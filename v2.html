@@ -57,608 +57,1261 @@
   .nav-left { display: flex; align-items: center; gap: 10px; }
   .nav h1 {
     font-family: 'Syne', sans-serif; font-weight: 800; font-size: 17px;
-    letter-spacing: -0.02em;
-    color: var(--cream);
+    color: var(--cream); text-transform: lowercase; letter-spacing: -0.02em;
   }
-  .nav-right { display: flex; align-items: center; gap: 18px; }
-  .nav-right button { background: var(--cream); color: var(--near-black); border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Space Grotesk', sans-serif; }
-  .nav-right button:hover { background: var(--warm-white); }
+  .nav h1 em { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; }
+  .nav .tag {
+    font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+    font-family: 'Space Grotesk', sans-serif; text-transform: lowercase; letter-spacing: 0.02em;
+  }
+  .tag-orange { background: var(--orange); color: white; }
+  .tag-green { background: var(--electric-green); color: var(--near-black); }
+  .tag-yellow { background: var(--hot-yellow); color: var(--near-black); }
+  .tag-blue { background: var(--sky-blue); color: var(--near-black); }
+  .tag-blush { background: var(--blush); color: var(--near-black); }
+  .tag-dark { background: var(--near-black); color: var(--cream); border: 1px solid rgba(255,255,255,0.15); }
+  .tag-outline { background: transparent; border: 1.5px solid var(--warm-grey); color: var(--near-black); }
+  .nav-right { display: flex; gap: 8px; align-items: center; }
+  .nav-btn {
+    background: transparent; border: 1px solid rgba(255,255,255,0.15);
+    color: var(--cream); font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px; font-weight: 500; padding: 5px 12px; border-radius: 20px;
+    cursor: pointer; transition: 0.15s ease; text-transform: lowercase;
+  }
+  .nav-btn:hover { border-color: var(--orange); color: var(--orange); }
 
   /* ═══ STEPPER ═══ */
-  .stepper { background: var(--warm-white); padding: 20px 28px; display: flex; gap: 12px; border-bottom: 1px solid var(--warm-grey); overflow-x: auto; }
-  .step { display: flex; flex-direction: column; gap: 4px; cursor: pointer; opacity: 0.4; transition: opacity 0.2s; }
-  .step.active { opacity: 1; }
-  .step span { font-size: 13px; font-weight: 600; letter-spacing: 0.02em; }
-  .step.active span { color: var(--orange); }
-  .step p { font-size: 11px; color: var(--mid-grey); }
+  .stepper {
+    background: var(--warm-white);
+    border-bottom: 1px solid var(--warm-grey);
+    padding: 0 28px;
+    display: flex;
+    gap: 0;
+  }
+  .step-tab {
+    padding: 12px 20px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: lowercase;
+    letter-spacing: 0.01em;
+    color: var(--mid-grey);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .step-tab:hover { color: var(--near-black); }
+  .step-tab.active { color: var(--near-black); border-bottom-color: var(--orange); }
+  .step-tab.done { color: var(--green-text); }
+  .step-num {
+    width: 20px; height: 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 10px; font-weight: 700;
+    background: var(--warm-grey); color: var(--mid-grey);
+  }
+  .step-tab.active .step-num { background: var(--orange); color: white; }
+  .step-tab.done .step-num { background: var(--electric-green); color: var(--near-black); }
 
   /* ═══ PAGES ═══ */
   .page { display: none; }
-  .page.active { display: grid; }
-  #brandPage { grid-template-columns: 1fr 1fr; gap: 32px; padding: 32px; }
-  #brandLeft { display: flex; flex-direction: column; gap: 20px; }
-  #brandRight { display: flex; flex-direction: column; gap: 16px; }
-  #dnaPage, #selectPage { padding: 32px; }
-  #selectPage { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; }
-  #promptPage { padding: 32px; display: flex !important; gap: 32px; }
-  #promptLeft { flex: 1; display: flex; flex-direction: column; gap: 20px; }
-  #promptRight { width: 300px; }
-  #genPage { padding: 32px; display: flex !important; flex-direction: column; gap: 24px; }
-  #reviewPage { padding: 32px; display: flex !important; flex-direction: column; gap: 24px; }
+  .page.active { display: block; }
+  .page-inner { max-width: 960px; margin: 0 auto; padding: 32px 28px; }
 
-  /* ═══ FORM ═══ */
-  .form-group { display: flex; flex-direction: column; gap: 8px; }
-  .form-group label { font-weight: 600; font-size: 13px; letter-spacing: 0.02em; }
-  .form-group input, .form-group textarea, .form-group select {
-    padding: 10px 12px; border: 1px solid var(--warm-grey); border-radius: 4px; font-family: 'Space Grotesk', sans-serif; font-size: 14px;
+  /* ═══ SECTION HEADERS ═══ */
+  .sh {
+    margin-bottom: 24px;
   }
-  .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--orange); }
-  .form-group textarea { resize: vertical; min-height: 100px; }
-  .form-group button { padding: 12px 20px; background: var(--orange); color: var(--cream); border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-family: 'Space Grotesk', sans-serif; }
-  .form-group button:hover { background: var(--orange-dim); }
-  .form-group button.secondary { background: var(--near-black); }
-  .form-group button.secondary:hover { background: var(--mid-grey); }
+  .sh-label {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--mid-grey); margin-bottom: 4px;
+  }
+  .sh h2 {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px;
+    text-transform: lowercase; letter-spacing: -0.02em; line-height: 1.1;
+  }
+  .sh h2 em { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; }
+  .sh p { font-size: 13px; color: var(--mid-grey); margin-top: 6px; max-width: 540px; }
 
   /* ═══ CARDS ═══ */
-  .tmpl-card {
-    padding: 16px;
+  .card {
     background: white;
-    border: 2px solid transparent;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-decoration: none;
-    color: var(--near-black);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    border-radius: 12px;
+    border: 1px solid var(--warm-grey);
+    margin-bottom: 16px;
+    overflow: hidden;
   }
-  .tmpl-card.selected { border-color: var(--orange); background: #fff5f0; }
-  .tmpl-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
-  .tmpl-card-name { font-weight: 600; font-size: 13px; }
-  .tmpl-card-desc { font-size: 12px; color: var(--mid-grey); line-height: 1.4; }
-  .tmpl-card-swatch { height: 60px; border-radius: 4px; margin-top: 4px; }
+  .card-head {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: 0.15s ease;
+  }
+  .card-head:hover { background: var(--warm-white); }
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 14px; text-transform: lowercase;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-body { padding: 0 18px 18px; }
+
+  /* ═══ FORM ELEMENTS ═══ */
+  .field { margin-bottom: 14px; }
+  .field-label {
+    font-size: 11px; font-weight: 600; text-transform: lowercase;
+    color: var(--mid-grey); margin-bottom: 4px; letter-spacing: 0.02em;
+  }
+  .field-input {
+    width: 100%; padding: 8px 12px;
+    font-family: 'Space Grotesk', sans-serif; font-size: 13px;
+    border: 1px solid var(--warm-grey); border-radius: 8px;
+    background: var(--cream); color: var(--near-black);
+    outline: none; transition: 0.15s ease;
+  }
+  .field-input:focus { border-color: var(--orange); }
+  textarea.field-input { resize: vertical; min-height: 64px; line-height: 1.5; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field-hint { font-size: 10px; color: var(--mid-grey); margin-top: 2px; }
+
+  /* colour chips */
+  .colour-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .colour-chip {
+    width: 32px; height: 32px; border-radius: 8px;
+    border: 2px solid var(--warm-grey); cursor: pointer; transition: 0.15s ease;
+    position: relative;
+  }
+  .colour-chip:hover { border-color: var(--near-black); }
+  .colour-chip.selected { border-color: var(--orange); box-shadow: 0 0 0 2px var(--orange); }
+  .colour-hex {
+    font-size: 9px; color: var(--mid-grey); text-align: center; margin-top: 2px;
+    font-family: 'Space Grotesk', monospace;
+  }
+  .add-colour {
+    width: 32px; height: 32px; border-radius: 8px;
+    border: 2px dashed var(--warm-grey);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: var(--mid-grey); cursor: pointer;
+    transition: 0.15s ease; background: transparent;
+  }
+  .add-colour:hover { border-color: var(--orange); color: var(--orange); }
 
   /* ═══ TEMPLATE GRID ═══ */
-  .tmpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
-
-  /* ═══ GENERATION PAGE ═══ */
-  .gen-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
-  .gen-card {
-    background: white;
-    border-radius: 6px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  .tmpl-filters {
+    display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap;
   }
-  .gen-img { height: 180px; background: var(--warm-grey); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--mid-grey); background-size: cover; background-position: center; }
-  .gen-meta { padding: 12px; border-top: 1px solid var(--warm-grey); }
-  .gen-meta-name { font-weight: 600; font-size: 12px; }
-  .gen-status { font-size: 11px; color: var(--mid-grey); margin-top: 4px; }
-  .gen-status.done { color: var(--green-text); font-weight: 600; }
+  .pill {
+    background: transparent; border: 1.5px solid var(--warm-grey);
+    color: var(--mid-grey); font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px;
+    cursor: pointer; transition: 0.15s ease; text-transform: lowercase; letter-spacing: 0.02em;
+  }
+  .pill:hover { border-color: var(--near-black); color: var(--near-black); }
+  .pill.active { background: var(--near-black); color: var(--cream); border-color: var(--near-black); }
+  .pill .ct {
+    display: inline-block; background: rgba(0,0,0,0.06);
+    font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 10px; margin-left: 3px;
+  }
+  .pill.active .ct { background: rgba(255,255,255,0.15); }
+
+  .tmpl-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .tmpl-card {
+    background: white;
+    border-radius: 12px;
+    border: 2px solid var(--warm-grey);
+    overflow: hidden;
+    cursor: pointer;
+    transition: 0.15s ease;
+    position: relative;
+  }
+  .tmpl-card:hover { border-color: var(--near-black); }
+  .tmpl-card.selected { border-color: var(--orange); box-shadow: 0 0 0 2px var(--orange); }
+  .tmpl-card .tmpl-check {
+    position: absolute; top: 10px; right: 10px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--warm-grey); color: transparent;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800; z-index: 2;
+    transition: 0.15s ease;
+  }
+  .tmpl-card.selected .tmpl-check { background: var(--orange); color: white; }
+  .tmpl-preview {
+    height: 140px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 13px; color: white; text-transform: lowercase;
+    text-align: center; padding: 16px; line-height: 1.3;
+  }
+  .tmpl-info { padding: 10px 14px; }
+  .tmpl-name {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px;
+    text-transform: lowercase; margin-bottom: 3px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .tmpl-desc {
+    font-size: 11px; color: var(--mid-grey); line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .tmpl-select-bar {
+    background: var(--warm-white);
+    border-bottom: 1px solid var(--warm-grey);
+    padding: 10px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 44px; z-index: 50;
+  }
+  .tmpl-count { font-size: 12px; font-weight: 600; }
+  .tmpl-count strong { color: var(--orange); }
+
+  /* ═══ GENERATE PAGE ═══ */
+  .gen-status {
+    text-align: center;
+    padding: 48px 20px;
+  }
+  .gen-status h2 {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px;
+    text-transform: lowercase; letter-spacing: -0.02em; margin-bottom: 8px;
+  }
+  .gen-status h2 em { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; }
+  .gen-status p { font-size: 13px; color: var(--mid-grey); margin-bottom: 24px; }
+  .gen-progress-wrap {
+    max-width: 400px; margin: 0 auto 24px;
+  }
+  .gen-track {
+    height: 6px; background: var(--warm-grey); border-radius: 3px; overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .gen-fill {
+    height: 100%; background: var(--orange); border-radius: 3px;
+    transition: width 0.4s ease; width: 0%;
+  }
+  .gen-pct { font-size: 12px; color: var(--mid-grey); font-weight: 600; }
+
+  .gen-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .gen-card {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--warm-grey);
+    background: white;
+    transition: 0.15s ease;
+  }
+  .gen-card .gen-img {
+    aspect-ratio: 1;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 11px; color: white; text-transform: lowercase;
+    text-align: center; padding: 12px; line-height: 1.3;
+  }
+  .gen-card .gen-img.loading {
+    background: var(--warm-grey) !important;
+    position: relative; overflow: hidden;
+  }
+  .gen-card .gen-img.loading::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .gen-meta {
+    padding: 8px 10px;
+    border-top: 1px solid var(--warm-grey);
+  }
+  .gen-meta .gm-name {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 11px;
+    text-transform: lowercase;
+  }
+  .gen-meta .gm-status {
+    font-size: 10px; margin-top: 1px;
+  }
+  .gm-status.done { color: var(--green-text); }
+  .gm-status.pending { color: var(--mid-grey); }
+  .gm-status.running { color: var(--orange); }
 
   /* ═══ REVIEW PAGE ═══ */
-  .rg { border: 1px solid var(--warm-grey); border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
-  .rg-head { padding: 16px; background: var(--warm-white); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-  .rg-left { display: flex; gap: 12px; align-items: center; }
-  .rg-name { font-weight: 600; font-size: 14px; }
-  .tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; }
-  .tag-green { background: var(--green-soft); color: var(--green-text); }
-  .tag-blue { background: var(--sky-blue); color: white; }
-  .rg-right { display: flex; gap: 12px; align-items: center; }
-  .rg-ver { font-size: 12px; color: var(--mid-grey); }
-  .rg-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warm-grey); }
-  .rg-dot.rated { background: var(--orange); }
-  .chev { width: 20px; color: var(--mid-grey); }
-  .rg-head.open .chev { transform: rotate(180deg); }
-  .rg-body { display: none; padding: 20px; border-top: 1px solid var(--warm-grey); }
-  .rg-body.open { display: block; }
-  .rg-prompt { margin-bottom: 20px; }
-  .rg-prompt-label { font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: var(--mid-grey); margin-bottom: 6px; }
-  .rg-prompt-text { font-size: 14px; line-height: 1.6; color: var(--near-black); }
-  .rg-versions { display: flex; gap: 16px; margin-bottom: 20px; overflow-x: auto; }
-  .rv-card { background: white; border: 1px solid var(--warm-grey); border-radius: 6px; overflow: hidden; width: 200px; flex-shrink: 0; }
-  .rv-card.sel { border-color: var(--orange); }
-  .rv-img { height: 200px; background: var(--warm-grey); display: flex; align-items: flex-end; position: relative; background-size: cover; background-position: center; }
-  .rv-label { position: absolute; top: 8px; left: 8px; background: var(--near-black); color: var(--cream); font-size: 9px; padding: 4px 8px; border-radius: 3px; font-weight: 600; }
-  .rv-label.cur { background: var(--orange); }
-  .rv-meta { padding: 12px; border-top: 1px solid var(--warm-grey); }
-  .rv-date { font-size: 12px; color: var(--mid-grey); }
-  .rg-fb { background: var(--warm-white); padding: 16px; border-radius: 6px; }
-  .rg-fb-label { font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: var(--mid-grey); display: block; margin-bottom: 8px; }
-  .rg-fb-btns { display: flex; gap: 8px; margin-bottom: 12px; }
-  .fbtn { padding: 8px 12px; border: 1px solid var(--warm-grey); background: white; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-  .fbtn.ship { border-color: var(--green-text); }
-  .fbtn.ship.on { background: var(--green-soft); color: var(--green-text); }
-  .fbtn.tweak { border-color: var(--orange); }
-  .fbtn.tweak.on { background: #fff5f0; color: var(--orange); }
-  .fbtn.redo { border-color: var(--red-text); }
-  .fbtn.redo.on { background: var(--red-soft); color: var(--red-text); }
-  .rg-fb-note { width: 100%; padding: 8px; border: 1px solid var(--warm-grey); border-radius: 4px; font-family: 'Space Grotesk', sans-serif; font-size: 12px; resize: vertical; min-height: 60px; }
-  .no-win { text-align: center; padding: 32px 20px; color: var(--mid-grey); }
-  .no-win em { display: block; margin-top: 8px; font-style: italic; font-size: 12px; }
-
-  /* ═══ EXPORT ═══ */
-  .export-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
-  .export-overlay.open { display: flex; }
-  .export-modal { background: white; border-radius: 8px; width: 90%; max-width: 700px; max-height: 80vh; display: flex; flex-direction: column; }
-  .export-header { padding: 24px; border-bottom: 1px solid var(--warm-grey); display: flex; justify-content: space-between; align-items: center; }
-  .export-header h2 { font-size: 18px; font-weight: 700; }
-  .export-close { background: none; border: none; font-size: 24px; cursor: pointer; }
-  .export-content { flex: 1; overflow-y: auto; padding: 24px; }
-  .wcard {
+  .review-bar {
     background: var(--warm-white);
-    padding: 16px;
-    border-radius: 6px;
-    margin-bottom: 16px;
-    display: flex;
-    gap: 16px;
+    border-bottom: 1px solid var(--warm-grey);
+    padding: 10px 28px;
+    display: flex; align-items: center; gap: 16px; font-size: 12px; flex-wrap: wrap;
   }
-  .wthumb { width: 80px; height: 80px; background: var(--warm-grey); border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--mid-grey); }
-  .wdetail { flex: 1; }
-  .wdetail h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
-  .wp { font-size: 12px; color: var(--mid-grey); margin-bottom: 8px; line-height: 1.4; }
-  .wn { font-size: 12px; color: var(--mid-grey); margin-bottom: 8px; }
-  .wf { display: flex; gap: 8px; flex-wrap: wrap; }
-  .fmt-pill { display: inline-block; padding: 4px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; color: white; }
-  .export-footer { padding: 20px 24px; border-top: 1px solid var(--warm-grey); display: flex; gap: 12px; justify-content: flex-end; }
-  .export-footer button { padding: 10px 20px; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-family: 'Space Grotesk', sans-serif; }
-  .export-footer button.primary { background: var(--orange); color: white; }
-  .export-footer button.secondary { background: var(--warm-grey); color: var(--near-black); }
+  .review-bar .rl { color: var(--mid-grey); }
+  .review-bar .rv { font-weight: 600; }
+  .review-bar .sep { width: 1px; height: 14px; background: var(--warm-grey); }
+  .review-filters {
+    padding: 12px 28px;
+    display: flex; gap: 6px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--warm-grey);
+  }
+  .pill-gap { width: 12px; }
 
-  /* ═══ MISC ═══ */
-  .hidden { display: none !important; }
-  .pill { display: inline-block; padding: 6px 12px; background: var(--warm-white); border: 1px solid var(--warm-grey); border-radius: 4px; font-size: 12px; cursor: pointer; }
-  .pill.active { background: var(--orange); color: white; border-color: var(--orange); }
-  #reviewFilters { display: flex; gap: 8px; margin-bottom: 20px; }
-  #reviewCounts { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 16px; margin-bottom: 20px; }
-  .count-card { background: var(--warm-white); padding: 16px; border-radius: 6px; }
-  .count-label { font-size: 11px; color: var(--mid-grey); font-weight: 600; margin-bottom: 4px; }
-  .count-value { font-size: 24px; font-weight: 700; }
-  .gen-progress { display: flex; gap: 16px; margin-bottom: 20px; }
-  .gen-progress-bar { flex: 1; height: 24px; background: var(--warm-white); border-radius: 4px; overflow: hidden; }
-  #genFill { height: 100%; background: var(--orange); width: 0%; transition: width 0.3s; }
-  #genPct { font-size: 14px; font-weight: 600; min-width: 60px; }
-  #genDone { display: flex; gap: 12px; flex-direction: column; }
-  .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-  .review-header h2 { font-size: 18px; font-weight: 700; }
-  .footer { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: var(--near-black); display: flex; align-items: center; padding: 0 28px; gap: 16px; }
-  .footer button { padding: 10px 20px; background: var(--orange); color: var(--cream); border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-family: 'Space Grotesk', sans-serif; }
-  .footer button:hover { background: var(--orange-dim); }
-  .footer p { color: var(--cream); flex: 1; font-size: 12px; }
-  .footer-segs { display: flex; height: 4px; gap: 1px; flex: 0 0 200px; }
-  .ff { flex: 1; border-radius: 2px; }
-  .ff.ship { background: var(--green-text); }
+  .review-groups { padding: 20px 28px 100px; max-width: 960px; margin: 0 auto; }
+
+  /* review group card */
+  .rg { margin-bottom: 16px; background: white; border-radius: 12px; border: 1px solid var(--warm-grey); overflow: hidden; }
+  .rg-head {
+    padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; transition: 0.15s ease; user-select: none;
+  }
+  .rg-head:hover { background: var(--warm-white); }
+  .rg-left { display: flex; align-items: center; gap: 8px; }
+  .rg-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; text-transform: lowercase; }
+  .rg-right { display: flex; align-items: center; gap: 10px; }
+  .rg-ver { font-size: 10px; color: var(--mid-grey); }
+  .rg-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--warm-grey); }
+  .rg-dot.rated { background: var(--electric-green); }
+  .chev { width: 14px; height: 14px; color: var(--mid-grey); transition: transform 0.2s ease; }
+  .rg-head.open .chev { transform: rotate(180deg); }
+  .rg-body { border-top: 1px solid var(--warm-grey); display: none; }
+  .rg-body.open { display: block; }
+
+  .rg-prompt {
+    padding: 12px 16px; background: var(--warm-white);
+    border-bottom: 1px solid rgba(232,224,216,0.5);
+  }
+  .rg-prompt-label {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 9px;
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--mid-grey); margin-bottom: 4px;
+  }
+  .rg-prompt-text { font-size: 12px; color: var(--near-black); line-height: 1.5; }
+  .rg-diff {
+    padding: 8px 16px; background: #FFF0E6;
+    border-bottom: 1px solid rgba(232,224,216,0.5);
+    font-size: 11px; color: var(--orange-dim); line-height: 1.5;
+  }
+  .rg-diff strong { font-weight: 700; }
+  .diff-add { background: var(--green-soft); padding: 0 3px; border-radius: 3px; color: var(--green-text); }
+  .diff-rm { background: var(--red-soft); padding: 0 3px; border-radius: 3px; color: var(--red-text); text-decoration: line-through; }
+
+  .rg-versions { padding: 14px 16px; display: flex; gap: 12px; overflow-x: auto; }
+  .rv-card {
+    flex: 0 0 200px; border-radius: 10px; overflow: hidden;
+    border: 2px solid transparent; transition: 0.15s ease; cursor: pointer; background: white;
+  }
+  .rv-card:hover { border-color: var(--orange); }
+  .rv-card.sel { border-color: var(--orange); box-shadow: 0 3px 16px rgba(255,107,44,0.12); }
+  .rv-label {
+    position: absolute; top: 6px; left: 6px;
+    background: rgba(13,13,13,0.7); color: var(--cream);
+    font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+    backdrop-filter: blur(4px); z-index: 2; text-transform: lowercase;
+  }
+  .rv-label.cur { background: var(--orange); color: white; }
+  .rv-card .rv-img {
+    aspect-ratio: 1; position: relative;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 10px; color: white; text-transform: lowercase;
+    text-align: center; padding: 10px; line-height: 1.3;
+  }
+  .rv-meta { padding: 6px 8px; border-top: 1px solid var(--warm-grey); }
+  .rv-date { font-size: 9px; color: var(--mid-grey); }
+  .rv-change { font-size: 9px; color: var(--orange-dim); font-weight: 500; }
+
+  .rg-fb {
+    padding: 10px 16px; border-top: 1px solid var(--warm-grey);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .rg-fb-label { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 10px; text-transform: lowercase; color: var(--mid-grey); flex-shrink: 0; }
+  .rg-fb-btns { display: flex; gap: 5px; }
+  .fbtn {
+    background: transparent; border: 1.5px solid var(--warm-grey);
+    font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 600;
+    padding: 3px 10px; border-radius: 20px; cursor: pointer; transition: 0.15s ease; text-transform: lowercase;
+  }
+  .fbtn:hover { border-color: var(--near-black); }
+  .fbtn.ship { color: var(--green-text); }
+  .fbtn.ship:hover, .fbtn.ship.on { background: var(--green-soft); border-color: #A3D9A5; }
+  .fbtn.tweak { color: var(--orange-dim); }
+  .fbtn.tweak:hover, .fbtn.tweak.on { background: #FFF0E6; border-color: var(--orange); }
+  .fbtn.redo { color: var(--red-text); }
+  .fbtn.redo:hover, .fbtn.redo.on { background: var(--red-soft); border-color: #F5C6CB; }
+  .rg-fb-note {
+    flex: 1; background: var(--cream); border: 1px solid var(--warm-grey);
+    border-radius: 8px; padding: 4px 8px; font-family: 'Space Grotesk', sans-serif;
+    font-size: 10px; color: var(--near-black); resize: none; height: 26px; outline: none;
+  }
+  .rg-fb-note:focus { border-color: var(--orange); }
+  .rg-fb-note::placeholder { color: var(--mid-grey); }
+
+  /* ═══ FOOTER BAR ═══ */
+  .footer-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: white; border-top: 1px solid var(--warm-grey);
+    padding: 10px 28px; display: flex; align-items: center; gap: 12px; z-index: 100;
+  }
+  .footer-bar .ft { font-size: 11px; font-weight: 600; flex-shrink: 0; }
+  .footer-track { flex: 1; height: 4px; background: var(--warm-grey); border-radius: 2px; overflow: hidden; }
+  .footer-segs { display: flex; height: 100%; }
+  .ff { height: 100%; transition: width 0.3s ease; }
+  .ff.ship { background: var(--electric-green); }
   .ff.tweak { background: var(--orange); }
-  .ff.redo { background: var(--red-text); }
-  #main { padding-bottom: 80px; }
+  .ff.redo { background: var(--blush); }
+  .btn-action {
+    background: var(--orange); color: white;
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px;
+    border: none; padding: 6px 16px; border-radius: 20px;
+    cursor: pointer; transition: 0.15s ease; text-transform: lowercase;
+  }
+  .btn-action:hover { background: var(--orange-dim); }
+  .btn-ghost {
+    background: transparent; border: 1.5px solid var(--warm-grey); color: var(--near-black);
+    font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 11px;
+    padding: 6px 14px; border-radius: 20px; cursor: pointer; transition: 0.15s ease; text-transform: lowercase;
+  }
+  .btn-ghost:hover { border-color: var(--near-black); }
+
+  /* ═══ EXPORT MODAL ═══ */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(13,13,13,0.45);
+    backdrop-filter: blur(6px); z-index: 200; display: none;
+    align-items: center; justify-content: center;
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    background: var(--cream); border-radius: 12px;
+    width: 90vw; max-width: 660px; max-height: 85vh;
+    overflow-y: auto; box-shadow: 0 24px 64px rgba(13,13,13,0.25);
+  }
+  .modal-head {
+    padding: 22px 22px 12px; border-bottom: 1px solid var(--warm-grey);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-head h2 {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px;
+    text-transform: lowercase; letter-spacing: -0.02em;
+  }
+  .modal-head h2 em { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; }
+  .modal-x {
+    background: none; border: none; font-size: 16px; cursor: pointer;
+    color: var(--mid-grey); padding: 4px 8px; border-radius: 6px;
+  }
+  .modal-x:hover { background: var(--warm-grey); }
+  .modal-body { padding: 16px 22px 22px; }
+  .modal-foot {
+    padding: 12px 22px; border-top: 1px solid var(--warm-grey);
+    display: flex; justify-content: flex-end; gap: 8px;
+  }
+
+  .brand-brief {
+    background: white; border-radius: 12px; padding: 14px 16px;
+    margin-bottom: 14px; border: 1px solid var(--warm-grey);
+  }
+  .brand-brief h3 {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 11px;
+    text-transform: lowercase; color: var(--mid-grey); margin-bottom: 8px;
+  }
+  .bb-row { display: flex; gap: 8px; margin-bottom: 4px; font-size: 11px; }
+  .bb-row .bl { color: var(--mid-grey); min-width: 80px; flex-shrink: 0; }
+  .bb-row .bv { font-weight: 500; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .cdot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--warm-grey); flex-shrink: 0; }
+  .fmt-pill {
+    font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 20px;
+    font-family: 'Space Grotesk', sans-serif; text-transform: lowercase;
+  }
+  .wcard {
+    background: white; border-radius: 12px; padding: 12px 14px;
+    margin-bottom: 8px; border: 1px solid var(--warm-grey);
+    display: flex; gap: 12px;
+  }
+  .wthumb {
+    width: 70px; height: 70px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: white; font-weight: 600; text-align: center;
+    line-height: 1.3; text-transform: lowercase; font-family: 'Syne', sans-serif;
+  }
+  .wdetail { flex: 1; min-width: 0; }
+  .wdetail h4 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; text-transform: lowercase; margin-bottom: 2px; }
+  .wdetail .wp { font-size: 10px; color: var(--mid-grey); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .wdetail .wn { font-size: 10px; color: var(--orange-dim); font-weight: 500; margin-top: 3px; }
+  .wdetail .wf { margin-top: 4px; display: flex; gap: 3px; }
+  .no-win { text-align: center; padding: 32px 20px; color: var(--mid-grey); font-size: 12px; }
+  .no-win em { font-family: 'Instrument Serif', serif; font-style: italic; font-size: 14px; display: block; margin-top: 4px; color: var(--near-black); }
+
+  /* ═══ UTILITY ═══ */
+  .hidden { display: none !important; }
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  .flex-between { display: flex; align-items: center; justify-content: space-between; }
 </style>
 </head>
 <body>
 
-<nav class="nav">
+<!-- ═══ NAV ═══ -->
+<div class="nav">
   <div class="nav-left">
-    <h1>chefly® creative kitchen</h1>
+    <h1>creative <em>kitchen</em> static</h1>
+    <span class="tag tag-orange" id="navTag">dna</span>
   </div>
   <div class="nav-right">
-    <button onclick="toggleApiKey()">api key</button>
-    <button onclick="openExport()">export</button>
+    <button class="nav-btn" onclick="window.open('https://creative-kitchen-video-v3.vercel.app','_blank')">video tool</button>
+    <button class="nav-btn" id="resetBtn">reset dna</button>
+    <button class="nav-btn" onclick="exportSheet()">export sheet</button>
+    <button class="nav-btn" onclick="downloadAllZip()">download .zip</button>
+    <button class="nav-btn" id="exportBtn" onclick="openExport()">export winners</button>
   </div>
-</nav>
-
-<div class="stepper" id="stepper">
-  <div class="step active" onclick="goStep(0)"><span>1. brand</span><p>scan your brand</p></div>
-  <div class="step" onclick="goStep(1)"><span>2. dna</span><p>set creative direction</p></div>
-  <div class="step" onclick="goStep(2)"><span>3. templates</span><p>select ad layouts</p></div>
-  <div class="step" onclick="goStep(3)"><span>4. prompts</span><p>edit generation prompts</p></div>
-  <div class="step" onclick="goStep(4)"><span>5. generate</span><p>run fal.ai batch</p></div>
-  <div class="step" onclick="goStep(5)"><span>6. review</span><p>rate & select winners</p></div>
 </div>
 
-<div id="main">
-  <!-- BRAND PAGE -->
-  <div id="brandPage" class="page active">
-    <div id="brandLeft">
-      <div class="form-group">
-        <label>brand url</label>
-        <input type="text" id="brandUrl" placeholder="https://...">
-      </div>
-      <div class="form-group">
-        <label>brand name</label>
-        <input type="text" id="brandName" placeholder="e.g., chefly">
-      </div>
-      <div class="form-group">
-        <label>product category</label>
-        <input type="text" id="productCat" placeholder="e.g., meal delivery">
-      </div>
-      <div class="form-group">
-        <button onclick="goStep(1)">next: creative direction</button>
-      </div>
-    </div>
-    <div id="brandRight">
-      <div class="form-group">
-        <label>brand analysis</label>
-        <div id="brandOutput" style="font-size: 13px; color: var(--mid-grey); line-height: 1.6;">scan a brand url to auto-fill key attributes</div>
-        <button class="secondary" style="margin-top: 12px;" onclick="scanBrand()">scan now</button>
-      </div>
-    </div>
+<!-- ═══ STEPPER ═══ -->
+<div class="stepper">
+  <div class="step-tab active" data-step="0" onclick="goStep(0)">
+    <span class="step-num">1</span> brand setup
   </div>
-
-  <!-- DNA PAGE -->
-  <div id="dnaPage" class="page">
-    <h2 style="margin-bottom: 20px;">creative direction</h2>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
-      <div class="form-group">
-        <label>tone</label>
-        <input type="text" id="dna-tone" placeholder="e.g., playful, premium, urgent">
-      </div>
-      <div class="form-group">
-        <label>visual style</label>
-        <input type="text" id="dna-style" placeholder="e.g., minimalist, bold, vibrant">
-      </div>
-      <div class="form-group">
-        <label>color palette</label>
-        <input type="text" id="dna-colors" placeholder="e.g., warm oranges, sky blues">
-      </div>
-      <div class="form-group">
-        <label>message focus</label>
-        <input type="text" id="dna-message" placeholder="e.g., sustainability, speed, luxury">
-      </div>
-    </div>
-    <div style="margin-top: 32px;">
-      <div class="form-group">
-        <label>additional notes</label>
-        <textarea id="dna-notes" placeholder="any other creative direction..."></textarea>
-      </div>
-    </div>
-    <div style="display: flex; gap: 12px; margin-top: 20px;">
-      <button class="secondary" onclick="goStep(1)">back</button>
-      <button onclick="goStep(2)">next: select templates</button>
-    </div>
+  <div class="step-tab" data-step="1" onclick="goStep(1)">
+    <span class="step-num">2</span> brand dna
   </div>
-
-  <!-- SELECT PAGE -->
-  <div id="selectPage" class="page">
+  <div class="step-tab" data-step="2" onclick="goStep(2)">
+    <span class="step-num">3</span> templates
   </div>
+  <div class="step-tab" data-step="3" onclick="goStep(3)">
+    <span class="step-num">4</span> prompt lab
+  </div>
+  <div class="step-tab" data-step="4" onclick="goStep(4)">
+    <span class="step-num">5</span> generate
+  </div>
+  <div class="step-tab" data-step="5" onclick="goStep(5)">
+    <span class="step-num">6</span> review
+  </div>
+</div>
 
-  <!-- PROMPT PAGE -->
-  <div id="promptPage" class="page">
-    <div id="promptLeft">
-      <h2 style="margin-bottom: 20px;">edit prompts</h2>
-      <div id="promptLab"></div>
+<!-- ═══════════════════════════════════════
+     PAGE 0: BRAND SETUP
+     ═══════════════════════════════════════ -->
+<div class="page active" id="page-0">
+  <div class="page-inner" style="max-width:640px">
+    <div class="sh">
+      <div class="sh-label">step 01</div>
+      <h2>brand <em>setup</em></h2>
+      <p>enter your website url and we'll scan it to auto-extract your brand identity, colours, and positioning.</p>
     </div>
-    <div id="promptRight">
-      <div style="background: var(--warm-white); padding: 16px; border-radius: 6px; position: sticky; top: 20px;">
-        <div class="form-group">
-          <label>fal.ai api key</label>
-          <input type="password" id="apiKeyInput" placeholder="your-api-key">
-          <button class="secondary" onclick="saveApiKey()" style="margin-top: 8px;">save key</button>
+
+    <div class="card">
+      <div class="card-body" style="padding-top:18px">
+        <div class="field">
+          <div class="field-label">website url</div>
+          <div style="display:flex;gap:8px">
+            <input class="field-input" value="www.eatchefly.com" id="setup-url" placeholder="yoursite.com" style="flex:1">
+            <button class="btn-action" onclick="scanBrand()" id="scanBtn" style="flex-shrink:0;padding:6px 20px">scan brand</button>
+          </div>
+          <div class="field-hint">we use jina.ai reader + microlink to extract colours, product info, and positioning</div>
+        </div>
+        <div id="scanProgress" class="hidden" style="margin-top:12px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--orange);font-weight:600">
+            <div style="width:14px;height:14px;border:2px solid var(--orange);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+            <span id="scanText">scanning website…</span>
+          </div>
+          <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+        </div>
+        <div id="scanResult" class="hidden" style="margin-top:14px">
+          <div style="background:var(--green-soft);border:1px solid #A3D9A5;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--green-text);font-weight:500">
+            brand scan complete — review and edit the extracted dna on the next page
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- GENERATION PAGE -->
-  <div id="genPage" class="page">
-    <h2>generating...</h2>
-    <div class="gen-progress">
-      <div class="gen-progress-bar">
-        <div id="genFill"></div>
+    <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--mid-grey)">or</div>
+    <div style="text-align:center;margin-top:8px">
+      <button class="btn-ghost" onclick="goStep(1)">skip scan — configure manually →</button>
+    </div>
+
+    <div id="setupNext" class="hidden" style="display:flex;justify-content:flex-end;margin-top:20px">
+      <button class="btn-action" onclick="goStep(1)" style="padding:8px 24px;font-size:14px">configure dna →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PAGE 1: DNA CONFIG
+     ═══════════════════════════════════════ -->
+<div class="page" id="page-1">
+  <div class="page-inner">
+    <div class="sh">
+      <div class="sh-label">step 02</div>
+      <h2>brand <em>dna</em></h2>
+      <p>configure your brand identity. these settings shape every prompt that gets sent to the image model.</p>
+    </div>
+
+    <!-- API Connection -->
+    <div class="card">
+      <div class="card-head" onclick="this.nextElementSibling.classList.toggle('hidden')">
+        <div class="card-title">api connection <span class="tag tag-orange">required</span></div>
+        <svg class="chev" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
       </div>
-      <div id="genPct">0 / 0</div>
+      <div class="card-body">
+        <div class="field">
+          <div class="field-label">fal.ai api key</div>
+          <div style="display:flex;gap:8px">
+            <input class="field-input" type="password" placeholder="Enter your fal.ai API key" id="dna-apikey" style="flex:1;font-family:'Space Grotesk',monospace">
+            <button class="btn-ghost" onclick="toggleApiKey()" id="apiToggle" style="flex-shrink:0;padding:6px 12px">show</button>
+          </div>
+          <div class="field-hint">required for image generation. get yours at <a href="https://fal.ai/dashboard/keys" target="_blank" style="color:var(--orange);text-decoration:none;font-weight:600">fal.ai/dashboard/keys</a></div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label">model</div>
+            <select class="field-input" id="dna-model">
+              <option value="fal-ai/nano-banana-2" selected>nano banana 2 (recommended)</option>
+              <option value="fal-ai/flux-pro">flux pro</option>
+              <option value="fal-ai/flux/schnell">flux schnell (fast)</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="field-label">aspect ratio</div>
+            <select class="field-input" id="dna-ratio">
+              <option value="1:1" selected>1:1 — square (1080×1080)</option>
+              <option value="4:5">4:5 — feed (1080×1350)</option>
+            </select>
+          </div>
+        </div>
+        <div id="apiStatus" style="display:none;margin-top:4px;font-size:11px;font-weight:600"></div>
+      </div>
     </div>
-    <div id="genCards" class="gen-container"></div>
-    <div id="genDone" class="hidden">
-      <button onclick="goStep(5)">next: review results</button>
-    </div>
-  </div>
 
-  <!-- REVIEW PAGE -->
-  <div id="reviewPage" class="page">
-    <div class="review-header">
-      <h2>review & rate</h2>
-      <div style="font-size: 13px; color: var(--mid-grey);"><strong id="rvTmplCt">0</strong> templates</div>
+    <!-- Brand Identity -->
+    <div class="card">
+      <div class="card-head" onclick="this.nextElementSibling.classList.toggle('hidden')">
+        <div class="card-title">brand identity <span class="tag tag-green">required</span></div>
+        <svg class="chev" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+      </div>
+      <div class="card-body">
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label">brand name</div>
+            <input class="field-input" value="CHEFLY" id="dna-brand">
+          </div>
+          <div class="field">
+            <div class="field-label">website</div>
+            <input class="field-input" value="www.eatchefly.com" id="dna-url">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label">product</div>
+            <input class="field-input" value="fresh meals" id="dna-product">
+          </div>
+          <div class="field">
+            <div class="field-label">target audience</div>
+            <input class="field-input" value="Food enthusiasts, Premium/luxury buyers" id="dna-audience">
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">brand context</div>
+          <textarea class="field-input" id="dna-context">Choose from 50+ chef-cooked, protein packed meals. Enjoy at home, at work or on the move - just heat when you're ready to eat</textarea>
+        </div>
+        <div class="field">
+          <div class="field-label">key claims</div>
+          <input class="field-input" value="Preservative-free meals, no seed oils, high protein" id="dna-claims">
+        </div>
+      </div>
     </div>
-    <div id="reviewFilters" style="margin-bottom: 20px;">
-      <div class="pill active" onclick="filterReview('all', this)">all</div>
-      <div class="pill" onclick="filterReview('unrated', this)">unrated</div>
-      <div class="pill" onclick="filterReview('ship', this)">ship it</div>
-      <div class="pill" onclick="filterReview('tweak', this)">tweak</div>
-      <div class="pill" onclick="filterReview('redo', this)">redo</div>
+
+    <!-- Brand Colours -->
+    <div class="card">
+      <div class="card-head" onclick="this.nextElementSibling.classList.toggle('hidden')">
+        <div class="card-title">colour palette <span class="tag tag-yellow">d2 system</span></div>
+        <svg class="chev" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+      </div>
+      <div class="card-body">
+        <div class="field-label">brand colours — click to toggle prominence in generated images</div>
+        <div class="colour-chips mt-8" id="colourChips">
+          <div class="colour-chip selected" style="background:#FF6B2C" title="#FF6B2C" onclick="this.classList.toggle('selected')"></div>
+          <div class="colour-chip selected" style="background:#0D0D0D" title="#0D0D0D" onclick="this.classList.toggle('selected')"></div>
+          <div class="colour-chip selected" style="background:#FFF6EE;border-color:#ccc" title="#FFF6EE" onclick="this.classList.toggle('selected')"></div>
+          <div class="colour-chip" style="background:#FFD60A" title="#FFD60A" onclick="this.classList.toggle('selected')"></div>
+          <div class="colour-chip" style="background:#A8E10C" title="#A8E10C" onclick="this.classList.toggle('selected')"></div>
+          <div class="colour-chip" style="background:#FF8FA3" title="#FF8FA3" onclick="this.classList.toggle('selected')"></div>
+          <div class="colour-chip" style="background:#5CCFFF" title="#5CCFFF" onclick="this.classList.toggle('selected')"></div>
+          <button class="add-colour" title="add custom colour">+</button>
+        </div>
+        <div class="field-hint mt-8">selected colours are injected into every prompt. the model responds strongly to colour instructions.</div>
+      </div>
     </div>
-    <div id="reviewCounts">
-      <div class="count-card"><div class="count-label">rated</div><div class="count-value"><span id="rvRated">0</span></div></div>
-      <div class="count-card"><div class="count-label">ship it</div><div class="count-value"><span id="rfShip">0</span></div></div>
-      <div class="count-card"><div class="count-label">tweak</div><div class="count-value"><span id="rfTweak">0</span></div></div>
-      <div class="count-card"><div class="count-label">redo</div><div class="count-value"><span id="rfRedo">0</span></div></div>
-      <div class="count-card"><div class="count-label">unrated</div><div class="count-value"><span id="rfUn">0</span></div></div>
-      <div class="count-card"><div class="count-label">total</div><div class="count-value"><span id="rfAll">0</span></div></div>
+
+    <!-- Photography Style -->
+    <div class="card">
+      <div class="card-head" onclick="this.nextElementSibling.classList.toggle('hidden')">
+        <div class="card-title">photography style <span class="tag tag-blush">high impact</span></div>
+        <svg class="chev" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <div class="field-label">photography direction — this is your most powerful lever</div>
+          <textarea class="field-input" style="min-height:80px" id="dna-photo">Clean, minimal compositions. Product-focused compositions for CHEFLY.</textarea>
+          <div class="field-hint">tip: use photography terminology — "shallow depth of field", "golden hour", "overhead flat-lay", "editorial food magazine quality"</div>
+        </div>
+      </div>
     </div>
-    <div id="reviewGroups"></div>
+
+    <!-- Ad Approach -->
+    <div class="card">
+      <div class="card-head" onclick="this.nextElementSibling.classList.toggle('hidden')">
+        <div class="card-title">ad approach & prompt modifier</div>
+        <svg class="chev" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <div class="field-label">ad approach</div>
+          <textarea class="field-input" id="dna-approach">Direct-response advertising with clear value propositions. CHEFLY aesthetic throughout. Strong CTAs with brand color accents.</textarea>
+        </div>
+        <div class="field">
+          <div class="field-label">prompt modifier — appended to every prompt</div>
+          <textarea class="field-input" id="dna-modifier">Brand: CHEFLY. Product: fresh meals. Colors: #FF6B2C, #0D0D0D, #FFF6EE. Professional advertising quality. Clean, modern layout.</textarea>
+          <div class="field-hint">add "No AI-generated text or overlays. Photography only." to reduce text hallucination</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:20px">
+      <button class="btn-action" onclick="goStep(2)" style="padding:8px 24px;font-size:14px">choose templates →</button>
+    </div>
   </div>
 </div>
 
-<div class="footer">
-  <p id="footerTxt">0 of 0 rated</p>
-  <div class="footer-segs" id="footerSegs"></div>
-  <button onclick="downloadBrief()">download brief</button>
-  <button onclick="goStep(0)">start over</button>
+<!-- ═══════════════════════════════════════
+     PAGE 2: TEMPLATE SELECTION
+     ═══════════════════════════════════════ -->
+<div class="page" id="page-2">
+  <div class="tmpl-select-bar">
+    <div class="tmpl-count"><strong id="selCount">0</strong> of 24 templates selected</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-ghost" onclick="selectAll()">select all recommended</button>
+      <button class="btn-action" onclick="goStep(3)">prompt lab →</button>
+    </div>
+  </div>
+  <div class="page-inner" style="padding-top:16px">
+    <div class="sh">
+      <div class="sh-label">step 03</div>
+      <h2>choose <em>templates</em></h2>
+      <p>pick which ad concepts to generate. templates rated "great" are the strongest performers.</p>
+    </div>
+
+    <div class="tmpl-filters" id="tmplFilters">
+      <button class="pill active" onclick="filterTmpl('all',this)">all <span class="ct">24</span></button>
+      <button class="pill" onclick="filterTmpl('great',this)">great <span class="ct">10</span></button>
+      <button class="pill" onclick="filterTmpl('good',this)">good <span class="ct">14</span></button>
+    </div>
+
+    <div class="tmpl-grid" id="tmplGrid"></div>
+  </div>
 </div>
 
-<!-- EXPORT MODAL -->
-<div id="exportOverlay" class="export-overlay">
-  <div class="export-modal">
-    <div class="export-header">
-      <h2>export winners</h2>
-      <button class="export-close" onclick="closeExport()">×</button>
+<!-- ═══════════════════════════════════════
+     PAGE 3: PROMPT LAB
+     ═══════════════════════════════════════ -->
+<div class="page" id="page-3">
+  <div class="page-inner">
+    <div class="sh">
+      <div class="sh-label">step 04</div>
+      <h2>prompt <em>lab</em></h2>
+      <p>review and fine-tune the assembled prompts before generation. each prompt combines the template base + your photography style + brand colours + modifier.</p>
     </div>
-    <div class="export-content">
+    <div id="promptLabList"></div>
+    <div style="display:flex;justify-content:space-between;margin-top:20px">
+      <button class="btn-ghost" onclick="goStep(2)">← back to templates</button>
+      <button class="btn-action" onclick="goStep(4)" style="padding:8px 24px;font-size:14px">generate all →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PAGE 4: GENERATE
+     ═══════════════════════════════════════ -->
+<div class="page" id="page-4">
+  <div class="page-inner">
+    <div class="gen-status" id="genStatus">
+      <div class="sh-label">step 05</div>
+      <h2>generating <em>creatives</em></h2>
+      <p>sending prompts to nano banana 2 via fal.ai — this takes about 30 seconds per image</p>
+      <div class="gen-progress-wrap">
+        <div class="gen-track"><div class="gen-fill" id="genFill"></div></div>
+        <div class="gen-pct" id="genPct">0 / 0</div>
+      </div>
+    </div>
+    <div class="gen-grid" id="genGrid"></div>
+    <div id="genDone" class="hidden" style="text-align:center;margin-top:24px">
+      <button class="btn-ghost" onclick="goStep(3)" style="margin-right:8px">← back to prompt lab</button>
+      <button class="btn-action" onclick="goStep(5)" style="padding:10px 28px;font-size:14px">review &amp; rate →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PAGE 5: REVIEW
+     ═══════════════════════════════════════ -->
+<div class="page" id="page-5">
+  <div class="review-bar">
+    <span><span class="rl">templates:</span> <span class="rv" id="rvTmplCt">20</span></span>
+    <div class="sep"></div>
+    <span><span class="rl">format:</span> <span class="rv">1:1</span></span>
+    <div class="sep"></div>
+    <span><span class="rl">rated:</span> <span class="rv" id="rvRated">0 / 24</span></span>
+  </div>
+  <div class="review-filters" id="reviewFilters">
+    <button class="pill active" onclick="filterReview('all',this)">all <span class="ct" id="rfAll">20</span></button>
+    <button class="pill" onclick="filterReview('great',this)">great <span class="ct">10</span></button>
+    <button class="pill" onclick="filterReview('good',this)">good <span class="ct">14</span></button>
+    <div class="pill-gap"></div>
+    <button class="pill" onclick="filterReview('ship',this)">ship <span class="ct" id="rfShip">0</span></button>
+    <button class="pill" onclick="filterReview('tweak',this)">tweak <span class="ct" id="rfTweak">0</span></button>
+    <button class="pill" onclick="filterReview('redo',this)">redo <span class="ct" id="rfRedo">0</span></button>
+    <button class="pill" onclick="filterReview('unrated',this)">unrated <span class="ct" id="rfUn">20</span></button>
+  </div>
+  <div class="review-groups" id="reviewGroups"></div>
+
+  <div class="footer-bar" id="reviewFooter">
+    <span class="ft" id="footerTxt">0 of 24 rated</span>
+    <div class="footer-track">
+      <div class="footer-segs" id="footerSegs"></div>
+    </div>
+    <button class="btn-action" onclick="openExport()">finish review</button>
+  </div>
+</div>
+
+<!-- ═══ EXPORT MODAL ═══ -->
+<div class="overlay" id="exportOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>designer <em>handoff</em></h2>
+      <button class="modal-x" onclick="closeExport()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="brand-brief">
+        <h3>brand kit</h3>
+        <div class="bb-row"><span class="bl">brand</span><span class="bv" style="font-family:'Syne';font-weight:800;text-transform:lowercase">chefly</span></div>
+        <div class="bb-row"><span class="bl">colours</span><span class="bv">
+          <span class="cdot" style="background:#FF6B2C"></span>
+          <span class="cdot" style="background:#FFD60A"></span>
+          <span class="cdot" style="background:#A8E10C"></span>
+          <span class="cdot" style="background:#FF8FA3"></span>
+          <span class="cdot" style="background:#5CCFFF"></span>
+          <span class="cdot" style="background:#0D0D0D"></span>
+          <span class="cdot" style="background:#FFF6EE;border-color:#ccc"></span>
+        </span></div>
+        <div class="bb-row"><span class="bl">fonts</span><span class="bv">syne 800 · instrument serif · space grotesk</span></div>
+        <div class="bb-row"><span class="bl">adapt to</span><span class="bv">
+          <span class="fmt-pill" style="background:var(--sky-blue)">1:1 feed</span>
+          <span class="fmt-pill" style="background:var(--blush)">4:5 feed</span>
+          <span class="fmt-pill" style="background:var(--hot-yellow)">9:16 story</span>
+          <span class="fmt-pill" style="background:var(--electric-green)">9:16 reel</span>
+        </span></div>
+      </div>
       <div id="winnersList"></div>
     </div>
-    <div class="export-footer">
-      <button class="secondary" onclick="closeExport()">close</button>
-      <button class="primary" onclick="downloadBrief()">download brief</button>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeExport()">back to review</button>
+      <button class="btn-action" onclick="downloadBrief()">download brief</button>
     </div>
   </div>
 </div>
 
 <script>
-/* ═══ STATE ═══ */
-const selected = new Set();
-const feedback = {};
-const promptEdits = {};
-const generatedImages = {};
-
-const catColours = {
-  lifestyle: { bg: '#FFD60A', color: '#0D0D0D' },
-  food: { bg: '#A8E10C', color: '#0D0D0D' },
-  social: { bg: '#FF8FA3', color: 'white' },
-  product: { bg: '#5CCFFF', color: 'white' },
-  testimonial: { bg: '#E8E0D8', color: '#0D0D0D' },
-};
-
+/* ═══════════════════════════════════════
+   DATA
+   ═══════════════════════════════════════ */
 const T = [
-  { id: 1, name: 'Us vs. Them', cat: 'lifestyle', rating: 'great', bg: '#FFF6EE', desc: 'side-by-side comparison of before/after or competitor', prompt: 'create a split-screen lifestyle ad comparing user experience with and without the brand' },
-  { id: 2, name: 'Hero Shot', cat: 'product', rating: 'great', bg: '#5CCFFF', desc: 'single stunning product hero', prompt: 'create a hero shot of the product in perfect lighting with premium aesthetic' },
-  { id: 3, name: 'Day in the Life', cat: 'lifestyle', rating: 'great', bg: '#FFD60A', desc: '3–4 panel sequence showing product integration', prompt: 'create a 4-panel carousel showing product usage throughout a typical day' },
-  { id: 4, name: 'Pattern Play', cat: 'lifestyle', rating: 'good', bg: '#FF8FA3', desc: 'repetitive visual pattern with product', prompt: 'create an abstract pattern composition featuring the product in a grid or tessellation' },
-  { id: 5, name: 'Close-Up Detail', cat: 'product', rating: 'good', bg: '#A8E10C', desc: 'texture, materials, craftsmanship', prompt: 'create a macro close-up shot highlighting product texture and craftsmanship details' },
-  { id: 6, name: 'Lifestyle Moment', cat: 'lifestyle', rating: 'great', bg: '#FFF6EE', desc: 'candid, relatable moment with user and product', prompt: 'capture a natural, candid lifestyle moment showing the product in everyday use' },
-  { id: 7, name: 'Color Blocking', cat: 'lifestyle', rating: 'good', bg: '#FF6B2C', desc: 'bold color field with minimal product placement', prompt: 'create a bold, minimalist design using solid color blocks with the product subtly placed' },
-  { id: 8, name: 'Branded Typography', cat: 'social', rating: 'good', bg: '#FFD60A', desc: 'oversize text treatment with brand values', prompt: 'create a typography-focused design with oversized text about brand values and the product' },
-  { id: 9, name: 'Benefit Stack', cat: 'product', rating: 'good', bg: '#5CCFFF', desc: '3–5 key benefits with icons or callouts', prompt: 'create an infographic-style ad stacking 4-5 key product benefits with icons' },
-  { id: 10, name: 'Mood Board', cat: 'lifestyle', rating: 'good', bg: '#E8E0D8', desc: 'collage of inspiration, moodboard aesthetic', prompt: 'create an inspiration mood board collage featuring the product and lifestyle elements' },
-  { id: 11, name: 'Silhouette Play', cat: 'lifestyle', rating: 'good', bg: '#FF8FA3', desc: 'product or user silhouetted against dramatic background', prompt: 'create a dramatic silhouette composition of the product or user against a vibrant backdrop' },
-  { id: 12, name: 'Behind the Brand', cat: 'testimonial', rating: 'good', bg: '#E8E0D8', desc: 'founder or team member with story', prompt: 'create a behind-the-scenes portrait of the founder or team member with authentic storytelling' },
-  { id: 13, name: 'Before & After', cat: 'product', rating: 'great', bg: '#A8E10C', desc: 'transformation visual (before and after result)', prompt: 'create a dramatic before-and-after visual showing the product transformation result' },
-  { id: 14, name: 'Minimalist Grid', cat: 'product', rating: 'good', bg: '#5CCFFF', desc: '3x3 or similar product variations grid', prompt: 'create a minimalist grid layout showcasing product variations or use cases' },
-  { id: 15, name: 'Gradient Dream', cat: 'lifestyle', rating: 'good', bg: 'linear-gradient(135deg, #FF8FA3, #5CCFFF)', desc: 'dreamy gradient background with product', prompt: 'create a dreamy, soft-focus image with a gradient background and the product as focal point' },
-  { id: 16, name: 'Customer Quote', cat: 'testimonial', rating: 'good', bg: '#FFD60A', desc: 'real customer testimonial with face and quote', prompt: 'create an ad featuring a real customer testimonial with their face and an honest, relatable quote' },
-  { id: 17, name: 'Product Flat Lay', cat: 'product', rating: 'great', bg: '#FFF6EE', desc: 'overhead flat lay with props and staging', prompt: 'create an overhead flat-lay composition with the product, complementary props, and careful staging' },
-  { id: 18, name: 'In-Context Use', cat: 'lifestyle', rating: 'great', bg: '#A8E10C', desc: 'product in real home or work environment', prompt: 'show the product in a realistic home or work environment being used by a person' },
-  { id: 19, name: 'Limited Edition', cat: 'product', rating: 'good', bg: '#FF8FA3', desc: 'scarcity/exclusivity callout with product', prompt: 'create a design emphasizing scarcity or exclusivity with the product prominently featured' },
-  { id: 20, name: 'Explainer Sequence', cat: 'lifestyle', rating: 'good', bg: '#5CCFFF', desc: '3–4 frame sequence explaining how product works', prompt: 'create a 4-frame sequence visually explaining how the product works step-by-step' },
-  { id: 21, name: 'Vogue #1 Feature', cat: 'social', rating: 'great', bg: '#FFD60A', desc: 'fashion-magazine cover style featuring brand', prompt: 'create a high-fashion magazine cover aesthetic featuring the brand with editorial typography' },
-  { id: 22, name: 'Glamour Best Overall', cat: 'social', rating: 'great', bg: '#FF8FA3', desc: 'award-winning editorial style callout', prompt: 'create an editorial award-winning aesthetic ad positioning the brand as best-in-class' },
-  { id: 23, name: 'Press Quote Card', cat: 'testimonial', rating: 'great', bg: '#E8E0D8', desc: 'press mention or media quote card design', prompt: 'create a press quote card design featuring a real media or influencer testimonial' },
-  { id: 24, name: 'Editor\'s Choice', cat: 'social', rating: 'great', bg: '#FFF6EE', desc: 'editorial selection badge/seal with premium feel', prompt: 'create a premium editorial selection badge or seal highlighting the product as editor\'s choice' },
+  { id:1, name:"Us vs. Them", cat:"comparison", rating:"good", bg:"#4a6080",
+    desc:"Side-by-side comparison against competitors",
+    prompt:"Create a side-by-side comparison advertisement. Left side labeled \"THEM\" shows generic/inferior alternative in muted tones. Right side labeled \"US\" shows the product with vibrant brand colors. Clear visual hierarchy showing superiority." },
+  { id:2, name:"Before/After", cat:"comparison", rating:"good", bg:"#7a5a5a",
+    desc:"Transformation or improvement showcase",
+    prompt:"Create a before and after comparison advertisement. Left side shows the \"before\" state in desaturated/dull treatment. Right side shows the \"after\" state with vibrant colors and the product. Dividing line or arrow between the two states." },
+  { id:3, name:"UGC Style", cat:"social-proof", rating:"good", bg:"#5a7060",
+    desc:"User-generated content aesthetic card",
+    prompt:"Create a UGC-style advertisement that looks like organic social media content. Casual, authentic aesthetic. Phone screenshot or social media post format. Product shown in natural, real-life setting. Slightly imperfect, genuine feel." },
+  { id:4, name:"Problem → Solution", cat:"headline", rating:"good", bg:"#5a4a6a",
+    desc:"Pain point headline with product as answer",
+    prompt:"Create a problem-solution advertisement. Top section presents the pain point in bold text with a negative visual treatment. Arrow or transition to bottom section showing the product as the solution with positive, bright treatment. Clear narrative flow." },
+  { id:5, name:"Lifestyle Shot", cat:"lifestyle", rating:"great", bg:"#3a6b50",
+    desc:"Product in natural use context",
+    prompt:"Create a lifestyle advertisement showing the product in a natural usage context. Person using/enjoying the product in an aspirational setting. Warm, editorial photography style. Brand name and minimal copy overlaid. Natural, unforced product placement." },
+  { id:6, name:"Quote + Product", cat:"social-proof", rating:"good", bg:"#4a4a5a",
+    desc:"Pull quote overlaying product imagery",
+    prompt:"Create a quote overlay advertisement. Large pull quote in elegant typography overlaid on a moody product photography background. Subtle brand gradient overlay. Attribution below the quote. Premium, editorial feel." },
+  { id:7, name:"Minimal Clean", cat:"minimal", rating:"great", bg:"#c8c4be",
+    desc:"Ultra-clean white space design",
+    prompt:"Create an ultra-minimal advertisement. Maximum white/negative space. Product floating in center with dramatic shadow. Single line of copy. Brand logo small in corner. Premium, Apple-like aesthetic with extreme simplicity." },
+  { id:8, name:"Bold Color Block", cat:"headline", rating:"good", bg:"#e89e1c",
+    desc:"Full-bleed brand color with large text",
+    prompt:"Create a bold color block advertisement. Full-bleed solid brand color background. Massive bold white headline text. Product image breaking out of or overlapping the color block. High contrast, impossible to ignore." },
+  { id:9, name:"Unboxing Feel", cat:"lifestyle", rating:"great", bg:"#8a7a5a",
+    desc:"Product unboxing or first-use moment",
+    prompt:"Create an unboxing experience advertisement. Flat lay or top-down shot of product packaging being opened. Contents artfully arranged. Premium packaging details visible. Excitement and discovery moment captured." },
+  { id:10, name:"Award Winner", cat:"trust", rating:"good", bg:"#8a7a50",
+    desc:"Award badge with product showcase",
+    prompt:"Create an award winner advertisement. Gold/premium award badge or seal prominently displayed. \"Award Winning\" or \"#1 Rated\" headline. Product photographed with premium lighting. Luxurious, achievement-focused design." },
+  { id:11, name:"Bundle Deal", cat:"offer", rating:"good", bg:"#7a8a5a",
+    desc:"Multi-product bundle with savings",
+    prompt:"Create a bundle deal advertisement. Multiple product variants arranged together attractively. \"Bundle & Save\" or \"Starter Kit\" headline. Original vs. bundle price comparison. Savings amount highlighted. Gift-box or package aesthetic." },
+  { id:12, name:"Flavor/Variant Grid", cat:"product", rating:"good", bg:"#6a7a8a",
+    desc:"Multiple SKU grid showcase",
+    prompt:"Create a product variant grid advertisement. 4-6 product variants arranged in a clean grid. Each variant with its flavor/color name. \"Find Your Flavor\" or variety headline. Brand logo centered. Colorful, variety-celebrating layout." },
+  { id:13, name:"Founder Story", cat:"narrative", rating:"good", bg:"#8a7060",
+    desc:"Brand origin story card",
+    prompt:"Create a founder story advertisement. Founder photo in authentic, casual style. Brief origin story quote. \"Why I Created [Brand]\" headline. Product image. Personal, authentic brand story aesthetic. Warm, trustworthy tone." },
+  { id:14, name:"Stack/Routine", cat:"lifestyle", rating:"good", bg:"#6a6a5a",
+    desc:"Product as part of a stack or routine",
+    prompt:"Create a product stack/routine advertisement. Multiple complementary products arranged in a \"daily stack\" formation. Numbered usage order. \"The Complete Routine\" or \"Stack\" headline. Clean, curated collection aesthetic." },
+  { id:15, name:"Taste/Experience", cat:"sensory", rating:"great", bg:"#8a4a3a",
+    desc:"Sensory description with imagery",
+    prompt:"Create a sensory experience advertisement. Vivid, mouthwatering or immersive product close-up. Descriptive sensory words floating around the image. Rich colors and textures. Indulgent, appetite-appeal photography. Premium food/beverage advertising style." },
+  { id:16, name:"Gift Guide", cat:"seasonal", rating:"good", bg:"#7a5a5a",
+    desc:"Gift-worthy positioning layout",
+    prompt:"Create a gift guide advertisement. Product beautifully wrapped or presented as a gift. \"The Perfect Gift\" or \"Gift Guide Pick\" headline. Holiday/gifting aesthetic with ribbons, bows, or festive touches. Premium gifting presentation." },
+  { id:17, name:"Behind the Scenes", cat:"lifestyle", rating:"great", bg:"#6a6050",
+    desc:"Raw production or team process reveal",
+    prompt:"Create a behind-the-scenes advertisement. Raw, authentic look at how the product is made or the team at work. Slightly unpolished, documentary feel. Handwritten-style annotation or caption. Trust-building transparency. Real people, real process aesthetic." },
+  { id:18, name:"Pain Agitation", cat:"headline", rating:"good", bg:"#6a3a4a",
+    desc:"Deep dive into the problem before the solution",
+    prompt:"Create a pain agitation advertisement. Visceral, empathetic description of the problem in bold headline text. Visual showing the frustration or struggle. Emotional connection with the audience pain point. Product teased at the bottom as the relief. Dark-to-light visual transition." },
+  { id:19, name:"New Year New You", cat:"seasonal", rating:"good", bg:"#5a7a6a",
+    desc:"Fresh start / resolution messaging",
+    prompt:"Create a \"New Year, New You\" seasonal advertisement. Fresh start, resolution, and transformation messaging. Clean, bright aesthetic suggesting new beginnings. Product positioned as the first step. Calendar or fresh start visual metaphor. Aspirational but achievable tone." },
+  { id:20, name:"Product in Action", cat:"lifestyle", rating:"great", bg:"#4a6a7a",
+    desc:"Dynamic implied movement in static image",
+    prompt:"Create a product-in-action advertisement. Static image that implies motion and energy — product being poured, opened, applied, or used with dynamic composition. Slight motion blur or splash effects. Action-oriented angle. Vibrant, energetic mood. Mid-moment photography aesthetic that captures the product experience." },
+  { id:21, name:"Vogue #1 Feature", cat:"press", rating:"great", bg:"#2a2a3a",
+    desc:"British Vogue \"Best for chef quality\" editorial layout",
+    prompt:"Create a premium editorial advertisement inspired by a British Vogue magazine feature. Elegant, high-fashion food photography aesthetic. A beautifully plated meal prep container styled like a luxury magazine spread — dramatic lighting, dark moody background, restaurant-quality presentation. The food should look editorial and aspirational, as if photographed for a Vogue food column. Soft directional light, rich shadows, premium tableware or surface. The overall mood should convey \"#1 for chef quality\" — elevated, refined, and unmistakably premium." },
+  { id:22, name:"Glamour Best Overall", cat:"press", rating:"great", bg:"#a08a70",
+    desc:"Glamour UK \"Best Overall\" lifestyle editorial",
+    prompt:"Create a lifestyle advertisement inspired by a Glamour UK magazine feature. Bright, warm, approachable editorial photography. A stylish woman at a modern kitchen counter or desk, opening or enjoying a meal prep container with visible delight. Natural daylight, clean contemporary interior, lifestyle editorial feel that says \"this is the meal prep service real editors actually use.\" The food should look fresh, colourful, and genuinely appetising. Warm colour grading, shallow depth of field on the food, aspirational but relatable everyday luxury." },
+  { id:23, name:"Press Quote Card", cat:"press", rating:"great", bg:"#5a6a5a",
+    desc:"Magazine quote with premium food photography backdrop",
+    prompt:"Create a premium advertisement with a stunning food photography background designed for a press quote overlay. Rich, dramatic close-up of a beautifully presented meal — visible char-grill marks on protein, vibrant vegetables, steam rising — with a large area of soft bokeh or gradient at the top third of the image, creating a natural space where editorial quote text can be placed in post-production. Cinematic food photography lighting, shallow depth of field, the food as the hero with intentional negative space for typography." },
+  { id:24, name:"Editor's Choice", cat:"press", rating:"great", bg:"#7a7060",
+    desc:"Multiple magazine features compilation layout",
+    prompt:"Create a premium flat-lay advertisement showing multiple meal prep containers artfully arranged on a luxurious marble or dark slate surface, styled as if for a magazine photoshoot. 3-4 open containers showing different colourful meals — grilled protein with visible char marks, vibrant salads, rich curries. Premium props scattered artfully: fresh herbs, a linen napkin, quality cutlery. Overhead editorial food photography with even studio lighting. The composition should feel curated and prestigious — a spread worthy of appearing in multiple luxury publications." },
 ];
 
+const catColours = {
+  lifestyle: { bg: 'var(--green-soft)', color: 'var(--green-text)' },
+  minimal: { bg: 'var(--warm-grey)', color: 'var(--near-black)' },
+  comparison: { bg: '#EDE7F6', color: '#4527A0' },
+  press: { bg: '#E3F2FD', color: '#1565C0' },
+  sensory: { bg: '#FCE4EC', color: '#AD1457' },
+  headline: { bg: '#FFF0E6', color: 'var(--orange-dim)' },
+  'social-proof': { bg: '#E8F5E9', color: '#2E7D32' },
+  narrative: { bg: '#FFF8E1', color: '#F57F17' },
+  offer: { bg: '#FFF3E0', color: '#E65100' },
+  product: { bg: '#E0F7FA', color: '#00695C' },
+  trust: { bg: '#FFF8E1', color: '#F57F17' },
+  seasonal: { bg: '#E8F5E9', color: '#2E7D32' },
+};
+
+let selected = new Set();
+let feedback = {}; // name -> { type, note }
+let promptEdits = {}; // id -> edited prompt
+let currentStep = 0;
+
 /* ═══ NAVIGATION ═══ */
-function goStep(i) {
-  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.step')[i].classList.add('active');
-  document.querySelectorAll('.page')[i].classList.add('active');
-  
-  if (i === 2) renderTemplates();
-  if (i === 3) renderPromptLab();
-  if (i === 4) startGeneration();
-  if (i === 5) renderReview();
+const steps = ['setup','dna','templates','prompt lab','generate','review'];
+const tagClasses = ['tag-blush','tag-orange','tag-blue','tag-yellow','tag-green','tag-green'];
+
+function goStep(n) {
+  currentStep = n;
+  document.querySelectorAll('.page').forEach((p,i) => p.classList.toggle('active', i===n));
+  document.querySelectorAll('.step-tab').forEach((t,i) => {
+    t.classList.toggle('active', i===n);
+    if (i < n) t.classList.add('done'); else t.classList.remove('done');
+  });
+  const navTag = document.getElementById('navTag');
+  navTag.textContent = steps[n];
+  navTag.className = 'tag ' + tagClasses[n];
+
+  document.getElementById('reviewFooter').style.display = n === 5 ? 'flex' : 'none';
+
+  if (n === 2) renderTemplates();
+  if (n === 3) renderPromptLab();
+  if (n === 4) startGeneration();
+  if (n === 5) renderReview();
 }
 
 /* ═══ BRAND SCAN ═══ */
-function scanBrand() {
-  const url = document.getElementById('brandUrl').value;
-  if (!url) {
-    document.getElementById('brandOutput').textContent = 'enter a url to scan';
-    return;
-  }
-  document.getElementById('brandOutput').textContent = 'scanning...';
-  
-  fetch(`https://api.brandfetch.io/v2/brands/${new URL(url).hostname}`)
-    .then(r => r.json())
-    .then(b => {
-      const colors = b.colors ? b.colors.map(c => c.hex).slice(0, 3).join(', ') : 'not found';
-      const tone = b.description ? b.description.split('.')[0] : 'premium, innovative';
-      document.getElementById('brandOutput').innerHTML = `
-        <strong>brand name:</strong> ${b.name}<br>
-        <strong>colors:</strong> ${colors}<br>
-        <strong>tone:</strong> ${tone}
-      `;
-      document.getElementById('brandName').value = b.name;
-      document.getElementById('dna-colors').value = colors;
-      document.getElementById('dna-tone').value = tone;
-    })
-    .catch(e => {
-      document.getElementById('brandOutput').textContent = 'scan failed; fill manually';
-    });
+async function scanBrand() {
+  const url = document.getElementById('setup-url').value.trim();
+  if (!url) return;
+  document.getElementById('scanProgress').classList.remove('hidden');
+  document.getElementById('scanResult').classList.add('hidden');
+  document.getElementById('scanBtn').disabled = true;
+
+  const steps = ['scanning website…','extracting colours…','analysing brand positioning…','building dna config…'];
+  let i = 0;
+  const interval = setInterval(() => {
+    i++;
+    if (i < steps.length) document.getElementById('scanText').textContent = steps[i];
+  }, 1200);
+
+  // Simulate scan (in production this calls Jina.ai + Microlink + Claude)
+  await new Promise(r => setTimeout(r, 4800));
+  clearInterval(interval);
+
+  document.getElementById('scanProgress').classList.add('hidden');
+  document.getElementById('scanResult').classList.remove('hidden');
+  document.getElementById('scanBtn').disabled = false;
+  document.getElementById('setupNext').classList.remove('hidden');
+  document.getElementById('setupNext').style.display = 'flex';
 }
 
-/* ═══ TEMPLATES ═══ */
-function renderTemplates() {
-  const container = document.getElementById('selectPage');
-  container.innerHTML = `
-    <div style="grid-column: 1/-1; padding: 20px 0; border-bottom: 1px solid var(--warm-grey); display: flex; gap: 12px;">
-      <button class="pill" onclick="selectAll()">select all</button>
-      <button class="pill secondary" onclick="document.querySelectorAll('.tmpl-card').forEach(c => c.classList.remove('selected')); selected.clear(); updateSelCount();">clear all</button>
-      <span style="margin-left: auto; padding: 6px 12px; font-size: 13px; color: var(--mid-grey);"><strong id="selCount">0</strong> selected</span>
-    </div>
-  `;
-  
-  const grid = document.createElement('div');
-  grid.style.gridColumn = '1 / -1';
-  grid.className = 'tmpl-grid';
-  T.forEach(t => {
-    const card = document.createElement('div');
-    card.className = 'tmpl-card';
-    card.innerHTML = `
-      <div class="tmpl-card-swatch" style="background: ${t.bg}"></div>
-      <div class="tmpl-card-name">${t.name}</div>
-      <div class="tmpl-card-desc">${t.desc}</div>
+/* ═══ PROMPT LAB ═══ */
+function renderPromptLab() {
+  if (selected.size === 0) { selected = new Set(T.map(t => t.id)); }
+  const sel = T.filter(t => selected.has(t.id));
+  const container = document.getElementById('promptLabList');
+  container.innerHTML = '';
+  sel.forEach(t => {
+    const fullPrompt = promptEdits[t.id] || buildPrompt(t);
+    const cc = catColours[t.cat] || catColours.lifestyle;
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <div class="card-head" onclick="this.nextElementSibling.classList.toggle('hidden')">
+        <div class="card-title">
+          ${t.name.toLowerCase()}
+          <span class="tag" style="background:${cc.bg};color:${cc.color};font-size:9px;padding:1px 6px">${t.cat}</span>
+          <span class="tag tag-${t.rating==='great'?'green':'blue'}" style="font-size:9px;padding:1px 6px">${t.rating}</span>
+        </div>
+        <svg class="chev" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+      </div>
+      <div class="card-body hidden">
+        <div class="field">
+          <div class="field-label">assembled prompt</div>
+          <textarea class="field-input" style="min-height:80px;font-size:12px" data-tid="${t.id}" onblur="savePromptEdit(this)">${fullPrompt}</textarea>
+          <div class="field-hint">edit to fine-tune. changes are preserved for this session.</div>
+        </div>
+      </div>
     `;
-    card.onclick = () => toggleSelect(t, card);
-    grid.appendChild(card);
+    container.appendChild(div);
   });
-  container.appendChild(grid);
-  
-  const footer = document.createElement('div');
-  footer.style.gridColumn = '1 / -1';
-  footer.style.padding = '20px 0';
-  footer.style.textAlign = 'right';
-  footer.innerHTML = '<button class="secondary" onclick="goStep(2)">back</button> <button onclick="goStep(3)">next: edit prompts</button>';
-  container.appendChild(footer);
 }
 
-function toggleSelect(t, card) {
-  card.classList.toggle('selected');
-  if (selected.has(t.id)) {
-    selected.delete(t.id);
-  } else {
-    selected.add(t.id);
+function savePromptEdit(el) {
+  const tid = parseInt(el.dataset.tid);
+  promptEdits[tid] = el.value;
+}
+
+/* ═══ EXPORT & DOWNLOAD ═══ */
+function exportSheet() {
+  // Generate CSV of all generated images with metadata
+  const sel = T.filter(t => selected.has(t.id));
+  let csv = 'Template,Category,Rating,Prompt,Image URL,Feedback,Note\n';
+  sel.forEach(t => {
+    const fb = feedback[t.name];
+    const prompt = (promptEdits[t.id] || buildPrompt(t)).replace(/"/g, '""');
+    const imgUrl = generatedImages[t.id] || '';
+    const fbType = fb?.type || '';
+    const fbNote = (fb?.note || '').replace(/"/g, '""');
+    csv += `"${t.name}","${t.cat}","${t.rating}","${prompt}","${imgUrl}","${fbType}","${fbNote}"\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'creative-kitchen-export.csv';
+  a.click();
+}
+
+async function downloadAllZip() {
+  const urls = Object.entries(generatedImages);
+  if (urls.length === 0) { alert('No images generated yet. Run generation first.'); return; }
+  // Download images individually (zip requires JSZip library)
+  for (const [id, url] of urls) {
+    const t = T.find(x => x.id === parseInt(id));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chefly-${t?.name.toLowerCase().replace(/[^a-z0-9]/g,'-') || id}.png`;
+    a.target = '_blank';
+    a.click();
+    await new Promise(r => setTimeout(r, 300));
   }
+}
+
+/* ═══ TEMPLATE SELECTION ═══ */
+function renderTemplates(filter='all') {
+  const grid = document.getElementById('tmplGrid');
+  grid.innerHTML = '';
+  const list = T.filter(t => filter === 'all' || t.rating === filter);
+  list.forEach(t => {
+    const cc = catColours[t.cat] || catColours.lifestyle;
+    const sel = selected.has(t.id);
+    const div = document.createElement('div');
+    div.className = 'tmpl-card' + (sel ? ' selected' : '');
+    div.onclick = () => { toggleSelect(t.id, div); };
+    div.innerHTML = `
+      <div class="tmpl-check">${sel ? '✓' : ''}</div>
+      <div class="tmpl-preview" style="background:${t.bg}">${t.name.toLowerCase()}</div>
+      <div class="tmpl-info">
+        <div class="tmpl-name">
+          ${t.name}
+          <span class="tag" style="background:${cc.bg};color:${cc.color};font-size:9px;padding:1px 6px">${t.cat}</span>
+          <span class="tag tag-${t.rating === 'great' ? 'green' : 'blue'}" style="font-size:9px;padding:1px 6px">${t.rating}</span>
+        </div>
+        <div class="tmpl-desc">${t.desc}</div>
+      </div>
+    `;
+    grid.appendChild(div);
+  });
+  updateSelCount();
+}
+
+function toggleSelect(id, el) {
+  if (selected.has(id)) { selected.delete(id); el.classList.remove('selected'); el.querySelector('.tmpl-check').textContent = ''; }
+  else { selected.add(id); el.classList.add('selected'); el.querySelector('.tmpl-check').textContent = '✓'; }
   updateSelCount();
 }
 
 function selectAll() {
   T.forEach(t => selected.add(t.id));
-  document.querySelectorAll('.tmpl-card').forEach(c => c.classList.add('selected'));
-  updateSelCount();
+  renderTemplates(document.querySelector('#tmplFilters .pill.active')?.textContent.trim().split(' ')[0] || 'all');
 }
 
 function updateSelCount() {
   document.getElementById('selCount').textContent = selected.size;
 }
 
-/* ═══ PROMPT LAB ═══ */
-function renderPromptLab() {
-  const container = document.getElementById('promptLab');
-  container.innerHTML = '';
-  const sel = T.filter(t => selected.has(t.id));
-  sel.forEach(t => {
-    const div = document.createElement('div');
-    div.style.cssText = 'background: var(--warm-white); padding: 16px; border-radius: 6px; margin-bottom: 16px;';
-    div.innerHTML = `
-      <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px;">${t.name}</div>
-      <textarea class="pl-prompt" data-id="${t.id}" style="width: 100%; padding: 8px; border: 1px solid var(--warm-grey); border-radius: 4px; font-family: 'Space Grotesk', sans-serif; min-height: 60px;">${promptEdits[t.id] || t.prompt}</textarea>
-      <button class="secondary" style="margin-top: 8px; padding: 6px 12px; font-size: 11px;" onclick="savePromptEdit(${t.id}, this)">save prompt</button>
-    `;
-    container.appendChild(div);
-  });
-  
-  const footer = document.createElement('div');
-  footer.style.marginTop = '20px';
-  footer.innerHTML = '<button class="secondary" onclick="goStep(2)">back</button> <button onclick="goStep(4)">next: generate</button>';
-  container.appendChild(footer);
+function filterTmpl(f, pill) {
+  document.querySelectorAll('#tmplFilters .pill').forEach(p => p.classList.remove('active'));
+  pill.classList.add('active');
+  renderTemplates(f);
 }
 
-function savePromptEdit(id, btn) {
-  const textarea = document.querySelector(`.pl-prompt[data-id="${id}"]`);
-  promptEdits[id] = textarea.value;
-  btn.textContent = 'saved!';
-  setTimeout(() => btn.textContent = 'save prompt', 1500);
-}
-
-/* ═══ EXPORT ═══ */
-function saveApiKey() {
-  const key = document.getElementById('apiKeyInput').value;
-  localStorage.setItem('falApiKey', key);
-  alert('api key saved to browser storage');
-}
-
+/* ═══ API KEY ═══ */
 function toggleApiKey() {
-  const input = document.getElementById('apiKeyInput');
-  input.type = input.type === 'password' ? 'text' : 'password';
+  const inp = document.getElementById('dna-apikey');
+  const btn = document.getElementById('apiToggle');
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'hide'; }
+  else { inp.type = 'password'; btn.textContent = 'show'; }
+}
+
+function getApiKey() { return document.getElementById('dna-apikey').value.trim(); }
+function getModel() { return document.getElementById('dna-model').value; }
+function getRatio() { return document.getElementById('dna-ratio').value; }
+
+function buildPrompt(t) {
+  const photo = document.getElementById('dna-photo').value.trim();
+  const modifier = document.getElementById('dna-modifier').value.trim();
+  const colours = [...document.querySelectorAll('.colour-chip.selected')].map(c => c.title).join(', ');
+  const brand = document.getElementById('dna-brand').value.trim();
+  const ratio = getRatio();
+  const dims = ratio === '1:1' ? '1080x1080 square format' : '1080x1350 portrait format';
+  return `${t.prompt} ${photo} Brand colours — use prominently: ${colours}. ${modifier} ${dims}.`;
 }
 
 /* ═══ GENERATION ═══ */
-function buildPrompt(t) {
-  const brand = document.getElementById('brandName').value || 'the brand';
-  const custom = promptEdits[t.id] || t.prompt;
-  const tone = document.getElementById('dna-tone').value || 'premium';
-  const style = document.getElementById('dna-style').value || 'modern';
-  return `${custom}. brand: ${brand}. tone: ${tone}. style: ${style}.`;
-}
+let generatedImages = {}; // id -> url
 
 async function generateOne(t) {
-  const key = localStorage.getItem('falApiKey') || '';
-  if (!key) {
-    alert('enter your fal.ai api key in step 4');
-    return;
-  }
-  
+  const apiKey = getApiKey();
+  const model = getModel();
+  const ratio = getRatio();
   const prompt = buildPrompt(t);
-  const card = document.getElementById(`gen-${t.id}`);
-  
-  try {
-    const r = await fetch('https://api.endpoints.antml.ai/run', {
-      method: 'POST',
-      headers: { 'Authorization': `Key ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'fal-ai/flux-pro',
-        input: { prompt: prompt, image_size: { width: 1024, height: 1024 } },
-      }),
-    });
-    
-    if (!r.ok) throw new Error(r.statusText);
-    const d = await r.json();
-    
-    if (d.images && d.images.length > 0) {
-      generatedImages[t.id] = d.images[0].url;
-      card.querySelector('.gen-img').style.backgroundImage = `url(${d.images[0].url})`;
-      card.querySelector('.gen-img').textContent = '';
-    } else {
-      throw new Error('no image in response');
-    }
-    
-    card.querySelector('.gen-status').className = 'gen-status done';
-    card.querySelector('.gen-status').textContent = 'done';
-  } catch (err) {
-    card.querySelector('.gen-status').className = 'gen-status';
-    card.querySelector('.gen-status').textContent = 'error: ' + err.message;
-    card.querySelector('.gen-status').style.color = 'var(--red-text)';
-  }
+
+  const resp = await fetch(`https://queue.fal.run/${model}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Key ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      prompt,
+      aspect_ratio: ratio,
+      resolution: '1K',
+      num_images: 1
+    })
+  });
+
+  if (!resp.ok) throw new Error(`API error: ${resp.status}`);
+  const data = await resp.json();
+  const url = data.images?.[0]?.url || data.output?.images?.[0]?.url || null;
+  return url;
 }
 
-function startGeneration() {
+async function startGeneration() {
+  if (selected.size === 0) { selected = new Set(T.map(t => t.id)); }
+  const apiKey = getApiKey();
+  const useRealApi = !!apiKey;
+
   const sel = T.filter(t => selected.has(t.id));
-  const container = document.getElementById('genCards');
-  container.innerHTML = '';
+  const grid = document.getElementById('genGrid');
+  grid.innerHTML = '';
   sel.forEach(t => {
-    const card = document.createElement('div');
-    card.id = `gen-${t.id}`;
-    card.className = 'gen-card';
-    card.innerHTML = `
-      <div class="gen-img" style="background: ${t.bg}"></div>
+    const div = document.createElement('div');
+    div.className = 'gen-card';
+    div.id = 'gen-' + t.id;
+    div.innerHTML = `
+      <div class="gen-img loading" style="background:${t.bg}"></div>
       <div class="gen-meta">
-        <div class="gen-meta-name">${t.name}</div>
-        <div class="gen-status">waiting...</div>
+        <div class="gm-name">${t.name.toLowerCase()}</div>
+        <div class="gm-status pending">waiting…</div>
       </div>
     `;
-    container.appendChild(card);
+    grid.appendChild(div);
   });
-  
-  const total = sel.length;
+
   let done = 0;
-  document.getElementById('genPct').textContent = `${done} / ${total}`;
+  const total = sel.length;
   document.getElementById('genFill').style.width = '0%';
-  
-  sel.forEach(async t => {
-    await generateOne(t);
+  document.getElementById('genPct').textContent = `0 / ${total}`;
+  document.getElementById('genDone').classList.add('hidden');
+  document.querySelector('#genStatus p').textContent = useRealApi
+    ? 'sending prompts to ' + getModel() + ' via fal.ai'
+    : 'no api key — running in demo mode with placeholder images';
+
+  for (let i = 0; i < total; i++) {
+    const t = sel[i];
+    const card = document.getElementById('gen-' + t.id);
+    if (!card) continue;
+
+    // mark as running
+    card.querySelector('.gm-status').className = 'gm-status running';
+    card.querySelector('.gm-status').textContent = 'generating…';
+
+    try {
+      if (useRealApi) {
+        const url = await generateOne(t);
+        if (url) {
+          generatedImages[t.id] = url;
+          const img = card.querySelector('.gen-img');
+          img.classList.remove('loading');
+          img.style.background = `url(${url}) center/cover`;
+          img.textContent = '';
+        }
+      } else {
+        // demo mode — simulate delay
+        await new Promise(r => setTimeout(r, 400));
+        const img = card.querySelector('.gen-img');
+        img.classList.remove('loading');
+        img.textContent = t.name.toLowerCase();
+      }
+      card.querySelector('.gm-status').className = 'gm-status done';
+      card.querySelector('.gm-status').textContent = 'done';
+    } catch (err) {
+      card.querySelector('.gm-status').className = 'gm-status';
+      card.querySelector('.gm-status').textContent = 'error: ' + err.message;
+      card.querySelector('.gm-status').style.color = 'var(--red-text)';
+    }
+
     done++;
     document.getElementById('genFill').style.width = (done/total*100) + '%';
     document.getElementById('genPct').textContent = `${done} / ${total}`;
-    if (done === total) document.getElementById('genDone').classList.remove('hidden');
-  });
+  }
+
+  document.getElementById('genDone').classList.remove('hidden');
 }
 
 /* ═══ REVIEW ═══ */
