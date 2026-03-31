@@ -789,7 +789,7 @@
      ═══════════════════════════════════════ -->
 <div class="page" id="page-2">
   <div class="tmpl-select-bar">
-    <div class="tmpl-count"><strong id="selCount">0</strong> of 24 templates selected</div>
+    <div class="tmpl-count"><strong id="selCount">0</strong> of 40 templates selected</div>
     <div style="display:flex;gap:8px">
       <button class="btn-ghost" onclick="selectAll()">select all recommended</button>
       <button class="btn-action" onclick="goStep(3)">prompt lab →</button>
@@ -803,9 +803,11 @@
     </div>
 
     <div class="tmpl-filters" id="tmplFilters">
-      <button class="pill active" onclick="filterTmpl('all',this)">all <span class="ct">24</span></button>
-      <button class="pill" onclick="filterTmpl('great',this)">great <span class="ct">10</span></button>
-      <button class="pill" onclick="filterTmpl('good',this)">good <span class="ct">14</span></button>
+      <button class="pill active" onclick="filterTmpl('all',this)">all <span class="ct">40</span></button>
+      <button class="pill" onclick="filterTmpl('great',this)">great <span class="ct">4</span></button>
+      <button class="pill" onclick="filterTmpl('good',this)">good <span class="ct">12</span></button>
+      <button class="pill" onclick="filterTmpl('needs-work',this)">needs-work <span class="ct">8</span></button>
+      <button class="pill" onclick="filterTmpl('slop',this)">slop <span class="ct">16</span></button>
     </div>
 
     <div class="tmpl-grid" id="tmplGrid"></div>
@@ -857,26 +859,28 @@
      ═══════════════════════════════════════ -->
 <div class="page" id="page-5">
   <div class="review-bar">
-    <span><span class="rl">templates:</span> <span class="rv" id="rvTmplCt">20</span></span>
+    <span><span class="rl">templates:</span> <span class="rv" id="rvTmplCt">40</span></span>
     <div class="sep"></div>
     <span><span class="rl">format:</span> <span class="rv">1:1</span></span>
     <div class="sep"></div>
-    <span><span class="rl">rated:</span> <span class="rv" id="rvRated">0 / 24</span></span>
+    <span><span class="rl">rated:</span> <span class="rv" id="rvRated">0 / 40</span></span>
   </div>
   <div class="review-filters" id="reviewFilters">
-    <button class="pill active" onclick="filterReview('all',this)">all <span class="ct" id="rfAll">20</span></button>
-    <button class="pill" onclick="filterReview('great',this)">great <span class="ct">10</span></button>
-    <button class="pill" onclick="filterReview('good',this)">good <span class="ct">14</span></button>
+    <button class="pill active" onclick="filterReview('all',this)">all <span class="ct" id="rfAll">40</span></button>
+    <button class="pill" onclick="filterReview('great',this)">great <span class="ct">4</span></button>
+    <button class="pill" onclick="filterReview('good',this)">good <span class="ct">12</span></button>
+    <button class="pill" onclick="filterReview('needs-work',this)">needs-work <span class="ct">8</span></button>
+    <button class="pill" onclick="filterReview('slop',this)">slop <span class="ct">16</span></button>
     <div class="pill-gap"></div>
     <button class="pill" onclick="filterReview('ship',this)">ship <span class="ct" id="rfShip">0</span></button>
     <button class="pill" onclick="filterReview('tweak',this)">tweak <span class="ct" id="rfTweak">0</span></button>
     <button class="pill" onclick="filterReview('redo',this)">redo <span class="ct" id="rfRedo">0</span></button>
-    <button class="pill" onclick="filterReview('unrated',this)">unrated <span class="ct" id="rfUn">20</span></button>
+    <button class="pill" onclick="filterReview('unrated',this)">unrated <span class="ct" id="rfUn">40</span></button>
   </div>
   <div class="review-groups" id="reviewGroups"></div>
 
   <div class="footer-bar" id="reviewFooter">
-    <span class="ft" id="footerTxt">0 of 24 rated</span>
+    <span class="ft" id="footerTxt">0 of 40 rated</span>
     <div class="footer-track">
       <div class="footer-segs" id="footerSegs"></div>
     </div>
@@ -926,78 +930,126 @@
    DATA
    ═══════════════════════════════════════ */
 const T = [
-  { id:1, name:"Us vs. Them", cat:"comparison", rating:"good", bg:"#4a6080",
+  { id:1, name:"Bold Headline", cat:"headline", rating:"needs-work", bg:"#5a4a6a",
+    desc:"Large headline text with product image and CTA",
+    prompt:"Create a bold headline static advertisement. Large, attention-grabbing headline text dominates the top third. Product image centered below. Strong call-to-action button at the bottom. Clean background with brand colors." },
+  { id:2, name:"Us vs. Them", cat:"comparison", rating:"good", bg:"#4a6080",
     desc:"Side-by-side comparison against competitors",
     prompt:"Create a side-by-side comparison advertisement. Left side labeled \"THEM\" shows generic/inferior alternative in muted tones. Right side labeled \"US\" shows the product with vibrant brand colors. Clear visual hierarchy showing superiority." },
-  { id:2, name:"Before/After", cat:"comparison", rating:"good", bg:"#7a5a5a",
+  { id:3, name:"Testimonial Card", cat:"social-proof", rating:"slop", bg:"#5a7060",
+    desc:"Customer review with star rating card",
+    prompt:"Create a testimonial card advertisement. Large quotation marks framing a customer review. 5-star rating displayed prominently. Small circular customer photo. Product image in corner. Clean card-style layout on brand background." },
+  { id:4, name:"Stat Callout", cat:"data", rating:"slop", bg:"#6a7a8a",
+    desc:"One massive statistic as the focal point",
+    prompt:"Create a statistics callout advertisement. One massive number/percentage as the focal point (e.g., \"93%\"). Supporting explanatory text below in smaller type. Product image anchoring the bottom. Bold, data-driven visual design." },
+  { id:5, name:"Feature Spotlight", cat:"product", rating:"needs-work", bg:"#4a6a7a",
+    desc:"Single feature highlighted with benefit copy",
+    prompt:"Create a single feature spotlight advertisement. One key feature highlighted with an icon or illustration. Benefit-driven headline explaining why this feature matters. Product image showing the feature in context. Clean, focused layout." },
+  { id:6, name:"Before/After", cat:"comparison", rating:"good", bg:"#7a5a5a",
     desc:"Transformation or improvement showcase",
     prompt:"Create a before and after comparison advertisement. Left side shows the \"before\" state in desaturated/dull treatment. Right side shows the \"after\" state with vibrant colors and the product. Dividing line or arrow between the two states." },
-  { id:3, name:"UGC Style", cat:"social-proof", rating:"good", bg:"#5a7060",
+  { id:7, name:"UGC Style", cat:"social-proof", rating:"good", bg:"#5a7060",
     desc:"User-generated content aesthetic card",
     prompt:"Create a UGC-style advertisement that looks like organic social media content. Casual, authentic aesthetic. Phone screenshot or social media post format. Product shown in natural, real-life setting. Slightly imperfect, genuine feel." },
-  { id:4, name:"Problem → Solution", cat:"headline", rating:"good", bg:"#5a4a6a",
+  { id:8, name:"Review Highlight", cat:"social-proof", rating:"slop", bg:"#6a6050",
+    desc:"Customer review text as hero copy",
+    prompt:"Create a review highlight advertisement. Large 5-star rating at top. Customer review text as the hero copy. Customer first name and verified purchase badge. Product image at bottom. Clean review card aesthetic." },
+  { id:9, name:"Problem → Solution", cat:"headline", rating:"good", bg:"#5a4a6a",
     desc:"Pain point headline with product as answer",
     prompt:"Create a problem-solution advertisement. Top section presents the pain point in bold text with a negative visual treatment. Arrow or transition to bottom section showing the product as the solution with positive, bright treatment. Clear narrative flow." },
-  { id:5, name:"Lifestyle Shot", cat:"lifestyle", rating:"great", bg:"#3a6b50",
+  { id:10, name:"Ingredient Callout", cat:"product", rating:"needs-work", bg:"#8a4a3a",
+    desc:"Key ingredient deep-dive visual",
+    prompt:"Create an ingredient/feature deep dive advertisement. One key ingredient or component highlighted with a close-up visual. Scientific or premium treatment. Benefit callouts with small icons. Product image showing the ingredient on the label." },
+  { id:11, name:"Lifestyle Shot", cat:"lifestyle", rating:"great", bg:"#3a6b50",
     desc:"Product in natural use context",
     prompt:"Create a lifestyle advertisement showing the product in a natural usage context. Person using/enjoying the product in an aspirational setting. Warm, editorial photography style. Brand name and minimal copy overlaid. Natural, unforced product placement." },
-  { id:6, name:"Quote + Product", cat:"social-proof", rating:"good", bg:"#4a4a5a",
+  { id:12, name:"3 Reasons Why", cat:"listicle", rating:"slop", bg:"#7a5a5a",
+    desc:"Numbered list format with three key points",
+    prompt:"Create a numbered list advertisement with \"3 Reasons Why\" format. Large headline at top. Three numbered points with icons and short benefit text. Product image alongside or below the list. Clean, scannable layout with brand colors." },
+  { id:13, name:"Quote + Product", cat:"social-proof", rating:"good", bg:"#4a4a5a",
     desc:"Pull quote overlaying product imagery",
     prompt:"Create a quote overlay advertisement. Large pull quote in elegant typography overlaid on a moody product photography background. Subtle brand gradient overlay. Attribution below the quote. Premium, editorial feel." },
-  { id:7, name:"Minimal Clean", cat:"minimal", rating:"great", bg:"#c8c4be",
+  { id:14, name:"Minimal Clean", cat:"minimal", rating:"great", bg:"#c8c4be",
     desc:"Ultra-clean white space design",
     prompt:"Create an ultra-minimal advertisement. Maximum white/negative space. Product floating in center with dramatic shadow. Single line of copy. Brand logo small in corner. Premium, Apple-like aesthetic with extreme simplicity." },
-  { id:8, name:"Bold Color Block", cat:"headline", rating:"good", bg:"#e89e1c",
+  { id:15, name:"Bold Color Block", cat:"headline", rating:"good", bg:"#e89e1c",
     desc:"Full-bleed brand color with large text",
     prompt:"Create a bold color block advertisement. Full-bleed solid brand color background. Massive bold white headline text. Product image breaking out of or overlapping the color block. High contrast, impossible to ignore." },
-  { id:9, name:"Unboxing Feel", cat:"lifestyle", rating:"great", bg:"#8a7a5a",
+  { id:16, name:"Social Proof Bar", cat:"social-proof", rating:"slop", bg:"#5a7060",
+    desc:"Trust bar with rating, count, and badges",
+    prompt:"Create a social proof bar advertisement. Product hero image at top. Below it, a trust bar showing: star rating, review count, \"As Seen In\" media logos, and certification badges. Clean, credibility-focused layout." },
+  { id:17, name:"Unboxing Feel", cat:"lifestyle", rating:"great", bg:"#8a7a5a",
     desc:"Product unboxing or first-use moment",
     prompt:"Create an unboxing experience advertisement. Flat lay or top-down shot of product packaging being opened. Contents artfully arranged. Premium packaging details visible. Excitement and discovery moment captured." },
-  { id:10, name:"Award Winner", cat:"trust", rating:"good", bg:"#8a7a50",
+  { id:18, name:"How It Works", cat:"educational", rating:"slop", bg:"#5a6a5a",
+    desc:"Three-step process explanation",
+    prompt:"Create a \"How It Works\" process advertisement. Three steps shown left-to-right or top-to-bottom with numbered circles. Each step has a simple icon and short description. Connecting arrows between steps. Product image at the final step." },
+  { id:19, name:"Money Back Guarantee", cat:"trust", rating:"slop", bg:"#8a7a50",
+    desc:"Guarantee badge with trust messaging",
+    prompt:"Create a money-back guarantee advertisement. Large guarantee badge/seal as focal element. Bold guarantee headline. Supporting terms text. Product image beside the guarantee. Trust-building, risk-reversal design." },
+  { id:20, name:"Limited Time Offer", cat:"urgency", rating:"needs-work", bg:"#6a3a4a",
+    desc:"Urgent countdown with discount percentage",
+    prompt:"Create a limited time offer advertisement. Urgent headline with \"LIMITED TIME\" or countdown timer visual. Discount percentage or deal prominently shown. Product image. Action-driving CTA button. Red/orange urgency accents." },
+  { id:21, name:"Expert Endorsed", cat:"social-proof", rating:"needs-work", bg:"#4a4a5a",
+    desc:"Professional endorsement with credentials",
+    prompt:"Create an expert endorsement advertisement. Professional headshot with credentials (Dr., PhD, etc.). Expert quote recommending the product. Professional/medical aesthetic. Product image with endorsement badge. Authority-building layout." },
+  { id:22, name:"Comparison Table", cat:"comparison", rating:"slop", bg:"#4a6080",
+    desc:"Checkmark vs X comparison table",
+    prompt:"Create a comparison table advertisement. Simple table with checkmarks and X marks. Your brand column highlighted with brand colors. Competitor columns in gray. Key features as rows. Clear visual winner shown through the checkmark pattern." },
+  { id:23, name:"Story Format", cat:"narrative", rating:"needs-work", bg:"#8a7060",
+    desc:"Three-panel narrative flow",
+    prompt:"Create a story-format advertisement. Three-panel or narrative flow showing: the problem moment, the discovery of the product, and the happy result. Comic-strip or storyboard aesthetic. Emotional narrative in a single image." },
+  { id:24, name:"Ingredient List", cat:"product", rating:"slop", bg:"#6a7a8a",
+    desc:"Product with callout lines to ingredients",
+    prompt:"Create an ingredient list breakdown advertisement. Product centered with callout lines pointing to key ingredients. Each ingredient has a small icon and benefit text. Clean, scientific infographic style. Premium product transparency feel." },
+  { id:25, name:"Award Winner", cat:"trust", rating:"good", bg:"#8a7a50",
     desc:"Award badge with product showcase",
     prompt:"Create an award winner advertisement. Gold/premium award badge or seal prominently displayed. \"Award Winning\" or \"#1 Rated\" headline. Product photographed with premium lighting. Luxurious, achievement-focused design." },
-  { id:11, name:"Bundle Deal", cat:"offer", rating:"good", bg:"#7a8a5a",
+  { id:26, name:"Bundle Deal", cat:"offer", rating:"good", bg:"#7a8a5a",
     desc:"Multi-product bundle with savings",
     prompt:"Create a bundle deal advertisement. Multiple product variants arranged together attractively. \"Bundle & Save\" or \"Starter Kit\" headline. Original vs. bundle price comparison. Savings amount highlighted. Gift-box or package aesthetic." },
-  { id:12, name:"Flavor/Variant Grid", cat:"product", rating:"good", bg:"#6a7a8a",
+  { id:27, name:"Flavor/Variant Grid", cat:"product", rating:"good", bg:"#6a7a8a",
     desc:"Multiple SKU grid showcase",
     prompt:"Create a product variant grid advertisement. 4-6 product variants arranged in a clean grid. Each variant with its flavor/color name. \"Find Your Flavor\" or variety headline. Brand logo centered. Colorful, variety-celebrating layout." },
-  { id:13, name:"Founder Story", cat:"narrative", rating:"good", bg:"#8a7060",
+  { id:28, name:"Day in the Life", cat:"lifestyle", rating:"needs-work", bg:"#6a6a5a",
+    desc:"Timeline showing product in daily routine",
+    prompt:"Create a \"Day in the Life\" advertisement. Timeline or schedule showing morning/afternoon/evening. Product placed at a key moment in the routine. Lifestyle context around each time block. Aspirational daily routine integration." },
+  { id:29, name:"Did You Know?", cat:"educational", rating:"slop", bg:"#5a6a5a",
+    desc:"Surprising fact or statistic as headline",
+    prompt:"Create a \"Did You Know?\" educational advertisement. Surprising statistic or fact as the headline with question mark or lightbulb icon. Explanatory text connecting the fact to the product benefit. Product as the solution. Curious, attention-grabbing design." },
+  { id:30, name:"Free Shipping Badge", cat:"offer", rating:"slop", bg:"#7a8a5a",
+    desc:"Shipping offer callout with icon",
+    prompt:"Create a free shipping callout advertisement. Shipping truck or package icon. \"FREE SHIPPING\" in bold. Minimum order threshold if applicable. Product image. Order CTA button. Clean, deal-focused layout." },
+  { id:31, name:"Subscription Save", cat:"offer", rating:"slop", bg:"#7a8a5a",
+    desc:"Subscribe and save with discount visual",
+    prompt:"Create a subscribe and save advertisement. Recurring delivery icon or calendar visual. Subscription discount percentage highlighted. \"Never Run Out\" or convenience messaging. Product with subscription badge. Savings math shown clearly." },
+  { id:32, name:"Side by Side Nutrition", cat:"comparison", rating:"slop", bg:"#4a6080",
+    desc:"Nutrition label comparison layout",
+    prompt:"Create a nutrition comparison advertisement. Two nutrition labels side by side. Your product values highlighted in brand colors with checkmarks. Competitor values in gray/red. Clear \"better for you\" visual hierarchy. Clean, factual layout." },
+  { id:33, name:"Founder Story", cat:"narrative", rating:"good", bg:"#8a7060",
     desc:"Brand origin story card",
     prompt:"Create a founder story advertisement. Founder photo in authentic, casual style. Brief origin story quote. \"Why I Created [Brand]\" headline. Product image. Personal, authentic brand story aesthetic. Warm, trustworthy tone." },
-  { id:14, name:"Stack/Routine", cat:"lifestyle", rating:"good", bg:"#6a6a5a",
+  { id:34, name:"Press Feature", cat:"trust", rating:"slop", bg:"#2a2a3a",
+    desc:"As Seen In media logos layout",
+    prompt:"Create an \"As Seen In\" press feature advertisement. Row of recognizable media outlet logos (placeholder rectangles). \"Featured In\" or \"As Seen In\" headline. Product hero image above. Premium, credibility-focused design." },
+  { id:35, name:"Countdown Timer", cat:"urgency", rating:"slop", bg:"#6a3a4a",
+    desc:"Digital clock countdown sale visual",
+    prompt:"Create a countdown timer sale advertisement. Digital clock display showing days:hours:minutes:seconds. \"Sale Ends In\" headline. Discount offer prominently shown. Product image. Urgency-driving red/orange color accents. Action CTA." },
+  { id:36, name:"Stack/Routine", cat:"lifestyle", rating:"good", bg:"#6a6a5a",
     desc:"Product as part of a stack or routine",
     prompt:"Create a product stack/routine advertisement. Multiple complementary products arranged in a \"daily stack\" formation. Numbered usage order. \"The Complete Routine\" or \"Stack\" headline. Clean, curated collection aesthetic." },
-  { id:15, name:"Taste/Experience", cat:"sensory", rating:"great", bg:"#8a4a3a",
+  { id:37, name:"Bold Question", cat:"headline", rating:"needs-work", bg:"#5a4a6a",
+    desc:"Provocative question headline to stop scroll",
+    prompt:"Create a provocative question headline advertisement. Large, bold question text that stops the scroll. The question challenges a common assumption or addresses a pain point. Product image as the implied answer below. Minimalist, high-impact design." },
+  { id:38, name:"User Poll Results", cat:"social-proof", rating:"slop", bg:"#5a7060",
+    desc:"Poll chart showing positive results",
+    prompt:"Create a poll results advertisement. Bar chart or pie chart showing overwhelming positive results. \"X% of users agree\" headline. Survey/study citation. Product image. Data visualization meets advertising. Clean infographic style." },
+  { id:39, name:"Taste/Experience", cat:"sensory", rating:"great", bg:"#8a4a3a",
     desc:"Sensory description with imagery",
     prompt:"Create a sensory experience advertisement. Vivid, mouthwatering or immersive product close-up. Descriptive sensory words floating around the image. Rich colors and textures. Indulgent, appetite-appeal photography. Premium food/beverage advertising style." },
-  { id:16, name:"Gift Guide", cat:"seasonal", rating:"good", bg:"#7a5a5a",
+  { id:40, name:"Gift Guide", cat:"seasonal", rating:"good", bg:"#7a5a5a",
     desc:"Gift-worthy positioning layout",
     prompt:"Create a gift guide advertisement. Product beautifully wrapped or presented as a gift. \"The Perfect Gift\" or \"Gift Guide Pick\" headline. Holiday/gifting aesthetic with ribbons, bows, or festive touches. Premium gifting presentation." },
-  { id:17, name:"Behind the Scenes", cat:"lifestyle", rating:"great", bg:"#6a6050",
-    desc:"Raw production or team process reveal",
-    prompt:"Create a behind-the-scenes advertisement. Raw, authentic look at how the product is made or the team at work. Slightly unpolished, documentary feel. Handwritten-style annotation or caption. Trust-building transparency. Real people, real process aesthetic." },
-  { id:18, name:"Pain Agitation", cat:"headline", rating:"good", bg:"#6a3a4a",
-    desc:"Deep dive into the problem before the solution",
-    prompt:"Create a pain agitation advertisement. Visceral, empathetic description of the problem in bold headline text. Visual showing the frustration or struggle. Emotional connection with the audience pain point. Product teased at the bottom as the relief. Dark-to-light visual transition." },
-  { id:19, name:"New Year New You", cat:"seasonal", rating:"good", bg:"#5a7a6a",
-    desc:"Fresh start / resolution messaging",
-    prompt:"Create a \"New Year, New You\" seasonal advertisement. Fresh start, resolution, and transformation messaging. Clean, bright aesthetic suggesting new beginnings. Product positioned as the first step. Calendar or fresh start visual metaphor. Aspirational but achievable tone." },
-  { id:20, name:"Product in Action", cat:"lifestyle", rating:"great", bg:"#4a6a7a",
-    desc:"Dynamic implied movement in static image",
-    prompt:"Create a product-in-action advertisement. Static image that implies motion and energy — product being poured, opened, applied, or used with dynamic composition. Slight motion blur or splash effects. Action-oriented angle. Vibrant, energetic mood. Mid-moment photography aesthetic that captures the product experience." },
-  { id:21, name:"Vogue #1 Feature", cat:"press", rating:"great", bg:"#2a2a3a",
-    desc:"British Vogue \"Best for chef quality\" editorial layout",
-    prompt:"Create a premium editorial advertisement inspired by a British Vogue magazine feature. Elegant, high-fashion food photography aesthetic. A beautifully plated meal prep container styled like a luxury magazine spread — dramatic lighting, dark moody background, restaurant-quality presentation. The food should look editorial and aspirational, as if photographed for a Vogue food column. Soft directional light, rich shadows, premium tableware or surface. The overall mood should convey \"#1 for chef quality\" — elevated, refined, and unmistakably premium." },
-  { id:22, name:"Glamour Best Overall", cat:"press", rating:"great", bg:"#a08a70",
-    desc:"Glamour UK \"Best Overall\" lifestyle editorial",
-    prompt:"Create a lifestyle advertisement inspired by a Glamour UK magazine feature. Bright, warm, approachable editorial photography. A stylish woman at a modern kitchen counter or desk, opening or enjoying a meal prep container with visible delight. Natural daylight, clean contemporary interior, lifestyle editorial feel that says \"this is the meal prep service real editors actually use.\" The food should look fresh, colourful, and genuinely appetising. Warm colour grading, shallow depth of field on the food, aspirational but relatable everyday luxury." },
-  { id:23, name:"Press Quote Card", cat:"press", rating:"great", bg:"#5a6a5a",
-    desc:"Magazine quote with premium food photography backdrop",
-    prompt:"Create a premium advertisement with a stunning food photography background designed for a press quote overlay. Rich, dramatic close-up of a beautifully presented meal — visible char-grill marks on protein, vibrant vegetables, steam rising — with a large area of soft bokeh or gradient at the top third of the image, creating a natural space where editorial quote text can be placed in post-production. Cinematic food photography lighting, shallow depth of field, the food as the hero with intentional negative space for typography." },
-  { id:24, name:"Editor's Choice", cat:"press", rating:"great", bg:"#7a7060",
-    desc:"Multiple magazine features compilation layout",
-    prompt:"Create a premium flat-lay advertisement showing multiple meal prep containers artfully arranged on a luxurious marble or dark slate surface, styled as if for a magazine photoshoot. 3-4 open containers showing different colourful meals — grilled protein with visible char marks, vibrant salads, rich curries. Premium props scattered artfully: fresh herbs, a linen napkin, quality cutlery. Overhead editorial food photography with even studio lighting. The composition should feel curated and prestigious — a spread worthy of appearing in multiple luxury publications." },
 ];
 
 const catColours = {
@@ -1013,6 +1065,10 @@ const catColours = {
   product: { bg: '#E0F7FA', color: '#00695C' },
   trust: { bg: '#FFF8E1', color: '#F57F17' },
   seasonal: { bg: '#E8F5E9', color: '#2E7D32' },
+  data: { bg: '#E8EAF6', color: '#283593' },
+  listicle: { bg: '#FBE9E7', color: '#BF360C' },
+  educational: { bg: '#E0F2F1', color: '#00695C' },
+  urgency: { bg: '#FCE4EC', color: '#AD1457' },
 };
 
 let selected = new Set();
@@ -1085,7 +1141,7 @@ function renderPromptLab() {
         <div class="card-title">
           ${t.name.toLowerCase()}
           <span class="tag" style="background:${cc.bg};color:${cc.color};font-size:9px;padding:1px 6px">${t.cat}</span>
-          <span class="tag tag-${t.rating==='great'?'green':'blue'}" style="font-size:9px;padding:1px 6px">${t.rating}</span>
+          <span class="tag tag-${t.rating==='great'?'green':t.rating==='good'?'blue':t.rating==='needs-work'?'yellow':'dark'}" style="font-size:9px;padding:1px 6px">${t.rating}</span>
         </div>
         <svg class="chev" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
       </div>
@@ -1159,7 +1215,7 @@ function renderTemplates(filter='all') {
         <div class="tmpl-name">
           ${t.name}
           <span class="tag" style="background:${cc.bg};color:${cc.color};font-size:9px;padding:1px 6px">${t.cat}</span>
-          <span class="tag tag-${t.rating === 'great' ? 'green' : 'blue'}" style="font-size:9px;padding:1px 6px">${t.rating}</span>
+          <span class="tag tag-${t.rating==='great'?'green':t.rating==='good'?'blue':t.rating==='needs-work'?'yellow':'dark'}" style="font-size:9px;padding:1px 6px">${t.rating}</span>
         </div>
         <div class="tmpl-desc">${t.desc}</div>
       </div>
@@ -1323,7 +1379,7 @@ function renderReview(filter='all') {
 
   const list = sel.filter(t => {
     if (filter === 'all') return true;
-    if (filter === 'great' || filter === 'good') return t.rating === filter;
+    if (filter === 'great' || filter === 'good' || filter === 'needs-work' || filter === 'slop') return t.rating === filter;
     const fb = feedback[t.name];
     if (filter === 'ship' || filter === 'tweak' || filter === 'redo') return fb && fb.type === filter;
     if (filter === 'unrated') return !fb;
@@ -1341,7 +1397,7 @@ function renderReview(filter='all') {
         <div class="rg-left">
           <span class="rg-name">${t.name}</span>
           <span class="tag" style="background:${cc.bg};color:${cc.color};font-size:9px;padding:1px 6px">${t.cat}</span>
-          <span class="tag tag-${t.rating==='great'?'green':'blue'}" style="font-size:9px;padding:1px 6px">${t.rating}</span>
+          <span class="tag tag-${t.rating==='great'?'green':t.rating==='good'?'blue':t.rating==='needs-work'?'yellow':'dark'}" style="font-size:9px;padding:1px 6px">${t.rating}</span>
         </div>
         <div class="rg-right">
           <span class="rg-ver">1 version</span>
@@ -1476,6 +1532,17 @@ document.getElementById('exportOverlay').addEventListener('click', function(e) {
 /* ═══ INIT ═══ */
 document.getElementById('reviewFooter').style.display = 'none';
 T.forEach(t => selected.add(t.id)); // pre-select all
+
+// Restore API key from localStorage
+try {
+  const savedKey = localStorage.getItem('ck_fal_api_key');
+  if (savedKey) document.getElementById('dna-apikey').value = savedKey;
+} catch(e) {}
+
+// Save API key on change
+document.getElementById('dna-apikey').addEventListener('input', function() {
+  try { localStorage.setItem('ck_fal_api_key', this.value); } catch(e) {}
+});
 </script>
 </body>
 </html>
