@@ -845,6 +845,7 @@
         <div class="gen-track"><div class="gen-fill" id="genFill"></div></div>
         <div class="gen-pct" id="genPct">0 / 0</div>
       </div>
+      <button class="btn-ghost hidden" id="genStopBtn" onclick="stopGeneration()" style="margin-top:12px;color:var(--red-text);border-color:var(--red-text)">⏹ stop generation</button>
     </div>
     <div class="gen-grid" id="genGrid"></div>
     <div id="genDone" class="hidden" style="text-align:center;margin-top:24px">
@@ -1259,13 +1260,16 @@ function getModel() { return document.getElementById('dna-model').value; }
 function getRatio() { return document.getElementById('dna-ratio').value; }
 
 function buildPrompt(t) {
+  const brand = document.getElementById('dna-brand').value.trim();
+  const url = document.getElementById('dna-url').value.trim();
+  const product = document.getElementById('dna-product').value.trim();
+  const claims = document.getElementById('dna-claims').value.trim();
   const photo = document.getElementById('dna-photo').value.trim();
   const modifier = document.getElementById('dna-modifier').value.trim();
   const colours = [...document.querySelectorAll('.colour-chip.selected')].map(c => c.title).join(', ');
-  const brand = document.getElementById('dna-brand').value.trim();
   const ratio = getRatio();
   const dims = ratio === '1:1' ? '1080x1080 square format' : '1080x1350 portrait format';
-  return `${t.prompt} ${photo} Brand colours — use prominently: ${colours}. ${modifier} ${dims}.`;
+  return `${t.prompt} Brand name: "${brand}". Website URL text displayed on ad: "${url.replace(/^www\./, '')}". Product: ${product}. Key claims: ${claims}. Brand colors: ${colours}. Photography style: ${photo}. ${modifier} IMPORTANT: Any website URL shown in the ad MUST read exactly "${url.replace(/^www\./, '')}" — not any other domain. Professional advertising quality. ${dims}. Print-ready resolution.`;
 }
 
 /* ═══ GENERATION ═══ */
@@ -1345,6 +1349,18 @@ try {
 } catch(e) {}
 
 let isGenerating = false;
+let stopRequested = false;
+
+function stopGeneration() {
+  stopRequested = true;
+  isGenerating = false;
+  document.getElementById('genStopBtn').classList.add('hidden');
+  document.querySelector('#genStatus p').textContent = 'generation stopped — completed images are saved';
+  document.getElementById('genDone').classList.remove('hidden');
+  // Mark any remaining "waiting…" cards as "stopped"
+  document.querySelectorAll('.gm-status.pending').forEach(el => { el.textContent = 'stopped'; });
+  document.querySelectorAll('.gm-status.running').forEach(el => { el.textContent = 'stopped'; el.className = 'gm-status'; });
+}
 
 function showGeneration() {
   if (selected.size === 0) { selected = new Set(T.map(t => t.id)); }
@@ -1389,6 +1405,8 @@ async function startGeneration() {
   const apiKey = getApiKey();
   const useRealApi = !!apiKey;
   isGenerating = true;
+  stopRequested = false;
+  document.getElementById('genStopBtn').classList.remove('hidden');
 
   const sel = T.filter(t => selected.has(t.id));
   const grid = document.getElementById('genGrid');
@@ -1420,6 +1438,7 @@ async function startGeneration() {
     : 'no api key — running in demo mode with placeholder images';
 
   for (let i = 0; i < needsGen.length; i++) {
+    if (stopRequested) break;
     const t = needsGen[i];
     const card = document.getElementById('gen-' + t.id);
     if (!card) continue;
@@ -1461,6 +1480,7 @@ async function startGeneration() {
   }
 
   isGenerating = false;
+  document.getElementById('genStopBtn').classList.add('hidden');
   document.getElementById('genDone').classList.remove('hidden');
 }
 
