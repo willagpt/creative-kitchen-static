@@ -57,1411 +57,767 @@
   .nav-left { display: flex; align-items: center; gap: 10px; }
   .nav h1 {
     font-family: 'Syne', sans-serif; font-weight: 800; font-size: 17px;
-    color: var(--cream); text-transform: lowercase; letter-spacing: -0.02em;
+    color: var(--warm-white); margin: 0;
   }
-  .nav h1 em { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; }
-  .nav .tag {
-    font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
-    font-family: 'Space Grotesk', sans-serif; text-transform: lowercase; letter-spacing: 0.02em;
-  }
-  .tag-orange { background: var(--orange); color: white; }
-  .tag-green { background: var(--electric-green); color: var(--near-black); }
-  .tag-yellow { background: var(--hot-yellow); color: var(--near-black); }
-  .tag-blue { background: var(--sky-blue); color: var(--near-black); }
-  .tag-blush { background: var(--blush); color: var(--near-black); }
-  .tag-dark { background: var(--near-black); color: var(--cream); border: 1px solid rgba(255,255,255,0.15); }
-  .tag-outline { background: transparent; border: 1.5px solid var(--warm-grey); color: var(--near-black); }
-  .nav-right { display: flex; gap: 8px; align-items: center; }
-  .nav-btn {
-    background: transparent; border: 1px solid rgba(255,255,255,0.15);
-    color: var(--cream); font-family: 'Space Grotesk', sans-serif;
-    font-size: 11px; font-weight: 500; padding: 5px 12px; border-radius: 20px;
-    cursor: pointer; transition: 0.15s ease; text-transform: lowercase;
-  }
-  .nav-btn:hover { border-color: var(--orange); color: var(--orange); }
+  .nav a { color: var(--warm-white); text-decoration: none; font-size: 13px; }
+  .nav a:hover { text-decoration: underline; }
 
-  /* ═══ STEPPER ═══ */
-  .stepper {
-    background: var(--warm-white);
-    border-bottom: 1px solid var(--warm-grey);
-    padding: 0 28px;
-    display: flex;
-    gap: 0;
+  /* ═══ MAIN LAYOUT ═══ */
+  .container { display: flex; gap: 0; min-height: calc(100vh - 47px); }
+  .sidebar {
+    width: 280px; background: var(--warm-grey); padding: 20px; overflow-y: auto;
+    border-right: 1px solid #ccc;
   }
-  .step-tab {
-    padding: 12px 20px;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 12px;
-    text-transform: lowercase;
-    letter-spacing: 0.01em;
-    color: var(--mid-grey);
+  .main-content { flex: 1; padding: 40px; overflow-y: auto; }
+
+  /* ═══ SIDEBAR ═══ */
+  .sidebar h2 {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px;
+    color: var(--near-black);
+  }
+  .sidebar-group { margin-bottom: 25px; }
+  .sidebar-group a {
+    display: block; padding: 8px 12px; margin-bottom: 5px;
+    background: var(--warm-white); color: var(--near-black);
+    text-decoration: none; border-radius: 4px; font-size: 13px;
     cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: 0.15s ease;
-    display: flex;
-    align-items: center;
-    gap: 6px;
   }
-  .step-tab:hover { color: var(--near-black); }
-  .step-tab.active { color: var(--near-black); border-bottom-color: var(--orange); }
-  .step-tab.done { color: var(--green-text); }
-  .step-num {
-    width: 20px; height: 20px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 10px; font-weight: 700;
-    background: var(--warm-grey); color: var(--mid-grey);
-  }
-  .step-tab.active .step-num { background: var(--orange); color: white; }
-  .step-tab.done .step-num { background: var(--electric-green); color: var(--near-black); }
+  .sidebar-group a:hover { background: var(--cream); }
+  .sidebar-group a.active { background: var(--near-black); color: var(--warm-white); }
 
-  /* ═══ PAGES ═══ */
-  .page { display: none; }
-  .page.active { display: block; }
-  .page-inner { max-width: 960px; margin: 0 auto; padding: 32px 28px; }
-
-  /* ═══ SECTION HEADERS ═══ */
-  .sh {
-    margin-bottom: 24px;
-  }
-  .sh-label {
-    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 10px;
-    text-transform: uppercase; letter-spacing: 0.1em; color: var(--mid-grey); margin-bottom: 4px;
-  }
-  .sh h2 {
-    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px;
-    text-transform: lowercase; letter-spacing: -0.02em; line-height: 1.1;
-  }
-  .sh h2 em { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; }
-  .sh p { font-size: 13px; color: var(--mid-grey); margin-top: 6px; max-width: 540px; }
-
-  /* ═══ CARDS ═══ */
+  /* ═══ CONTENT CARD ═══ */
   .card {
-    background: white;
-    border-radius: 12px;
-    border: 1px solid var(--warm-grey);
-    margin-bottom: 16px;
-    overflow: hidden;
+    background: var(--warm-white); padding: 30px; border-radius: 8px;
+    margin-bottom: 30px; border: 1px solid var(--warm-grey);
   }
-  .card-head {
-    padding: 14px 18px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    transition: 0.15s ease;
-  }
-  .card-head:hover { background: var(--warm-white); }
-  .card-title {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700; font-size: 14px; text-transform: lowercase;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .card-body { padding: 0 18px 18px; }
+  .card h3 { font-family: 'Instrument Serif', serif; font-size: 22px; margin-bottom: 12px; }
+  .card p { font-size: 15px; line-height: 1.7; margin-bottom: 12px; color: var(--mid-grey); }
+  .card-meta { font-size: 12px; color: var(--mid-grey); margin-top: 15px; }
 
-  /* ═══ FORM ELEMENTS ═══ */
-  .field { margin-bottom: 14px; }
-  .field-label {
-    font-size: 11px; font-weight: 600; text-transform: lowercase;
-    color: var(--mid-grey); margin-bottom: 4px; letter-spacing: 0.02em;
+  /* ═══ BUTTONS ═══ */
+  button, a.btn {
+    background: var(--orange); color: white; border: none; padding: 10px 18px;
+    border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600;
+    text-decoration: none; display: inline-block;
   }
-  .field-input {
-    width: 100%; padding: 8px 12px;
-    font-family: 'Space Grotesk', sans-serif; font-size: 13px;
-    border: 1px solid var(--warm-grey); border-radius: 8px;
-    background: var(--cream); color: var(--near-black);
-    outline: none; transition: 0.15s ease;
-  }
-  .field-input:focus { border-color: var(--orange); }
-  textarea.field-input { resize: vertical; min-height: 64px; line-height: 1.5; }
-  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .field-hint { font-size: 10px; color: var(--mid-grey); margin-top: 2px; }
+  button:hover, a.btn:hover { background: var(--orange-dim); }
+  button.secondary { background: var(--warm-grey); color: var(--near-black); }
+  button.secondary:hover { background: #d9d3cc; }
 
-  /* colour chips */
-  .colour-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
-  .colour-chip {
-    width: 32px; height: 32px; border-radius: 8px;
-    border: 2px solid var(--warm-grey); cursor: pointer; transition: 0.15s ease;
-    position: relative;
+  /* ═══ FORMS ═══ */
+  input, textarea {
+    width: 100%; padding: 10px 12px; margin-bottom: 15px;
+    border: 1px solid var(--warm-grey); border-radius: 4px;
+    font-family: 'Space Grotesk', sans-serif; font-size: 14px;
   }
-  .colour-chip:hover { border-color: var(--near-black); }
-  .colour-chip.selected { border-color: var(--orange); box-shadow: 0 0 0 2px var(--orange); }
-  .colour-hex {
-    font-size: 9px; color: var(--mid-grey); text-align: center; margin-top: 2px;
-    font-family: 'Space Grotesk', monospace;
-  }
-  .add-colour {
-    width: 32px; height: 32px; border-radius: 8px;
-    border: 2px dashed var(--warm-grey);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; color: var(--mid-grey); cursor: pointer;
-    transition: 0.15s ease; background: transparent;
-  }
-  .add-colour:hover { border-color: var(--orange); color: var(--orange); }
+  input:focus, textarea:focus { outline: none; border-color: var(--orange); }
+  label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; }
 
-  /* ═══ TEMPLATE GRID ═══ */
-  .tmpl-filters {
-    display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap;
+  /* ═══ ALERTS ═══ */
+  .alert {
+    padding: 12px 15px; margin-bottom: 15px; border-radius: 4px; font-size: 13px;
   }
-  .pill {
-    background: transparent; border: 1.5px solid var(--warm-grey);
-    color: var(--mid-grey); font-family: 'Space Grotesk', sans-serif;
-    font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px;
-    cursor: pointer; transition: 0.15s ease; text-transform: lowercase; letter-spacing: 0.02em;
-  }
-  .pill:hover { border-color: var(--near-black); color: var(--near-black); }
-  .pill.active { background: var(--near-black); color: var(--cream); border-color: var(--near-black); }
-  .pill .ct {
-    display: inline-block; background: rgba(0,0,0,0.06);
-    font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 10px; margin-left: 3px;
-  }
-  .pill.active .ct { background: rgba(255,255,255,0.15); }
+  .alert.success { background: var(--green-soft); color: var(--green-text); border-left: 4px solid #28a745; }
+  .alert.error { background: var(--red-soft); color: var(--red-text); border-left: 4px solid #dc3545; }
 
-  .tmpl-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 14px;
-  }
-  .tmpl-card {
-    background: white;
-    border-radius: 12px;
-    border: 2px solid var(--warm-grey);
-    overflow: hidden;
-    cursor: pointer;
-    transition: 0.15s ease;
-    position: relative;
-  }
-  .tmpl-card:hover { border-color: var(--near-black); }
-  .tmpl-card.selected { border-color: var(--orange); box-shadow: 0 0 0 2px var(--orange); }
-  .tmpl-card .tmpl-check {
-    position: absolute; top: 10px; right: 10px;
-    width: 22px; height: 22px; border-radius: 50%;
-    background: var(--warm-grey); color: transparent;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 800; z-index: 2;
-    transition: 0.15s ease;
-  }
-  .tmpl-card.selected .tmpl-check { background: var(--orange); color: white; }
-  .tmpl-preview {
-    height: 140px;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Syne', sans-serif; font-weight: 700;
-    font-size: 13px; color: white; text-transform: lowercase;
-    text-align: center; padding: 16px; line-height: 1.3;
-  }
-  .tmpl-info { padding: 10px 14px; }
-  .tmpl-name {
-    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px;
-    text-transform: lowercase; margin-bottom: 3px;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .tmpl-desc {
-    font-size: 11px; color: var(--mid-grey); line-height: 1.4;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-  }
-  .tmpl-select-bar {
-    background: var(--warm-white);
-    border-bottom: 1px solid var(--warm-grey);
-    padding: 10px 28px;
-    display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 44px; z-index: 50;
-  }
-  .tmpl-count { font-size: 12px; font-weight: 600; }
-  .tmpl-count strong { color: var(--orange); }
+  /* ═══ TYPOGRAPHY ═══ */
+  h1 { font-family: 'Instrument Serif', serif; font-size: 36px; margin-bottom: 20px; }
+  h2 { font-family: 'Instrument Serif', serif; font-size: 28px; margin-bottom: 15px; }
+  h3 { font-family: 'Instrument Serif', serif; font-size: 22px; margin-bottom: 10px; }
+  h4 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 8px; }
 
-  /* ═══ GENERATE PAGE ═══ */
-  .gen-status {
-    text-align: center;
-    padding: 48px 20px;
-  }
-  .gen-status h2 {
-    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px;
-    text-transform: lowercase; letter-spacing: -0.02em; margin-bottom: 8px;
-  }
-  .gen-status h2 em { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; }
-  .gen-status p { font-size: 13px; color: var(--mid-grey); margin-bottom: 24px; }
-  .gen-progress-wrap {
-    max-width: 400px; margin: 0 auto 24px;
-  }
-  .gen-track {
-    height: 6px; background: var(--warm-grey); border-radius: 3px; overflow: hidden;
-    margin-bottom: 8px;
-  }
-  .gen-fill {
-    height: 100%; background: var(--orange); border-radius: 3px;
-    transition: width 0.4s ease; width: 0%;
-  }
-  .gen-pct { font-size: 12px; color: var(--mid-grey); font-weight: 600; }
-
-  .gen-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
-    margin-top: 24px;
-  }
-  .gen-card {
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid var(--warm-grey);
-    background: white;
-    transition: 0.15s ease;
-  }
-  .gen-card .gen-img {
-    aspect-ratio: 1;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Syne', sans-serif; font-weight: 700;
-    font-size: 11px; color: white; text-transform: lowercase;
-    text-align: center; padding: 12px; line-height: 1.3;
-  }
-  .gen-card .gen-img.loading {
-    background: var(--warm-grey) !important;
-    position: relative; overflow: hidden;
-  }
-  .gen-card .gen-img.loading::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
-    animation: shimmer 1.5s infinite;
-  }
-  @keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-  }
-  .gen-meta {
-    padding: 8px 10px;
-    border-top: 1px solid var(--warm-grey);
-  }
-  .gen-meta .gm-name {
-    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 11px;
-    text-transform: lowercase;
-  }
-  .gen-meta .gm-status {
-    font-size: 10px; margin-top: 1px;
-  }
-  .gm-status.done { color: var(--green-text); }
-  .gm-status.pending { color: var(--mid-grey); }
-  .gm-status.running { color: var(--orange); }
-
-  /* ═══ REVIEW PAGE ═══ */
-  .review-bar {
-    background: var(--warm-white);
-    border-bottom: 1px solid var(--warm-grey);
-    padding: 10px 28px;
-    display: flex; align-items: center; gap: 16px; font-size: 12px; flex-wrap: wrap;
-  }
-  .review-bar .rl { color: var(--mid-grey); }
-  .review-bar .rv { font-weight: 600; }
-  .review-bar .sep { width: 1px; height: 14px; background: var(--warm-grey); }
-  .review-filters {
-    padding: 12px 28px;
-    display: flex; gap: 6px; flex-wrap: wrap;
-    border-bottom: 1px solid var(--warm-grey);
-  }
-  .pill-gap { width: 12px; }
-
-  .review-groups { padding: 20px 28px 100px; max-width: 960px; margin: 0 auto; }
-
-  /* review group card */
-  .rg { margin-bottom: 16px; background: white; border-radius: 12px; border: 1px solid var(--warm-grey); overflow: hidden; }
-  .rg-head {
-    padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
-    cursor: pointer; transition: 0.15s ease; user-select: none;
-  }
-  .rg-head:hover { background: var(--warm-white); }
-  .rg-left { display: flex; align-items: center; gap: 8px; }
-  .rg-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; text-transform: lowercase; }
-  .rg-right { display: flex; align-items: center; gap: 10px; }
-  .rg-ver { font-size: 10px; color: var(--mid-grey); }
-  .rg-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--warm-grey); }
-  .rg-dot.rated { background: var(--electric-green); }
-  .chev { width: 14px; height: 14px; color: var(--mid-grey); transition: transform 0.2s ease; }
-  .rg-head.open .chev { transform: rotate(180deg); }
-  .rg-body { border-top: 1px solid var(--warm-grey); display: none; }
-  .rg-body.open { display: block; }
-
-  .rg-prompt {
-    padding: 12px 16px; background: var(--warm-white);
-    border-bottom: 1px solid rgba(232,224,216,0.5);
-  }
-  .rg-prompt-label {
-    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 9px;
-    text-transform: uppercase; letter-spacing: 0.1em; color: var(--mid-grey); margin-bottom: 4px;
-  }
-  .rg-prompt-text { font-size: 12px; color: var(--near-black); line-height: 1.5; }
-  .rg-diff {
-    padding: 8px 16px; background: #FFF0E6;
-    border-bottom: 1px solid rgba(232,224,216,0.5);
-    font-size: 11px; color: var(--orange-dim); line-height: 1.5;
-  }
-  .rg-diff strong { font-weight: 700; }
-  .diff-add { background: var(--green-soft); padding: 0 3px; border-radius: 3px; color: var(--green-text); }
-  .diff-rm { background: var(--red-soft); padding: 0 3px; border-radius: 3px; color: var(--red-text); text-decoration: line-through; }
-
-  .rg-versions { padding: 14px 16px; display: flex; gap: 12px; overflow-x: auto; }
-  .rv-card {
-    flex: 0 0 200px; border-radius: 10px; overflow: hidden;
-    border: 2px solid transparent; transition: 0.15s ease; cursor: pointer; background: white;
-  }
-  .rv-card:hover { border-color: var(--orange); }
-  .rv-card.sel { border-color: var(--orange); box-shadow: 0 3px 16px rgba(255,107,44,0.12); }
-  .rv-label {
-    position: absolute; top: 6px; left: 6px;
-    background: rgba(13,13,13,0.7); color: var(--cream);
-    font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
-    backdrop-filter: blur(4px); z-index: 2; text-transform: lowercase;
-  }
-  .rv-label.cur { background: var(--orange); color: white; }
-  .rv-card .rv-img {
-    aspect-ratio: 1; position: relative;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Syne', sans-serif; font-weight: 700;
-    font-size: 10px; color: white; text-transform: lowercase;
-    text-align: center; padding: 10px; line-height: 1.3;
-  }
-  .rv-meta { padding: 6px 8px; border-top: 1px solid var(--warm-grey); }
-  .rv-date { font-size: 9px; color: var(--mid-grey); }
-  .rv-change { font-size: 9px; color: var(--orange-dim); font-weight: 500; }
-
-  .rg-fb {
-    padding: 10px 16px; border-top: 1px solid var(--warm-grey);
-    display: flex; align-items: center; gap: 10px;
-  }
-  .rg-fb-label { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 10px; text-transform: lowercase; color: var(--mid-grey); flex-shrink: 0; }
-  .rg-fb-btns { display: flex; gap: 5px; }
-  .fbtn {
-    background: transparent; border: 1.5px solid var(--warm-grey);
-    font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 600;
-    padding: 3px 10px; border-radius: 20px; cursor: pointer; transition: 0.15s ease; text-transform: lowercase;
-  }
-  .fbtn:hover { border-color: var(--near-black); }
-  .fbtn.ship { color: var(--green-text); }
-  .fbtn.ship:hover, .fbtn.ship.on { background: var(--green-soft); border-color: #A3D9A5; }
-  .fbtn.tweak { color: var(--orange-dim); }
-  .fbtn.tweak:hover, .fbtn.tweak.on { background: #FFF0E6; border-color: var(--orange); }
-  .fbtn.redo { color: var(--red-text); }
-  .fbtn.redo:hover, .fbtn.redo.on { background: var(--red-soft); border-color: #F5C6CB; }
-  .rg-fb-note {
-    flex: 1; background: var(--cream); border: 1px solid var(--warm-grey);
-    border-radius: 8px; padding: 4px 8px; font-family: 'Space Grotesk', sans-serif;
-    font-size: 10px; color: var(--near-black); resize: none; height: 26px; outline: none;
-  }
-  .rg-fb-note:focus { border-color: var(--orange); }
-  .rg-fb-note::placeholder { color: var(--mid-grey); }
-
-  /* ═══ FOOTER BAR ═══ */
-  .footer-bar {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    background: white; border-top: 1px solid var(--warm-grey);
-    padding: 10px 28px; display: flex; align-items: center; gap: 12px; z-index: 100;
-  }
-  .footer-bar .ft { font-size: 11px; font-weight: 600; flex-shrink: 0; }
-  .footer-track { flex: 1; height: 4px; background: var(--warm-grey); border-radius: 2px; overflow: hidden; }
-  .footer-segs { display: flex; height: 100%; }
-  .ff { height: 100%; transition: width 0.3s ease; }
-  .ff.ship { background: var(--electric-green); }
-  .ff.tweak { background: var(--orange); }
-  .ff.redo { background: var(--blush); }
-  .btn-action {
-    background: var(--orange); color: white;
-    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px;
-    border: none; padding: 6px 16px; border-radius: 20px;
-    cursor: pointer; transition: 0.15s ease; text-transform: lowercase;
-  }
-  .btn-action:hover { background: var(--orange-dim); }
-  .btn-ghost {
-    background: transparent; border: 1.5px solid var(--warm-grey); color: var(--near-black);
-    font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 11px;
-    padding: 6px 14px; border-radius: 20px; cursor: pointer; transition: 0.15s ease; text-transform: lowercase;
-  }
-  .btn-ghost:hover { border-color: var(--near-black); }
-
-  /* ═══ EXPORT MODAL ═══ */
-  .overlay {
-    position: fixed; inset: 0; background: rgba(13,13,13,0.45);
-    backdrop-filter: blur(6px); z-index: 200; display: none;
-    align-items: center; justify-content: center;
-  }
-  .overlay.open { display: flex; }
-  .modal {
-    background: var(--cream); border-radius: 12px;
-    width: 90vw; max-width: 660px; max-height: 85vh;
-    overflow-y: auto; box-shadow: 0 24px 64px rgba(13,13,13,0.25);
-  }
-  .modal-head {
-    padding: 22px 22px 12px; border-bottom: 1px solid var(--warm-grey);
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .modal-head h2 {
-    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px;
-    text-transform: lowercase; letter-spacing: -0.02em;
-  }
-  .modal-head h2 em { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; }
-  .modal-x {
-    background: none; border: none; font-size: 16px; cursor: pointer;
-    color: var(--mid-grey); padding: 4px 8px; border-radius: 6px;
-  }
-  .modal-x:hover { background: var(--warm-grey); }
-  .modal-body { padding: 16px 22px 22px; }
-  .modal-foot {
-    padding: 12px 22px; border-top: 1px solid var(--warm-grey);
-    display: flex; justify-content: flex-end; gap: 8px;
-  }
-
-  .brand-brief {
-    background: white; border-radius: 12px; padding: 14px 16px;
-    margin-bottom: 14px; border: 1px solid var(--warm-grey);
-  }
-  .brand-brief h3 {
-    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 11px;
-    text-transform: lowercase; color: var(--mid-grey); margin-bottom: 8px;
-  }
-  .bb-row { display: flex; gap: 8px; margin-bottom: 4px; font-size: 11px; }
-  .bb-row .bl { color: var(--mid-grey); min-width: 80px; flex-shrink: 0; }
-  .bb-row .bv { font-weight: 500; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
-  .cdot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--warm-grey); flex-shrink: 0; }
-  .fmt-pill {
-    font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 20px;
-    font-family: 'Space Grotesk', sans-serif; text-transform: lowercase;
-  }
-  .wcard {
-    background: white; border-radius: 12px; padding: 12px 14px;
-    margin-bottom: 8px; border: 1px solid var(--warm-grey);
-    display: flex; gap: 12px;
-  }
-  .wthumb {
-    width: 70px; height: 70px; border-radius: 8px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 9px; color: white; font-weight: 600; text-align: center;
-    line-height: 1.3; text-transform: lowercase; font-family: 'Syne', sans-serif;
-  }
-  .wdetail { flex: 1; min-width: 0; }
-  .wdetail h4 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; text-transform: lowercase; margin-bottom: 2px; }
-  .wdetail .wp { font-size: 10px; color: var(--mid-grey); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .wdetail .wn { font-size: 10px; color: var(--orange-dim); font-weight: 500; margin-top: 3px; }
-  .wdetail .wf { margin-top: 4px; display: flex; gap: 3px; }
-  .no-win { text-align: center; padding: 32px 20px; color: var(--mid-grey); font-size: 12px; }
-  .no-win em { font-family: 'Instrument Serif', serif; font-style: italic; font-size: 14px; display: block; margin-top: 4px; color: var(--near-black); }
+  /* ═══ TABLE ═══ */
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  thead { background: var(--warm-grey); }
+  th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; font-size: 14px; }
+  tr:hover { background: var(--cream); }
 
   /* ═══ UTILITY ═══ */
-  .hidden { display: none !important; }
-  .mt-8 { margin-top: 8px; }
-  .mt-16 { margin-top: 16px; }
-  .mt-24 { margin-top: 24px; }
-  .flex-between { display: flex; align-items: center; justify-content: space-between; }
+  .mt { margin-top: 20px; }
+  .mb { margin-bottom: 20px; }
+  .text-muted { color: var(--mid-grey); }
+  .text-center { text-align: center; }
+  .hidden { display: none; }
 </style>
 </head>
 <body>
 
-<!-- ═══ NAV ═══ -->
+<!-- NAV -->
 <div class="nav">
   <div class="nav-left">
-    <h1>creative <em>kitchen</em> static</h1>
-    <span class="tag tag-orange" id="navTag">dna</span>
+    <h1>chefly®</h1>
   </div>
-  <div class="nav-right">
-    <button class="nav-btn" onclick="window.open('https://creative-kitchen-video-v3.vercel.app','_blank')">video tool</button>
-    <button class="nav-btn" id="resetBtn">reset dna</button>
-    <button class="nav-btn" onclick="exportSheet()">export sheet</button>
-    <button class="nav-btn" onclick="downloadAllZip()">download .zip</button>
-    <button class="nav-btn" id="exportBtn" onclick="openExport()">export winners</button>
+  <div>
+    <a href="#logout">Logout</a>
   </div>
 </div>
 
-<!-- ═══ STEPPER ═══ -->
-<div class="stepper">
-  <div class="step-tab active" data-step="0" onclick="goStep(0)">
-    <span class="step-num">1</span> brand setup
+<!-- MAIN LAYOUT -->
+<div class="container">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <h2>Kitchen Templates</h2>
+    <div class="sidebar-group">
+      <a href="#" data-template="roasted-vegetables">Roasted Vegetables</a>
+      <a href="#" data-template="chicken-marinade">Chicken Marinade</a>
+      <a href="#" data-template="pasta-sauce">Pasta Sauce</a>
+      <a href="#" data-template="grilled-fish">Grilled Fish</a>
+      <a href="#" data-template="stir-fry">Stir Fry</a>
+      <a href="#" data-template="salad-dressing">Salad Dressing</a>
+      <a href="#" data-template="soup-base">Soup Base</a>
+      <a href="#" data-template="baked-goods">Baked Goods</a>
+      <a href="#" data-template="breakfast-bowls">Breakfast Bowls</a>
+      <a href="#" data-template="desserts">Desserts</a>
+      <a href="#" data-template="smoothies">Smoothies</a>
+      <a href="#" data-template="appetizers">Appetizers</a>
+      <a href="#" data-template="main-courses">Main Courses</a>
+      <a href="#" data-template="sides">Sides</a>
+      <a href="#" data-template="sauces">Sauces</a>
+      <a href="#" data-template="beverages">Beverages</a>
+      <a href="#" data-template="preserves">Preserves</a>
+      <a href="#" data-template="seasonings">Seasonings</a>
+      <a href="#" data-template="condiments">Condiments</a>
+      <a href="#" data-template="snacks">Snacks</a>
+      <a href="#" data-template="meal-prep">Meal Prep</a>
+      <a href="#" data-template="cooking-methods">Cooking Methods</a>
+      <a href="#" data-template="kitchen-tips">Kitchen Tips</a>
+      <a href="#" data-template="food-storage">Food Storage</a>
+    </div>
   </div>
-  <div class="step-tab" data-step="1" onclick="goStep(1)">
-    <span class="step-num">2</span> brand dna
-  </div>
-  <div class="step-tab" data-step="2" onclick="goStep(2)">
-    <span class="step-num">3</span> templates
-  </div>
-  <div class="step-tab" data-step="3" onclick="goStep(3)">
-    <span class="step-num">4</span> prompt lab
-  </div>
-  <div class="step-tab" data-step="4" onclick="goStep(4)">
-    <span class="step-num">5</span> generate
-  </div>
-  <div class="step-tab" data-step="5" onclick="goStep(5)">
-    <span class="step-num">6</span> review
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <h1>Creative Kitchen Static Template Library</h1>
+    <p class="text-muted">Select a template from the left sidebar to view its details and customize it.</p>
+
+    <!-- TEMPLATES CONTAINER -->
+    <div id="templates-container">
+      <!-- ROASTED VEGETABLES -->
+      <div class="template-section" data-template="roasted-vegetables" style="display: none;">
+        <div class="card">
+          <h3>Roasted Vegetables</h3>
+          <p>Perfect for weeknight dinners. Toss your favorite vegetables in olive oil and roasted until caramelized.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 10 minutes | <strong>Cook Time:</strong> 25 minutes | <strong>Serves:</strong> 4</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>2 cups assorted vegetables (broccoli, carrots, bell peppers)</li>
+            <li>3 tablespoons olive oil</li>
+            <li>Salt and pepper to taste</li>
+            <li>1 teaspoon garlic powder</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Preheat oven to 400°F</li>
+            <li>Toss vegetables with olive oil and seasonings</li>
+            <li>Spread on baking sheet</li>
+            <li>Roast for 25 minutes until golden</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- CHICKEN MARINADE -->
+      <div class="template-section" data-template="chicken-marinade" style="display: none;">
+        <div class="card">
+          <h3>Chicken Marinade</h3>
+          <p>A versatile marinade that works with any cooking method. Perfect for grilling, baking, or pan-searing.</p>
+          <p class="text-muted"><strong>Marinating Time:</strong> 2-4 hours | <strong>Makes:</strong> 1 cup marinade</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>1/2 cup olive oil</li>
+            <li>1/4 cup balsamic vinegar</li>
+            <li>3 cloves garlic, minced</li>
+            <li>1 tablespoon Dijon mustard</li>
+            <li>2 teaspoons dried herbs (thyme, oregano)</li>
+            <li>Salt and pepper to taste</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Combine all ingredients in a bowl</li>
+            <li>Mix well and taste for balance</li>
+            <li>Pour over chicken and refrigerate</li>
+            <li>Marinate for at least 2 hours</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- PASTA SAUCE -->
+      <div class="template-section" data-template="pasta-sauce" style="display: none;">
+        <div class="card">
+          <h3>Pasta Sauce</h3>
+          <p>A classic tomato-based sauce that's ready in 30 minutes. Great for any pasta shape.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 5 minutes | <strong>Cook Time:</strong> 25 minutes | <strong>Makes:</strong> 3 cups</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>2 tablespoons olive oil</li>
+            <li>4 cloves garlic, minced</li>
+            <li>1 can (28 oz) crushed tomatoes</li>
+            <li>1 teaspoon dried basil</li>
+            <li>Salt and pepper to taste</li>
+            <li>Pinch of sugar</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Heat olive oil in a large pot</li>
+            <li>Sauté garlic until fragrant</li>
+            <li>Add crushed tomatoes and seasonings</li>
+            <li>Simmer for 20 minutes, stirring occasionally</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- GRILLED FISH -->
+      <div class="template-section" data-template="grilled-fish" style="display: none;">
+        <div class="card">
+          <h3>Grilled Fish</h3>
+          <p>A light and healthy option that's perfect for summer grilling. Works best with firm white fish.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 10 minutes | <strong>Cook Time:</strong> 12 minutes | <strong>Serves:</strong> 2</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>2 fish fillets (salmon, halibut, or cod)</li>
+            <li>2 tablespoons olive oil</li>
+            <li>Juice of 1 lemon</li>
+            <li>Salt, pepper, and fresh herbs</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Preheat grill to medium-high heat</li>
+            <li>Brush fish with olive oil and lemon juice</li>
+            <li>Season with salt, pepper, and herbs</li>
+            <li>Grill for 6 minutes per side</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- STIR FRY -->
+      <div class="template-section" data-template="stir-fry" style="display: none;">
+        <div class="card">
+          <h3>Stir Fry</h3>
+          <p>Quick, healthy, and customizable. Perfect for using up vegetables in your fridge.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 15 minutes | <strong>Cook Time:</strong> 10 minutes | <strong>Serves:</strong> 3</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>3 cups mixed vegetables (snap peas, carrots, broccoli)</li>
+            <li>1 pound protein (chicken, shrimp, or tofu)</li>
+            <li>3 cloves garlic, minced</li>
+            <li>3 tablespoons soy sauce</li>
+            <li>2 tablespoons sesame oil</li>
+            <li>1 teaspoon ginger, minced</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Heat wok or large skillet over high heat</li>
+            <li>Cook protein first, set aside</li>
+            <li>Stir fry vegetables for 5 minutes</li>
+            <li>Return protein, add soy sauce and sesame oil</li>
+            <li>Toss everything together and serve</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- SALAD DRESSING -->
+      <div class="template-section" data-template="salad-dressing" style="display: none;">
+        <div class="card">
+          <h3>Salad Dressing</h3>
+          <p>A versatile vinaigrette that complements any salad. Make it fresh whenever you need it.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 3 minutes | <strong>Makes:</strong> 1/2 cup</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>1/4 cup olive oil</li>
+            <li>2 tablespoons balsamic vinegar</li>
+            <li>1 tablespoon red wine vinegar</li>
+            <li>1 teaspoon Dijon mustard</li>
+            <li>1 clove garlic, minced</li>
+            <li>Salt and pepper to taste</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Combine all ingredients in a jar</li>
+            <li>Shake vigorously until emulsified</li>
+            <li>Taste and adjust seasonings</li>
+            <li>Use immediately or store in refrigerator</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- SOUP BASE -->
+      <div class="template-section" data-template="soup-base" style="display: none;">
+        <div class="card">
+          <h3>Soup Base</h3>
+          <p>A foundational recipe that you can customize with your favorite vegetables and proteins.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 10 minutes | <strong>Cook Time:</strong> 30 minutes | <strong>Makes:</strong> 6 cups</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>2 tablespoons olive oil</li>
+            <li>1 onion, diced</li>
+            <li>3 cloves garlic, minced</li>
+            <li>4 cups broth (vegetable or chicken)</li>
+            <li>2 cups diced vegetables</li>
+            <li>Salt and pepper to taste</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Heat olive oil in a large pot</li>
+            <li>Sauté onion and garlic until softened</li>
+            <li>Add broth and vegetables</li>
+            <li>Simmer for 20 minutes until vegetables are tender</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- BAKED GOODS -->
+      <div class="template-section" data-template="baked-goods" style="display: none;">
+        <div class="card">
+          <h3>Baked Goods</h3>
+          <p>A basic formula for cookies, cakes, and breads. Perfect for experimenting with flavors.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 15 minutes | <strong>Cook Time:</strong> 20 minutes</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>2 cups all-purpose flour</li>
+            <li>1 cup butter, softened</li>
+            <li>1 cup sugar</li>
+            <li>2 eggs</li>
+            <li>1 teaspoon vanilla extract</li>
+            <li>1 teaspoon baking powder</li>
+            <li>Salt to taste</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Preheat oven to 350°F</li>
+            <li>Cream butter and sugar together</li>
+            <li>Add eggs and vanilla extract</li>
+            <li>Mix in flour, baking powder, and salt</li>
+            <li>Bake for 20 minutes until golden</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- BREAKFAST BOWLS -->
+      <div class="template-section" data-template="breakfast-bowls" style="display: none;">
+        <div class="card">
+          <h3>Breakfast Bowls</h3>
+          <p>Start your day with a nutritious and delicious breakfast bowl. Mix and match your favorite toppings.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 5 minutes | <strong>Serves:</strong> 1</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>1 cup cooked oatmeal or granola</li>
+            <li>1/2 cup Greek yogurt</li>
+            <li>1/2 cup fresh berries</li>
+            <li>2 tablespoons nut butter</li>
+            <li>1 tablespoon honey</li>
+            <li>Pinch of cinnamon</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Place oatmeal or granola in a bowl</li>
+            <li>Top with Greek yogurt</li>
+            <li>Add fresh berries and nut butter</li>
+            <li>Drizzle with honey and sprinkle cinnamon</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- DESSERTS -->
+      <div class="template-section" data-template="desserts" style="display: none;">
+        <div class="card">
+          <h3>Desserts</h3>
+          <p>Indulge with these sweet treats. Perfect for special occasions or weekend baking.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 20 minutes | <strong>Cook Time:</strong> 30 minutes</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>2 cups all-purpose flour</li>
+            <li>3/4 cup butter, softened</li>
+            <li>3/4 cup sugar</li>
+            <li>2 eggs</li>
+            <li>1 teaspoon vanilla extract</li>
+            <li>1/2 cup cocoa powder (optional)</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Preheat oven to 325°F</li>
+            <li>Cream butter and sugar</li>
+            <li>Beat in eggs and vanilla</li>
+            <li>Fold in flour and cocoa</li>
+            <li>Bake for 30 minutes until set</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- SMOOTHIES -->
+      <div class="template-section" data-template="smoothies" style="display: none;">
+        <div class="card">
+          <h3>Smoothies</h3>
+          <p>Refreshing drinks that double as a healthy breakfast or post-workout snack.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 2 minutes | <strong>Serves:</strong> 1-2</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>1 cup frozen fruit (berries, mango, or pineapple)</li>
+            <li>1/2 cup Greek yogurt</li>
+            <li>1/2 cup milk (dairy or non-dairy)</li>
+            <li>1 tablespoon honey</li>
+            <li>1/2 tablespoon nut butter (optional)</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Add frozen fruit to blender</li>
+            <li>Add yogurt, milk, and honey</li>
+            <li>Blend until smooth</li>
+            <li>Pour into glasses and serve immediately</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- APPETIZERS -->
+      <div class="template-section" data-template="appetizers" style="display: none;">
+        <div class="card">
+          <h3>Appetizers</h3>
+          <p>Crowd-pleasing starters that are easy to prepare and impress your guests.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 15 minutes | <strong>Makes:</strong> 12 pieces</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>1 cup cream cheese, softened</li>
+            <li>1/2 cup cheddar cheese, shredded</li>
+            <li>2 tablespoons fresh herbs</li>
+            <li>Salt and pepper to taste</li>
+            <li>Crackers or vegetable sticks for serving</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Mix cream cheese and cheddar until smooth</li>
+            <li>Fold in fresh herbs and seasonings</li>
+            <li>Transfer to serving dish</li>
+            <li>Serve with crackers or vegetables</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- MAIN COURSES -->
+      <div class="template-section" data-template="main-courses" style="display: none;">
+        <div class="card">
+          <h3>Main Courses</h3>
+          <p>Satisfying dishes that come together in under an hour. Perfect for weeknight dinners.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 20 minutes | <strong>Cook Time:</strong> 30 minutes | <strong>Serves:</strong> 4</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>1.5 pounds protein of choice</li>
+            <li>2 cups vegetables, chopped</li>
+            <li>2 cloves garlic, minced</li>
+            <li>1 cup sauce or broth</li>
+            <li>2 tablespoons cooking oil</li>
+            <li>Salt and pepper to taste</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Heat oil in a large pan</li>
+            <li>Brown the protein on all sides</li>
+            <li>Remove and set aside</li>
+            <li>Sauté vegetables and garlic</li>
+            <li>Return protein, add sauce, and simmer</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- SIDES -->
+      <div class="template-section" data-template="sides" style="display: none;">
+        <div class="card">
+          <h3>Sides</h3>
+          <p>Complement your main course with these versatile side dishes.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 10 minutes | <strong>Cook Time:</strong> 20 minutes | <strong>Serves:</strong> 4</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>4 cups base ingredient (potatoes, rice, or pasta)</li>
+            <li>2 tablespoons butter or oil</li>
+            <li>1/2 cup broth or cream</li>
+            <li>Salt and pepper to taste</li>
+            <li>Fresh herbs for garnish</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Prepare base ingredient according to package</li>
+            <li>Heat butter or oil in a separate pan</li>
+            <li>Add seasonings and broth</li>
+            <li>Mix with cooked base ingredient</li>
+            <li>Garnish with fresh herbs before serving</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- SAUCES -->
+      <div class="template-section" data-template="sauces" style="display: none;">
+        <div class="card">
+          <h3>Sauces</h3>
+          <p>Elevate your dishes with these flavorful sauces. Great for dipping or drizzling.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 5 minutes | <strong>Cook Time:</strong> 10 minutes | <strong>Makes:</strong> 1 cup</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>1/2 cup base liquid (oil, vinegar, or cream)</li>
+            <li>2 tablespoons flavor ingredient (mustard, garlic, etc.)</li>
+            <li>1 tablespoon sweetener (sugar, honey)</li>
+            <li>Salt and pepper to taste</li>
+            <li>Optional: spices and herbs</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Combine base liquid with flavor ingredient</li>
+            <li>Whisk in sweetener</li>
+            <li>Season with salt, pepper, and spices</li>
+            <li>Store in an airtight container in the refrigerator</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- BEVERAGES -->
+      <div class="template-section" data-template="beverages" style="display: none;">
+        <div class="card">
+          <h3>Beverages</h3>
+          <p>Quench your thirst with these refreshing drinks. Perfect for any time of day.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 5 minutes | <strong>Serves:</strong> 2</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>2 cups base liquid (water, juice, or tea)</li>
+            <li>1/4 cup flavoring (fruit, herbs, or extracts)</li>
+            <li>1-2 tablespoons sweetener</li>
+            <li>Ice cubes</li>
+            <li>Optional: sparkling water for fizz</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Prepare base liquid</li>
+            <li>Add flavoring and sweetener</li>
+            <li>Stir well to combine</li>
+            <li>Pour over ice and serve immediately</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- PRESERVES -->
+      <div class="template-section" data-template="preserves" style="display: none;">
+        <div class="card">
+          <h3>Preserves</h3>
+          <p>Make your own jams and preserves at home. Perfect for gifts or personal use.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 30 minutes | <strong>Cook Time:</strong> 1 hour | <strong>Makes:</strong> 4 jars</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>4 cups fruit of choice</li>
+            <li>2 cups sugar</li>
+            <li>2 tablespoons lemon juice</li>
+            <li>1/2 teaspoon pectin (optional)</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Combine fruit, sugar, and lemon juice</li>
+            <li>Bring to a boil over medium-high heat</li>
+            <li>Reduce heat and simmer until thickened</li>
+            <li>Pour into sterilized jars and seal</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- SEASONINGS -->
+      <div class="template-section" data-template="seasonings" style="display: none;">
+        <div class="card">
+          <h3>Seasonings</h3>
+          <p>Create your own spice blends to flavor all your favorite dishes.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 10 minutes | <strong>Makes:</strong> 1/4 cup</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>2 tablespoons base spice (paprika, cumin, etc.)</li>
+            <li>1 tablespoon secondary spice (garlic powder, onion powder)</li>
+            <li>1 teaspoon optional spice (cayenne, oregano)</li>
+            <li>Salt and pepper to taste</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Combine all spices in a bowl</li>
+            <li>Mix until well blended</li>
+            <li>Transfer to an airtight container</li>
+            <li>Use as needed in your favorite recipes</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- CONDIMENTS -->
+      <div class="template-section" data-template="condiments" style="display: none;">
+        <div class="card">
+          <h3>Condiments</h3>
+          <p>Make your own condiments at home. Great for adding flavor to any meal.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 15 minutes | <strong>Makes:</strong> 1 cup</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>1/2 cup primary ingredient (mayo, mustard, etc.)</li>
+            <li>1/4 cup flavor addition (pickle juice, hot sauce)</li>
+            <li>1 tablespoon sweetener or acid (sugar, vinegar)</li>
+            <li>Salt and pepper to taste</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Mix primary ingredient with flavor addition</li>
+            <li>Add sweetener and season to taste</li>
+            <li>Store in a jar in the refrigerator</li>
+            <li>Use within 2-3 weeks for best flavor</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- SNACKS -->
+      <div class="template-section" data-template="snacks" style="display: none;">
+        <div class="card">
+          <h3>Snacks</h3>
+          <p>Quick and satisfying snacks for any time of day. Easy to prepare and perfect for on-the-go.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 10 minutes | <strong>Makes:</strong> 1-2 servings</p>
+          <h4>Ingredients:</h4>
+          <ul>
+            <li>1 cup base ingredient (nuts, popcorn, fruit)</li>
+            <li>2 tablespoons flavor ingredient (dried fruit, chocolate)</li>
+            <li>1 tablespoon seasoning or coating</li>
+            <li>Pinch of salt</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Combine base ingredient with flavor addition</li>
+            <li>Add seasoning and toss well</li>
+            <li>Spread on a baking sheet if toasting</li>
+            <li>Bake at 300°F for 10-15 minutes if desired</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- MEAL PREP -->
+      <div class="template-section" data-template="meal-prep" style="display: none;">
+        <div class="card">
+          <h3>Meal Prep</h3>
+          <p>Prepare a week's worth of meals in advance. Perfect for busy schedules and healthy eating.</p>
+          <p class="text-muted"><strong>Prep Time:</strong> 2 hours | <strong>Servings:</strong> 5</p>
+          <h4>Components:</h4>
+          <ul>
+            <li>2 cups cooked protein (chicken, beans, tofu)</li>
+            <li>3 cups roasted vegetables</li>
+            <li>2 cups cooked grains (rice, quinoa)</li>
+            <li>1 cup sauce or dressing for flavor</li>
+          </ul>
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Prepare protein according to preference</li>
+            <li>Roast vegetables until tender</li>
+            <li>Cook grains according to package directions</li>
+            <li>Divide into containers and refrigerate</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- COOKING METHODS -->
+      <div class="template-section" data-template="cooking-methods" style="display: none;">
+        <div class="card">
+          <h3>Cooking Methods</h3>
+          <p>Master different cooking techniques to expand your culinary skills.</p>
+          <p class="text-muted"><strong>Learn:</strong> Various techniques for different outcomes</p>
+          <h4>Methods Covered:</h4>
+          <ul>
+            <li><strong>Roasting:</strong> High heat to develop flavor</li>
+            <li><strong>Braising:</strong> Slow cooking in liquid</li>
+            <li><strong>Steaming:</strong> Gentle, healthy cooking</li>
+            <li><strong>Sautéing:</strong> Quick cooking over medium-high heat</li>
+            <li><strong>Grilling:</strong> Outdoor or stovetop heat</li>
+          </ul>
+          <h4>Tips:</h4>
+          <ol>
+            <li>Match cooking method to ingredient type</li>
+            <li>Always preheat equipment as needed</li>
+            <li>Use a timer to prevent overcooking</li>
+            <li>Let proteins rest after cooking</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- KITCHEN TIPS -->
+      <div class="template-section" data-template="kitchen-tips" style="display: none;">
+        <div class="card">
+          <h3>Kitchen Tips</h3>
+          <p>Helpful tricks and techniques to improve your cooking and save time in the kitchen.</p>
+          <p class="text-muted"><strong>Explore:</strong> Practical advice from experienced cooks</p>
+          <h4>Essential Tips:</h4>
+          <ul>
+            <li>Read the entire recipe before starting</li>
+            <li>Mise en place: prep all ingredients first</li>
+            <li>Keep your knives sharp for safety</li>
+            <li>Taste as you cook and adjust seasoning</li>
+            <li>Don't overcrowd the pan when searing</li>
+          </ul>
+          <h4>Time Savers:</h4>
+          <ol>
+            <li>Prep vegetables when you have time</li>
+            <li>Use a slow cooker or instant pot</li>
+            <li>Double recipes and freeze extras</li>
+            <li>Organize your pantry for quick access</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- FOOD STORAGE -->
+      <div class="template-section" data-template="food-storage" style="display: none;">
+        <div class="card">
+          <h3>Food Storage</h3>
+          <p>Proper storage techniques to keep your food fresh and reduce waste.</p>
+          <p class="text-muted"><strong>Learn:</strong> Best practices for different food types</p>
+          <h4>Storage Guidelines:</h4>
+          <ul>
+            <li><strong>Refrigerator:</strong> 35-40°F for most items</li>
+            <li><strong>Freezer:</strong> 0°F or below for long-term storage</li>
+            <li><strong>Pantry:</strong> Cool, dry, and dark for shelf-stable items</li>
+            <li><strong>Vegetables:</strong> Separate ethylene producers from ethylene sensitive items</li>
+          </ul>
+          <h4>Common Timeframes:</h4>
+          <ol>
+            <li>Cooked meals: 3-4 days in refrigerator</li>
+            <li>Raw vegetables: 5-7 days in crisper drawer</li>
+            <li>Frozen items: 2-3 months for best quality</li>
+            <li>Pantry items: Check expiration dates regularly</li>
+          </ol>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     PAGE 0: BRAND SETUP
-     ═══════════════════════════════════════ -->
-<div class="page active" id="page-0">
-  <div class="page-inner" style="max-width:640px">
-    <div class="sh">
-      <div class="sh-label">step 01</div>
-      <h2>brand <em>setup</em></h2>
-      <p>enter your website url and we'll scan it to auto-extract your brand identity, colours, and positioning.</p>
-    </div>
-
-    <div class="card">
-      <div class="card-body" style="padding-top:18px">
-        <div class="field">
-          <div class="field-label">website url</div>
-          <div style="display:flex;gap:8px">
-            <input class="field-input" value="www.eatchefly.com" id="setup-url" placeholder="yoursite.com" style="flex:1">
-            <button class="btn-action" onclick="scanBrand()" id="scanBtn" style="flex-shrink:0;padding:6px 20px">scan brand</button>
-          </div>
-          <div class="field-hint">we use jina.ai reader + microlink to extract colours, product info, and positioning</div>
-        </div>
-        <div id="scanProgress" class="hidden" style="margin-top:12px">
-          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--orange);font-weight:600">
-            <div style="width:14px;height:14px;border:2px solid var(--orange);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite"></div>
-            <span id="scanText">scanning website…</span>
-          </div>
-          <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-        </div>
-        <div id="scanResult" class="hidden" style="margin-top:14px">
-          <div style="background:var(--green-soft);border:1px solid #A3D9A5;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--green-text);font-weight:500">
-            brand scan complete — review and edit the extracted dna on the next page
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--mid-grey)">or</div>
-    <div style="text-align:center;margin-top:8px">
-      <button class="btn-ghost" onclick="goStep(1)">skip scan — configure manually →</button>
-    </div>
-
-    <div id="setupNext" class="hidden" style="display:flex;justify-content:flex-end;margin-top:20px">
-      <button class="btn-action" onclick="goStep(1)" style="padding:8px 24px;font-size:14px">configure dna →</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════
-     PAGE 1: DNA CONFIG
-     ═══════════════════════════════════════ -->
-<div class="page" id="page-1">
-  <div class="page-inner">
-    <div class="sh">
-      <div class="sh-label">step 02</div>
-      <h2>brand <em>dna</em></h2>
-      <p>configure your brand identity. these settings shape every prompt that gets sent to the image model.</p>
-    </div>
-
-    <!-- API Connection -->
-    <div class="card">
-      <div class="card-head" onclick="this.nextElementSibling.classList.toggle('hidden')">
-        <div class="card-title">api connection <span class="tag tag-orange">required</span></div>
-        <svg class="chev" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
-      </div>
-      <div class="card-body">
-        <div class="field">
-          <div class="field-label">fal.ai api key</div>
-          <div style="display:flex;gap:8px">
-            <input class="field-input" type="password" placeholder="Enter your fal.ai API key" id="dna-apikey" style="flex:1;font-family:'Space Grotesk',monospace">
-            <button class="btn-ghost" onclick="toggleApiKey()" id="apiToggle" style="flex-shrink:0;padding:6px 12px">show</button>
-          </div>
-          <div class="field-hint">required for image generation. get yours at <a href="https://fal.ai/dashboard/keys" target="_blank" style="color:var(--orange);text-decoration:none;font-weight:600">fal.ai/dashboard/keys</a></div>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <div class="field-label">model</div>
-            <select class="field-input" id="dna-model">
-              <option value="fal-ai/nano-banana-2" selected>nano banana 2 (recommended)</option>
-              <option value="fal-ai/flux-pro">flux pro</option>
-              <option value="fal-ai/flux/schnell">flux schnell (fast)</option>
-            </select>
-          </div>
-          <div class="field">
-            <div class="field-label">aspect ratio</div>
-            <select class="field-input" id="dna-ratio">
-              <option value="1:1" selected>1:1 — square (1080×1080)</option>
-              <option value="4:5">4:5 — feed (1080×1350)</option>
-            </select>
-          </div>
-        </div>
-        <div id="apiStatus" style="display:none;margin-top:4px;font-size:11px;font-weight:600"></div>
-      </div>
-    </div>
-
-    <!-- Brand Identity -->
-    <div class="card">
-      <div class="card-head" onclick="this.nextElementSibling.classList.toggle('hidden')">
-        <div class="card-title">brand identity <span class="tag tag-green">required</span></div>
-        <svg class="chev" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
-      </div>
-      <div class="card-body">
-        <div class="field-row">
-          <div class="field">
-            <div class="field-label">brand name</div>
-            <input class="field-input" value="CHEFLY" id="dna-brand">
-          </div>
-          <div class="field">
-            <div class="field-label">website</div>
-            <input class="field-input" value="www.eatchefly.com" id="dna-url">
-          </div>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <div class="field-label">product</div>
-            <input class="field-input" value="fresh meals" id="dna-product">
-          </div>
-          <div class="field">
-            <div class="field-label">target audience</div>
-            <input class="field-input" value="Food enthusiasts, Premium/luxury buyers" id="dna-audience">
-          </div>
-        </div>
-        <div class="field">
-          <div class="field-label">brand context</div>
-          <textarea class="field-input" id="dna-context">Choose from 50+ chef-cooked, protein packed meals. Enjoy at home, at work or on the move - just heat when you're ready to eat</textarea>
-        </div>
-        <div class="field">
-          <div class="field-label">key claims</div>
-          <input class="field-input" value="Preservative-free meals, no seed oils, high protein" id="dna-claims">
-        </div>
-      </div>
-    </div>
-
-    <!-- Brand Colours -->
-    <div class="card">
-      <div class="card-head" onclick="this.nextElementSibling.classList.toggle('hidden')">
-        <div class="card-title">colour palette <span class="tag tag-yellow">d2 system</span></div>
-        <svg class="chev" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
-      </div>
-      <div class="card-body">
-        <div class="field-label">brand colours — click to toggle prominence in generated images</div>
-        <div class="colour-chips mt-8" id="colourChips">
-          <div class="colour-chip selected" style="background:#FF6B2C" title="#FF6B2C" onclick="this.classList.toggle('selected')"></div>
-          <div class="colour-chip selected" style="background:#0D0D0D" title="#0D0D0D" onclick="this.classList.toggle('selected')"></div>
-          <div class="colour-chip selected" style="background:#FFF6EE;border-color:#ccc" title="#FFF6EE" onclick="this.classList.toggle('selected')"></div>
-          <div class="colour-chip" style="background:#FFD60A" title="#FFD60A" onclick="this.classList.toggle('selected')"></div>
-          <div class="colour-chip" style="background:#A8E10C" title="#A8E10C" onclick="this.classList.toggle('selected')"></div>
-          <div class="colour-chip" style="background:#FF8FA3" title="#FF8FA3" onclick="this.classList.toggle('selected')"></div>
-          <div class="colour-chip" style="background:#5CCFFF" title="#5CCFFF" onclick="this.classList.toggle('selected')"></div>
-          <button class="add-colour" title="add custom colour">+</button>
-        </div>
-        <div class="field-hint mt-8">selected colours are injected into every prompt. the model responds strongly to colour instructions.</div>
-      </div>
-    </div>
-
-    <!-- Photography Style -->
-    <div class="card">
-      <div class="card-head" onclick="this.nextElementSibling.classList.toggle('hidden')">
-        <div class="card-title">photography style <span class="tag tag-blush">high impact</span></div>
-        <svg class="chev" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
-      </div>
-      <div class="card-body">
-        <div class="field">
-          <div class="field-label">photography direction — this is your most powerful lever</div>
-          <textarea class="field-input" style="min-height:80px" id="dna-photo">Clean, minimal compositions. Product-focused compositions for CHEFLY.</textarea>
-          <div class="field-hint">tip: use photography terminology — "shallow depth of field", "golden hour", "overhead flat-lay", "editorial food magazine quality"</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Ad Approach -->
-    <div class="card">
-      <div class="card-head" onclick="this.nextElementSibling.classList.toggle('hidden')">
-        <div class="card-title">ad approach & prompt modifier</div>
-        <svg class="chev" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
-      </div>
-      <div class="card-body">
-        <div class="field">
-          <div class="field-label">ad approach</div>
-          <textarea class="field-input" id="dna-approach">Direct-response advertising with clear value propositions. CHEFLY aesthetic throughout. Strong CTAs with brand color accents.</textarea>
-        </div>
-        <div class="field">
-          <div class="field-label">prompt modifier — appended to every prompt</div>
-          <textarea class="field-input" id="dna-modifier">Brand: CHEFLY. Product: fresh meals. Colors: #FF6B2C, #0D0D0D, #FFF6EE. Professional advertising quality. Clean, modern layout.</textarea>
-          <div class="field-hint">add "No AI-generated text or overlays. Photography only." to reduce text hallucination</div>
-        </div>
-      </div>
-    </div>
-
-    <div style="display:flex;justify-content:flex-end;margin-top:20px">
-      <button class="btn-action" onclick="goStep(2)" style="padding:8px 24px;font-size:14px">choose templates →</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════
-     PAGE 2: TEMPLATE SELECTION
-     ═══════════════════════════════════════ -->
-<div class="page" id="page-2">
-  <div class="tmpl-select-bar">
-    <div class="tmpl-count"><strong id="selCount">0</strong> of 20 recommended templates selected</div>
-    <div style="display:flex;gap:8px">
-      <button class="btn-ghost" onclick="selectAll()">select all recommended</button>
-      <button class="btn-action" onclick="goStep(3)">prompt lab →</button>
-    </div>
-  </div>
-  <div class="page-inner" style="padding-top:16px">
-    <div class="sh">
-      <div class="sh-label">step 03</div>
-      <h2>choose <em>templates</em></h2>
-      <p>pick which ad concepts to generate. templates rated "great" are the strongest performers.</p>
-    </div>
-
-    <div class="tmpl-filters" id="tmplFilters">
-      <button class="pill active" onclick="filterTmpl('all',this)">all <span class="ct">20</span></button>
-      <button class="pill" onclick="filterTmpl('great',this)">great <span class="ct">10</span></button>
-      <button class="pill" onclick="filterTmpl('good',this)">good <span class="ct">10</span></button>
-    </div>
-
-    <div class="tmpl-grid" id="tmplGrid"></div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════
-     PAGE 3: PROMPT LAB
-     ═══════════════════════════════════════ -->
-<div class="page" id="page-3">
-  <div class="page-inner">
-    <div class="sh">
-      <div class="sh-label">step 04</div>
-      <h2>prompt <em>lab</em></h2>
-      <p>review and fine-tune the assembled prompts before generation. each prompt combines the template base + your photography style + brand colours + modifier.</p>
-    </div>
-    <div id="promptLabList"></div>
-    <div style="display:flex;justify-content:space-between;margin-top:20px">
-      <button class="btn-ghost" onclick="goStep(2)">← back to templates</button>
-      <button class="btn-action" onclick="goStep(4)" style="padding:8px 24px;font-size:14px">generate all →</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════
-     PAGE 4: GENERATE
-     ═══════════════════════════════════════ -->
-<div class="page" id="page-4">
-  <div class="page-inner">
-    <div class="gen-status" id="genStatus">
-      <div class="sh-label">step 05</div>
-      <h2>generating <em>creatives</em></h2>
-      <p>sending prompts to nano banana 2 via fal.ai — this takes about 30 seconds per image</p>
-      <div class="gen-progress-wrap">
-        <div class="gen-track"><div class="gen-fill" id="genFill"></div></div>
-        <div class="gen-pct" id="genPct">0 / 0</div>
-      </div>
-    </div>
-    <div class="gen-grid" id="genGrid"></div>
-    <div id="genDone" class="hidden" style="text-align:center;margin-top:24px">
-      <button class="btn-ghost" onclick="goStep(3)" style="margin-right:8px">← back to prompt lab</button>
-      <button class="btn-action" onclick="goStep(5)" style="padding:10px 28px;font-size:14px">review &amp; rate →</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════
-     PAGE 5: REVIEW
-     ═══════════════════════════════════════ -->
-<div class="page" id="page-5">
-  <div class="review-bar">
-    <span><span class="rl">templates:</span> <span class="rv" id="rvTmplCt">20</span></span>
-    <div class="sep"></div>
-    <span><span class="rl">format:</span> <span class="rv">1:1</span></span>
-    <div class="sep"></div>
-    <span><span class="rl">rated:</span> <span class="rv" id="rvRated">0 / 20</span></span>
-  </div>
-  <div class="review-filters" id="reviewFilters">
-    <button class="pill active" onclick="filterReview('all',this)">all <span class="ct" id="rfAll">20</span></button>
-    <button class="pill" onclick="filterReview('great',this)">great <span class="ct">10</span></button>
-    <button class="pill" onclick="filterReview('good',this)">good <span class="ct">10</span></button>
-    <div class="pill-gap"></div>
-    <button class="pill" onclick="filterReview('ship',this)">ship <span class="ct" id="rfShip">0</span></button>
-    <button class="pill" onclick="filterReview('tweak',this)">tweak <span class="ct" id="rfTweak">0</span></button>
-    <button class="pill" onclick="filterReview('redo',this)">redo <span class="ct" id="rfRedo">0</span></button>
-    <button class="pill" onclick="filterReview('unrated',this)">unrated <span class="ct" id="rfUn">20</span></button>
-  </div>
-  <div class="review-groups" id="reviewGroups"></div>
-
-  <div class="footer-bar" id="reviewFooter">
-    <span class="ft" id="footerTxt">0 of 20 rated</span>
-    <div class="footer-track">
-      <div class="footer-segs" id="footerSegs"></div>
-    </div>
-    <button class="btn-action" onclick="openExport()">finish review</button>
-  </div>
-</div>
-
-<!-- ═══ EXPORT MODAL ═══ -->
-<div class="overlay" id="exportOverlay">
-  <div class="modal">
-    <div class="modal-head">
-      <h2>designer <em>handoff</em></h2>
-      <button class="modal-x" onclick="closeExport()">&#10005;</button>
-    </div>
-    <div class="modal-body">
-      <div class="brand-brief">
-        <h3>brand kit</h3>
-        <div class="bb-row"><span class="bl">brand</span><span class="bv" style="font-family:'Syne';font-weight:800;text-transform:lowercase">chefly</span></div>
-        <div class="bb-row"><span class="bl">colours</span><span class="bv">
-          <span class="cdot" style="background:#FF6B2C"></span>
-          <span class="cdot" style="background:#FFD60A"></span>
-          <span class="cdot" style="background:#A8E10C"></span>
-          <span class="cdot" style="background:#FF8FA3"></span>
-          <span class="cdot" style="background:#5CCFFF"></span>
-          <span class="cdot" style="background:#0D0D0D"></span>
-          <span class="cdot" style="background:#FFF6EE;border-color:#ccc"></span>
-        </span></div>
-        <div class="bb-row"><span class="bl">fonts</span><span class="bv">syne 800 · instrument serif · space grotesk</span></div>
-        <div class="bb-row"><span class="bl">adapt to</span><span class="bv">
-          <span class="fmt-pill" style="background:var(--sky-blue)">1:1 feed</span>
-          <span class="fmt-pill" style="background:var(--blush)">4:5 feed</span>
-          <span class="fmt-pill" style="background:var(--hot-yellow)">9:16 story</span>
-          <span class="fmt-pill" style="background:var(--electric-green)">9:16 reel</span>
-        </span></div>
-      </div>
-      <div id="winnersList"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn-ghost" onclick="closeExport()">back to review</button>
-      <button class="btn-action" onclick="downloadBrief()">download brief</button>
-    </div>
-  </div>
-</div>
-
+<!-- JAVASCRIPT -->
 <script>
-/* ═══════════════════════════════════════
-   DATA
-   ═══════════════════════════════════════ */
-const T = [
-  { id:1, name:"Lifestyle Shot", cat:"lifestyle", rating:"great", bg:"#3a6b50",
-    desc:"editorial food photography in natural settings",
-    prompt:"Create a lifestyle editorial photograph showing a person enjoying a fresh, colorful meal at a sunlit kitchen counter. Natural light, warm tones, casual elegance." },
-  { id:2, name:"Minimal Clean", cat:"minimal", rating:"great", bg:"#c8c4be",
-    desc:"premium product photography with dramatic space",
-    prompt:"Create a minimalist product photograph on a clean white or light surface with dramatic directional lighting creating strong shadows. Single meal container, hero angle." },
-  { id:3, name:"Unboxing Feel", cat:"lifestyle", rating:"great", bg:"#8a7a5a",
-    desc:"flat-lay product discovery photography",
-    prompt:"Create flat lay photography of an unboxing moment — editorial product photography. Open box with meals partially revealed, tissue paper, fresh ingredients scattered artfully." },
-  { id:4, name:"Taste/Experience", cat:"sensory", rating:"great", bg:"#8a4a3a",
-    desc:"sensory close-up food photography",
-    prompt:"Mouthwatering extreme close-up showcasing textures — grill marks, steam, melted cheese, fresh herbs, dripping sauce. Macro lens feel, shallow depth of field." },
-  { id:5, name:"Behind the Scenes", cat:"lifestyle", rating:"great", bg:"#6a6050",
-    desc:"documentary-style kitchen photography",
-    prompt:"Documentary-style behind-the-scenes photography. Chef hands preparing food, kitchen environment, raw ingredients being transformed. Authentic, slightly unpolished." },
-  { id:6, name:"Product in Action", cat:"lifestyle", rating:"great", bg:"#4a6a7a",
-    desc:"dynamic product photography with motion",
-    prompt:"Dynamic product photography with implied motion, splash effects, action angles — no text needed. One of the strongest templates." },
-  { id:7, name:"Vogue #1 Feature", cat:"press", rating:"great", bg:"#2a2a3a",
-    desc:"moody editorial luxury styling",
-    prompt:"Moody editorial food photography with luxury styling. Dark background, dramatic side lighting, premium ingredients artfully arranged." },
-  { id:8, name:"Glamour Best Overall", cat:"press", rating:"great", bg:"#a08a70",
-    desc:"warm, bright editorial lifestyle",
-    prompt:"Lifestyle editorial photography with a relatable subject. Warm, bright, approachable. Magazine-worthy quality." },
-  { id:9, name:"Press Quote Card", cat:"press", rating:"great", bg:"#5a6a5a",
-    desc:"food hero with intentional negative space",
-    prompt:"Stunning food photo with intentional negative space for post-production text overlay. AI does the photography, designer adds the text." },
-  { id:10, name:"Editor's Choice", cat:"press", rating:"great", bg:"#7a7060",
-    desc:"overhead flat-lay with premium props",
-    prompt:"Overhead flat lay with premium styling and editorial props. Multiple containers show variety. Luxury surface sells the story." },
-  { id:11, name:"Us vs. Them", cat:"comparison", rating:"good", bg:"#4a6080",
-    desc:"split-frame visual contrast concept",
-    prompt:"Split-frame visual contrast. Left: dull processed meal in cold tones. Right: vibrant fresh CHEFLY meal in warm tones. No text — visual contrast tells the story." },
-  { id:12, name:"Before/After", cat:"comparison", rating:"good", bg:"#7a5a5a",
-    desc:"transformation comparison photography",
-    prompt:"Before and after comparison. Left: desaturated/dull treatment. Right: vibrant colors with the product. Dividing line between states." },
-  { id:13, name:"UGC Style", cat:"social-proof", rating:"good", bg:"#5a7060",
-    desc:"authentic social media aesthetic",
-    prompt:"UGC-style ad that looks like organic social content. Casual, authentic. Phone screenshot format. Product in natural, real-life setting." },
-  { id:14, name:"Bold Color Block", cat:"headline", rating:"good", bg:"#e89e1c",
-    desc:"product on vivid colour background",
-    prompt:"Product dramatically placed on a vivid orange background — text added in post. Bold, graphic, attention-grabbing." },
-  { id:15, name:"Quote + Product", cat:"social-proof", rating:"good", bg:"#4a4a5a",
-    desc:"moody product with space for text",
-    prompt:"Moody product photography with subtle gradient background. Hero meal with dramatic lighting. Negative space for quote overlay in post." },
-  { id:16, name:"Problem → Solution", cat:"headline", rating:"good", bg:"#5a4a6a",
-    desc:"pain-point to product narrative",
-    prompt:"Problem-solution ad. Top: pain point in dark, stressed imagery. Bottom: product as solution with bright treatment. Clear narrative flow." },
-  { id:17, name:"Bundle Deal", cat:"offer", rating:"good", bg:"#7a8a5a",
-    desc:"multiple products arranged attractively",
-    prompt:"Multiple products arranged attractively — artful product arrangement, text/pricing added in post." },
-  { id:18, name:"Flavor/Variant Grid", cat:"product", rating:"good", bg:"#6a7a8a",
-    desc:"colourful grid of product variants",
-    prompt:"Colourful grid of product variants without text — labels added in post. Each variant in its own cell, vibrant colours." },
-  { id:19, name:"Founder Story", cat:"narrative", rating:"good", bg:"#8a7060",
-    desc:"warm editorial portrait with product",
-    prompt:"Warm editorial portrait representing the founder with the product. Casual, authentic styling. Text added in post." },
-  { id:20, name:"Stack/Routine", cat:"lifestyle", rating:"good", bg:"#6a6a5a",
-    desc:"curated daily meal prep flat-lay",
-    prompt:"Products in a curated flat lay. Morning/afternoon/evening meal prep aesthetic. Three meals visible. Numbering added in post." },
-];
+  // Template switching functionality
+  const sidebarLinks = document.querySelectorAll('.sidebar-group a');
+  const templateSections = document.querySelectorAll('.template-section');
 
-const catColours = {
-  lifestyle: { bg: 'var(--green-soft)', color: 'var(--green-text)' },
-  minimal: { bg: 'var(--warm-grey)', color: 'var(--near-black)' },
-  comparison: { bg: '#EDE7F6', color: '#4527A0' },
-  press: { bg: '#E3F2FD', color: '#1565C0' },
-  sensory: { bg: '#FCE4EC', color: '#AD1457' },
-  headline: { bg: '#FFF0E6', color: 'var(--orange-dim)' },
-  'social-proof': { bg: '#E8F5E9', color: '#2E7D32' },
-  narrative: { bg: '#FFF8E1', color: '#F57F17' },
-  offer: { bg: '#FFF3E0', color: '#E65100' },
-  product: { bg: '#E0F7FA', color: '#00695C' },
-};
+  sidebarLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const templateName = link.getAttribute('data-template');
 
-let selected = new Set();
-let feedback = {}; // name -> { type, note }
-let promptEdits = {}; // id -> edited prompt
-let currentStep = 0;
+      // Hide all sections
+      templateSections.forEach(section => {
+        section.style.display = 'none';
+      });
 
-/* ═══ NAVIGATION ═══ */
-const steps = ['setup','dna','templates','prompt lab','generate','review'];
-const tagClasses = ['tag-blush','tag-orange','tag-blue','tag-yellow','tag-green','tag-green'];
-
-function goStep(n) {
-  currentStep = n;
-  document.querySelectorAll('.page').forEach((p,i) => p.classList.toggle('active', i===n));
-  document.querySelectorAll('.step-tab').forEach((t,i) => {
-    t.classList.toggle('active', i===n);
-    if (i < n) t.classList.add('done'); else t.classList.remove('done');
-  });
-  const navTag = document.getElementById('navTag');
-  navTag.textContent = steps[n];
-  navTag.className = 'tag ' + tagClasses[n];
-
-  document.getElementById('reviewFooter').style.display = n === 5 ? 'flex' : 'none';
-
-  if (n === 2) renderTemplates();
-  if (n === 3) renderPromptLab();
-  if (n === 4) startGeneration();
-  if (n === 5) renderReview();
-}
-
-/* ═══ BRAND SCAN ═══ */
-async function scanBrand() {
-  const url = document.getElementById('setup-url').value.trim();
-  if (!url) return;
-  document.getElementById('scanProgress').classList.remove('hidden');
-  document.getElementById('scanResult').classList.add('hidden');
-  document.getElementById('scanBtn').disabled = true;
-
-  const steps = ['scanning website…','extracting colours…','analysing brand positioning…','building dna config…'];
-  let i = 0;
-  const interval = setInterval(() => {
-    i++;
-    if (i < steps.length) document.getElementById('scanText').textContent = steps[i];
-  }, 1200);
-
-  // Simulate scan (in production this calls Jina.ai + Microlink + Claude)
-  await new Promise(r => setTimeout(r, 4800));
-  clearInterval(interval);
-
-  document.getElementById('scanProgress').classList.add('hidden');
-  document.getElementById('scanResult').classList.remove('hidden');
-  document.getElementById('scanBtn').disabled = false;
-  document.getElementById('setupNext').classList.remove('hidden');
-  document.getElementById('setupNext').style.display = 'flex';
-}
-
-/* ═══ PROMPT LAB ═══ */
-function renderPromptLab() {
-  if (selected.size === 0) { selected = new Set(T.map(t => t.id)); }
-  const sel = T.filter(t => selected.has(t.id));
-  const container = document.getElementById('promptLabList');
-  container.innerHTML = '';
-  sel.forEach(t => {
-    const fullPrompt = promptEdits[t.id] || buildPrompt(t);
-    const cc = catColours[t.cat] || catColours.lifestyle;
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.innerHTML = `
-      <div class="card-head" onclick="this.nextElementSibling.classList.toggle('hidden')">
-        <div class="card-title">
-          ${t.name.toLowerCase()}
-          <span class="tag" style="background:${cc.bg};color:${cc.color};font-size:9px;padding:1px 6px">${t.cat}</span>
-          <span class="tag tag-${t.rating==='great'?'green':'blue'}" style="font-size:9px;padding:1px 6px">${t.rating}</span>
-        </div>
-        <svg class="chev" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
-      </div>
-      <div class="card-body hidden">
-        <div class="field">
-          <div class="field-label">assembled prompt</div>
-          <textarea class="field-input" style="min-height:80px;font-size:12px" data-tid="${t.id}" onblur="savePromptEdit(this)">${fullPrompt}</textarea>
-          <div class="field-hint">edit to fine-tune. changes are preserved for this session.</div>
-        </div>
-      </div>
-    `;
-    container.appendChild(div);
-  });
-}
-
-function savePromptEdit(el) {
-  const tid = parseInt(el.dataset.tid);
-  promptEdits[tid] = el.value;
-}
-
-/* ═══ EXPORT & DOWNLOAD ═══ */
-function exportSheet() {
-  // Generate CSV of all generated images with metadata
-  const sel = T.filter(t => selected.has(t.id));
-  let csv = 'Template,Category,Rating,Prompt,Image URL,Feedback,Note\n';
-  sel.forEach(t => {
-    const fb = feedback[t.name];
-    const prompt = (promptEdits[t.id] || buildPrompt(t)).replace(/"/g, '""');
-    const imgUrl = generatedImages[t.id] || '';
-    const fbType = fb?.type || '';
-    const fbNote = (fb?.note || '').replace(/"/g, '""');
-    csv += `"${t.name}","${t.cat}","${t.rating}","${prompt}","${imgUrl}","${fbType}","${fbNote}"\n`;
-  });
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'creative-kitchen-export.csv';
-  a.click();
-}
-
-async function downloadAllZip() {
-  const urls = Object.entries(generatedImages);
-  if (urls.length === 0) { alert('No images generated yet. Run generation first.'); return; }
-  // Download images individually (zip requires JSZip library)
-  for (const [id, url] of urls) {
-    const t = T.find(x => x.id === parseInt(id));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `chefly-${t?.name.toLowerCase().replace(/[^a-z0-9]/g,'-') || id}.png`;
-    a.target = '_blank';
-    a.click();
-    await new Promise(r => setTimeout(r, 300));
-  }
-}
-
-/* ═══ TEMPLATE SELECTION ═══ */
-function renderTemplates(filter='all') {
-  const grid = document.getElementById('tmplGrid');
-  grid.innerHTML = '';
-  const list = T.filter(t => filter === 'all' || t.rating === filter);
-  list.forEach(t => {
-    const cc = catColours[t.cat] || catColours.lifestyle;
-    const sel = selected.has(t.id);
-    const div = document.createElement('div');
-    div.className = 'tmpl-card' + (sel ? ' selected' : '');
-    div.onclick = () => { toggleSelect(t.id, div); };
-    div.innerHTML = `
-      <div class="tmpl-check">${sel ? '✓' : ''}</div>
-      <div class="tmpl-preview" style="background:${t.bg}">${t.name.toLowerCase()}</div>
-      <div class="tmpl-info">
-        <div class="tmpl-name">
-          ${t.name}
-          <span class="tag" style="background:${cc.bg};color:${cc.color};font-size:9px;padding:1px 6px">${t.cat}</span>
-          <span class="tag tag-${t.rating === 'great' ? 'green' : 'blue'}" style="font-size:9px;padding:1px 6px">${t.rating}</span>
-        </div>
-        <div class="tmpl-desc">${t.desc}</div>
-      </div>
-    `;
-    grid.appendChild(div);
-  });
-  updateSelCount();
-}
-
-function toggleSelect(id, el) {
-  if (selected.has(id)) { selected.delete(id); el.classList.remove('selected'); el.querySelector('.tmpl-check').textContent = ''; }
-  else { selected.add(id); el.classList.add('selected'); el.querySelector('.tmpl-check').textContent = '✓'; }
-  updateSelCount();
-}
-
-function selectAll() {
-  T.forEach(t => selected.add(t.id));
-  renderTemplates(document.querySelector('#tmplFilters .pill.active')?.textContent.trim().split(' ')[0] || 'all');
-}
-
-function updateSelCount() {
-  document.getElementById('selCount').textContent = selected.size;
-}
-
-function filterTmpl(f, pill) {
-  document.querySelectorAll('#tmplFilters .pill').forEach(p => p.classList.remove('active'));
-  pill.classList.add('active');
-  renderTemplates(f);
-}
-
-/* ═══ API KEY ═══ */
-function toggleApiKey() {
-  const inp = document.getElementById('dna-apikey');
-  const btn = document.getElementById('apiToggle');
-  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'hide'; }
-  else { inp.type = 'password'; btn.textContent = 'show'; }
-}
-
-function getApiKey() { return document.getElementById('dna-apikey').value.trim(); }
-function getModel() { return document.getElementById('dna-model').value; }
-function getRatio() { return document.getElementById('dna-ratio').value; }
-
-function buildPrompt(t) {
-  const photo = document.getElementById('dna-photo').value.trim();
-  const modifier = document.getElementById('dna-modifier').value.trim();
-  const colours = [...document.querySelectorAll('.colour-chip.selected')].map(c => c.title).join(', ');
-  const brand = document.getElementById('dna-brand').value.trim();
-  const ratio = getRatio();
-  const dims = ratio === '1:1' ? '1080x1080 square format' : '1080x1350 portrait format';
-  return `${t.prompt} ${photo} Brand colours — use prominently: ${colours}. ${modifier} ${dims}.`;
-}
-
-/* ═══ GENERATION ═══ */
-let generatedImages = {}; // id -> url
-
-async function generateOne(t) {
-  const apiKey = getApiKey();
-  const model = getModel();
-  const ratio = getRatio();
-  const prompt = buildPrompt(t);
-
-  const resp = await fetch(`https://queue.fal.run/${model}`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Key ${apiKey}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      prompt,
-      aspect_ratio: ratio,
-      resolution: '1K',
-      num_images: 1
-    })
-  });
-
-  if (!resp.ok) throw new Error(`API error: ${resp.status}`);
-  const data = await resp.json();
-  const url = data.images?.[0]?.url || data.output?.images?.[0]?.url || null;
-  return url;
-}
-
-async function startGeneration() {
-  if (selected.size === 0) { selected = new Set(T.map(t => t.id)); }
-  const apiKey = getApiKey();
-  const useRealApi = !!apiKey;
-
-  const sel = T.filter(t => selected.has(t.id));
-  const grid = document.getElementById('genGrid');
-  grid.innerHTML = '';
-  sel.forEach(t => {
-    const div = document.createElement('div');
-    div.className = 'gen-card';
-    div.id = 'gen-' + t.id;
-    div.innerHTML = `
-      <div class="gen-img loading" style="background:${t.bg}"></div>
-      <div class="gen-meta">
-        <div class="gm-name">${t.name.toLowerCase()}</div>
-        <div class="gm-status pending">waiting…</div>
-      </div>
-    `;
-    grid.appendChild(div);
-  });
-
-  let done = 0;
-  const total = sel.length;
-  document.getElementById('genFill').style.width = '0%';
-  document.getElementById('genPct').textContent = `0 / ${total}`;
-  document.getElementById('genDone').classList.add('hidden');
-  document.querySelector('#genStatus p').textContent = useRealApi
-    ? 'sending prompts to ' + getModel() + ' via fal.ai'
-    : 'no api key — running in demo mode with placeholder images';
-
-  for (let i = 0; i < total; i++) {
-    const t = sel[i];
-    const card = document.getElementById('gen-' + t.id);
-    if (!card) continue;
-
-    // mark as running
-    card.querySelector('.gm-status').className = 'gm-status running';
-    card.querySelector('.gm-status').textContent = 'generating…';
-
-    try {
-      if (useRealApi) {
-        const url = await generateOne(t);
-        if (url) {
-          generatedImages[t.id] = url;
-          const img = card.querySelector('.gen-img');
-          img.classList.remove('loading');
-          img.style.background = `url(${url}) center/cover`;
-          img.textContent = '';
-        }
-      } else {
-        // demo mode — simulate delay
-        await new Promise(r => setTimeout(r, 400));
-        const img = card.querySelector('.gen-img');
-        img.classList.remove('loading');
-        img.textContent = t.name.toLowerCase();
+      // Show selected section
+      const selectedSection = document.querySelector(`[data-template="${templateName}"]`);
+      if (selectedSection) {
+        selectedSection.style.display = 'block';
       }
-      card.querySelector('.gm-status').className = 'gm-status done';
-      card.querySelector('.gm-status').textContent = 'done';
-    } catch (err) {
-      card.querySelector('.gm-status').className = 'gm-status';
-      card.querySelector('.gm-status').textContent = 'error: ' + err.message;
-      card.querySelector('.gm-status').style.color = 'var(--red-text)';
+
+      // Update active state
+      sidebarLinks.forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+
+      // Scroll to top of content
+      document.querySelector('.main-content').scrollTop = 0;
+    });
+  });
+
+  // Show first template on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    const firstLink = document.querySelector('.sidebar-group a');
+    if (firstLink) {
+      firstLink.click();
     }
-
-    done++;
-    document.getElementById('genFill').style.width = (done/total*100) + '%';
-    document.getElementById('genPct').textContent = `${done} / ${total}`;
-  }
-
-  document.getElementById('genDone').classList.remove('hidden');
-}
-
-/* ═══ REVIEW ═══ */
-function renderReview(filter='all') {
-  const sel = T.filter(t => selected.has(t.id));
-  const container = document.getElementById('reviewGroups');
-  container.innerHTML = '';
-  document.getElementById('rvTmplCt').textContent = sel.length;
-
-  const list = sel.filter(t => {
-    if (filter === 'all') return true;
-    if (filter === 'great' || filter === 'good') return t.rating === filter;
-    const fb = feedback[t.name];
-    if (filter === 'ship' || filter === 'tweak' || filter === 'redo') return fb && fb.type === filter;
-    if (filter === 'unrated') return !fb;
-    return true;
   });
-
-  list.forEach((t, i) => {
-    const open = i < 3;
-    const cc = catColours[t.cat] || catColours.lifestyle;
-    const fb = feedback[t.name];
-    const div = document.createElement('div');
-    div.className = 'rg';
-    div.innerHTML = `
-      <div class="rg-head ${open?'open':''}" onclick="toggleRg(this)">
-        <div class="rg-left">
-          <span class="rg-name">${t.name}</span>
-          <span class="tag" style="background:${cc.bg};color:${cc.color};font-size:9px;padding:1px 6px">${t.cat}</span>
-          <span class="tag tag-${t.rating==='great'?'green':'blue'}" style="font-size:9px;padding:1px 6px">${t.rating}</span>
-        </div>
-        <div class="rg-right">
-          <span class="rg-ver">1 version</span>
-          <div class="rg-dot ${fb?'rated':''}"></div>
-          <svg class="chev" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
-        </div>
-      </div>
-      <div class="rg-body ${open?'open':''}">
-        <div class="rg-prompt">
-          <div class="rg-prompt-label">prompt</div>
-          <div class="rg-prompt-text">${t.prompt}</div>
-        </div>
-        <div class="rg-versions">
-          <div class="rv-card sel">
-            <div class="rv-img" style="background:${generatedImages[t.id] ? `url(${generatedImages[t.id]}) center/cover` : t.bg};position:relative">
-              <span class="rv-label cur">current run</span>
-              ${generatedImages[t.id] ? '' : t.name.toLowerCase()}
-            </div>
-            <div class="rv-meta"><div class="rv-date">${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}).toLowerCase()}</div></div>
-          </div>
-        </div>
-        <div class="rg-fb">
-          <span class="rg-fb-label">verdict</span>
-          <div class="rg-fb-btns">
-            <button class="fbtn ship ${fb&&fb.type==='ship'?'on':''}" onclick="setFb(this,'${t.name}','ship')">ship it</button>
-            <button class="fbtn tweak ${fb&&fb.type==='tweak'?'on':''}" onclick="setFb(this,'${t.name}','tweak')">tweak</button>
-            <button class="fbtn redo ${fb&&fb.type==='redo'?'on':''}" onclick="setFb(this,'${t.name}','redo')">redo</button>
-          </div>
-          <textarea class="rg-fb-note" placeholder="optional note…" data-name="${t.name}" onblur="saveFbNote(this)">${fb&&fb.note||''}</textarea>
-        </div>
-      </div>
-    `;
-    container.appendChild(div);
-  });
-  updateReviewCounts();
-}
-
-function toggleRg(h) { h.classList.toggle('open'); h.nextElementSibling.classList.toggle('open'); }
-
-function setFb(btn, name, type) {
-  btn.closest('.rg-fb-btns').querySelectorAll('.fbtn').forEach(b => b.classList.remove('on'));
-  btn.classList.add('on');
-  if (!feedback[name]) feedback[name] = {};
-  feedback[name].type = type;
-  btn.closest('.rg').querySelector('.rg-dot').className = 'rg-dot rated';
-  updateReviewCounts();
-}
-
-function saveFbNote(el) {
-  const name = el.dataset.name;
-  if (!feedback[name]) feedback[name] = {};
-  feedback[name].note = el.value;
-}
-
-function updateReviewCounts() {
-  const sel = T.filter(t => selected.has(t.id));
-  const total = sel.length;
-  let s=0, tw=0, r=0;
-  sel.forEach(t => { const f=feedback[t.name]; if(f){if(f.type==='ship')s++;if(f.type==='tweak')tw++;if(f.type==='redo')r++;} });
-  const rated = s + tw + r;
-  document.getElementById('rvRated').textContent = `${rated} / ${total}`;
-  document.getElementById('rfShip').textContent = s;
-  document.getElementById('rfTweak').textContent = tw;
-  document.getElementById('rfRedo').textContent = r;
-  document.getElementById('rfUn').textContent = total - rated;
-  document.getElementById('rfAll').textContent = total;
-  document.getElementById('footerTxt').textContent = `${rated} of ${total} rated`;
-  document.getElementById('footerSegs').innerHTML = `
-    <div class="ff ship" style="width:${(s/total)*100}%"></div>
-    <div class="ff tweak" style="width:${(tw/total)*100}%"></div>
-    <div class="ff redo" style="width:${(r/total)*100}%"></div>
-  `;
-}
-
-function filterReview(f, pill) {
-  document.querySelectorAll('#reviewFilters .pill').forEach(p => p.classList.remove('active'));
-  pill.classList.add('active');
-  renderReview(f);
-}
-
-/* ═══ EXPORT ═══ */
-function openExport() {
-  const winners = T.filter(t => selected.has(t.id) && feedback[t.name] && feedback[t.name].type === 'ship');
-  const list = document.getElementById('winnersList');
-  if (winners.length === 0) {
-    list.innerHTML = '<div class="no-win">no winners tagged yet.<em>tag creatives as "ship it" to add them here</em></div>';
-  } else {
-    list.innerHTML = winners.map(w => {
-      const note = feedback[w.name]?.note ? `<div class="wn">note: ${feedback[w.name].note}</div>` : '';
-      return `<div class="wcard">
-        <div class="wthumb" style="background:${w.bg}">${w.name.toLowerCase()}</div>
-        <div class="wdetail">
-          <h4>${w.name}</h4>
-          <div class="wp">${w.prompt}</div>
-          ${note}
-          <div class="wf">
-            <span class="fmt-pill" style="background:var(--sky-blue)">1:1 source</span>
-            <span class="fmt-pill" style="background:var(--blush)">→ 4:5</span>
-            <span class="fmt-pill" style="background:var(--hot-yellow)">→ 9:16</span>
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-  }
-  document.getElementById('exportOverlay').classList.add('open');
-}
-
-function closeExport() { document.getElementById('exportOverlay').classList.remove('open'); }
-
-function downloadBrief() {
-  const winners = T.filter(t => selected.has(t.id) && feedback[t.name] && feedback[t.name].type === 'ship');
-  let md = `# chefly® — designer handoff brief\n\n`;
-  md += `**date:** ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}\n`;
-  md += `**brand:** chefly\n**source:** 1:1 (1080×1080)\n**adapt to:** 4:5 feed, 9:16 story, 9:16 reel\n\n`;
-  md += `## brand kit\n- **palette:** #FF6B2C, #FFD60A, #A8E10C, #FF8FA3, #5CCFFF, #0D0D0D, #FFF6EE\n`;
-  md += `- **display:** syne 800, lowercase\n- **accent:** instrument serif, italic\n- **body:** space grotesk\n- **texture:** paper grain 4%\n\n---\n\n`;
-  md += `## winners (${winners.length})\n\n`;
-  winners.forEach((w,i) => {
-    md += `### ${i+1}. ${w.name}\n**prompt:** ${w.prompt}\n`;
-    if (feedback[w.name]?.note) md += `**note:** ${feedback[w.name].note}\n`;
-    md += `**deliverables:** adapt 1:1 → 4:5, 9:16 story, 9:16 reel. add logo + headline (syne 800) + cta. paper grain.\n\n---\n\n`;
-  });
-  const blob = new Blob([md], { type: 'text/markdown' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'chefly-creative-handoff.md';
-  a.click();
-}
-
-document.getElementById('exportOverlay').addEventListener('click', function(e) { if(e.target===this)closeExport(); });
-
-/* ═══ INIT ═══ */
-document.getElementById('reviewFooter').style.display = 'none';
-T.forEach(t => selected.add(t.id)); // pre-select all
 </script>
+
 </body>
 </html>
