@@ -1095,7 +1095,7 @@ function goStep(n) {
 
   if (n === 2) renderTemplates();
   if (n === 3) renderPromptLab();
-  if (n === 4) startGeneration();
+  if (n === 4) showGeneration();
   if (n === 5) renderReview();
 }
 
@@ -1334,10 +1334,61 @@ async function generateOne(t, statusEl) {
   throw new Error('Generation timed out after 2 minutes');
 }
 
+// Save generated images to localStorage
+function saveGeneratedImages() {
+  try { localStorage.setItem('ck_generated_images', JSON.stringify(generatedImages)); } catch(e) {}
+}
+// Load generated images from localStorage on init
+try {
+  const saved = localStorage.getItem('ck_generated_images');
+  if (saved) generatedImages = JSON.parse(saved);
+} catch(e) {}
+
+let isGenerating = false;
+
+function showGeneration() {
+  if (selected.size === 0) { selected = new Set(T.map(t => t.id)); }
+  const sel = T.filter(t => selected.has(t.id));
+
+  // Check if we have cached images for the current selection
+  const cachedCount = sel.filter(t => generatedImages[t.id]).length;
+
+  if (cachedCount > 0 && !isGenerating) {
+    // Restore cached results
+    const grid = document.getElementById('genGrid');
+    grid.innerHTML = '';
+    sel.forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'gen-card';
+      div.id = 'gen-' + t.id;
+      const hasImg = generatedImages[t.id];
+      div.innerHTML = `
+        <div class="gen-img${hasImg ? '' : ' loading'}" style="${hasImg ? 'background:url(' + hasImg + ') center/cover' : 'background:' + t.bg}"></div>
+        <div class="gen-meta">
+          <div class="gm-name">${t.name.toLowerCase()}</div>
+          <div class="gm-status ${hasImg ? 'done' : 'pending'}">${hasImg ? 'done' : 'not generated'}</div>
+        </div>
+      `;
+      grid.appendChild(div);
+    });
+    document.getElementById('genFill').style.width = (cachedCount/sel.length*100) + '%';
+    document.getElementById('genPct').textContent = `${cachedCount} / ${sel.length}`;
+    document.querySelector('#genStatus p').textContent = cachedCount === sel.length
+      ? 'all images generated — click regenerate to start fresh'
+      : cachedCount + ' of ' + sel.length + ' generated — click regenerate to continue';
+    if (cachedCount === sel.length) document.getElementById('genDone').classList.remove('hidden');
+    else document.getElementById('genDone').classList.add('hidden');
+    return;
+  }
+
+  if (!isGenerating) startGeneration();
+}
+
 async function startGeneration() {
   if (selected.size === 0) { selected = new Set(T.map(t => t.id)); }
   const apiKey = getApiKey();
   const useRealApi = !!apiKey;
+  isGenerating = true;
 
   const sel = T.filter(t => selected.has(t.id));
   const grid = document.getElementById('genGrid');
@@ -1346,27 +1397,30 @@ async function startGeneration() {
     const div = document.createElement('div');
     div.className = 'gen-card';
     div.id = 'gen-' + t.id;
+    // Skip already generated images
+    const hasImg = generatedImages[t.id];
     div.innerHTML = `
-      <div class="gen-img loading" style="background:${t.bg}"></div>
+      <div class="gen-img${hasImg ? '' : ' loading'}" style="${hasImg ? 'background:url(' + hasImg + ') center/cover' : 'background:' + t.bg}"></div>
       <div class="gen-meta">
         <div class="gm-name">${t.name.toLowerCase()}</div>
-        <div class="gm-status pending">waiting…</div>
+        <div class="gm-status ${hasImg ? 'done' : 'pending'}">${hasImg ? 'done' : 'waiting…'}</div>
       </div>
     `;
     grid.appendChild(div);
   });
 
-  let done = 0;
+  const needsGen = sel.filter(t => !generatedImages[t.id]);
+  let done = sel.length - needsGen.length;
   const total = sel.length;
-  document.getElementById('genFill').style.width = '0%';
-  document.getElementById('genPct').textContent = `0 / ${total}`;
+  document.getElementById('genFill').style.width = (done/total*100) + '%';
+  document.getElementById('genPct').textContent = `${done} / ${total}`;
   document.getElementById('genDone').classList.add('hidden');
   document.querySelector('#genStatus p').textContent = useRealApi
     ? 'sending prompts to ' + getModel() + ' via fal.ai'
     : 'no api key — running in demo mode with placeholder images';
 
-  for (let i = 0; i < total; i++) {
-    const t = sel[i];
+  for (let i = 0; i < needsGen.length; i++) {
+    const t = needsGen[i];
     const card = document.getElementById('gen-' + t.id);
     if (!card) continue;
 
@@ -1380,6 +1434,7 @@ async function startGeneration() {
         const url = await generateOne(t, statusEl);
         if (url) {
           generatedImages[t.id] = url;
+          saveGeneratedImages();
           const img = card.querySelector('.gen-img');
           img.classList.remove('loading');
           img.style.background = `url(${url}) center/cover`;
@@ -1405,6 +1460,7 @@ async function startGeneration() {
     document.getElementById('genPct').textContent = `${done} / ${total}`;
   }
 
+  isGenerating = false;
   document.getElementById('genDone').classList.remove('hidden');
 }
 
