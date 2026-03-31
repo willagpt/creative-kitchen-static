@@ -845,7 +845,12 @@
         <div class="gen-track"><div class="gen-fill" id="genFill"></div></div>
         <div class="gen-pct" id="genPct">0 / 0</div>
       </div>
-      <button class="btn-ghost hidden" id="genStopBtn" onclick="stopGeneration()" style="margin-top:12px;color:var(--red-text);border-color:var(--red-text)">⏹ stop generation</button>
+      <div id="genControls" style="display:flex;gap:8px;margin-top:12px;align-items:center">
+        <button class="btn-action" id="genStartBtn" onclick="startGeneration()" style="padding:8px 20px;font-size:13px">▶ start generating</button>
+        <button class="btn-ghost hidden" id="genStopBtn" onclick="stopGeneration()" style="padding:8px 20px;font-size:13px;color:var(--red-text);border-color:var(--red-text)">⏹ stop</button>
+        <button class="btn-ghost hidden" id="genResumeBtn" onclick="startGeneration()" style="padding:8px 20px;font-size:13px">▶ resume</button>
+        <button class="btn-ghost hidden" id="genClearBtn" onclick="clearGenerated()" style="padding:8px 20px;font-size:13px">↺ regenerate all</button>
+      </div>
     </div>
     <div class="gen-grid" id="genGrid"></div>
     <div id="genDone" class="hidden" style="text-align:center;margin-top:24px">
@@ -1351,53 +1356,74 @@ try {
 let isGenerating = false;
 let stopRequested = false;
 
+function updateGenButtons() {
+  const sel = T.filter(t => selected.has(t.id));
+  const cachedCount = sel.filter(t => generatedImages[t.id]).length;
+  const allDone = cachedCount === sel.length && sel.length > 0;
+  const someDone = cachedCount > 0 && !allDone;
+
+  document.getElementById('genStartBtn').classList.toggle('hidden', isGenerating || cachedCount > 0);
+  document.getElementById('genStopBtn').classList.toggle('hidden', !isGenerating);
+  document.getElementById('genResumeBtn').classList.toggle('hidden', isGenerating || !someDone);
+  document.getElementById('genClearBtn').classList.toggle('hidden', cachedCount === 0);
+}
+
 function stopGeneration() {
   stopRequested = true;
   isGenerating = false;
-  document.getElementById('genStopBtn').classList.add('hidden');
+  updateGenButtons();
   document.querySelector('#genStatus p').textContent = 'generation stopped — completed images are saved';
   document.getElementById('genDone').classList.remove('hidden');
-  // Mark any remaining "waiting…" cards as "stopped"
   document.querySelectorAll('.gm-status.pending').forEach(el => { el.textContent = 'stopped'; });
   document.querySelectorAll('.gm-status.running').forEach(el => { el.textContent = 'stopped'; el.className = 'gm-status'; });
+}
+
+function clearGenerated() {
+  generatedImages = {};
+  saveGeneratedImages();
+  showGeneration();
 }
 
 function showGeneration() {
   if (selected.size === 0) { selected = new Set(T.map(t => t.id)); }
   const sel = T.filter(t => selected.has(t.id));
-
-  // Check if we have cached images for the current selection
   const cachedCount = sel.filter(t => generatedImages[t.id]).length;
+  const total = sel.length;
 
-  if (cachedCount > 0 && !isGenerating) {
-    // Restore cached results
-    const grid = document.getElementById('genGrid');
-    grid.innerHTML = '';
-    sel.forEach(t => {
-      const div = document.createElement('div');
-      div.className = 'gen-card';
-      div.id = 'gen-' + t.id;
-      const hasImg = generatedImages[t.id];
-      div.innerHTML = `
-        <div class="gen-img${hasImg ? '' : ' loading'}" style="${hasImg ? 'background:url(' + hasImg + ') center/cover' : 'background:' + t.bg}"></div>
-        <div class="gen-meta">
-          <div class="gm-name">${t.name.toLowerCase()}</div>
-          <div class="gm-status ${hasImg ? 'done' : 'pending'}">${hasImg ? 'done' : 'not generated'}</div>
-        </div>
-      `;
-      grid.appendChild(div);
-    });
-    document.getElementById('genFill').style.width = (cachedCount/sel.length*100) + '%';
-    document.getElementById('genPct').textContent = `${cachedCount} / ${sel.length}`;
-    document.querySelector('#genStatus p').textContent = cachedCount === sel.length
-      ? 'all images generated — click regenerate to start fresh'
-      : cachedCount + ' of ' + sel.length + ' generated — click regenerate to continue';
-    if (cachedCount === sel.length) document.getElementById('genDone').classList.remove('hidden');
-    else document.getElementById('genDone').classList.add('hidden');
-    return;
+  // Always render the grid with current state
+  const grid = document.getElementById('genGrid');
+  grid.innerHTML = '';
+  sel.forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'gen-card';
+    div.id = 'gen-' + t.id;
+    const hasImg = generatedImages[t.id];
+    div.innerHTML = `
+      <div class="gen-img${hasImg ? '' : ' loading'}" style="${hasImg ? 'background:url(' + hasImg + ') center/cover' : 'background:' + t.bg}"></div>
+      <div class="gen-meta">
+        <div class="gm-name">${t.name.toLowerCase()}</div>
+        <div class="gm-status ${hasImg ? 'done' : 'pending'}">${hasImg ? 'done' : 'not generated'}</div>
+      </div>
+    `;
+    grid.appendChild(div);
+  });
+
+  document.getElementById('genFill').style.width = (cachedCount/total*100) + '%';
+  document.getElementById('genPct').textContent = `${cachedCount} / ${total}`;
+
+  if (cachedCount === total && total > 0) {
+    document.querySelector('#genStatus p').textContent = 'all images generated — use "regenerate all" to start fresh';
+    document.getElementById('genDone').classList.remove('hidden');
+  } else if (cachedCount > 0) {
+    document.querySelector('#genStatus p').textContent = cachedCount + ' of ' + total + ' generated — click resume to continue';
+    document.getElementById('genDone').classList.remove('hidden');
+  } else {
+    document.querySelector('#genStatus p').textContent = 'click start to begin generating images';
+    document.getElementById('genDone').classList.add('hidden');
   }
 
-  if (!isGenerating) startGeneration();
+  updateGenButtons();
+  // Do NOT auto-start — user clicks Start or Resume
 }
 
 async function startGeneration() {
@@ -1406,7 +1432,7 @@ async function startGeneration() {
   const useRealApi = !!apiKey;
   isGenerating = true;
   stopRequested = false;
-  document.getElementById('genStopBtn').classList.remove('hidden');
+  updateGenButtons();
 
   const sel = T.filter(t => selected.has(t.id));
   const grid = document.getElementById('genGrid');
@@ -1480,7 +1506,7 @@ async function startGeneration() {
   }
 
   isGenerating = false;
-  document.getElementById('genStopBtn').classList.add('hidden');
+  updateGenButtons();
   document.getElementById('genDone').classList.remove('hidden');
 }
 
