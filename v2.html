@@ -57,767 +57,772 @@
   .nav-left { display: flex; align-items: center; gap: 10px; }
   .nav h1 {
     font-family: 'Syne', sans-serif; font-weight: 800; font-size: 17px;
-    color: var(--warm-white); margin: 0;
+    letter-spacing: -0.02em;
+    color: var(--cream);
   }
-  .nav a { color: var(--warm-white); text-decoration: none; font-size: 13px; }
-  .nav a:hover { text-decoration: underline; }
+  .nav-right { display: flex; align-items: center; gap: 18px; }
+  .nav-right button { background: var(--cream); color: var(--near-black); border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Space Grotesk', sans-serif; }
+  .nav-right button:hover { background: var(--warm-white); }
 
-  /* ═══ MAIN LAYOUT ═══ */
-  .container { display: flex; gap: 0; min-height: calc(100vh - 47px); }
-  .sidebar {
-    width: 280px; background: var(--warm-grey); padding: 20px; overflow-y: auto;
-    border-right: 1px solid #ccc;
-  }
-  .main-content { flex: 1; padding: 40px; overflow-y: auto; }
+  /* ═══ STEPPER ═══ */
+  .stepper { background: var(--warm-white); padding: 20px 28px; display: flex; gap: 12px; border-bottom: 1px solid var(--warm-grey); overflow-x: auto; }
+  .step { display: flex; flex-direction: column; gap: 4px; cursor: pointer; opacity: 0.4; transition: opacity 0.2s; }
+  .step.active { opacity: 1; }
+  .step span { font-size: 13px; font-weight: 600; letter-spacing: 0.02em; }
+  .step.active span { color: var(--orange); }
+  .step p { font-size: 11px; color: var(--mid-grey); }
 
-  /* ═══ SIDEBAR ═══ */
-  .sidebar h2 {
-    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px;
-    color: var(--near-black);
+  /* ═══ PAGES ═══ */
+  .page { display: none; }
+  .page.active { display: grid; }
+  #brandPage { grid-template-columns: 1fr 1fr; gap: 32px; padding: 32px; }
+  #brandLeft { display: flex; flex-direction: column; gap: 20px; }
+  #brandRight { display: flex; flex-direction: column; gap: 16px; }
+  #dnaPage, #selectPage { padding: 32px; }
+  #selectPage { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; }
+  #promptPage { padding: 32px; display: flex !important; gap: 32px; }
+  #promptLeft { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+  #promptRight { width: 300px; }
+  #genPage { padding: 32px; display: flex !important; flex-direction: column; gap: 24px; }
+  #reviewPage { padding: 32px; display: flex !important; flex-direction: column; gap: 24px; }
+
+  /* ═══ FORM ═══ */
+  .form-group { display: flex; flex-direction: column; gap: 8px; }
+  .form-group label { font-weight: 600; font-size: 13px; letter-spacing: 0.02em; }
+  .form-group input, .form-group textarea, .form-group select {
+    padding: 10px 12px; border: 1px solid var(--warm-grey); border-radius: 4px; font-family: 'Space Grotesk', sans-serif; font-size: 14px;
   }
-  .sidebar-group { margin-bottom: 25px; }
-  .sidebar-group a {
-    display: block; padding: 8px 12px; margin-bottom: 5px;
-    background: var(--warm-white); color: var(--near-black);
-    text-decoration: none; border-radius: 4px; font-size: 13px;
+  .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--orange); }
+  .form-group textarea { resize: vertical; min-height: 100px; }
+  .form-group button { padding: 12px 20px; background: var(--orange); color: var(--cream); border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-family: 'Space Grotesk', sans-serif; }
+  .form-group button:hover { background: var(--orange-dim); }
+  .form-group button.secondary { background: var(--near-black); }
+  .form-group button.secondary:hover { background: var(--mid-grey); }
+
+  /* ═══ CARDS ═══ */
+  .tmpl-card {
+    padding: 16px;
+    background: white;
+    border: 2px solid transparent;
+    border-radius: 6px;
     cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    color: var(--near-black);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
-  .sidebar-group a:hover { background: var(--cream); }
-  .sidebar-group a.active { background: var(--near-black); color: var(--warm-white); }
+  .tmpl-card.selected { border-color: var(--orange); background: #fff5f0; }
+  .tmpl-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+  .tmpl-card-name { font-weight: 600; font-size: 13px; }
+  .tmpl-card-desc { font-size: 12px; color: var(--mid-grey); line-height: 1.4; }
+  .tmpl-card-swatch { height: 60px; border-radius: 4px; margin-top: 4px; }
 
-  /* ═══ CONTENT CARD ═══ */
-  .card {
-    background: var(--warm-white); padding: 30px; border-radius: 8px;
-    margin-bottom: 30px; border: 1px solid var(--warm-grey);
+  /* ═══ TEMPLATE GRID ═══ */
+  .tmpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+
+  /* ═══ GENERATION PAGE ═══ */
+  .gen-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
+  .gen-card {
+    background: white;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   }
-  .card h3 { font-family: 'Instrument Serif', serif; font-size: 22px; margin-bottom: 12px; }
-  .card p { font-size: 15px; line-height: 1.7; margin-bottom: 12px; color: var(--mid-grey); }
-  .card-meta { font-size: 12px; color: var(--mid-grey); margin-top: 15px; }
+  .gen-img { height: 180px; background: var(--warm-grey); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--mid-grey); background-size: cover; background-position: center; }
+  .gen-meta { padding: 12px; border-top: 1px solid var(--warm-grey); }
+  .gen-meta-name { font-weight: 600; font-size: 12px; }
+  .gen-status { font-size: 11px; color: var(--mid-grey); margin-top: 4px; }
+  .gen-status.done { color: var(--green-text); font-weight: 600; }
 
-  /* ═══ BUTTONS ═══ */
-  button, a.btn {
-    background: var(--orange); color: white; border: none; padding: 10px 18px;
-    border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600;
-    text-decoration: none; display: inline-block;
+  /* ═══ REVIEW PAGE ═══ */
+  .rg { border: 1px solid var(--warm-grey); border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
+  .rg-head { padding: 16px; background: var(--warm-white); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+  .rg-left { display: flex; gap: 12px; align-items: center; }
+  .rg-name { font-weight: 600; font-size: 14px; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; }
+  .tag-green { background: var(--green-soft); color: var(--green-text); }
+  .tag-blue { background: var(--sky-blue); color: white; }
+  .rg-right { display: flex; gap: 12px; align-items: center; }
+  .rg-ver { font-size: 12px; color: var(--mid-grey); }
+  .rg-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warm-grey); }
+  .rg-dot.rated { background: var(--orange); }
+  .chev { width: 20px; color: var(--mid-grey); }
+  .rg-head.open .chev { transform: rotate(180deg); }
+  .rg-body { display: none; padding: 20px; border-top: 1px solid var(--warm-grey); }
+  .rg-body.open { display: block; }
+  .rg-prompt { margin-bottom: 20px; }
+  .rg-prompt-label { font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: var(--mid-grey); margin-bottom: 6px; }
+  .rg-prompt-text { font-size: 14px; line-height: 1.6; color: var(--near-black); }
+  .rg-versions { display: flex; gap: 16px; margin-bottom: 20px; overflow-x: auto; }
+  .rv-card { background: white; border: 1px solid var(--warm-grey); border-radius: 6px; overflow: hidden; width: 200px; flex-shrink: 0; }
+  .rv-card.sel { border-color: var(--orange); }
+  .rv-img { height: 200px; background: var(--warm-grey); display: flex; align-items: flex-end; position: relative; background-size: cover; background-position: center; }
+  .rv-label { position: absolute; top: 8px; left: 8px; background: var(--near-black); color: var(--cream); font-size: 9px; padding: 4px 8px; border-radius: 3px; font-weight: 600; }
+  .rv-label.cur { background: var(--orange); }
+  .rv-meta { padding: 12px; border-top: 1px solid var(--warm-grey); }
+  .rv-date { font-size: 12px; color: var(--mid-grey); }
+  .rg-fb { background: var(--warm-white); padding: 16px; border-radius: 6px; }
+  .rg-fb-label { font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: var(--mid-grey); display: block; margin-bottom: 8px; }
+  .rg-fb-btns { display: flex; gap: 8px; margin-bottom: 12px; }
+  .fbtn { padding: 8px 12px; border: 1px solid var(--warm-grey); background: white; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .fbtn.ship { border-color: var(--green-text); }
+  .fbtn.ship.on { background: var(--green-soft); color: var(--green-text); }
+  .fbtn.tweak { border-color: var(--orange); }
+  .fbtn.tweak.on { background: #fff5f0; color: var(--orange); }
+  .fbtn.redo { border-color: var(--red-text); }
+  .fbtn.redo.on { background: var(--red-soft); color: var(--red-text); }
+  .rg-fb-note { width: 100%; padding: 8px; border: 1px solid var(--warm-grey); border-radius: 4px; font-family: 'Space Grotesk', sans-serif; font-size: 12px; resize: vertical; min-height: 60px; }
+  .no-win { text-align: center; padding: 32px 20px; color: var(--mid-grey); }
+  .no-win em { display: block; margin-top: 8px; font-style: italic; font-size: 12px; }
+
+  /* ═══ EXPORT ═══ */
+  .export-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+  .export-overlay.open { display: flex; }
+  .export-modal { background: white; border-radius: 8px; width: 90%; max-width: 700px; max-height: 80vh; display: flex; flex-direction: column; }
+  .export-header { padding: 24px; border-bottom: 1px solid var(--warm-grey); display: flex; justify-content: space-between; align-items: center; }
+  .export-header h2 { font-size: 18px; font-weight: 700; }
+  .export-close { background: none; border: none; font-size: 24px; cursor: pointer; }
+  .export-content { flex: 1; overflow-y: auto; padding: 24px; }
+  .wcard {
+    background: var(--warm-white);
+    padding: 16px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 16px;
   }
-  button:hover, a.btn:hover { background: var(--orange-dim); }
-  button.secondary { background: var(--warm-grey); color: var(--near-black); }
-  button.secondary:hover { background: #d9d3cc; }
+  .wthumb { width: 80px; height: 80px; background: var(--warm-grey); border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--mid-grey); }
+  .wdetail { flex: 1; }
+  .wdetail h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .wp { font-size: 12px; color: var(--mid-grey); margin-bottom: 8px; line-height: 1.4; }
+  .wn { font-size: 12px; color: var(--mid-grey); margin-bottom: 8px; }
+  .wf { display: flex; gap: 8px; flex-wrap: wrap; }
+  .fmt-pill { display: inline-block; padding: 4px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; color: white; }
+  .export-footer { padding: 20px 24px; border-top: 1px solid var(--warm-grey); display: flex; gap: 12px; justify-content: flex-end; }
+  .export-footer button { padding: 10px 20px; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-family: 'Space Grotesk', sans-serif; }
+  .export-footer button.primary { background: var(--orange); color: white; }
+  .export-footer button.secondary { background: var(--warm-grey); color: var(--near-black); }
 
-  /* ═══ FORMS ═══ */
-  input, textarea {
-    width: 100%; padding: 10px 12px; margin-bottom: 15px;
-    border: 1px solid var(--warm-grey); border-radius: 4px;
-    font-family: 'Space Grotesk', sans-serif; font-size: 14px;
-  }
-  input:focus, textarea:focus { outline: none; border-color: var(--orange); }
-  label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; }
-
-  /* ═══ ALERTS ═══ */
-  .alert {
-    padding: 12px 15px; margin-bottom: 15px; border-radius: 4px; font-size: 13px;
-  }
-  .alert.success { background: var(--green-soft); color: var(--green-text); border-left: 4px solid #28a745; }
-  .alert.error { background: var(--red-soft); color: var(--red-text); border-left: 4px solid #dc3545; }
-
-  /* ═══ TYPOGRAPHY ═══ */
-  h1 { font-family: 'Instrument Serif', serif; font-size: 36px; margin-bottom: 20px; }
-  h2 { font-family: 'Instrument Serif', serif; font-size: 28px; margin-bottom: 15px; }
-  h3 { font-family: 'Instrument Serif', serif; font-size: 22px; margin-bottom: 10px; }
-  h4 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-
-  /* ═══ TABLE ═══ */
-  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-  thead { background: var(--warm-grey); }
-  th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; font-size: 14px; }
-  tr:hover { background: var(--cream); }
-
-  /* ═══ UTILITY ═══ */
-  .mt { margin-top: 20px; }
-  .mb { margin-bottom: 20px; }
-  .text-muted { color: var(--mid-grey); }
-  .text-center { text-align: center; }
-  .hidden { display: none; }
+  /* ═══ MISC ═══ */
+  .hidden { display: none !important; }
+  .pill { display: inline-block; padding: 6px 12px; background: var(--warm-white); border: 1px solid var(--warm-grey); border-radius: 4px; font-size: 12px; cursor: pointer; }
+  .pill.active { background: var(--orange); color: white; border-color: var(--orange); }
+  #reviewFilters { display: flex; gap: 8px; margin-bottom: 20px; }
+  #reviewCounts { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .count-card { background: var(--warm-white); padding: 16px; border-radius: 6px; }
+  .count-label { font-size: 11px; color: var(--mid-grey); font-weight: 600; margin-bottom: 4px; }
+  .count-value { font-size: 24px; font-weight: 700; }
+  .gen-progress { display: flex; gap: 16px; margin-bottom: 20px; }
+  .gen-progress-bar { flex: 1; height: 24px; background: var(--warm-white); border-radius: 4px; overflow: hidden; }
+  #genFill { height: 100%; background: var(--orange); width: 0%; transition: width 0.3s; }
+  #genPct { font-size: 14px; font-weight: 600; min-width: 60px; }
+  #genDone { display: flex; gap: 12px; flex-direction: column; }
+  .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .review-header h2 { font-size: 18px; font-weight: 700; }
+  .footer { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: var(--near-black); display: flex; align-items: center; padding: 0 28px; gap: 16px; }
+  .footer button { padding: 10px 20px; background: var(--orange); color: var(--cream); border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-family: 'Space Grotesk', sans-serif; }
+  .footer button:hover { background: var(--orange-dim); }
+  .footer p { color: var(--cream); flex: 1; font-size: 12px; }
+  .footer-segs { display: flex; height: 4px; gap: 1px; flex: 0 0 200px; }
+  .ff { flex: 1; border-radius: 2px; }
+  .ff.ship { background: var(--green-text); }
+  .ff.tweak { background: var(--orange); }
+  .ff.redo { background: var(--red-text); }
+  #main { padding-bottom: 80px; }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
-<div class="nav">
+<nav class="nav">
   <div class="nav-left">
-    <h1>chefly®</h1>
+    <h1>chefly® creative kitchen</h1>
   </div>
-  <div>
-    <a href="#logout">Logout</a>
+  <div class="nav-right">
+    <button onclick="toggleApiKey()">api key</button>
+    <button onclick="openExport()">export</button>
   </div>
+</nav>
+
+<div class="stepper" id="stepper">
+  <div class="step active" onclick="goStep(0)"><span>1. brand</span><p>scan your brand</p></div>
+  <div class="step" onclick="goStep(1)"><span>2. dna</span><p>set creative direction</p></div>
+  <div class="step" onclick="goStep(2)"><span>3. templates</span><p>select ad layouts</p></div>
+  <div class="step" onclick="goStep(3)"><span>4. prompts</span><p>edit generation prompts</p></div>
+  <div class="step" onclick="goStep(4)"><span>5. generate</span><p>run fal.ai batch</p></div>
+  <div class="step" onclick="goStep(5)"><span>6. review</span><p>rate & select winners</p></div>
 </div>
 
-<!-- MAIN LAYOUT -->
-<div class="container">
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <h2>Kitchen Templates</h2>
-    <div class="sidebar-group">
-      <a href="#" data-template="roasted-vegetables">Roasted Vegetables</a>
-      <a href="#" data-template="chicken-marinade">Chicken Marinade</a>
-      <a href="#" data-template="pasta-sauce">Pasta Sauce</a>
-      <a href="#" data-template="grilled-fish">Grilled Fish</a>
-      <a href="#" data-template="stir-fry">Stir Fry</a>
-      <a href="#" data-template="salad-dressing">Salad Dressing</a>
-      <a href="#" data-template="soup-base">Soup Base</a>
-      <a href="#" data-template="baked-goods">Baked Goods</a>
-      <a href="#" data-template="breakfast-bowls">Breakfast Bowls</a>
-      <a href="#" data-template="desserts">Desserts</a>
-      <a href="#" data-template="smoothies">Smoothies</a>
-      <a href="#" data-template="appetizers">Appetizers</a>
-      <a href="#" data-template="main-courses">Main Courses</a>
-      <a href="#" data-template="sides">Sides</a>
-      <a href="#" data-template="sauces">Sauces</a>
-      <a href="#" data-template="beverages">Beverages</a>
-      <a href="#" data-template="preserves">Preserves</a>
-      <a href="#" data-template="seasonings">Seasonings</a>
-      <a href="#" data-template="condiments">Condiments</a>
-      <a href="#" data-template="snacks">Snacks</a>
-      <a href="#" data-template="meal-prep">Meal Prep</a>
-      <a href="#" data-template="cooking-methods">Cooking Methods</a>
-      <a href="#" data-template="kitchen-tips">Kitchen Tips</a>
-      <a href="#" data-template="food-storage">Food Storage</a>
+<div id="main">
+  <!-- BRAND PAGE -->
+  <div id="brandPage" class="page active">
+    <div id="brandLeft">
+      <div class="form-group">
+        <label>brand url</label>
+        <input type="text" id="brandUrl" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label>brand name</label>
+        <input type="text" id="brandName" placeholder="e.g., chefly">
+      </div>
+      <div class="form-group">
+        <label>product category</label>
+        <input type="text" id="productCat" placeholder="e.g., meal delivery">
+      </div>
+      <div class="form-group">
+        <button onclick="goStep(1)">next: creative direction</button>
+      </div>
+    </div>
+    <div id="brandRight">
+      <div class="form-group">
+        <label>brand analysis</label>
+        <div id="brandOutput" style="font-size: 13px; color: var(--mid-grey); line-height: 1.6;">scan a brand url to auto-fill key attributes</div>
+        <button class="secondary" style="margin-top: 12px;" onclick="scanBrand()">scan now</button>
+      </div>
     </div>
   </div>
 
-  <!-- MAIN CONTENT -->
-  <div class="main-content">
-    <h1>Creative Kitchen Static Template Library</h1>
-    <p class="text-muted">Select a template from the left sidebar to view its details and customize it.</p>
-
-    <!-- TEMPLATES CONTAINER -->
-    <div id="templates-container">
-      <!-- ROASTED VEGETABLES -->
-      <div class="template-section" data-template="roasted-vegetables" style="display: none;">
-        <div class="card">
-          <h3>Roasted Vegetables</h3>
-          <p>Perfect for weeknight dinners. Toss your favorite vegetables in olive oil and roasted until caramelized.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 10 minutes | <strong>Cook Time:</strong> 25 minutes | <strong>Serves:</strong> 4</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>2 cups assorted vegetables (broccoli, carrots, bell peppers)</li>
-            <li>3 tablespoons olive oil</li>
-            <li>Salt and pepper to taste</li>
-            <li>1 teaspoon garlic powder</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Preheat oven to 400°F</li>
-            <li>Toss vegetables with olive oil and seasonings</li>
-            <li>Spread on baking sheet</li>
-            <li>Roast for 25 minutes until golden</li>
-          </ol>
-        </div>
+  <!-- DNA PAGE -->
+  <div id="dnaPage" class="page">
+    <h2 style="margin-bottom: 20px;">creative direction</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+      <div class="form-group">
+        <label>tone</label>
+        <input type="text" id="dna-tone" placeholder="e.g., playful, premium, urgent">
       </div>
-
-      <!-- CHICKEN MARINADE -->
-      <div class="template-section" data-template="chicken-marinade" style="display: none;">
-        <div class="card">
-          <h3>Chicken Marinade</h3>
-          <p>A versatile marinade that works with any cooking method. Perfect for grilling, baking, or pan-searing.</p>
-          <p class="text-muted"><strong>Marinating Time:</strong> 2-4 hours | <strong>Makes:</strong> 1 cup marinade</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>1/2 cup olive oil</li>
-            <li>1/4 cup balsamic vinegar</li>
-            <li>3 cloves garlic, minced</li>
-            <li>1 tablespoon Dijon mustard</li>
-            <li>2 teaspoons dried herbs (thyme, oregano)</li>
-            <li>Salt and pepper to taste</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Combine all ingredients in a bowl</li>
-            <li>Mix well and taste for balance</li>
-            <li>Pour over chicken and refrigerate</li>
-            <li>Marinate for at least 2 hours</li>
-          </ol>
-        </div>
+      <div class="form-group">
+        <label>visual style</label>
+        <input type="text" id="dna-style" placeholder="e.g., minimalist, bold, vibrant">
       </div>
-
-      <!-- PASTA SAUCE -->
-      <div class="template-section" data-template="pasta-sauce" style="display: none;">
-        <div class="card">
-          <h3>Pasta Sauce</h3>
-          <p>A classic tomato-based sauce that's ready in 30 minutes. Great for any pasta shape.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 5 minutes | <strong>Cook Time:</strong> 25 minutes | <strong>Makes:</strong> 3 cups</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>2 tablespoons olive oil</li>
-            <li>4 cloves garlic, minced</li>
-            <li>1 can (28 oz) crushed tomatoes</li>
-            <li>1 teaspoon dried basil</li>
-            <li>Salt and pepper to taste</li>
-            <li>Pinch of sugar</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Heat olive oil in a large pot</li>
-            <li>Sauté garlic until fragrant</li>
-            <li>Add crushed tomatoes and seasonings</li>
-            <li>Simmer for 20 minutes, stirring occasionally</li>
-          </ol>
-        </div>
+      <div class="form-group">
+        <label>color palette</label>
+        <input type="text" id="dna-colors" placeholder="e.g., warm oranges, sky blues">
       </div>
-
-      <!-- GRILLED FISH -->
-      <div class="template-section" data-template="grilled-fish" style="display: none;">
-        <div class="card">
-          <h3>Grilled Fish</h3>
-          <p>A light and healthy option that's perfect for summer grilling. Works best with firm white fish.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 10 minutes | <strong>Cook Time:</strong> 12 minutes | <strong>Serves:</strong> 2</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>2 fish fillets (salmon, halibut, or cod)</li>
-            <li>2 tablespoons olive oil</li>
-            <li>Juice of 1 lemon</li>
-            <li>Salt, pepper, and fresh herbs</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Preheat grill to medium-high heat</li>
-            <li>Brush fish with olive oil and lemon juice</li>
-            <li>Season with salt, pepper, and herbs</li>
-            <li>Grill for 6 minutes per side</li>
-          </ol>
-        </div>
+      <div class="form-group">
+        <label>message focus</label>
+        <input type="text" id="dna-message" placeholder="e.g., sustainability, speed, luxury">
       </div>
-
-      <!-- STIR FRY -->
-      <div class="template-section" data-template="stir-fry" style="display: none;">
-        <div class="card">
-          <h3>Stir Fry</h3>
-          <p>Quick, healthy, and customizable. Perfect for using up vegetables in your fridge.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 15 minutes | <strong>Cook Time:</strong> 10 minutes | <strong>Serves:</strong> 3</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>3 cups mixed vegetables (snap peas, carrots, broccoli)</li>
-            <li>1 pound protein (chicken, shrimp, or tofu)</li>
-            <li>3 cloves garlic, minced</li>
-            <li>3 tablespoons soy sauce</li>
-            <li>2 tablespoons sesame oil</li>
-            <li>1 teaspoon ginger, minced</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Heat wok or large skillet over high heat</li>
-            <li>Cook protein first, set aside</li>
-            <li>Stir fry vegetables for 5 minutes</li>
-            <li>Return protein, add soy sauce and sesame oil</li>
-            <li>Toss everything together and serve</li>
-          </ol>
-        </div>
+    </div>
+    <div style="margin-top: 32px;">
+      <div class="form-group">
+        <label>additional notes</label>
+        <textarea id="dna-notes" placeholder="any other creative direction..."></textarea>
       </div>
+    </div>
+    <div style="display: flex; gap: 12px; margin-top: 20px;">
+      <button class="secondary" onclick="goStep(1)">back</button>
+      <button onclick="goStep(2)">next: select templates</button>
+    </div>
+  </div>
 
-      <!-- SALAD DRESSING -->
-      <div class="template-section" data-template="salad-dressing" style="display: none;">
-        <div class="card">
-          <h3>Salad Dressing</h3>
-          <p>A versatile vinaigrette that complements any salad. Make it fresh whenever you need it.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 3 minutes | <strong>Makes:</strong> 1/2 cup</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>1/4 cup olive oil</li>
-            <li>2 tablespoons balsamic vinegar</li>
-            <li>1 tablespoon red wine vinegar</li>
-            <li>1 teaspoon Dijon mustard</li>
-            <li>1 clove garlic, minced</li>
-            <li>Salt and pepper to taste</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Combine all ingredients in a jar</li>
-            <li>Shake vigorously until emulsified</li>
-            <li>Taste and adjust seasonings</li>
-            <li>Use immediately or store in refrigerator</li>
-          </ol>
-        </div>
-      </div>
+  <!-- SELECT PAGE -->
+  <div id="selectPage" class="page">
+  </div>
 
-      <!-- SOUP BASE -->
-      <div class="template-section" data-template="soup-base" style="display: none;">
-        <div class="card">
-          <h3>Soup Base</h3>
-          <p>A foundational recipe that you can customize with your favorite vegetables and proteins.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 10 minutes | <strong>Cook Time:</strong> 30 minutes | <strong>Makes:</strong> 6 cups</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>2 tablespoons olive oil</li>
-            <li>1 onion, diced</li>
-            <li>3 cloves garlic, minced</li>
-            <li>4 cups broth (vegetable or chicken)</li>
-            <li>2 cups diced vegetables</li>
-            <li>Salt and pepper to taste</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Heat olive oil in a large pot</li>
-            <li>Sauté onion and garlic until softened</li>
-            <li>Add broth and vegetables</li>
-            <li>Simmer for 20 minutes until vegetables are tender</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- BAKED GOODS -->
-      <div class="template-section" data-template="baked-goods" style="display: none;">
-        <div class="card">
-          <h3>Baked Goods</h3>
-          <p>A basic formula for cookies, cakes, and breads. Perfect for experimenting with flavors.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 15 minutes | <strong>Cook Time:</strong> 20 minutes</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>2 cups all-purpose flour</li>
-            <li>1 cup butter, softened</li>
-            <li>1 cup sugar</li>
-            <li>2 eggs</li>
-            <li>1 teaspoon vanilla extract</li>
-            <li>1 teaspoon baking powder</li>
-            <li>Salt to taste</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Preheat oven to 350°F</li>
-            <li>Cream butter and sugar together</li>
-            <li>Add eggs and vanilla extract</li>
-            <li>Mix in flour, baking powder, and salt</li>
-            <li>Bake for 20 minutes until golden</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- BREAKFAST BOWLS -->
-      <div class="template-section" data-template="breakfast-bowls" style="display: none;">
-        <div class="card">
-          <h3>Breakfast Bowls</h3>
-          <p>Start your day with a nutritious and delicious breakfast bowl. Mix and match your favorite toppings.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 5 minutes | <strong>Serves:</strong> 1</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>1 cup cooked oatmeal or granola</li>
-            <li>1/2 cup Greek yogurt</li>
-            <li>1/2 cup fresh berries</li>
-            <li>2 tablespoons nut butter</li>
-            <li>1 tablespoon honey</li>
-            <li>Pinch of cinnamon</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Place oatmeal or granola in a bowl</li>
-            <li>Top with Greek yogurt</li>
-            <li>Add fresh berries and nut butter</li>
-            <li>Drizzle with honey and sprinkle cinnamon</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- DESSERTS -->
-      <div class="template-section" data-template="desserts" style="display: none;">
-        <div class="card">
-          <h3>Desserts</h3>
-          <p>Indulge with these sweet treats. Perfect for special occasions or weekend baking.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 20 minutes | <strong>Cook Time:</strong> 30 minutes</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>2 cups all-purpose flour</li>
-            <li>3/4 cup butter, softened</li>
-            <li>3/4 cup sugar</li>
-            <li>2 eggs</li>
-            <li>1 teaspoon vanilla extract</li>
-            <li>1/2 cup cocoa powder (optional)</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Preheat oven to 325°F</li>
-            <li>Cream butter and sugar</li>
-            <li>Beat in eggs and vanilla</li>
-            <li>Fold in flour and cocoa</li>
-            <li>Bake for 30 minutes until set</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- SMOOTHIES -->
-      <div class="template-section" data-template="smoothies" style="display: none;">
-        <div class="card">
-          <h3>Smoothies</h3>
-          <p>Refreshing drinks that double as a healthy breakfast or post-workout snack.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 2 minutes | <strong>Serves:</strong> 1-2</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>1 cup frozen fruit (berries, mango, or pineapple)</li>
-            <li>1/2 cup Greek yogurt</li>
-            <li>1/2 cup milk (dairy or non-dairy)</li>
-            <li>1 tablespoon honey</li>
-            <li>1/2 tablespoon nut butter (optional)</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Add frozen fruit to blender</li>
-            <li>Add yogurt, milk, and honey</li>
-            <li>Blend until smooth</li>
-            <li>Pour into glasses and serve immediately</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- APPETIZERS -->
-      <div class="template-section" data-template="appetizers" style="display: none;">
-        <div class="card">
-          <h3>Appetizers</h3>
-          <p>Crowd-pleasing starters that are easy to prepare and impress your guests.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 15 minutes | <strong>Makes:</strong> 12 pieces</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>1 cup cream cheese, softened</li>
-            <li>1/2 cup cheddar cheese, shredded</li>
-            <li>2 tablespoons fresh herbs</li>
-            <li>Salt and pepper to taste</li>
-            <li>Crackers or vegetable sticks for serving</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Mix cream cheese and cheddar until smooth</li>
-            <li>Fold in fresh herbs and seasonings</li>
-            <li>Transfer to serving dish</li>
-            <li>Serve with crackers or vegetables</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- MAIN COURSES -->
-      <div class="template-section" data-template="main-courses" style="display: none;">
-        <div class="card">
-          <h3>Main Courses</h3>
-          <p>Satisfying dishes that come together in under an hour. Perfect for weeknight dinners.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 20 minutes | <strong>Cook Time:</strong> 30 minutes | <strong>Serves:</strong> 4</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>1.5 pounds protein of choice</li>
-            <li>2 cups vegetables, chopped</li>
-            <li>2 cloves garlic, minced</li>
-            <li>1 cup sauce or broth</li>
-            <li>2 tablespoons cooking oil</li>
-            <li>Salt and pepper to taste</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Heat oil in a large pan</li>
-            <li>Brown the protein on all sides</li>
-            <li>Remove and set aside</li>
-            <li>Sauté vegetables and garlic</li>
-            <li>Return protein, add sauce, and simmer</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- SIDES -->
-      <div class="template-section" data-template="sides" style="display: none;">
-        <div class="card">
-          <h3>Sides</h3>
-          <p>Complement your main course with these versatile side dishes.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 10 minutes | <strong>Cook Time:</strong> 20 minutes | <strong>Serves:</strong> 4</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>4 cups base ingredient (potatoes, rice, or pasta)</li>
-            <li>2 tablespoons butter or oil</li>
-            <li>1/2 cup broth or cream</li>
-            <li>Salt and pepper to taste</li>
-            <li>Fresh herbs for garnish</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Prepare base ingredient according to package</li>
-            <li>Heat butter or oil in a separate pan</li>
-            <li>Add seasonings and broth</li>
-            <li>Mix with cooked base ingredient</li>
-            <li>Garnish with fresh herbs before serving</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- SAUCES -->
-      <div class="template-section" data-template="sauces" style="display: none;">
-        <div class="card">
-          <h3>Sauces</h3>
-          <p>Elevate your dishes with these flavorful sauces. Great for dipping or drizzling.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 5 minutes | <strong>Cook Time:</strong> 10 minutes | <strong>Makes:</strong> 1 cup</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>1/2 cup base liquid (oil, vinegar, or cream)</li>
-            <li>2 tablespoons flavor ingredient (mustard, garlic, etc.)</li>
-            <li>1 tablespoon sweetener (sugar, honey)</li>
-            <li>Salt and pepper to taste</li>
-            <li>Optional: spices and herbs</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Combine base liquid with flavor ingredient</li>
-            <li>Whisk in sweetener</li>
-            <li>Season with salt, pepper, and spices</li>
-            <li>Store in an airtight container in the refrigerator</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- BEVERAGES -->
-      <div class="template-section" data-template="beverages" style="display: none;">
-        <div class="card">
-          <h3>Beverages</h3>
-          <p>Quench your thirst with these refreshing drinks. Perfect for any time of day.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 5 minutes | <strong>Serves:</strong> 2</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>2 cups base liquid (water, juice, or tea)</li>
-            <li>1/4 cup flavoring (fruit, herbs, or extracts)</li>
-            <li>1-2 tablespoons sweetener</li>
-            <li>Ice cubes</li>
-            <li>Optional: sparkling water for fizz</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Prepare base liquid</li>
-            <li>Add flavoring and sweetener</li>
-            <li>Stir well to combine</li>
-            <li>Pour over ice and serve immediately</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- PRESERVES -->
-      <div class="template-section" data-template="preserves" style="display: none;">
-        <div class="card">
-          <h3>Preserves</h3>
-          <p>Make your own jams and preserves at home. Perfect for gifts or personal use.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 30 minutes | <strong>Cook Time:</strong> 1 hour | <strong>Makes:</strong> 4 jars</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>4 cups fruit of choice</li>
-            <li>2 cups sugar</li>
-            <li>2 tablespoons lemon juice</li>
-            <li>1/2 teaspoon pectin (optional)</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Combine fruit, sugar, and lemon juice</li>
-            <li>Bring to a boil over medium-high heat</li>
-            <li>Reduce heat and simmer until thickened</li>
-            <li>Pour into sterilized jars and seal</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- SEASONINGS -->
-      <div class="template-section" data-template="seasonings" style="display: none;">
-        <div class="card">
-          <h3>Seasonings</h3>
-          <p>Create your own spice blends to flavor all your favorite dishes.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 10 minutes | <strong>Makes:</strong> 1/4 cup</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>2 tablespoons base spice (paprika, cumin, etc.)</li>
-            <li>1 tablespoon secondary spice (garlic powder, onion powder)</li>
-            <li>1 teaspoon optional spice (cayenne, oregano)</li>
-            <li>Salt and pepper to taste</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Combine all spices in a bowl</li>
-            <li>Mix until well blended</li>
-            <li>Transfer to an airtight container</li>
-            <li>Use as needed in your favorite recipes</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- CONDIMENTS -->
-      <div class="template-section" data-template="condiments" style="display: none;">
-        <div class="card">
-          <h3>Condiments</h3>
-          <p>Make your own condiments at home. Great for adding flavor to any meal.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 15 minutes | <strong>Makes:</strong> 1 cup</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>1/2 cup primary ingredient (mayo, mustard, etc.)</li>
-            <li>1/4 cup flavor addition (pickle juice, hot sauce)</li>
-            <li>1 tablespoon sweetener or acid (sugar, vinegar)</li>
-            <li>Salt and pepper to taste</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Mix primary ingredient with flavor addition</li>
-            <li>Add sweetener and season to taste</li>
-            <li>Store in a jar in the refrigerator</li>
-            <li>Use within 2-3 weeks for best flavor</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- SNACKS -->
-      <div class="template-section" data-template="snacks" style="display: none;">
-        <div class="card">
-          <h3>Snacks</h3>
-          <p>Quick and satisfying snacks for any time of day. Easy to prepare and perfect for on-the-go.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 10 minutes | <strong>Makes:</strong> 1-2 servings</p>
-          <h4>Ingredients:</h4>
-          <ul>
-            <li>1 cup base ingredient (nuts, popcorn, fruit)</li>
-            <li>2 tablespoons flavor ingredient (dried fruit, chocolate)</li>
-            <li>1 tablespoon seasoning or coating</li>
-            <li>Pinch of salt</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Combine base ingredient with flavor addition</li>
-            <li>Add seasoning and toss well</li>
-            <li>Spread on a baking sheet if toasting</li>
-            <li>Bake at 300°F for 10-15 minutes if desired</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- MEAL PREP -->
-      <div class="template-section" data-template="meal-prep" style="display: none;">
-        <div class="card">
-          <h3>Meal Prep</h3>
-          <p>Prepare a week's worth of meals in advance. Perfect for busy schedules and healthy eating.</p>
-          <p class="text-muted"><strong>Prep Time:</strong> 2 hours | <strong>Servings:</strong> 5</p>
-          <h4>Components:</h4>
-          <ul>
-            <li>2 cups cooked protein (chicken, beans, tofu)</li>
-            <li>3 cups roasted vegetables</li>
-            <li>2 cups cooked grains (rice, quinoa)</li>
-            <li>1 cup sauce or dressing for flavor</li>
-          </ul>
-          <h4>Instructions:</h4>
-          <ol>
-            <li>Prepare protein according to preference</li>
-            <li>Roast vegetables until tender</li>
-            <li>Cook grains according to package directions</li>
-            <li>Divide into containers and refrigerate</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- COOKING METHODS -->
-      <div class="template-section" data-template="cooking-methods" style="display: none;">
-        <div class="card">
-          <h3>Cooking Methods</h3>
-          <p>Master different cooking techniques to expand your culinary skills.</p>
-          <p class="text-muted"><strong>Learn:</strong> Various techniques for different outcomes</p>
-          <h4>Methods Covered:</h4>
-          <ul>
-            <li><strong>Roasting:</strong> High heat to develop flavor</li>
-            <li><strong>Braising:</strong> Slow cooking in liquid</li>
-            <li><strong>Steaming:</strong> Gentle, healthy cooking</li>
-            <li><strong>Sautéing:</strong> Quick cooking over medium-high heat</li>
-            <li><strong>Grilling:</strong> Outdoor or stovetop heat</li>
-          </ul>
-          <h4>Tips:</h4>
-          <ol>
-            <li>Match cooking method to ingredient type</li>
-            <li>Always preheat equipment as needed</li>
-            <li>Use a timer to prevent overcooking</li>
-            <li>Let proteins rest after cooking</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- KITCHEN TIPS -->
-      <div class="template-section" data-template="kitchen-tips" style="display: none;">
-        <div class="card">
-          <h3>Kitchen Tips</h3>
-          <p>Helpful tricks and techniques to improve your cooking and save time in the kitchen.</p>
-          <p class="text-muted"><strong>Explore:</strong> Practical advice from experienced cooks</p>
-          <h4>Essential Tips:</h4>
-          <ul>
-            <li>Read the entire recipe before starting</li>
-            <li>Mise en place: prep all ingredients first</li>
-            <li>Keep your knives sharp for safety</li>
-            <li>Taste as you cook and adjust seasoning</li>
-            <li>Don't overcrowd the pan when searing</li>
-          </ul>
-          <h4>Time Savers:</h4>
-          <ol>
-            <li>Prep vegetables when you have time</li>
-            <li>Use a slow cooker or instant pot</li>
-            <li>Double recipes and freeze extras</li>
-            <li>Organize your pantry for quick access</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- FOOD STORAGE -->
-      <div class="template-section" data-template="food-storage" style="display: none;">
-        <div class="card">
-          <h3>Food Storage</h3>
-          <p>Proper storage techniques to keep your food fresh and reduce waste.</p>
-          <p class="text-muted"><strong>Learn:</strong> Best practices for different food types</p>
-          <h4>Storage Guidelines:</h4>
-          <ul>
-            <li><strong>Refrigerator:</strong> 35-40°F for most items</li>
-            <li><strong>Freezer:</strong> 0°F or below for long-term storage</li>
-            <li><strong>Pantry:</strong> Cool, dry, and dark for shelf-stable items</li>
-            <li><strong>Vegetables:</strong> Separate ethylene producers from ethylene sensitive items</li>
-          </ul>
-          <h4>Common Timeframes:</h4>
-          <ol>
-            <li>Cooked meals: 3-4 days in refrigerator</li>
-            <li>Raw vegetables: 5-7 days in crisper drawer</li>
-            <li>Frozen items: 2-3 months for best quality</li>
-            <li>Pantry items: Check expiration dates regularly</li>
-          </ol>
+  <!-- PROMPT PAGE -->
+  <div id="promptPage" class="page">
+    <div id="promptLeft">
+      <h2 style="margin-bottom: 20px;">edit prompts</h2>
+      <div id="promptLab"></div>
+    </div>
+    <div id="promptRight">
+      <div style="background: var(--warm-white); padding: 16px; border-radius: 6px; position: sticky; top: 20px;">
+        <div class="form-group">
+          <label>fal.ai api key</label>
+          <input type="password" id="apiKeyInput" placeholder="your-api-key">
+          <button class="secondary" onclick="saveApiKey()" style="margin-top: 8px;">save key</button>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- GENERATION PAGE -->
+  <div id="genPage" class="page">
+    <h2>generating...</h2>
+    <div class="gen-progress">
+      <div class="gen-progress-bar">
+        <div id="genFill"></div>
+      </div>
+      <div id="genPct">0 / 0</div>
+    </div>
+    <div id="genCards" class="gen-container"></div>
+    <div id="genDone" class="hidden">
+      <button onclick="goStep(5)">next: review results</button>
+    </div>
+  </div>
+
+  <!-- REVIEW PAGE -->
+  <div id="reviewPage" class="page">
+    <div class="review-header">
+      <h2>review & rate</h2>
+      <div style="font-size: 13px; color: var(--mid-grey);"><strong id="rvTmplCt">0</strong> templates</div>
+    </div>
+    <div id="reviewFilters" style="margin-bottom: 20px;">
+      <div class="pill active" onclick="filterReview('all', this)">all</div>
+      <div class="pill" onclick="filterReview('unrated', this)">unrated</div>
+      <div class="pill" onclick="filterReview('ship', this)">ship it</div>
+      <div class="pill" onclick="filterReview('tweak', this)">tweak</div>
+      <div class="pill" onclick="filterReview('redo', this)">redo</div>
+    </div>
+    <div id="reviewCounts">
+      <div class="count-card"><div class="count-label">rated</div><div class="count-value"><span id="rvRated">0</span></div></div>
+      <div class="count-card"><div class="count-label">ship it</div><div class="count-value"><span id="rfShip">0</span></div></div>
+      <div class="count-card"><div class="count-label">tweak</div><div class="count-value"><span id="rfTweak">0</span></div></div>
+      <div class="count-card"><div class="count-label">redo</div><div class="count-value"><span id="rfRedo">0</span></div></div>
+      <div class="count-card"><div class="count-label">unrated</div><div class="count-value"><span id="rfUn">0</span></div></div>
+      <div class="count-card"><div class="count-label">total</div><div class="count-value"><span id="rfAll">0</span></div></div>
+    </div>
+    <div id="reviewGroups"></div>
+  </div>
 </div>
 
-<!-- JAVASCRIPT -->
+<div class="footer">
+  <p id="footerTxt">0 of 0 rated</p>
+  <div class="footer-segs" id="footerSegs"></div>
+  <button onclick="downloadBrief()">download brief</button>
+  <button onclick="goStep(0)">start over</button>
+</div>
+
+<!-- EXPORT MODAL -->
+<div id="exportOverlay" class="export-overlay">
+  <div class="export-modal">
+    <div class="export-header">
+      <h2>export winners</h2>
+      <button class="export-close" onclick="closeExport()">×</button>
+    </div>
+    <div class="export-content">
+      <div id="winnersList"></div>
+    </div>
+    <div class="export-footer">
+      <button class="secondary" onclick="closeExport()">close</button>
+      <button class="primary" onclick="downloadBrief()">download brief</button>
+    </div>
+  </div>
+</div>
+
 <script>
-  // Template switching functionality
-  const sidebarLinks = document.querySelectorAll('.sidebar-group a');
-  const templateSections = document.querySelectorAll('.template-section');
+/* ═══ STATE ═══ */
+const selected = new Set();
+const feedback = {};
+const promptEdits = {};
+const generatedImages = {};
 
-  sidebarLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const templateName = link.getAttribute('data-template');
+const catColours = {
+  lifestyle: { bg: '#FFD60A', color: '#0D0D0D' },
+  food: { bg: '#A8E10C', color: '#0D0D0D' },
+  social: { bg: '#FF8FA3', color: 'white' },
+  product: { bg: '#5CCFFF', color: 'white' },
+  testimonial: { bg: '#E8E0D8', color: '#0D0D0D' },
+};
 
-      // Hide all sections
-      templateSections.forEach(section => {
-        section.style.display = 'none';
-      });
+const T = [
+  { id: 1, name: 'Us vs. Them', cat: 'lifestyle', rating: 'great', bg: '#FFF6EE', desc: 'side-by-side comparison of before/after or competitor', prompt: 'create a split-screen lifestyle ad comparing user experience with and without the brand' },
+  { id: 2, name: 'Hero Shot', cat: 'product', rating: 'great', bg: '#5CCFFF', desc: 'single stunning product hero', prompt: 'create a hero shot of the product in perfect lighting with premium aesthetic' },
+  { id: 3, name: 'Day in the Life', cat: 'lifestyle', rating: 'great', bg: '#FFD60A', desc: '3–4 panel sequence showing product integration', prompt: 'create a 4-panel carousel showing product usage throughout a typical day' },
+  { id: 4, name: 'Pattern Play', cat: 'lifestyle', rating: 'good', bg: '#FF8FA3', desc: 'repetitive visual pattern with product', prompt: 'create an abstract pattern composition featuring the product in a grid or tessellation' },
+  { id: 5, name: 'Close-Up Detail', cat: 'product', rating: 'good', bg: '#A8E10C', desc: 'texture, materials, craftsmanship', prompt: 'create a macro close-up shot highlighting product texture and craftsmanship details' },
+  { id: 6, name: 'Lifestyle Moment', cat: 'lifestyle', rating: 'great', bg: '#FFF6EE', desc: 'candid, relatable moment with user and product', prompt: 'capture a natural, candid lifestyle moment showing the product in everyday use' },
+  { id: 7, name: 'Color Blocking', cat: 'lifestyle', rating: 'good', bg: '#FF6B2C', desc: 'bold color field with minimal product placement', prompt: 'create a bold, minimalist design using solid color blocks with the product subtly placed' },
+  { id: 8, name: 'Branded Typography', cat: 'social', rating: 'good', bg: '#FFD60A', desc: 'oversize text treatment with brand values', prompt: 'create a typography-focused design with oversized text about brand values and the product' },
+  { id: 9, name: 'Benefit Stack', cat: 'product', rating: 'good', bg: '#5CCFFF', desc: '3–5 key benefits with icons or callouts', prompt: 'create an infographic-style ad stacking 4-5 key product benefits with icons' },
+  { id: 10, name: 'Mood Board', cat: 'lifestyle', rating: 'good', bg: '#E8E0D8', desc: 'collage of inspiration, moodboard aesthetic', prompt: 'create an inspiration mood board collage featuring the product and lifestyle elements' },
+  { id: 11, name: 'Silhouette Play', cat: 'lifestyle', rating: 'good', bg: '#FF8FA3', desc: 'product or user silhouetted against dramatic background', prompt: 'create a dramatic silhouette composition of the product or user against a vibrant backdrop' },
+  { id: 12, name: 'Behind the Brand', cat: 'testimonial', rating: 'good', bg: '#E8E0D8', desc: 'founder or team member with story', prompt: 'create a behind-the-scenes portrait of the founder or team member with authentic storytelling' },
+  { id: 13, name: 'Before & After', cat: 'product', rating: 'great', bg: '#A8E10C', desc: 'transformation visual (before and after result)', prompt: 'create a dramatic before-and-after visual showing the product transformation result' },
+  { id: 14, name: 'Minimalist Grid', cat: 'product', rating: 'good', bg: '#5CCFFF', desc: '3x3 or similar product variations grid', prompt: 'create a minimalist grid layout showcasing product variations or use cases' },
+  { id: 15, name: 'Gradient Dream', cat: 'lifestyle', rating: 'good', bg: 'linear-gradient(135deg, #FF8FA3, #5CCFFF)', desc: 'dreamy gradient background with product', prompt: 'create a dreamy, soft-focus image with a gradient background and the product as focal point' },
+  { id: 16, name: 'Customer Quote', cat: 'testimonial', rating: 'good', bg: '#FFD60A', desc: 'real customer testimonial with face and quote', prompt: 'create an ad featuring a real customer testimonial with their face and an honest, relatable quote' },
+  { id: 17, name: 'Product Flat Lay', cat: 'product', rating: 'great', bg: '#FFF6EE', desc: 'overhead flat lay with props and staging', prompt: 'create an overhead flat-lay composition with the product, complementary props, and careful staging' },
+  { id: 18, name: 'In-Context Use', cat: 'lifestyle', rating: 'great', bg: '#A8E10C', desc: 'product in real home or work environment', prompt: 'show the product in a realistic home or work environment being used by a person' },
+  { id: 19, name: 'Limited Edition', cat: 'product', rating: 'good', bg: '#FF8FA3', desc: 'scarcity/exclusivity callout with product', prompt: 'create a design emphasizing scarcity or exclusivity with the product prominently featured' },
+  { id: 20, name: 'Explainer Sequence', cat: 'lifestyle', rating: 'good', bg: '#5CCFFF', desc: '3–4 frame sequence explaining how product works', prompt: 'create a 4-frame sequence visually explaining how the product works step-by-step' },
+  { id: 21, name: 'Vogue #1 Feature', cat: 'social', rating: 'great', bg: '#FFD60A', desc: 'fashion-magazine cover style featuring brand', prompt: 'create a high-fashion magazine cover aesthetic featuring the brand with editorial typography' },
+  { id: 22, name: 'Glamour Best Overall', cat: 'social', rating: 'great', bg: '#FF8FA3', desc: 'award-winning editorial style callout', prompt: 'create an editorial award-winning aesthetic ad positioning the brand as best-in-class' },
+  { id: 23, name: 'Press Quote Card', cat: 'testimonial', rating: 'great', bg: '#E8E0D8', desc: 'press mention or media quote card design', prompt: 'create a press quote card design featuring a real media or influencer testimonial' },
+  { id: 24, name: 'Editor\'s Choice', cat: 'social', rating: 'great', bg: '#FFF6EE', desc: 'editorial selection badge/seal with premium feel', prompt: 'create a premium editorial selection badge or seal highlighting the product as editor\'s choice' },
+];
 
-      // Show selected section
-      const selectedSection = document.querySelector(`[data-template="${templateName}"]`);
-      if (selectedSection) {
-        selectedSection.style.display = 'block';
-      }
+/* ═══ NAVIGATION ═══ */
+function goStep(i) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.step')[i].classList.add('active');
+  document.querySelectorAll('.page')[i].classList.add('active');
+  
+  if (i === 2) renderTemplates();
+  if (i === 3) renderPromptLab();
+  if (i === 4) startGeneration();
+  if (i === 5) renderReview();
+}
 
-      // Update active state
-      sidebarLinks.forEach(l => l.classList.remove('active'));
-      link.classList.add('active');
-
-      // Scroll to top of content
-      document.querySelector('.main-content').scrollTop = 0;
+/* ═══ BRAND SCAN ═══ */
+function scanBrand() {
+  const url = document.getElementById('brandUrl').value;
+  if (!url) {
+    document.getElementById('brandOutput').textContent = 'enter a url to scan';
+    return;
+  }
+  document.getElementById('brandOutput').textContent = 'scanning...';
+  
+  fetch(`https://api.brandfetch.io/v2/brands/${new URL(url).hostname}`)
+    .then(r => r.json())
+    .then(b => {
+      const colors = b.colors ? b.colors.map(c => c.hex).slice(0, 3).join(', ') : 'not found';
+      const tone = b.description ? b.description.split('.')[0] : 'premium, innovative';
+      document.getElementById('brandOutput').innerHTML = `
+        <strong>brand name:</strong> ${b.name}<br>
+        <strong>colors:</strong> ${colors}<br>
+        <strong>tone:</strong> ${tone}
+      `;
+      document.getElementById('brandName').value = b.name;
+      document.getElementById('dna-colors').value = colors;
+      document.getElementById('dna-tone').value = tone;
+    })
+    .catch(e => {
+      document.getElementById('brandOutput').textContent = 'scan failed; fill manually';
     });
-  });
+}
 
-  // Show first template on page load
-  document.addEventListener('DOMContentLoaded', () => {
-    const firstLink = document.querySelector('.sidebar-group a');
-    if (firstLink) {
-      firstLink.click();
+/* ═══ TEMPLATES ═══ */
+function renderTemplates() {
+  const container = document.getElementById('selectPage');
+  container.innerHTML = `
+    <div style="grid-column: 1/-1; padding: 20px 0; border-bottom: 1px solid var(--warm-grey); display: flex; gap: 12px;">
+      <button class="pill" onclick="selectAll()">select all</button>
+      <button class="pill secondary" onclick="document.querySelectorAll('.tmpl-card').forEach(c => c.classList.remove('selected')); selected.clear(); updateSelCount();">clear all</button>
+      <span style="margin-left: auto; padding: 6px 12px; font-size: 13px; color: var(--mid-grey);"><strong id="selCount">0</strong> selected</span>
+    </div>
+  `;
+  
+  const grid = document.createElement('div');
+  grid.style.gridColumn = '1 / -1';
+  grid.className = 'tmpl-grid';
+  T.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'tmpl-card';
+    card.innerHTML = `
+      <div class="tmpl-card-swatch" style="background: ${t.bg}"></div>
+      <div class="tmpl-card-name">${t.name}</div>
+      <div class="tmpl-card-desc">${t.desc}</div>
+    `;
+    card.onclick = () => toggleSelect(t, card);
+    grid.appendChild(card);
+  });
+  container.appendChild(grid);
+  
+  const footer = document.createElement('div');
+  footer.style.gridColumn = '1 / -1';
+  footer.style.padding = '20px 0';
+  footer.style.textAlign = 'right';
+  footer.innerHTML = '<button class="secondary" onclick="goStep(2)">back</button> <button onclick="goStep(3)">next: edit prompts</button>';
+  container.appendChild(footer);
+}
+
+function toggleSelect(t, card) {
+  card.classList.toggle('selected');
+  if (selected.has(t.id)) {
+    selected.delete(t.id);
+  } else {
+    selected.add(t.id);
+  }
+  updateSelCount();
+}
+
+function selectAll() {
+  T.forEach(t => selected.add(t.id));
+  document.querySelectorAll('.tmpl-card').forEach(c => c.classList.add('selected'));
+  updateSelCount();
+}
+
+function updateSelCount() {
+  document.getElementById('selCount').textContent = selected.size;
+}
+
+/* ═══ PROMPT LAB ═══ */
+function renderPromptLab() {
+  const container = document.getElementById('promptLab');
+  container.innerHTML = '';
+  const sel = T.filter(t => selected.has(t.id));
+  sel.forEach(t => {
+    const div = document.createElement('div');
+    div.style.cssText = 'background: var(--warm-white); padding: 16px; border-radius: 6px; margin-bottom: 16px;';
+    div.innerHTML = `
+      <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px;">${t.name}</div>
+      <textarea class="pl-prompt" data-id="${t.id}" style="width: 100%; padding: 8px; border: 1px solid var(--warm-grey); border-radius: 4px; font-family: 'Space Grotesk', sans-serif; min-height: 60px;">${promptEdits[t.id] || t.prompt}</textarea>
+      <button class="secondary" style="margin-top: 8px; padding: 6px 12px; font-size: 11px;" onclick="savePromptEdit(${t.id}, this)">save prompt</button>
+    `;
+    container.appendChild(div);
+  });
+  
+  const footer = document.createElement('div');
+  footer.style.marginTop = '20px';
+  footer.innerHTML = '<button class="secondary" onclick="goStep(2)">back</button> <button onclick="goStep(4)">next: generate</button>';
+  container.appendChild(footer);
+}
+
+function savePromptEdit(id, btn) {
+  const textarea = document.querySelector(`.pl-prompt[data-id="${id}"]`);
+  promptEdits[id] = textarea.value;
+  btn.textContent = 'saved!';
+  setTimeout(() => btn.textContent = 'save prompt', 1500);
+}
+
+/* ═══ EXPORT ═══ */
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value;
+  localStorage.setItem('falApiKey', key);
+  alert('api key saved to browser storage');
+}
+
+function toggleApiKey() {
+  const input = document.getElementById('apiKeyInput');
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+/* ═══ GENERATION ═══ */
+function buildPrompt(t) {
+  const brand = document.getElementById('brandName').value || 'the brand';
+  const custom = promptEdits[t.id] || t.prompt;
+  const tone = document.getElementById('dna-tone').value || 'premium';
+  const style = document.getElementById('dna-style').value || 'modern';
+  return `${custom}. brand: ${brand}. tone: ${tone}. style: ${style}.`;
+}
+
+async function generateOne(t) {
+  const key = localStorage.getItem('falApiKey') || '';
+  if (!key) {
+    alert('enter your fal.ai api key in step 4');
+    return;
+  }
+  
+  const prompt = buildPrompt(t);
+  const card = document.getElementById(`gen-${t.id}`);
+  
+  try {
+    const r = await fetch('https://api.endpoints.antml.ai/run', {
+      method: 'POST',
+      headers: { 'Authorization': `Key ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'fal-ai/flux-pro',
+        input: { prompt: prompt, image_size: { width: 1024, height: 1024 } },
+      }),
+    });
+    
+    if (!r.ok) throw new Error(r.statusText);
+    const d = await r.json();
+    
+    if (d.images && d.images.length > 0) {
+      generatedImages[t.id] = d.images[0].url;
+      card.querySelector('.gen-img').style.backgroundImage = `url(${d.images[0].url})`;
+      card.querySelector('.gen-img').textContent = '';
+    } else {
+      throw new Error('no image in response');
     }
-  });
-</script>
+    
+    card.querySelector('.gen-status').className = 'gen-status done';
+    card.querySelector('.gen-status').textContent = 'done';
+  } catch (err) {
+    card.querySelector('.gen-status').className = 'gen-status';
+    card.querySelector('.gen-status').textContent = 'error: ' + err.message;
+    card.querySelector('.gen-status').style.color = 'var(--red-text)';
+  }
+}
 
+function startGeneration() {
+  const sel = T.filter(t => selected.has(t.id));
+  const container = document.getElementById('genCards');
+  container.innerHTML = '';
+  sel.forEach(t => {
+    const card = document.createElement('div');
+    card.id = `gen-${t.id}`;
+    card.className = 'gen-card';
+    card.innerHTML = `
+      <div class="gen-img" style="background: ${t.bg}"></div>
+      <div class="gen-meta">
+        <div class="gen-meta-name">${t.name}</div>
+        <div class="gen-status">waiting...</div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+  
+  const total = sel.length;
+  let done = 0;
+  document.getElementById('genPct').textContent = `${done} / ${total}`;
+  document.getElementById('genFill').style.width = '0%';
+  
+  sel.forEach(async t => {
+    await generateOne(t);
+    done++;
+    document.getElementById('genFill').style.width = (done/total*100) + '%';
+    document.getElementById('genPct').textContent = `${done} / ${total}`;
+    if (done === total) document.getElementById('genDone').classList.remove('hidden');
+  });
+}
+
+/* ═══ REVIEW ═══ */
+function renderReview(filter='all') {
+  const sel = T.filter(t => selected.has(t.id));
+  const container = document.getElementById('reviewGroups');
+  container.innerHTML = '';
+  document.getElementById('rvTmplCt').textContent = sel.length;
+
+  const list = sel.filter(t => {
+    if (filter === 'all') return true;
+    if (filter === 'great' || filter === 'good') return t.rating === filter;
+    const fb = feedback[t.name];
+    if (filter === 'ship' || filter === 'tweak' || filter === 'redo') return fb && fb.type === filter;
+    if (filter === 'unrated') return !fb;
+    return true;
+  });
+
+  list.forEach((t, i) => {
+    const open = i < 3;
+    const cc = catColours[t.cat] || catColours.lifestyle;
+    const fb = feedback[t.name];
+    const div = document.createElement('div');
+    div.className = 'rg';
+    div.innerHTML = `
+      <div class="rg-head ${open?'open':''}" onclick="toggleRg(this)">
+        <div class="rg-left">
+          <span class="rg-name">${t.name}</span>
+          <span class="tag" style="background:${cc.bg};color:${cc.color};font-size:9px;padding:1px 6px">${t.cat}</span>
+          <span class="tag tag-${t.rating==='great'?'green':'blue'}" style="font-size:9px;padding:1px 6px">${t.rating}</span>
+        </div>
+        <div class="rg-right">
+          <span class="rg-ver">1 version</span>
+          <div class="rg-dot ${fb?'rated':''}"></div>
+          <svg class="chev" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+        </div>
+      </div>
+      <div class="rg-body ${open?'open':''}">
+        <div class="rg-prompt">
+          <div class="rg-prompt-label">prompt</div>
+          <div class="rg-prompt-text">${t.prompt}</div>
+        </div>
+        <div class="rg-versions">
+          <div class="rv-card sel">
+            <div class="rv-img" style="background:${generatedImages[t.id] ? `url(${generatedImages[t.id]}) center/cover` : t.bg};position:relative">
+              <span class="rv-label cur">current run</span>
+              ${generatedImages[t.id] ? '' : t.name.toLowerCase()}
+            </div>
+            <div class="rv-meta"><div class="rv-date">${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}).toLowerCase()}</div></div>
+          </div>
+        </div>
+        <div class="rg-fb">
+          <span class="rg-fb-label">verdict</span>
+          <div class="rg-fb-btns">
+            <button class="fbtn ship ${fb&&fb.type==='ship'?'on':''}" onclick="setFb(this,'${t.name}','ship')">ship it</button>
+            <button class="fbtn tweak ${fb&&fb.type==='tweak'?'on':''}" onclick="setFb(this,'${t.name}','tweak')">tweak</button>
+            <button class="fbtn redo ${fb&&fb.type==='redo'?'on':''}" onclick="setFb(this,'${t.name}','redo')">redo</button>
+          </div>
+          <textarea class="rg-fb-note" placeholder="optional note…" data-name="${t.name}" onblur="saveFbNote(this)">${fb&&fb.note||''}</textarea>
+        </div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+  updateReviewCounts();
+}
+
+function toggleRg(h) { h.classList.toggle('open'); h.nextElementSibling.classList.toggle('open'); }
+
+function setFb(btn, name, type) {
+  btn.closest('.rg-fb-btns').querySelectorAll('.fbtn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  if (!feedback[name]) feedback[name] = {};
+  feedback[name].type = type;
+  btn.closest('.rg').querySelector('.rg-dot').className = 'rg-dot rated';
+  updateReviewCounts();
+}
+
+function saveFbNote(el) {
+  const name = el.dataset.name;
+  if (!feedback[name]) feedback[name] = {};
+  feedback[name].note = el.value;
+}
+
+function updateReviewCounts() {
+  const sel = T.filter(t => selected.has(t.id));
+  const total = sel.length;
+  let s=0, tw=0, r=0;
+  sel.forEach(t => { const f=feedback[t.name]; if(f){if(f.type==='ship')s++;if(f.type==='tweak')tw++;if(f.type==='redo')r++;} });
+  const rated = s + tw + r;
+  document.getElementById('rvRated').textContent = `${rated} / ${total}`;
+  document.getElementById('rfShip').textContent = s;
+  document.getElementById('rfTweak').textContent = tw;
+  document.getElementById('rfRedo').textContent = r;
+  document.getElementById('rfUn').textContent = total - rated;
+  document.getElementById('rfAll').textContent = total;
+  document.getElementById('footerTxt').textContent = `${rated} of ${total} rated`;
+  document.getElementById('footerSegs').innerHTML = `
+    <div class="ff ship" style="width:${(s/total)*100}%"></div>
+    <div class="ff tweak" style="width:${(tw/total)*100}%"></div>
+    <div class="ff redo" style="width:${(r/total)*100}%"></div>
+  `;
+}
+
+function filterReview(f, pill) {
+  document.querySelectorAll('#reviewFilters .pill').forEach(p => p.classList.remove('active'));
+  pill.classList.add('active');
+  renderReview(f);
+}
+
+/* ═══ EXPORT ═══ */
+function openExport() {
+  const winners = T.filter(t => selected.has(t.id) && feedback[t.name] && feedback[t.name].type === 'ship');
+  const list = document.getElementById('winnersList');
+  if (winners.length === 0) {
+    list.innerHTML = '<div class="no-win">no winners tagged yet.<em>tag creatives as "ship it" to add them here</em></div>';
+  } else {
+    list.innerHTML = winners.map(w => {
+      const note = feedback[w.name]?.note ? `<div class="wn">note: ${feedback[w.name].note}</div>` : '';
+      return `<div class="wcard">
+        <div class="wthumb" style="background:${w.bg}">${w.name.toLowerCase()}</div>
+        <div class="wdetail">
+          <h4>${w.name}</h4>
+          <div class="wp">${w.prompt}</div>
+          ${note}
+          <div class="wf">
+            <span class="fmt-pill" style="background:var(--sky-blue)">1:1 source</span>
+            <span class="fmt-pill" style="background:var(--blush)">→ 4:5</span>
+            <span class="fmt-pill" style="background:var(--hot-yellow)">→ 9:16</span>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('exportOverlay').classList.add('open');
+}
+
+function closeExport() { document.getElementById('exportOverlay').classList.remove('open'); }
+
+function downloadBrief() {
+  const winners = T.filter(t => selected.has(t.id) && feedback[t.name] && feedback[t.name].type === 'ship');
+  let md = `# chefly® — designer handoff brief\n\n`;
+  md += `**date:** ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}\n`;
+  md += `**brand:** chefly\n**source:** 1:1 (1080×1080)\n**adapt to:** 4:5 feed, 9:16 story, 9:16 reel\n\n`;
+  md += `## brand kit\n- **palette:** #FF6B2C, #FFD60A, #A8E10C, #FF8FA3, #5CCFFF, #0D0D0D, #FFF6EE\n`;
+  md += `- **display:** syne 800, lowercase\n- **accent:** instrument serif, italic\n- **body:** space grotesk\n- **texture:** paper grain 4%\n\n---\n\n`;
+  md += `## winners (${winners.length})\n\n`;
+  winners.forEach((w,i) => {
+    md += `### ${i+1}. ${w.name}\n**prompt:** ${w.prompt}\n`;
+    if (feedback[w.name]?.note) md += `**note:** ${feedback[w.name].note}\n`;
+    md += `**deliverables:** adapt 1:1 → 4:5, 9:16 story, 9:16 reel. add logo + headline (syne 800) + cta. paper grain.\n\n---\n\n`;
+  });
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'chefly-creative-handoff.md';
+  a.click();
+}
+
+document.getElementById('exportOverlay').addEventListener('click', function(e) { if(e.target===this)closeExport(); });
+
+/* ═══ INIT ═══ */
+document.getElementById('reviewFooter').style.display = 'none';
+T.forEach(t => selected.add(t.id)); // pre-select all
+</script>
 </body>
 </html>
