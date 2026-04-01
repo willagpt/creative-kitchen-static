@@ -155,9 +155,15 @@
   .prompt-meta {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-top: 8px;
     font-size: 11px;
     color: var(--text-dim);
+  }
+
+  .prompt-actions {
+    display: flex;
+    gap: 6px;
   }
 
   .result-area {
@@ -191,6 +197,37 @@
     opacity: 0.3;
   }
 
+  .result-overlay {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .result-area:hover .result-overlay { opacity: 1; }
+
+  .overlay-btn {
+    background: rgba(13,13,13,0.8);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: all 0.15s;
+  }
+
+  .overlay-btn:hover { background: rgba(255,107,44,0.8); border-color: var(--orange); }
+
+  .overlay-btn.fav { color: var(--yellow); }
+  .overlay-btn.fav:hover { background: rgba(255,214,10,0.2); }
+
   .status-bar {
     display: flex;
     justify-content: space-between;
@@ -218,11 +255,23 @@
     border: 2px solid transparent;
     opacity: 0.6;
     transition: all 0.15s;
+    position: relative;
   }
 
   .history-thumb:hover { opacity: 1; }
   .history-thumb.active { border-color: var(--orange); opacity: 1; }
+  .history-thumb.favourite { border-color: var(--yellow); opacity: 0.9; }
+  .history-thumb.active.favourite { border-color: var(--yellow); opacity: 1; }
   .history-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+  .fav-star {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    font-size: 8px;
+    color: var(--yellow);
+    text-shadow: 0 0 3px rgba(0,0,0,0.8);
+  }
 
   .history-detail {
     background: var(--surface2);
@@ -247,6 +296,11 @@
     color: var(--orange);
     font-weight: 600;
     font-size: 11px;
+  }
+
+  .detail-actions {
+    display: flex;
+    gap: 6px;
   }
 
   .detail-prompt {
@@ -277,6 +331,8 @@
   }
 
   .preset-btn:hover { color: var(--text); border-color: var(--orange); }
+  .preset-btn.saved { border-color: var(--green); color: var(--green); }
+  .preset-btn.custom { border-style: dashed; }
 
   @keyframes pulse {
     0%, 100% { opacity: 1; }
@@ -331,11 +387,13 @@
       <button class="btn btn-generate" id="genBtn" onclick="generate()">generate</button>
     </div>
 
-    <textarea id="promptInput" placeholder="Write your prompt here...">Create a bold headline static advertisement for "CHEFLY" (eatchefly.com). Large, attention-grabbing headline dominates the top third. Product image centered below. Strong call-to-action button at bottom. Brand colors — use ONLY these for all backgrounds, text, accents, and graphic elements: #FF6B2C, #0D0D0D, #FFF6EE, #FFD60A, #A8E10C, #FF8FA3, #5CCFFF. Product: fresh meals. Key claims: Preservative-free meals, no seed oils, high protein. Photography: Clean, minimal, product-focused compositions. Professional advertising quality. 1080x1080 square format.</textarea>
+    <textarea id="promptInput" placeholder="Write your prompt here..."></textarea>
 
     <div class="prompt-meta">
-      <span id="charCount">0 chars</span>
-      <span id="tokenEst">~0 tokens</span>
+      <span><span id="charCount">0 chars</span> · <span id="tokenEst">~0 tokens</span></span>
+      <div class="prompt-actions">
+        <button class="preset-btn" onclick="saveCustomPreset()" title="Save current prompt as a reusable preset">+ save prompt</button>
+      </div>
     </div>
   </div>
 
@@ -349,6 +407,10 @@
         <div>paste a prompt and hit generate</div>
         <div style="margin-top:4px;font-size:11px">tip: start at 512px to iterate fast, then upscale winners</div>
       </div>
+      <div class="result-overlay" id="resultOverlay">
+        <button class="overlay-btn" onclick="downloadCurrent()" title="Download this image">&#x2B07; download</button>
+        <button class="overlay-btn fav" onclick="toggleFavCurrent()" id="favBtn" title="Favourite this generation">&#x2606; fave</button>
+      </div>
     </div>
 
     <div class="status-bar">
@@ -359,28 +421,90 @@
     <div class="history-detail hidden" id="historyDetail">
       <div class="detail-header">
         <span class="detail-label" id="detailLabel">—</span>
-        <button class="preset-btn" onclick="loadFromHistory()" title="Load this prompt back into the editor">↑ load prompt</button>
+        <div class="detail-actions">
+          <button class="preset-btn" onclick="downloadFromHistory()" title="Download this image">&#x2B07; download</button>
+          <button class="preset-btn" onclick="loadFromHistory()" title="Load this prompt back into the editor">&#x2191; load prompt</button>
+        </div>
       </div>
       <div class="detail-prompt" id="detailPrompt"></div>
     </div>
 
     <div id="historyLabel" style="font-size:10px;color:var(--text-dim);margin-top:12px;display:none;justify-content:space-between;align-items:center">
       <span>generation history — click to compare · <span id="historyCount">0</span> saved</span>
-      <button class="preset-btn" onclick="clearHistory()" style="color:#FF8FA3">clear all</button>
+      <div style="display:flex;gap:6px">
+        <button class="preset-btn" onclick="exportHistory()" title="Export all history as JSON backup">export</button>
+        <button class="preset-btn" onclick="clearHistory()" style="color:#FF8FA3">clear all</button>
+      </div>
     </div>
     <div class="history" id="history"></div>
   </div>
 </div>
 
 <script>
-// Presets
-const PRESETS = [
-  { name: 'B (favourite)', prompt: 'Create a bold headline static advertisement for "CHEFLY" (eatchefly.com). Large, attention-grabbing headline dominates the top third. Product image centered below. Strong call-to-action button at bottom. Brand colors — use ONLY these for all backgrounds, text, accents, and graphic elements: #FF6B2C, #0D0D0D, #FFF6EE, #FFD60A, #A8E10C, #FF8FA3, #5CCFFF. Product: fresh meals. Key claims: Preservative-free meals, no seed oils, high protein. Photography: Clean, minimal, product-focused compositions. Professional advertising quality. 1080x1080 square format.' },
-  { name: 'C (favourite)', prompt: 'Create a bold headline static advertisement. Large, attention-grabbing headline text dominates the top third. Product image centered below. Strong call-to-action button at the bottom. Clean background with brand colors. Brand name: "CHEFLY". Website URL text displayed on ad: "eatchefly.com". Product: fresh meals. Key claims: Preservative-free meals, no seed oils, high protein. Brand colors — use ONLY these for all backgrounds, text, accents, and graphic elements: #FF6B2C, #0D0D0D, #FFF6EE, #FFD60A, #A8E10C, #FF8FA3, #5CCFFF. Photography style: Clean, minimal compositions. Product-focused compositions for CHEFLY. Direct-response advertising with clear value propositions. CHEFLY aesthetic throughout. Strong CTAs with brand color accents. Do NOT generate any AI text overlays, watermarks, or placeholder logos. IMPORTANT: Any website URL shown in the ad MUST read exactly "eatchefly.com" — not any other domain. Professional advertising quality. 1080x1080 square format.' },
-  { name: 'B-rewrite (photo style)', prompt: 'Premium DTC meal delivery advertisement for CHEFLY (eatchefly.com). Hero shot of a freshly prepared high-protein meal in branded matte packaging, steam gently rising, shot on Canon R5 85mm f/2.8 from a 30-degree overhead angle. Soft key light from upper left, warm fill light reflecting off a cream surface. Bold headline text "CHEFLY" dominates the top third in clean sans-serif type, call-to-action button at bottom reading "eatchefly.com". Brand color palette — use ONLY these: #FF6B2C for accents, #0D0D0D for text and backgrounds, #FFF6EE for surface, #FFD60A #A8E10C #FF8FA3 #5CCFFF as accent highlights. Preservative-free, no seed oils, high protein. For a scroll-stopping paid social campaign. 1:1, 1080x1080.' },
-  { name: 'C-rewrite (photo style)', prompt: 'Static advertisement for CHEFLY, a premium chef-cooked meal delivery brand (eatchefly.com). Centre frame: a sealed meal tray with visible protein, grains, and fresh vegetables, shot on Hasselblad X2D 90mm at f/4, shallow depth of field. Warm directional lighting from upper right, dark moody background fading to near-black. Text "CHEFLY" in bold clean sans-serif across the top third, tagline "Preservative-free. No seed oils. High protein." in smaller type below. CTA "eatchefly.com" at bottom. Brand colors — use ONLY these throughout: #FF6B2C, #0D0D0D, #FFF6EE, #FFD60A, #A8E10C, #FF8FA3, #5CCFFF. Direct-response advertising aesthetic, clean modern layout. Do NOT generate any watermarks or placeholder logos. For a high-converting paid social campaign targeting food enthusiasts. 1:1, 1080x1080.' },
+// === Built-in Presets ===
+const BUILT_IN_PRESETS = [
+  { name: 'Flow dark (chicken)', prompt: 'A 1:1 social media ad with a near-black (#0D0D0D) background. Top half: Bold lowercase cream (#FFF6EE) headline text in a heavy sans-serif font. Line one: "bad meals..." Line two: a large cream equals sign. Line three: "bad weeks." \u2014 the word "weeks." is in an elegant serif italic font. Full stops on both headline lines. Centre-aligned with generous line spacing. Below headline: Two lines of smaller warm grey (#9A918A) sans-serif text reading "eat chef-cooked, high-protein meals with chefly. better food = better everything." Centre-aligned. Centre: A top-down flat-lay photograph of a single natural cream-coloured sugarcane fibre meal tray \u2014 NOT black plastic, NOT a bento box. The tray is rectangular with rounded corners, shallow sides, no lid, no internal dividers. Inside the tray: a glazed sesame chicken thigh with visible grill marks, dark purple-black rice, bright green edamame beans, wilted dark spinach, and thin julienned orange carrot strips. A hand enters from the top of frame sprinkling sesame seeds over the chicken. The food is colourful and appetising. Shot directly from above on a dark surface with soft warm lighting. Below the tray: A small rounded orange (#FF6B2C) pill-shaped button with white lowercase text "see this week\'s menu." Bottom: "chefly" logo in lowercase \u2014 "chef" in bold cream sans-serif, "ly" in serif italic, small \u00ae superscript. Style: Dark, confident, typographic. The tray MUST be natural cream/beige sugarcane fibre, not black plastic. 95% black and cream, the food is the only colour. No emojis, no uppercase.' },
+  { name: 'Flow dark (beef)', prompt: 'A 1:1 social media ad with a near-black (#0D0D0D) background. Top half: Bold lowercase cream (#FFF6EE) headline text in a heavy sans-serif font. Line one: "bad meals..." Line two: a large cream equals sign. Line three: "bad weeks." \u2014 the word "weeks." is in an elegant serif italic font. Full stops on both headline lines. Centre-aligned with generous line spacing. Below headline: Two lines of smaller warm grey (#9A918A) sans-serif text reading "eat chef-cooked, high-protein meals with chefly. better food = better everything." Centre-aligned. Centre: A top-down flat-lay photograph of a single natural cream-coloured sugarcane fibre meal tray \u2014 NOT black plastic, NOT a bento box. The tray is rectangular with rounded corners, shallow sides, no lid, no internal dividers. Inside the tray: chunks of slow-cooked beef in a rich dark sauce, glass noodles with sliced red and yellow peppers, and bright green broccoli florets. The food is glossy, saucy, and appetising. Shot directly from above on a dark surface with soft warm lighting. A small stream of golden miso dressing is being poured from above onto the protein. Below the tray: A small rounded orange (#FF6B2C) pill-shaped button with white lowercase text "see this week\'s menu." Bottom: "chefly" logo in lowercase \u2014 "chef" in bold cream sans-serif, "ly" in serif italic, small \u00ae superscript. Style: Dark, confident, typographic. The tray MUST be natural cream/beige sugarcane fibre, not black plastic. 95% black and cream, the food is the only colour. No emojis, no uppercase.' },
+  { name: 'Benefit grid (cream)', prompt: 'A clean, modern 1:1 social media ad for a UK meal delivery brand called "Chefly". Warm cream background (#FFF6EE) with subtle paper grain texture. The layout mirrors a product-in-context format. Top: Bold lowercase headline in heavy sans-serif (like Syne Extra Bold), black text reading "dinner sorted." on the first line, "every night." on the second line \u2014 the word "night." is in an elegant serif italic (like Instrument Serif Italic). Full stop at the end of both lines. Text is centre-aligned. Centre: A tightly cropped, edge-to-edge overhead photograph of a natural cream-coloured sugarcane fibre meal tray sitting on a wooden chopping board at a slight angle. The chopping board fills the full width of the middle section. NOT a black plastic container, NOT divided into compartments. The tray is rectangular with rounded corners, shallow sides, no internal dividers. Inside the tray, all in one open space: a glazed sesame chicken thigh with sesame seeds, dark purple-black rice, bright green edamame beans, wilted spinach, and thin julienned orange carrot strips. The food is colourful and appetising. Natural warm daylight, wooden board texture visible. No cutlery, no napkin, no hands. Around the tray: Four benefit callouts arranged in pairs (two above the photograph, two below), each with a small coloured dot icon and lowercase bold label: "chef-prepared" (orange dot #FF6B2C), "ready in 5 min" (green dot #A8E10C), "fresh ingredients" (yellow dot #FFD60A), "no washing up" (blue dot #5CCFFF). Thin subtle dashed lines connect each callout toward the tray. Below: A small black pill badge with cream text reading "25% off your first box", and below that a rounded orange (#FF6B2C) CTA button with white lowercase text "see this week\'s menu." Bottom: "chefly" logo \u2014 "chef" in bold black sans-serif, "ly" in serif italic, small \u00ae superscript. All lowercase. Style: Minimal, premium, editorial. The photograph must feel like a real food photo cropped into the layout, not a floating product shot with space around it. 95% cream and black, 5% orange accent. No clutter, generous whitespace in the text areas but the food photo itself fills its zone edge to edge. No emojis, no exclamation marks, no uppercase.' },
+  { name: 'B (favourite)', prompt: 'Create a bold headline static advertisement for "CHEFLY" (eatchefly.com). Large, attention-grabbing headline dominates the top third. Product image centered below. Strong call-to-action button at bottom. Brand colors \u2014 use ONLY these for all backgrounds, text, accents, and graphic elements: #FF6B2C, #0D0D0D, #FFF6EE, #FFD60A, #A8E10C, #FF8FA3, #5CCFFF. Product: fresh meals. Key claims: Preservative-free meals, no seed oils, high protein. Photography: Clean, minimal, product-focused compositions. Professional advertising quality. 1080x1080 square format.' },
+  { name: 'C (favourite)', prompt: 'Create a bold headline static advertisement. Large, attention-grabbing headline text dominates the top third. Product image centered below. Strong call-to-action button at the bottom. Clean background with brand colors. Brand name: "CHEFLY". Website URL text displayed on ad: "eatchefly.com". Product: fresh meals. Key claims: Preservative-free meals, no seed oils, high protein. Brand colors \u2014 use ONLY these for all backgrounds, text, accents, and graphic elements: #FF6B2C, #0D0D0D, #FFF6EE, #FFD60A, #A8E10C, #FF8FA3, #5CCFFF. Photography style: Clean, minimal compositions. Product-focused compositions for CHEFLY. Direct-response advertising with clear value propositions. CHEFLY aesthetic throughout. Strong CTAs with brand color accents. Do NOT generate any AI text overlays, watermarks, or placeholder logos. IMPORTANT: Any website URL shown in the ad MUST read exactly "eatchefly.com" \u2014 not any other domain. Professional advertising quality. 1080x1080 square format.' },
+  { name: 'B-rewrite (photo)', prompt: 'Premium DTC meal delivery advertisement for CHEFLY (eatchefly.com). Hero shot of a freshly prepared high-protein meal in branded matte packaging, steam gently rising, shot on Canon R5 85mm f/2.8 from a 30-degree overhead angle. Soft key light from upper left, warm fill light reflecting off a cream surface. Bold headline text "CHEFLY" dominates the top third in clean sans-serif type, call-to-action button at bottom reading "eatchefly.com". Brand color palette \u2014 use ONLY these: #FF6B2C for accents, #0D0D0D for text and backgrounds, #FFF6EE for surface, #FFD60A #A8E10C #FF8FA3 #5CCFFF as accent highlights. Preservative-free, no seed oils, high protein. For a scroll-stopping paid social campaign. 1:1, 1080x1080.' },
+  { name: 'C-rewrite (photo)', prompt: 'Static advertisement for CHEFLY, a premium chef-cooked meal delivery brand (eatchefly.com). Centre frame: a sealed meal tray with visible protein, grains, and fresh vegetables, shot on Hasselblad X2D 90mm at f/4, shallow depth of field. Warm directional lighting from upper right, dark moody background fading to near-black. Text "CHEFLY" in bold clean sans-serif across the top third, tagline "Preservative-free. No seed oils. High protein." in smaller type below. CTA "eatchefly.com" at bottom. Brand colors \u2014 use ONLY these throughout: #FF6B2C, #0D0D0D, #FFF6EE, #FFD60A, #A8E10C, #FF8FA3, #5CCFFF. Direct-response advertising aesthetic, clean modern layout. Do NOT generate any watermarks or placeholder logos. For a high-converting paid social campaign targeting food enthusiasts. 1:1, 1080x1080.' },
   { name: 'empty', prompt: '' }
 ];
+
+// === Custom Presets (saved to localStorage) ===
+function getCustomPresets() {
+  try {
+    return JSON.parse(localStorage.getItem('ck_custom_presets') || '[]');
+  } catch (e) { return []; }
+}
+
+function saveCustomPresets(presets) {
+  localStorage.setItem('ck_custom_presets', JSON.stringify(presets));
+}
+
+function saveCustomPreset() {
+  const prompt = promptInput.value.trim();
+  if (!prompt) { alert('Write a prompt first'); return; }
+  const name = window.prompt('Name this preset:');
+  if (!name) return;
+  const customs = getCustomPresets();
+  customs.push({ name, prompt });
+  saveCustomPresets(customs);
+  renderPresets();
+}
+
+function deleteCustomPreset(idx) {
+  if (!confirm('Delete this saved preset?')) return;
+  const customs = getCustomPresets();
+  customs.splice(idx, 1);
+  saveCustomPresets(customs);
+  renderPresets();
+}
+
+function renderPresets() {
+  presetsEl.innerHTML = '';
+  // Built-in
+  BUILT_IN_PRESETS.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'preset-btn';
+    btn.textContent = p.name;
+    btn.onclick = () => { promptInput.value = p.prompt; updateCounts(); };
+    presetsEl.appendChild(btn);
+  });
+  // Custom
+  const customs = getCustomPresets();
+  customs.forEach((p, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'preset-btn custom';
+    btn.textContent = p.name;
+    btn.onclick = () => { promptInput.value = p.prompt; updateCounts(); };
+    btn.oncontextmenu = (e) => { e.preventDefault(); deleteCustomPreset(i); };
+    btn.title = p.name + ' (right-click to delete)';
+    presetsEl.appendChild(btn);
+  });
+}
 
 // Init
 const apiKeyInput = document.getElementById('apiKey');
@@ -412,23 +536,38 @@ function updateCounts() {
 promptInput.addEventListener('input', updateCounts);
 updateCounts();
 
-// Presets
-PRESETS.forEach(p => {
-  const btn = document.createElement('button');
-  btn.className = 'preset-btn';
-  btn.textContent = p.name;
-  btn.onclick = () => {
-    promptInput.value = p.prompt;
-    updateCounts();
-  };
-  presetsEl.appendChild(btn);
+// Render presets
+renderPresets();
+
+// Load last used prompt from localStorage
+const lastPrompt = localStorage.getItem('ck_last_prompt');
+if (lastPrompt) {
+  promptInput.value = lastPrompt;
+  updateCounts();
+}
+
+// Auto-save prompt as you type
+promptInput.addEventListener('input', () => {
+  localStorage.setItem('ck_last_prompt', promptInput.value);
 });
+
+// Also save model/ratio/res selections
+const lastModel = localStorage.getItem('ck_last_model');
+const lastRatio = localStorage.getItem('ck_last_ratio');
+const lastRes = localStorage.getItem('ck_last_res');
+if (lastModel) document.getElementById('modelSelect').value = lastModel;
+if (lastRatio) document.getElementById('ratioSelect').value = lastRatio;
+if (lastRes) document.getElementById('resSelect').value = lastRes;
+
+document.getElementById('modelSelect').addEventListener('change', (e) => localStorage.setItem('ck_last_model', e.target.value));
+document.getElementById('ratioSelect').addEventListener('change', (e) => localStorage.setItem('ck_last_ratio', e.target.value));
+document.getElementById('resSelect').addEventListener('change', (e) => localStorage.setItem('ck_last_res', e.target.value));
 
 // === IndexedDB persistence — images survive reloads ===
 const DB_NAME = 'ck_prompt_tester';
 const DB_VERSION = 1;
 const STORE_NAME = 'generations';
-const MAX_SAVED = 50;
+const MAX_SAVED = 100;
 
 function openDB() {
   return new Promise((resolve, reject) => {
@@ -485,13 +624,55 @@ async function imageUrlToDataUrl(url) {
     });
   } catch (e) {
     console.warn('Could not cache image:', e);
-    return url; // fallback to remote URL
+    return url;
+  }
+}
+
+// === Download ===
+function downloadImage(dataUrl, filename) {
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = filename || 'chefly-gen-' + Date.now() + '.png';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function downloadCurrent() {
+  const item = history.find(h => h.id === selectedHistoryId);
+  if (!item) return;
+  const modelName = item.model.split('/').pop();
+  const filename = 'chefly-' + modelName + '-' + item.ratio.replace(':', 'x') + '-' + item.id + '.png';
+  downloadImage(item.dataUrl || item.url, filename);
+}
+
+function downloadFromHistory() {
+  downloadCurrent();
+}
+
+// === Favourites ===
+function toggleFavCurrent() {
+  const item = history.find(h => h.id === selectedHistoryId);
+  if (!item) return;
+  item.favourite = !item.favourite;
+  saveToDB(item);
+  renderHistory();
+  updateFavBtn(item);
+}
+
+function updateFavBtn(item) {
+  const btn = document.getElementById('favBtn');
+  if (item && item.favourite) {
+    btn.innerHTML = '&#x2605; faved';
+  } else {
+    btn.innerHTML = '&#x2606; fave';
   }
 }
 
 // Generation history
 let history = [];
 let timerInterval = null;
+let selectedHistoryId = null;
 
 // Restore history on page load
 (async function restoreHistory() {
@@ -502,11 +683,15 @@ let timerInterval = null;
       selectedHistoryId = history[0].id;
       renderHistory();
       showHistoryDetail(history[0]);
-      // Show most recent image
+      updateFavBtn(history[0]);
       const placeholder = document.getElementById('placeholder');
       if (placeholder) placeholder.remove();
-      document.getElementById('resultArea').innerHTML = '<img src="' + history[0].dataUrl + '" alt="Generated image" />';
-      document.getElementById('statusText').textContent = history[0].model.split('/').pop() + ' · ' + history[0].ratio + ' · ' + history[0].resolution + ' · ' + history[0].time + 's · restored';
+      document.getElementById('resultArea').querySelector('.result-overlay').style.display = '';
+      const img = document.createElement('img');
+      img.src = history[0].dataUrl || history[0].url;
+      img.alt = 'Generated image';
+      document.getElementById('resultArea').insertBefore(img, document.getElementById('resultOverlay'));
+      document.getElementById('statusText').textContent = history[0].model.split('/').pop() + ' \u00b7 ' + history[0].ratio + ' \u00b7 ' + history[0].resolution + ' \u00b7 ' + history[0].time + 's \u00b7 restored';
     }
   } catch (e) {
     console.warn('Could not restore history:', e);
@@ -530,11 +715,10 @@ async function generate() {
   const resultArea = document.getElementById('resultArea');
 
   btn.disabled = true;
-  btn.textContent = 'generating…';
-  statusText.textContent = 'submitting to ' + model + '…';
+  btn.textContent = 'generating\u2026';
+  statusText.textContent = 'submitting to ' + model + '\u2026';
   statusText.classList.add('generating');
 
-  // Start timer
   const startTime = Date.now();
   timerInterval = setInterval(() => {
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -547,7 +731,6 @@ async function generate() {
   };
 
   try {
-    // Build request body — Flux models use image_size, Nano Banana uses aspect_ratio + resolution
     const isFlux = model.includes('flux');
     const fluxSizeMap = {
       '1:1': 'square_hd',
@@ -561,16 +744,14 @@ async function generate() {
     if (isFlux) {
       body.image_size = fluxSizeMap[ratio] || 'square_hd';
     } else {
-      // Nano Banana models only accept 1K, 2K, 4K — fall back from 512px to 1K
       const validRes = (resolution === '512px') ? '1K' : resolution;
       if (resolution === '512px') {
-        statusText.textContent = '512px not supported by ' + model.split('/').pop() + ' — using 1K…';
+        statusText.textContent = '512px not supported by ' + model.split('/').pop() + ' \u2014 using 1K\u2026';
       }
       body.aspect_ratio = ratio;
       body.resolution = validRes;
     }
 
-    // Submit to queue
     const submitResp = await fetch('https://queue.fal.run/' + model, {
       method: 'POST',
       headers,
@@ -580,7 +761,6 @@ async function generate() {
     if (!submitResp.ok) throw new Error('Submit error: ' + submitResp.status);
     const submitData = await submitResp.json();
 
-    // Check for direct URL
     let imageUrl = submitData.images?.[0]?.url || submitData.output?.images?.[0]?.url;
 
     if (!imageUrl) {
@@ -590,8 +770,7 @@ async function generate() {
       const statusUrl = 'https://queue.fal.run/' + model + '/requests/' + requestId + '/status';
       const resultUrl = 'https://queue.fal.run/' + model + '/requests/' + requestId;
 
-      // Poll
-      statusText.textContent = 'queued…';
+      statusText.textContent = 'queued\u2026';
       const maxWait = 180000;
       while (Date.now() - startTime < maxWait) {
         await new Promise(r => setTimeout(r, 1500));
@@ -601,7 +780,7 @@ async function generate() {
         const elapsed = Math.round((Date.now() - startTime) / 1000);
 
         if (pollData.status === 'COMPLETED') {
-          statusText.textContent = 'downloading…';
+          statusText.textContent = 'downloading\u2026';
           const resultResp = await fetch(resultUrl, { headers: { 'Authorization': 'Key ' + apiKey } });
           if (!resultResp.ok) throw new Error('Result error: ' + resultResp.status);
           const resultData = await resultResp.json();
@@ -610,14 +789,13 @@ async function generate() {
         } else if (pollData.status === 'FAILED') {
           throw new Error('Generation failed: ' + (pollData.error || 'unknown'));
         } else {
-          statusText.textContent = pollData.status.toLowerCase().replace('_', ' ') + '… ' + elapsed + 's';
+          statusText.textContent = pollData.status.toLowerCase().replace('_', ' ') + '\u2026 ' + elapsed + 's';
         }
       }
 
       if (!imageUrl) throw new Error('Timed out after 3 minutes');
     }
 
-    // Display result
     clearInterval(timerInterval);
     const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
     timerEl.textContent = totalTime + 's';
@@ -625,30 +803,34 @@ async function generate() {
     const placeholder = document.getElementById('placeholder');
     if (placeholder) placeholder.remove();
 
-    resultArea.innerHTML = '<img src="' + imageUrl + '" alt="Generated image" />';
-    statusText.textContent = model.split('/').pop() + ' · ' + ratio + ' · ' + resolution + ' · ' + totalTime + 's';
+    // Remove old image if any
+    const oldImg = resultArea.querySelector('img');
+    if (oldImg) oldImg.remove();
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.alt = 'Generated image';
+    resultArea.insertBefore(img, document.getElementById('resultOverlay'));
+
+    statusText.textContent = model.split('/').pop() + ' \u00b7 ' + ratio + ' \u00b7 ' + resolution + ' \u00b7 ' + totalTime + 's';
     statusText.classList.remove('generating');
 
-    // Cache image locally as data URL so it survives reloads
-    statusText.textContent += ' · saving…';
+    statusText.textContent += ' \u00b7 saving\u2026';
     const dataUrl = await imageUrlToDataUrl(imageUrl);
 
-    // Add to history and persist
-    const entry = { url: imageUrl, dataUrl, model, ratio, resolution, time: totalTime, prompt: prompt, id: Date.now() };
+    const entry = { url: imageUrl, dataUrl, model, ratio, resolution, time: totalTime, prompt: prompt, id: Date.now(), favourite: false };
     history.unshift(entry);
     selectedHistoryId = history[0].id;
+    updateFavBtn(entry);
 
-    // Save to IndexedDB
     try {
       await saveToDB(entry);
-      // Trim old entries if over limit
       if (history.length > MAX_SAVED) {
         const old = history.splice(MAX_SAVED);
         for (const item of old) await deleteFromDB(item.id);
       }
     } catch (e) { console.warn('Could not persist:', e); }
 
-    statusText.textContent = model.split('/').pop() + ' · ' + ratio + ' · ' + resolution + ' · ' + totalTime + 's · saved';
+    statusText.textContent = model.split('/').pop() + ' \u00b7 ' + ratio + ' \u00b7 ' + resolution + ' \u00b7 ' + totalTime + 's \u00b7 saved';
     renderHistory();
     showHistoryDetail(history[0]);
 
@@ -662,8 +844,6 @@ async function generate() {
   btn.textContent = 'generate';
 }
 
-let selectedHistoryId = null;
-
 function renderHistory() {
   const container = document.getElementById('history');
   const label = document.getElementById('historyLabel');
@@ -676,16 +856,24 @@ function renderHistory() {
   history.forEach((item, i) => {
     const imgSrc = item.dataUrl || item.url;
     const thumb = document.createElement('div');
-    thumb.className = 'history-thumb' + (item.id === selectedHistoryId ? ' active' : '');
-    thumb.innerHTML = '<img src="' + imgSrc + '" />';
-    thumb.title = '#' + (history.length - i) + ' · ' + item.model.split('/').pop() + ' · ' + item.ratio + ' · ' + item.time + 's';
+    thumb.className = 'history-thumb' + (item.id === selectedHistoryId ? ' active' : '') + (item.favourite ? ' favourite' : '');
+    thumb.innerHTML = '<img src="' + imgSrc + '" />' + (item.favourite ? '<span class="fav-star">\u2605</span>' : '');
+    thumb.title = '#' + (history.length - i) + ' \u00b7 ' + item.model.split('/').pop() + ' \u00b7 ' + item.ratio + ' \u00b7 ' + item.time + 's' + (item.favourite ? ' \u2605' : '');
     thumb.onclick = () => {
       selectedHistoryId = item.id;
-      document.getElementById('resultArea').innerHTML = '<img src="' + imgSrc + '" alt="Generated image" />';
-      document.getElementById('statusText').textContent = item.model.split('/').pop() + ' · ' + item.ratio + ' · ' + item.resolution + ' · ' + item.time + 's';
+      const oldImg = document.getElementById('resultArea').querySelector('img');
+      if (oldImg) oldImg.remove();
+      const placeholder = document.getElementById('placeholder');
+      if (placeholder) placeholder.remove();
+      const img = document.createElement('img');
+      img.src = imgSrc;
+      img.alt = 'Generated image';
+      document.getElementById('resultArea').insertBefore(img, document.getElementById('resultOverlay'));
+      document.getElementById('statusText').textContent = item.model.split('/').pop() + ' \u00b7 ' + item.ratio + ' \u00b7 ' + item.resolution + ' \u00b7 ' + item.time + 's';
       document.querySelectorAll('.history-thumb').forEach(t => t.classList.remove('active'));
       thumb.classList.add('active');
       showHistoryDetail(item);
+      updateFavBtn(item);
     };
     container.appendChild(thumb);
   });
@@ -698,7 +886,7 @@ function showHistoryDetail(item) {
 
   const modelName = item.model.split('/').pop();
   const idx = history.length - history.findIndex(h => h.id === item.id);
-  label.textContent = '#' + idx + ' · ' + modelName + ' · ' + item.ratio + ' · ' + item.resolution + ' · ' + item.time + 's';
+  label.textContent = '#' + idx + ' \u00b7 ' + modelName + ' \u00b7 ' + item.ratio + ' \u00b7 ' + item.resolution + ' \u00b7 ' + item.time + 's' + (item.favourite ? ' \u2605' : '');
   promptEl.textContent = item.prompt;
   panel.classList.remove('hidden');
 }
@@ -711,6 +899,28 @@ function loadFromHistory() {
   document.getElementById('ratioSelect').value = item.ratio;
   document.getElementById('resSelect').value = item.resolution;
   updateCounts();
+  localStorage.setItem('ck_last_prompt', item.prompt);
+}
+
+// === Export history as JSON (backup) ===
+function exportHistory() {
+  const exportData = history.map(h => ({
+    id: h.id,
+    model: h.model,
+    ratio: h.ratio,
+    resolution: h.resolution,
+    time: h.time,
+    prompt: h.prompt,
+    favourite: h.favourite || false,
+    dataUrl: h.dataUrl
+  }));
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'chefly-prompt-tester-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 async function clearHistory() {
@@ -726,7 +936,7 @@ async function clearHistory() {
   document.getElementById('history').innerHTML = '';
   document.getElementById('historyLabel').style.display = 'none';
   document.getElementById('historyDetail').classList.add('hidden');
-  document.getElementById('resultArea').innerHTML = '<div class="result-placeholder"><div class="icon">&#x1f3a8;</div><div>paste a prompt and hit generate</div></div>';
+  document.getElementById('resultArea').innerHTML = '<div class="result-placeholder" id="placeholder"><div class="icon">&#x1f3a8;</div><div>paste a prompt and hit generate</div></div><div class="result-overlay" id="resultOverlay"><button class="overlay-btn" onclick="downloadCurrent()" title="Download this image">&#x2B07; download</button><button class="overlay-btn fav" onclick="toggleFavCurrent()" id="favBtn" title="Favourite this generation">&#x2606; fave</button></div>';
   document.getElementById('statusText').textContent = 'history cleared';
 }
 </script>
