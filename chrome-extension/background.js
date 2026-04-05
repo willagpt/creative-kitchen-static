@@ -27,6 +27,11 @@ async function supabaseRequest(path, { method = 'GET', body, config } = {}) {
     'Authorization': `Bearer ${cfg.supabaseAnonKey}`
   };
 
+  // Tell Supabase to return the inserted/updated row(s) as JSON
+  if (method === 'POST' || method === 'PATCH') {
+    headers['Prefer'] = 'return=representation';
+  }
+
   const res = await fetch(`${cfg.supabaseUrl}${path}`, {
     method,
     headers,
@@ -38,7 +43,8 @@ async function supabaseRequest(path, { method = 'GET', body, config } = {}) {
     throw new Error(`Supabase ${method} ${path} failed: ${res.status} — ${text}`);
   }
 
-  return res.json();
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
 }
 
 // ─── Save ad to Supabase ────────────────────────────────────────────
