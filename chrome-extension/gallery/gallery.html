@@ -71,7 +71,7 @@
         <span class="modal-date" id="modal-date">Captured Jan 29, 2026</span>
       </div>
 
-      <!-- ─── Before / After Comparison ───────────────────── -->
+      <!-- ─── Before / After Comparison ─────────────────── -->
       <div class="comparison">
         <div class="comparison-panel">
           <div class="panel-header">
@@ -92,26 +92,26 @@
             <span class="panel-tag panel-tag-generated">AI Generated</span>
           </div>
           <div class="panel-image" id="modal-generated-image">
-            <img id="modal-generated-img" src="" alt="Generated version" />
-            <div class="panel-placeholder hidden" id="modal-no-generated">
-              <p>No generated image yet</p>
-              <button class="btn btn-primary" id="modal-generate-btn">Generate Now</button>
+            <img id="modal-generated-img" class="hidden" src="" alt="Generated version" />
+            <div class="panel-placeholder" id="modal-no-generated">
+              <p id="generate-placeholder-text">No generated image yet</p>
+              <button class="btn btn-primary" id="modal-generate-btn">Generate Image</button>
             </div>
           </div>
           <div class="panel-copy" id="modal-generated-notes"></div>
         </div>
       </div>
 
-      <!-- ─── Prompt Section ──────────────────────────────── -->
+      <!-- ─── Prompt Section ────────────────────────── -->
       <div class="prompt-section">
         <div class="prompt-header">
           <span class="section-title">Generated Prompt</span>
           <button class="btn btn-small btn-secondary" id="copy-prompt-btn">Copy</button>
         </div>
-        <pre class="prompt-text" id="modal-prompt">No prompt generated yet. Click "Generate Prompt" to create one.</pre>
+        <pre class="prompt-text" id="modal-prompt">No prompt generated yet.</pre>
       </div>
 
-      <!-- ─── Ad Metadata ─────────────────────────────────── -->
+      <!-- ─── Ad Metadata ───────────────────────────── -->
       <div class="metadata-section">
         <div class="section-title">Ad Details</div>
         <div class="metadata-grid">
@@ -134,7 +134,7 @@
         </div>
       </div>
 
-      <!-- ─── Actions ─────────────────────────────────────── -->
+      <!-- ─── Actions ───────────────────────────────── -->
       <div class="modal-actions">
         <button class="btn btn-primary" id="modal-regenerate-btn">Regenerate Prompt</button>
         <button class="btn btn-secondary" id="modal-open-ad-btn">Open in Ad Library</button>

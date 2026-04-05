@@ -3,7 +3,7 @@
 
 const SUPABASE_FUNCTIONS_PATH = '/functions/v1/generate-ad-prompt';
 
-// ─── Storage helpers ────────────────────────────────────────────────
+// ─── Storage helpers ────────────────────────────────────────────
 async function getConfig() {
   const { config } = await chrome.storage.local.get('config');
   return config || {};
@@ -14,7 +14,7 @@ async function saveConfig(updates) {
   await chrome.storage.local.set({ config: { ...current, ...updates } });
 }
 
-// ─── Supabase helpers ───────────────────────────────────────────────
+// ─── Supabase helpers ───────────────────────────────────────────
 async function supabaseRequest(path, { method = 'GET', body, config } = {}) {
   const cfg = config || await getConfig();
   if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) {
@@ -27,7 +27,6 @@ async function supabaseRequest(path, { method = 'GET', body, config } = {}) {
     'Authorization': `Bearer ${cfg.supabaseAnonKey}`
   };
 
-  // Tell Supabase to return the inserted/updated row(s) as JSON
   if (method === 'POST' || method === 'PATCH') {
     headers['Prefer'] = 'return=representation';
   }
@@ -47,11 +46,10 @@ async function supabaseRequest(path, { method = 'GET', body, config } = {}) {
   return text ? JSON.parse(text) : null;
 }
 
-// ─── Save ad to Supabase ────────────────────────────────────────────
+// ─── Save ad to Supabase ────────────────────────────────────────
 async function saveAd(adData) {
   const config = await getConfig();
 
-  // 1. Insert the saved ad
   const [saved] = await supabaseRequest('/rest/v1/saved_ads', {
     method: 'POST',
     body: {
@@ -72,49 +70,46 @@ async function saveAd(adData) {
   return saved;
 }
 
-// ─── Generate prompt via Edge Function ──────────────────────────────
-async function generatePrompt(savedAd) {
-  const config = await getConfig();
-
-  const res = await fetch(`${config.supabaseUrl}${SUPABASE_FUNCTIONS_PATH}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.supabaseAnonKey}`
-    },
-    body: JSON.stringify({
-      saved_ad_id: savedAd.id,
-      advertiser_name: savedAd.advertiser_name,
-      ad_copy: savedAd.ad_copy,
-      image_url: savedAd.image_url,
-      media_type: savedAd.media_type
-    })
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Prompt generation failed: ${res.status} — ${text}`);
+// ─── Generate prompt via Edge Function (fire-and-forget) ──────────
+async function generatePromptInBackground(savedAd) {
+  try {
+    const config = await getConfig();
+    const res = await fetch(`${config.supabaseUrl}${SUPABASE_FUNCTIONS_PATH}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.supabaseAnonKey}`
+      },
+      body: JSON.stringify({
+        saved_ad_id: savedAd.id,
+        advertiser_name: savedAd.advertiser_name,
+        ad_copy: savedAd.ad_copy,
+        image_url: savedAd.image_url,
+        media_type: savedAd.media_type
+      })
+    });
+    if (!res.ok) {
+      console.error('Background prompt generation failed:', res.status);
+    } else {
+      console.log('Background prompt generated for:', savedAd.id);
+    }
+  } catch (err) {
+    console.error('Background prompt generation error:', err);
   }
-
-  return res.json();
 }
 
-// ─── Fetch all saved ads ────────────────────────────────────────────
+// ─── Fetch all saved ads ────────────────────────────────────────
 async function fetchSavedAds() {
-  return supabaseRequest(
-    '/rest/v1/saved_ads?select=*&order=created_at.desc'
-  );
+  return supabaseRequest('/rest/v1/saved_ads?select=*&order=created_at.desc');
 }
 
-// ─── Fetch a single saved ad with its generated prompt ──────────────
+// ─── Fetch a single saved ad ────────────────────────────────────
 async function fetchAdWithPrompt(adId) {
-  const [ad] = await supabaseRequest(
-    `/rest/v1/saved_ads?id=eq.${adId}&select=*`
-  );
+  const [ad] = await supabaseRequest(`/rest/v1/saved_ads?id=eq.${adId}&select=*`);
   return ad;
 }
 
-// ─── Delete a saved ad ─────────────────────────────────────────────
+// ─── Delete a saved ad ───────────────────────────────────────
 async function deleteAd(adId) {
   const config = await getConfig();
   await fetch(`${config.supabaseUrl}/rest/v1/saved_ads?id=eq.${adId}`, {
@@ -128,25 +123,17 @@ async function deleteAd(adId) {
   return { deleted: true };
 }
 
-// ─── Message handler ────────────────────────────────────────────────
+// ─── Message handler ────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const handle = async () => {
     try {
       switch (message.type) {
         case 'SAVE_AD': {
           const saved = await saveAd(message.data);
-          // Auto-generate prompt after saving
-          try {
-            const promptResult = await generatePrompt(saved);
-            return { success: true, ad: saved, prompt: promptResult };
-          } catch (promptErr) {
-            // Ad saved but prompt failed — still return success
-            return {
-              success: true,
-              ad: saved,
-              promptError: promptErr.message
-            };
-          }
+          // Fire-and-forget: kick off prompt generation in background
+          // Don't await — return the save result immediately
+          generatePromptInBackground(saved);
+          return { success: true, ad: saved };
         }
 
         case 'FETCH_ADS': {
@@ -162,11 +149,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         case 'DELETE_AD': {
           await deleteAd(message.adId);
           return { success: true };
-        }
-
-        case 'GENERATE_PROMPT': {
-          const result = await generatePrompt(message.ad);
-          return { success: true, prompt: result };
         }
 
         case 'GET_CONFIG': {
@@ -194,7 +176,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   };
 
   handle().then(sendResponse);
-  return true; // keep message channel open for async response
+  return true;
 });
 
 // ─── Open side panel on extension icon click (when on Ad Library) ───
@@ -204,7 +186,7 @@ chrome.action.onClicked.addListener(async (tab) => {
   }
 });
 
-// ─── Enable side panel only on Ad Library pages ─────────────────────
+// ─── Enable side panel only on Ad Library pages ─────────────────
 chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
   if (!tab.url) return;
 

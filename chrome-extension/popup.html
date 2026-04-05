@@ -194,7 +194,7 @@
     <div class="header-icon">🍳</div>
     <div class="header-text">
       <h1>Creative Kitchen</h1>
-      <p>Ad Capture &amp; Prompt Generator</p>
+      <p>Ad Capture, Prompt &amp; Image Generator</p>
     </div>
   </div>
 
@@ -212,7 +212,7 @@
     </div>
   </div>
 
-  <!-- Configuration -->
+  <!-- Supabase Configuration -->
   <div class="section">
     <div class="section-title">Supabase Connection</div>
 
@@ -228,6 +228,20 @@
     </div>
 
     <div id="connection-status" class="hidden"></div>
+  </div>
+
+  <!-- fal.ai Configuration -->
+  <div class="section">
+    <div class="section-title">fal.ai Image Generation</div>
+
+    <label for="fal-key">API Key</label>
+    <input type="password" id="fal-key" placeholder="fal_..." />
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="save-fal">Save</button>
+    </div>
+
+    <div id="fal-status" class="hidden"></div>
   </div>
 
   <!-- Actions -->

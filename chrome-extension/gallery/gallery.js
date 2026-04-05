@@ -1,5 +1,5 @@
 // Creative Kitchen — Ad Comparison Gallery
-// Shows saved ads with before/after comparison and generated prompts
+// Save ads, generate prompts (Claude), generate images (fal.ai), compare
 
 (() => {
   'use strict';
@@ -10,6 +10,8 @@
   let selectedAd = null;
   let supabaseConfig = null;
 
+  const FAL_MODEL = 'fal-ai/flux/dev';
+
   // ─── DOM refs ─────────────────────────────────────────────────────
   const gallery = document.getElementById('gallery');
   const emptyState = document.getElementById('empty-state');
@@ -17,19 +19,16 @@
   const modalOverlay = document.getElementById('modal-overlay');
   const refreshBtn = document.getElementById('refresh-btn');
 
-  // Stats
   const statTotal = document.getElementById('stat-total');
   const statPrompts = document.getElementById('stat-prompts');
   const statCompared = document.getElementById('stat-compared');
   const statBrands = document.getElementById('stat-brands');
 
-  // Modal elements
   const modalBrand = document.getElementById('modal-brand');
   const modalDate = document.getElementById('modal-date');
   const modalOriginalImg = document.getElementById('modal-original-img');
   const modalOriginalCopy = document.getElementById('modal-original-copy');
   const modalGeneratedImg = document.getElementById('modal-generated-img');
-  const modalGeneratedImage = document.getElementById('modal-generated-image');
   const modalNoGenerated = document.getElementById('modal-no-generated');
   const modalGeneratedNotes = document.getElementById('modal-generated-notes');
   const modalPrompt = document.getElementById('modal-prompt');
@@ -37,8 +36,9 @@
   const modalPlatform = document.getElementById('modal-platform');
   const modalRunningDate = document.getElementById('modal-running-date');
   const modalStatus = document.getElementById('modal-status');
+  const generatePlaceholderText = document.getElementById('generate-placeholder-text');
 
-  // ─── Config helper — read Supabase creds directly ─────────────────
+  // ─── Config helper ────────────────────────────────────────────────
   async function getConfig() {
     if (supabaseConfig) return supabaseConfig;
     const { config } = await chrome.storage.local.get('config');
@@ -46,24 +46,7 @@
     return supabaseConfig;
   }
 
-  // ─── Message helper (for simple/fast ops via service worker) ──────
-  function sendMessage(msg) {
-    return new Promise((resolve, reject) => {
-      try {
-        chrome.runtime.sendMessage(msg, (response) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-          } else {
-            resolve(response);
-          }
-        });
-      } catch (err) {
-        reject(new Error('Extension context invalidated — close and reopen the gallery.'));
-      }
-    });
-  }
-
-  // ─── Direct Supabase REST call (bypasses service worker) ──────────
+  // ─── Direct Supabase REST call ───────────────────────────────────
   async function supabaseRest(path, { method = 'GET', body } = {}) {
     const config = await getConfig();
     if (!config.supabaseUrl || !config.supabaseAnonKey) {
@@ -95,13 +78,9 @@
     return text ? JSON.parse(text) : null;
   }
 
-  // ─── Direct Edge Function call (bypasses service worker) ──────────
+  // ─── Direct Edge Function call (prompt generation) ──────────────
   async function callGeneratePrompt(ad) {
     const config = await getConfig();
-    if (!config.supabaseUrl) {
-      throw new Error('Supabase not configured. Open extension settings.');
-    }
-
     const res = await fetch(`${config.supabaseUrl}/functions/v1/generate-ad-prompt`, {
       method: 'POST',
       headers: {
@@ -125,7 +104,78 @@
     return res.json();
   }
 
-  // ─── Load ads (direct REST call) ──────────────────────────────────
+  // ─── fal.ai image generation (queue → poll → result) ───────────
+  async function generateImageWithFal(prompt, onStatus) {
+    const config = await getConfig();
+    if (!config.falApiKey) {
+      throw new Error('fal.ai API key not set. Open extension settings (popup) and add it.');
+    }
+
+    const headers = {
+      'Authorization': 'Key ' + config.falApiKey,
+      'Content-Type': 'application/json'
+    };
+
+    // 1. Submit job to fal.ai queue
+    onStatus('Submitting to fal.ai...');
+    const submitRes = await fetch('https://queue.fal.run/' + FAL_MODEL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        prompt,
+        num_images: 1,
+        image_size: 'portrait_4_3',
+        enable_safety_checker: false
+      })
+    });
+
+    if (!submitRes.ok) {
+      const errText = await submitRes.text();
+      throw new Error(`fal.ai submit failed: ${submitRes.status} — ${errText}`);
+    }
+
+    const submitData = await submitRes.json();
+    const requestId = submitData.request_id;
+
+    // 2. Poll for completion
+    const statusUrl = 'https://queue.fal.run/' + FAL_MODEL + '/requests/' + requestId + '/status';
+    let attempts = 0;
+    const maxAttempts = 120; // 3 minutes max
+
+    while (attempts < maxAttempts) {
+      await new Promise(r => setTimeout(r, 1500));
+      attempts++;
+
+      const pollRes = await fetch(statusUrl, { headers });
+      const pollData = await pollRes.json();
+
+      if (pollData.status === 'COMPLETED') {
+        onStatus('Downloading image...');
+        break;
+      } else if (pollData.status === 'FAILED') {
+        throw new Error('fal.ai generation failed: ' + (pollData.error || 'Unknown error'));
+      } else {
+        onStatus(`Generating image... (${Math.round(attempts * 1.5)}s)`);
+      }
+    }
+
+    if (attempts >= maxAttempts) {
+      throw new Error('Image generation timed out after 3 minutes');
+    }
+
+    // 3. Fetch the result
+    const resultUrl = 'https://queue.fal.run/' + FAL_MODEL + '/requests/' + requestId;
+    const resultRes = await fetch(resultUrl, { headers });
+    const resultData = await resultRes.json();
+
+    if (!resultData.images || !resultData.images[0]) {
+      throw new Error('fal.ai returned no images');
+    }
+
+    return resultData.images[0].url;
+  }
+
+  // ─── Load ads ─────────────────────────────────────────────────────
   async function loadAds() {
     loading.classList.remove('hidden');
     gallery.classList.add('hidden');
@@ -145,7 +195,7 @@
     }
   }
 
-  // ─── Update stats ─────────────────────────────────────────────────
+  // ─── Stats ───────────────────────────────────────────────────────
   function updateStats() {
     statTotal.textContent = allAds.length;
     statPrompts.textContent = allAds.filter(a => a.generated_prompt).length;
@@ -154,17 +204,13 @@
     statBrands.textContent = brands.size;
   }
 
-  // ─── Filter ads ───────────────────────────────────────────────────
+  // ─── Filter ───────────────────────────────────────────────────────
   function getFilteredAds() {
     switch (currentFilter) {
-      case 'with-prompt':
-        return allAds.filter(a => a.generated_prompt);
-      case 'pending':
-        return allAds.filter(a => !a.generated_prompt);
-      case 'compared':
-        return allAds.filter(a => a.generated_image_url);
-      default:
-        return allAds;
+      case 'with-prompt': return allAds.filter(a => a.generated_prompt);
+      case 'pending': return allAds.filter(a => !a.generated_prompt);
+      case 'compared': return allAds.filter(a => a.generated_image_url);
+      default: return allAds;
     }
   }
 
@@ -175,7 +221,6 @@
     if (ads.length === 0) {
       gallery.classList.add('hidden');
       emptyState.classList.remove('hidden');
-
       if (allAds.length > 0) {
         emptyState.querySelector('h2').textContent = 'No ads match this filter';
         emptyState.querySelector('p').textContent = 'Try a different filter or capture more ads.';
@@ -213,21 +258,18 @@
       `;
     }).join('');
 
-    // Attach click handlers
     gallery.querySelectorAll('.ad-card').forEach(card => {
       card.addEventListener('click', () => {
-        const adId = card.dataset.adId;
-        const ad = allAds.find(a => a.id === adId);
+        const ad = allAds.find(a => a.id === card.dataset.adId);
         if (ad) openModal(ad);
       });
     });
   }
 
-  // ─── Open comparison modal ────────────────────────────────────────
+  // ─── Open modal ───────────────────────────────────────────────────
   function openModal(ad) {
     selectedAd = ad;
 
-    // Header
     modalBrand.textContent = ad.advertiser_name || 'Unknown Brand';
     modalDate.textContent = `Captured ${formatDate(ad.created_at)}`;
 
@@ -240,7 +282,7 @@
     }
     modalOriginalCopy.textContent = ad.ad_copy || 'No ad copy captured';
 
-    // Generated version
+    // Generated image
     if (ad.generated_image_url) {
       modalGeneratedImg.src = ad.generated_image_url;
       modalGeneratedImg.classList.remove('hidden');
@@ -248,11 +290,22 @@
     } else {
       modalGeneratedImg.classList.add('hidden');
       modalNoGenerated.classList.remove('hidden');
+      // Update placeholder based on whether prompt exists
+      const generateBtn = document.getElementById('modal-generate-btn');
+      if (ad.generated_prompt) {
+        generatePlaceholderText.textContent = 'Prompt ready — generate the image';
+        generateBtn.textContent = 'Generate Image';
+        generateBtn.disabled = false;
+      } else {
+        generatePlaceholderText.textContent = 'Waiting for prompt generation...';
+        generateBtn.textContent = 'Generate Image';
+        generateBtn.disabled = true;
+      }
     }
     modalGeneratedNotes.textContent = ad.generation_notes || '';
 
     // Prompt
-    modalPrompt.textContent = ad.generated_prompt || 'No prompt generated yet. Click "Generate Now" to create one.';
+    modalPrompt.textContent = ad.generated_prompt || 'Prompt generating in background... Hit Refresh to check.';
 
     // Metadata
     modalLibraryId.textContent = ad.library_id || '—';
@@ -260,7 +313,6 @@
     modalRunningDate.textContent = ad.started_running || '—';
     modalStatus.textContent = ad.metadata?.status || '—';
 
-    // Show modal
     modalOverlay.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
   }
@@ -272,46 +324,100 @@
     selectedAd = null;
   }
 
-  // ─── Generate prompt — calls Edge Function DIRECTLY ───────────────
-  async function generatePromptForAd() {
+  // ─── REGENERATE PROMPT (Claude via Edge Function) ───────────────
+  async function regeneratePrompt() {
     if (!selectedAd) return;
 
-    const regenBtn = document.getElementById('modal-regenerate-btn');
-    const generateBtn = document.getElementById('modal-generate-btn');
-
-    // Disable both buttons and show loading
-    if (regenBtn) { regenBtn.textContent = 'Generating...'; regenBtn.disabled = true; }
-    if (generateBtn) { generateBtn.textContent = 'Generating...'; generateBtn.disabled = true; }
+    const btn = document.getElementById('modal-regenerate-btn');
+    btn.textContent = 'Generating Prompt...';
+    btn.disabled = true;
     modalPrompt.textContent = 'Generating prompt — this takes 10–15 seconds...';
 
     try {
-      // Call Edge Function DIRECTLY from the gallery page
-      // No service worker middleman = no dropped responses
       const result = await callGeneratePrompt(selectedAd);
 
       if (result && result.success && result.prompt) {
-        // Update local state
         selectedAd.generated_prompt = result.prompt;
         const idx = allAds.findIndex(a => a.id === selectedAd.id);
         if (idx >= 0) allAds[idx] = selectedAd;
 
-        // Update modal
         modalPrompt.textContent = selectedAd.generated_prompt;
+
+        // Enable the Generate Image button now that we have a prompt
+        const generateBtn = document.getElementById('modal-generate-btn');
+        if (generateBtn) {
+          generateBtn.disabled = false;
+          generatePlaceholderText.textContent = 'Prompt ready — generate the image';
+        }
+
         updateStats();
         renderGallery();
       } else {
-        throw new Error((result && result.error) || 'Generation failed — empty response');
+        throw new Error((result && result.error) || 'Generation failed');
       }
     } catch (err) {
-      console.error('Prompt generation error:', err);
       modalPrompt.textContent = `Error: ${err.message}`;
     } finally {
-      if (regenBtn) { regenBtn.textContent = 'Regenerate Prompt'; regenBtn.disabled = false; }
-      if (generateBtn) { generateBtn.textContent = 'Generate Now'; generateBtn.disabled = false; }
+      btn.textContent = 'Regenerate Prompt';
+      btn.disabled = false;
     }
   }
 
-  // ─── Delete ad — direct REST call ─────────────────────────────────
+  // ─── GENERATE IMAGE (fal.ai) ───────────────────────────────────
+  async function generateImage() {
+    if (!selectedAd) return;
+
+    if (!selectedAd.generated_prompt) {
+      alert('No prompt available yet. Click "Regenerate Prompt" first, or wait for the auto-generated prompt.');
+      return;
+    }
+
+    const btn = document.getElementById('modal-generate-btn');
+    btn.textContent = 'Starting...';
+    btn.disabled = true;
+
+    try {
+      const imageUrl = await generateImageWithFal(
+        selectedAd.generated_prompt,
+        (status) => {
+          generatePlaceholderText.textContent = status;
+        }
+      );
+
+      // Save the generated image URL to Supabase
+      await supabaseRest(`/rest/v1/saved_ads?id=eq.${selectedAd.id}`, {
+        method: 'PATCH',
+        body: {
+          generated_image_url: imageUrl,
+          image_generated_at: new Date().toISOString()
+        }
+      });
+
+      // Update local state
+      selectedAd.generated_image_url = imageUrl;
+      const idx = allAds.findIndex(a => a.id === selectedAd.id);
+      if (idx >= 0) allAds[idx] = selectedAd;
+
+      // Show the image in the comparison panel
+      modalGeneratedImg.src = imageUrl;
+      modalGeneratedImg.classList.remove('hidden');
+      modalNoGenerated.classList.add('hidden');
+
+      updateStats();
+      renderGallery();
+    } catch (err) {
+      console.error('Image generation error:', err);
+      generatePlaceholderText.textContent = `Error: ${err.message}`;
+      btn.textContent = 'Retry';
+      btn.disabled = false;
+      return;
+    }
+
+    btn.textContent = 'Generate Image';
+    btn.disabled = false;
+  }
+
+  // ─── Delete ad ────────────────────────────────────────────────────
   async function deleteSelectedAd() {
     if (!selectedAd) return;
     if (!confirm(`Delete this ${selectedAd.advertiser_name || ''} ad? This can't be undone.`)) return;
@@ -331,10 +437,7 @@
         }
       });
 
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Delete failed: ${res.status} — ${text}`);
-      }
+      if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
 
       allAds = allAds.filter(a => a.id !== selectedAd.id);
       closeModal();
@@ -362,18 +465,14 @@
     if (!dateStr) return '—';
     try {
       return new Date(dateStr).toLocaleDateString('en-GB', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
+        day: 'numeric', month: 'short', year: 'numeric'
       });
-    } catch {
-      return dateStr;
-    }
+    } catch { return dateStr; }
   }
 
   // ─── Event listeners ──────────────────────────────────────────────
 
-  // Filter buttons
+  // Filters
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelector('.filter-btn.active').classList.remove('active');
@@ -383,7 +482,6 @@
     });
   });
 
-  // Refresh
   refreshBtn.addEventListener('click', loadAds);
 
   // Modal close
@@ -395,14 +493,12 @@
     if (e.key === 'Escape') closeModal();
   });
 
-  // Modal actions — both generate buttons call the same direct function
-  document.getElementById('modal-regenerate-btn').addEventListener('click', generatePromptForAd);
-  document.getElementById('modal-generate-btn')?.addEventListener('click', generatePromptForAd);
+  // Modal actions — SEPARATE functions for each button
+  document.getElementById('modal-regenerate-btn').addEventListener('click', regeneratePrompt);
+  document.getElementById('modal-generate-btn').addEventListener('click', generateImage);
   document.getElementById('copy-prompt-btn').addEventListener('click', copyPrompt);
   document.getElementById('modal-open-ad-btn').addEventListener('click', () => {
-    if (selectedAd?.page_url) {
-      window.open(selectedAd.page_url, '_blank');
-    }
+    if (selectedAd?.page_url) window.open(selectedAd.page_url, '_blank');
   });
   document.getElementById('modal-delete-btn').addEventListener('click', deleteSelectedAd);
 
