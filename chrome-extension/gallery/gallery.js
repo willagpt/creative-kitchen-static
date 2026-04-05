@@ -1,5 +1,5 @@
 // Creative Kitchen — Ad Comparison Gallery
-// Save ads, generate prompts (Claude), generate images (fal.ai), compare
+// Save ads, generate prompts (Claude), generate images (fal.ai nano-banana-2), compare
 
 (() => {
   'use strict';
@@ -10,7 +10,7 @@
   let selectedAd = null;
   let supabaseConfig = null;
 
-  const FAL_MODEL = 'fal-ai/flux/dev';
+  const FAL_MODEL = 'fal-ai/nano-banana-2';
 
   // ─── DOM refs ─────────────────────────────────────────────────────
   const gallery = document.getElementById('gallery');
@@ -46,6 +46,18 @@
     return supabaseConfig;
   }
 
+  // ─── Safe JSON parse helper ─────────────────────────────────────
+  async function safeJson(res) {
+    const text = await res.text();
+    if (!text) return null;
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      console.error('JSON parse failed for:', text.substring(0, 200));
+      throw new Error('Invalid JSON response from server');
+    }
+  }
+
   // ─── Direct Supabase REST call ───────────────────────────────────
   async function supabaseRest(path, { method = 'GET', body } = {}) {
     const config = await getConfig();
@@ -74,8 +86,7 @@
       throw new Error(`${res.status}: ${text}`);
     }
 
-    const text = await res.text();
-    return text ? JSON.parse(text) : null;
+    return safeJson(res);
   }
 
   // ─── Direct Edge Function call (prompt generation) ──────────────
@@ -101,7 +112,7 @@
       throw new Error(`Prompt generation failed: ${res.status} — ${text}`);
     }
 
-    return res.json();
+    return safeJson(res);
   }
 
   // ─── fal.ai image generation (queue → poll → result) ───────────
@@ -117,7 +128,7 @@
     };
 
     // 1. Submit job to fal.ai queue
-    onStatus('Submitting to fal.ai...');
+    onStatus('Submitting to nano-banana-2...');
     const submitRes = await fetch('https://queue.fal.run/' + FAL_MODEL, {
       method: 'POST',
       headers,
@@ -131,31 +142,45 @@
 
     if (!submitRes.ok) {
       const errText = await submitRes.text();
-      throw new Error(`fal.ai submit failed: ${submitRes.status} — ${errText}`);
+      throw new Error(`fal.ai submit failed (${submitRes.status}): ${errText}`);
     }
 
-    const submitData = await submitRes.json();
+    const submitData = await safeJson(submitRes);
+    if (!submitData || !submitData.request_id) {
+      throw new Error('fal.ai did not return a request_id. Check your API key.');
+    }
     const requestId = submitData.request_id;
 
     // 2. Poll for completion
     const statusUrl = 'https://queue.fal.run/' + FAL_MODEL + '/requests/' + requestId + '/status';
     let attempts = 0;
-    const maxAttempts = 120; // 3 minutes max
+    const maxAttempts = 120;
 
     while (attempts < maxAttempts) {
       await new Promise(r => setTimeout(r, 1500));
       attempts++;
 
-      const pollRes = await fetch(statusUrl, { headers });
-      const pollData = await pollRes.json();
+      try {
+        const pollRes = await fetch(statusUrl, { headers });
+        const pollData = await safeJson(pollRes);
 
-      if (pollData.status === 'COMPLETED') {
-        onStatus('Downloading image...');
-        break;
-      } else if (pollData.status === 'FAILED') {
-        throw new Error('fal.ai generation failed: ' + (pollData.error || 'Unknown error'));
-      } else {
-        onStatus(`Generating image... (${Math.round(attempts * 1.5)}s)`);
+        if (!pollData) {
+          onStatus(`Waiting for fal.ai... (${Math.round(attempts * 1.5)}s)`);
+          continue;
+        }
+
+        if (pollData.status === 'COMPLETED') {
+          onStatus('Downloading image...');
+          break;
+        } else if (pollData.status === 'FAILED') {
+          throw new Error('fal.ai generation failed: ' + (pollData.error || 'Unknown error'));
+        } else {
+          onStatus(`Generating image... (${Math.round(attempts * 1.5)}s)`);
+        }
+      } catch (pollErr) {
+        if (pollErr.message.includes('fal.ai generation failed')) throw pollErr;
+        // Network hiccup — retry
+        onStatus(`Retrying... (${Math.round(attempts * 1.5)}s)`);
       }
     }
 
@@ -166,9 +191,10 @@
     // 3. Fetch the result
     const resultUrl = 'https://queue.fal.run/' + FAL_MODEL + '/requests/' + requestId;
     const resultRes = await fetch(resultUrl, { headers });
-    const resultData = await resultRes.json();
+    const resultData = await safeJson(resultRes);
 
-    if (!resultData.images || !resultData.images[0]) {
+    if (!resultData || !resultData.images || !resultData.images[0]) {
+      console.error('fal.ai result:', resultData);
       throw new Error('fal.ai returned no images');
     }
 
@@ -290,7 +316,6 @@
     } else {
       modalGeneratedImg.classList.add('hidden');
       modalNoGenerated.classList.remove('hidden');
-      // Update placeholder based on whether prompt exists
       const generateBtn = document.getElementById('modal-generate-btn');
       if (ad.generated_prompt) {
         generatePlaceholderText.textContent = 'Prompt ready — generate the image';
@@ -343,7 +368,6 @@
 
         modalPrompt.textContent = selectedAd.generated_prompt;
 
-        // Enable the Generate Image button now that we have a prompt
         const generateBtn = document.getElementById('modal-generate-btn');
         if (generateBtn) {
           generateBtn.disabled = false;
@@ -363,7 +387,7 @@
     }
   }
 
-  // ─── GENERATE IMAGE (fal.ai) ───────────────────────────────────
+  // ─── GENERATE IMAGE (fal.ai nano-banana-2) ──────────────────────
   async function generateImage() {
     if (!selectedAd) return;
 
@@ -472,7 +496,6 @@
 
   // ─── Event listeners ──────────────────────────────────────────────
 
-  // Filters
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelector('.filter-btn.active').classList.remove('active');
@@ -484,7 +507,6 @@
 
   refreshBtn.addEventListener('click', loadAds);
 
-  // Modal close
   document.getElementById('modal-close').addEventListener('click', closeModal);
   modalOverlay.addEventListener('click', (e) => {
     if (e.target === modalOverlay) closeModal();
@@ -493,7 +515,7 @@
     if (e.key === 'Escape') closeModal();
   });
 
-  // Modal actions — SEPARATE functions for each button
+  // Modal actions — SEPARATE functions
   document.getElementById('modal-regenerate-btn').addEventListener('click', regeneratePrompt);
   document.getElementById('modal-generate-btn').addEventListener('click', generateImage);
   document.getElementById('copy-prompt-btn').addEventListener('click', copyPrompt);
