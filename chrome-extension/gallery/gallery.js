@@ -8,6 +8,7 @@
   let allAds = [];
   let currentFilter = 'all';
   let selectedAd = null;
+  let supabaseConfig = null;
 
   // ─── DOM refs ─────────────────────────────────────────────────────
   const gallery = document.getElementById('gallery');
@@ -37,7 +38,15 @@
   const modalRunningDate = document.getElementById('modal-running-date');
   const modalStatus = document.getElementById('modal-status');
 
-  // ─── Message helper ───────────────────────────────────────────────
+  // ─── Config helper — read Supabase creds directly ─────────────────
+  async function getConfig() {
+    if (supabaseConfig) return supabaseConfig;
+    const { config } = await chrome.storage.local.get('config');
+    supabaseConfig = config || {};
+    return supabaseConfig;
+  }
+
+  // ─── Message helper (for simple/fast ops via service worker) ──────
   function sendMessage(msg) {
     return new Promise((resolve, reject) => {
       try {
@@ -54,22 +63,79 @@
     });
   }
 
-  // ─── Load ads ─────────────────────────────────────────────────────
+  // ─── Direct Supabase REST call (bypasses service worker) ──────────
+  async function supabaseRest(path, { method = 'GET', body } = {}) {
+    const config = await getConfig();
+    if (!config.supabaseUrl || !config.supabaseAnonKey) {
+      throw new Error('Supabase not configured. Open extension settings.');
+    }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'apikey': config.supabaseAnonKey,
+      'Authorization': `Bearer ${config.supabaseAnonKey}`
+    };
+
+    if (method === 'POST' || method === 'PATCH') {
+      headers['Prefer'] = 'return=representation';
+    }
+
+    const res = await fetch(`${config.supabaseUrl}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`${res.status}: ${text}`);
+    }
+
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
+  }
+
+  // ─── Direct Edge Function call (bypasses service worker) ──────────
+  async function callGeneratePrompt(ad) {
+    const config = await getConfig();
+    if (!config.supabaseUrl) {
+      throw new Error('Supabase not configured. Open extension settings.');
+    }
+
+    const res = await fetch(`${config.supabaseUrl}/functions/v1/generate-ad-prompt`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.supabaseAnonKey}`
+      },
+      body: JSON.stringify({
+        saved_ad_id: ad.id,
+        advertiser_name: ad.advertiser_name,
+        ad_copy: ad.ad_copy,
+        image_url: ad.image_url,
+        media_type: ad.media_type
+      })
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Prompt generation failed: ${res.status} — ${text}`);
+    }
+
+    return res.json();
+  }
+
+  // ─── Load ads (direct REST call) ──────────────────────────────────
   async function loadAds() {
     loading.classList.remove('hidden');
     gallery.classList.add('hidden');
     emptyState.classList.add('hidden');
 
     try {
-      const res = await sendMessage({ type: 'FETCH_ADS' });
-
-      if (res.success && res.ads) {
-        allAds = res.ads;
-        updateStats();
-        renderGallery();
-      } else {
-        throw new Error(res.error || 'Failed to fetch ads');
-      }
+      const ads = await supabaseRest('/rest/v1/saved_ads?select=*&order=created_at.desc');
+      allAds = ads || [];
+      updateStats();
+      renderGallery();
     } catch (err) {
       console.error('Failed to load ads:', err);
       emptyState.classList.remove('hidden');
@@ -186,7 +252,7 @@
     modalGeneratedNotes.textContent = ad.generation_notes || '';
 
     // Prompt
-    modalPrompt.textContent = ad.generated_prompt || 'No prompt generated yet. Click "Generate Prompt" to create one.';
+    modalPrompt.textContent = ad.generated_prompt || 'No prompt generated yet. Click "Generate Now" to create one.';
 
     // Metadata
     modalLibraryId.textContent = ad.library_id || '—';
@@ -206,12 +272,10 @@
     selectedAd = null;
   }
 
-  // ─── Generate prompt for selected ad ──────────────────────────────
-  async function generatePromptForAd(e) {
+  // ─── Generate prompt — calls Edge Function DIRECTLY ───────────────
+  async function generatePromptForAd() {
     if (!selectedAd) return;
 
-    // Show loading on whichever button was clicked
-    const clickedBtn = e?.target;
     const regenBtn = document.getElementById('modal-regenerate-btn');
     const generateBtn = document.getElementById('modal-generate-btn');
 
@@ -221,14 +285,13 @@
     modalPrompt.textContent = 'Generating prompt — this takes 10–15 seconds...';
 
     try {
-      const res = await sendMessage({
-        type: 'GENERATE_PROMPT',
-        ad: selectedAd
-      });
+      // Call Edge Function DIRECTLY from the gallery page
+      // No service worker middleman = no dropped responses
+      const result = await callGeneratePrompt(selectedAd);
 
-      if (res && res.success && res.prompt) {
+      if (result && result.success && result.prompt) {
         // Update local state
-        selectedAd.generated_prompt = res.prompt.prompt || res.prompt;
+        selectedAd.generated_prompt = result.prompt;
         const idx = allAds.findIndex(a => a.id === selectedAd.id);
         if (idx >= 0) allAds[idx] = selectedAd;
 
@@ -237,9 +300,10 @@
         updateStats();
         renderGallery();
       } else {
-        throw new Error((res && res.error) || 'Generation failed — no response from service worker');
+        throw new Error((result && result.error) || 'Generation failed — empty response');
       }
     } catch (err) {
+      console.error('Prompt generation error:', err);
       modalPrompt.textContent = `Error: ${err.message}`;
     } finally {
       if (regenBtn) { regenBtn.textContent = 'Regenerate Prompt'; regenBtn.disabled = false; }
@@ -247,7 +311,7 @@
     }
   }
 
-  // ─── Delete ad ────────────────────────────────────────────────────
+  // ─── Delete ad — direct REST call ─────────────────────────────────
   async function deleteSelectedAd() {
     if (!selectedAd) return;
     if (!confirm(`Delete this ${selectedAd.advertiser_name || ''} ad? This can't be undone.`)) return;
@@ -257,19 +321,25 @@
     btn.disabled = true;
 
     try {
-      const res = await sendMessage({
-        type: 'DELETE_AD',
-        adId: selectedAd.id
+      const config = await getConfig();
+      const res = await fetch(`${config.supabaseUrl}/rest/v1/saved_ads?id=eq.${selectedAd.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': config.supabaseAnonKey,
+          'Authorization': `Bearer ${config.supabaseAnonKey}`
+        }
       });
 
-      if (res.success) {
-        allAds = allAds.filter(a => a.id !== selectedAd.id);
-        closeModal();
-        updateStats();
-        renderGallery();
-      } else {
-        throw new Error(res.error || 'Delete failed');
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Delete failed: ${res.status} — ${text}`);
       }
+
+      allAds = allAds.filter(a => a.id !== selectedAd.id);
+      closeModal();
+      updateStats();
+      renderGallery();
     } catch (err) {
       alert(`Delete failed: ${err.message}`);
       btn.textContent = 'Delete';
@@ -325,7 +395,7 @@
     if (e.key === 'Escape') closeModal();
   });
 
-  // Modal actions
+  // Modal actions — both generate buttons call the same direct function
   document.getElementById('modal-regenerate-btn').addEventListener('click', generatePromptForAd);
   document.getElementById('modal-generate-btn')?.addEventListener('click', generatePromptForAd);
   document.getElementById('copy-prompt-btn').addEventListener('click', copyPrompt);
