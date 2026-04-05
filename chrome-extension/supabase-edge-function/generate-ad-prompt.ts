@@ -35,29 +35,42 @@ serve(async (req) => {
     }
 
     // ─── Build the Claude prompt ──────────────────────────────────
-    const systemPrompt = `You are a creative director specialising in DTC food and lifestyle brand advertising. Your job is to reverse-engineer ad creatives into detailed image generation prompts.
+    const systemPrompt = `You are a senior creative director at a DTC food and lifestyle brand studio. You reverse-engineer paid social ad creatives into production-ready image generation prompts.
 
-Given an ad's details (brand name, ad copy, and optionally an image URL), generate a detailed prompt that could be used with an AI image generator (like DALL-E, Midjourney, or Flux) to recreate the style, mood, and composition of the original ad.
+Your prompts must read like a detailed creative brief — not a vague description. Write as if you're briefing a designer who will recreate this ad from scratch without ever seeing the original.
 
-Your prompt should cover:
-- **Composition & Layout:** How elements are arranged (e.g., product placement, text areas, negative space)
-- **Colour Palette:** Dominant and accent colours, gradients, colour temperature
-- **Lighting & Mood:** Natural/studio/dramatic, time of day feel, emotional tone
-- **Style & Aesthetic:** Photography style, illustration style, minimalist/maximalist
-- **Typography Direction:** Style of text (bold sans-serif, handwritten, etc.) — describe but don't include actual text
-- **Brand Feel:** Premium, playful, authentic, clinical, artisan, etc.
-- **Technical Details:** Aspect ratio, resolution suggestions, background treatment
+RULES:
+1. Start with format and aspect ratio (e.g. "A clean, modern 4:5 social media ad for...")
+2. Specify exact hex colour codes where possible — infer from the brand's visual identity if needed
+3. Name font styles by reference (e.g. "heavy black sans-serif like Syne Extra Bold", "elegant serif italic like Instrument Serif")
+4. Describe the layout top-to-bottom, section by section — headline, centre content, CTA, footer
+5. Specify spacing language (generous margin, tight leading, centred, stacked)
+6. Describe what's deliberately ABSENT (no photography, no emojis, no uppercase, etc.)
+7. End with the overall tone and emotional temperature — calm, confident, urgent, playful, etc.
+8. Use backticks for hex codes and exact text strings
+9. Never use markdown headers, bullet points, or numbered lists — write in flowing paragraphs
+10. Output ONLY the prompt — no preamble, no explanation, no "Here's the prompt:" prefix
 
-Output ONLY the prompt text — no preamble, no explanation, no markdown headers. Just the prompt ready to paste into an image generator.`
+QUALITY STANDARD — here is an example of the level of detail and specificity your output must match:
 
-    const userMessage = `Reverse-engineer this ad into an image generation prompt:
+"""
+A clean, modern 4:5 social media ad for a UK meal delivery brand called "Chefly". Price comparison format — Chefly vs the real cost of cooking from scratch. Warm cream background (\`#FFF6EE\`) with subtle paper grain texture at 5–6% opacity.
+Top: Bold lowercase headline in heavy black sans-serif (like Syne Extra Bold) reading "why pay more to cook it yourself?" — the word "yourself?" is in elegant serif italic (like Instrument Serif Italic). Centre-aligned, with generous margin above and below.
+Centre: Two side-by-side comparison cards of equal size, sitting in a rounded-corner container with a very faint warm-grey (\`#E8E0D8\`) background. Left card feels subtly warmer and more inviting than the right.
+Below the comparison: A rounded orange (\`#FF6B2C\`) CTA button with white lowercase text and a small right-pointing arrow. Bottom: Logo centred with tagline in serif italic.
+Style: The entire ad is typographic — no photography, no lifestyle imagery. The numbers do the talking. 95% cream and black, 5% orange on CTA and dot accents only. No emojis, no exclamation marks, no uppercase anywhere. Clean, confident, factual. The tone is not aggressive or salesy — it's a calm, honest question.
+"""
 
-**Brand:** ${advertiser_name || 'Unknown'}
-**Ad Copy:** ${ad_copy || 'No copy available'}
-**Media Type:** ${media_type || 'image'}
-${image_url ? `**Image URL:** ${image_url}` : ''}
+Match this level of specificity for every ad you analyse. Infer design details from the brand name, ad copy, and visual identity. Be opinionated about design choices.`
 
-Generate a detailed image prompt that captures the essence, style, and composition of this ad.`
+    const userMessage = `Reverse-engineer this ad into a production-ready image generation prompt:
+
+Brand: ${advertiser_name || 'Unknown'}
+Ad copy: ${ad_copy || 'No copy available'}
+Media type: ${media_type || 'image'}
+${image_url ? `Image URL: ${image_url}` : ''}
+
+Write the prompt at creative-director level — specific hex codes, font references, section-by-section layout, deliberate absences, and emotional tone. Flowing paragraphs, no lists.`
 
     // ─── Call Claude API ──────────────────────────────────────────
     const claudeRes = await fetch(CLAUDE_API_URL, {
@@ -69,7 +82,7 @@ Generate a detailed image prompt that captures the essence, style, and compositi
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
+        max_tokens: 2048,
         system: systemPrompt,
         messages: [
           { role: 'user', content: userMessage }
