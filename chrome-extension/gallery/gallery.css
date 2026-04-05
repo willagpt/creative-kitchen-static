@@ -106,6 +106,8 @@ body {
 .btn-secondary { background: var(--bg-2); color: var(--text-0); }
 .btn-secondary:hover { background: var(--bg-3); }
 .btn-small { padding: 4px 10px; font-size: 11px; }
+.btn-danger { background: var(--error); color: #fff; margin-left: auto; }
+.btn-danger:hover { background: #dc2626; }
 
 /* ─── Stats Bar ────────────────────────────────────────────────────── */
 .stats-bar {

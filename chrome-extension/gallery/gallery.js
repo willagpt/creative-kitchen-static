@@ -231,6 +231,36 @@
     }
   }
 
+  // ─── Delete ad ────────────────────────────────────────────────────
+  async function deleteSelectedAd() {
+    if (!selectedAd) return;
+    if (!confirm(`Delete this ${selectedAd.advertiser_name || ''} ad? This can't be undone.`)) return;
+
+    const btn = document.getElementById('modal-delete-btn');
+    btn.textContent = 'Deleting...';
+    btn.disabled = true;
+
+    try {
+      const res = await sendMessage({
+        type: 'DELETE_AD',
+        adId: selectedAd.id
+      });
+
+      if (res.success) {
+        allAds = allAds.filter(a => a.id !== selectedAd.id);
+        closeModal();
+        updateStats();
+        renderGallery();
+      } else {
+        throw new Error(res.error || 'Delete failed');
+      }
+    } catch (err) {
+      alert(`Delete failed: ${err.message}`);
+      btn.textContent = 'Delete';
+      btn.disabled = false;
+    }
+  }
+
   // ─── Copy prompt ──────────────────────────────────────────────────
   function copyPrompt() {
     const text = modalPrompt.textContent;
@@ -288,6 +318,7 @@
       window.open(selectedAd.page_url, '_blank');
     }
   });
+  document.getElementById('modal-delete-btn').addEventListener('click', deleteSelectedAd);
 
   // ─── Init ─────────────────────────────────────────────────────────
   loadAds();

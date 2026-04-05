@@ -114,6 +114,20 @@ async function fetchAdWithPrompt(adId) {
   return ad;
 }
 
+// ─── Delete a saved ad ─────────────────────────────────────────────
+async function deleteAd(adId) {
+  const config = await getConfig();
+  await fetch(`${config.supabaseUrl}/rest/v1/saved_ads?id=eq.${adId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': config.supabaseAnonKey,
+      'Authorization': `Bearer ${config.supabaseAnonKey}`
+    }
+  });
+  return { deleted: true };
+}
+
 // ─── Message handler ────────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const handle = async () => {
@@ -143,6 +157,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         case 'FETCH_AD': {
           const ad = await fetchAdWithPrompt(message.adId);
           return { success: true, ad };
+        }
+
+        case 'DELETE_AD': {
+          await deleteAd(message.adId);
+          return { success: true };
         }
 
         case 'GENERATE_PROMPT': {
