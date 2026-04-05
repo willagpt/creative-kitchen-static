@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creative Kitchen — Ad Gallery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="gallery.css">
+</head>
+<body>
+  <!-- ─── Nav ─────────────────────────────────────────────────────── -->
+  <nav class="nav">
+    <div class="nav-left">
+      <span class="nav-icon">🍳</span>
+      <span class="nav-title">Creative Kitchen</span>
+      <span class="nav-divider">|</span>
+      <span class="nav-subtitle">Ad Capture Gallery</span>
+    </div>
+    <div class="nav-right">
+      <div class="filter-group">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="with-prompt">With Prompt</button>
+        <button class="filter-btn" data-filter="pending">Pending</button>
+        <button class="filter-btn" data-filter="compared">Compared</button>
+      </div>
+      <button class="btn btn-secondary" id="refresh-btn">↻ Refresh</button>
+    </div>
+  </nav>
+
+  <!-- ─── Stats Bar ───────────────────────────────────────────────── -->
+  <div class="stats-bar">
+    <div class="stat">
+      <span class="stat-value" id="stat-total">0</span>
+      <span class="stat-label">Ads Captured</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" id="stat-prompts">0</span>
+      <span class="stat-label">Prompts Generated</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" id="stat-compared">0</span>
+      <span class="stat-label">Comparisons Made</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" id="stat-brands">0</span>
+      <span class="stat-label">Brands Tracked</span>
+    </div>
+  </div>
+
+  <!-- ─── Gallery Grid ────────────────────────────────────────────── -->
+  <main class="gallery" id="gallery">
+    <!-- Cards injected by JS -->
+  </main>
+
+  <!-- ─── Empty State ─────────────────────────────────────────────── -->
+  <div class="empty-state hidden" id="empty-state">
+    <div class="empty-icon">📸</div>
+    <h2>No ads captured yet</h2>
+    <p>Go to the <a href="https://www.facebook.com/ads/library" target="_blank">Facebook Ad Library</a> and click "Save to Creative Kitchen" on any ad to get started.</p>
+  </div>
+
+  <!-- ─── Comparison Modal ────────────────────────────────────────── -->
+  <div class="modal-overlay hidden" id="modal-overlay">
+    <div class="modal">
+      <button class="modal-close" id="modal-close">✕</button>
+
+      <div class="modal-header">
+        <h2 id="modal-brand">Brand Name</h2>
+        <span class="modal-date" id="modal-date">Captured Jan 29, 2026</span>
+      </div>
+
+      <!-- ─── Before / After Comparison ───────────────────── -->
+      <div class="comparison">
+        <div class="comparison-panel">
+          <div class="panel-header">
+            <span class="panel-tag panel-tag-original">Original Ad</span>
+          </div>
+          <div class="panel-image" id="modal-original-image">
+            <img id="modal-original-img" src="" alt="Original ad" />
+          </div>
+          <div class="panel-copy" id="modal-original-copy"></div>
+        </div>
+
+        <div class="comparison-divider">
+          <div class="divider-vs">VS</div>
+        </div>
+
+        <div class="comparison-panel">
+          <div class="panel-header">
+            <span class="panel-tag panel-tag-generated">AI Generated</span>
+          </div>
+          <div class="panel-image" id="modal-generated-image">
+            <img id="modal-generated-img" src="" alt="Generated version" />
+            <div class="panel-placeholder hidden" id="modal-no-generated">
+              <p>No generated image yet</p>
+              <button class="btn btn-primary" id="modal-generate-btn">Generate Now</button>
+            </div>
+          </div>
+          <div class="panel-copy" id="modal-generated-notes"></div>
+        </div>
+      </div>
+
+      <!-- ─── Prompt Section ──────────────────────────────── -->
+      <div class="prompt-section">
+        <div class="prompt-header">
+          <span class="section-title">Generated Prompt</span>
+          <button class="btn btn-small btn-secondary" id="copy-prompt-btn">Copy</button>
+        </div>
+        <pre class="prompt-text" id="modal-prompt">No prompt generated yet. Click "Generate Prompt" to create one.</pre>
+      </div>
+
+      <!-- ─── Ad Metadata ─────────────────────────────────── -->
+      <div class="metadata-section">
+        <div class="section-title">Ad Details</div>
+        <div class="metadata-grid">
+          <div class="meta-item">
+            <span class="meta-label">Library ID</span>
+            <span class="meta-value" id="modal-library-id">—</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Platform</span>
+            <span class="meta-value" id="modal-platform">—</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Started Running</span>
+            <span class="meta-value" id="modal-running-date">—</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Status</span>
+            <span class="meta-value" id="modal-status">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Actions ─────────────────────────────────────── -->
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="modal-regenerate-btn">Regenerate Prompt</button>
+        <button class="btn btn-secondary" id="modal-open-ad-btn">Open in Ad Library</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Loading State ───────────────────────────────────────────── -->
+  <div class="loading" id="loading">
+    <div class="loading-spinner"></div>
+    <p>Loading your ad collection...</p>
+  </div>
+
+  <script src="gallery.js"></script>
+</body>
+</html>

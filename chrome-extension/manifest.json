@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Creative Kitchen — Ad Capture",
+  "version": "1.0.0",
+  "description": "Save ads from Facebook Ad Library, generate AI prompts, and compare with your versions.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "https://www.facebook.com/ads/library/*",
+    "https://facebook.com/ads/library/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.facebook.com/ads/library/*",
+        "https://facebook.com/ads/library/*"
+      ],
+      "js": ["content-script.js"],
+      "css": ["styles/content.css"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "gallery/gallery.html"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
