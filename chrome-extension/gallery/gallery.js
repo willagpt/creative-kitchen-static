@@ -39,8 +39,18 @@
 
   // ─── Message helper ───────────────────────────────────────────────
   function sendMessage(msg) {
-    return new Promise((resolve) => {
-      chrome.runtime.sendMessage(msg, resolve);
+    return new Promise((resolve, reject) => {
+      try {
+        chrome.runtime.sendMessage(msg, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve(response);
+          }
+        });
+      } catch (err) {
+        reject(new Error('Extension context invalidated — close and reopen the gallery.'));
+      }
     });
   }
 
@@ -197,12 +207,18 @@
   }
 
   // ─── Generate prompt for selected ad ──────────────────────────────
-  async function generatePromptForAd() {
+  async function generatePromptForAd(e) {
     if (!selectedAd) return;
 
-    const btn = document.getElementById('modal-regenerate-btn');
-    btn.textContent = 'Generating...';
-    btn.disabled = true;
+    // Show loading on whichever button was clicked
+    const clickedBtn = e?.target;
+    const regenBtn = document.getElementById('modal-regenerate-btn');
+    const generateBtn = document.getElementById('modal-generate-btn');
+
+    // Disable both buttons and show loading
+    if (regenBtn) { regenBtn.textContent = 'Generating...'; regenBtn.disabled = true; }
+    if (generateBtn) { generateBtn.textContent = 'Generating...'; generateBtn.disabled = true; }
+    modalPrompt.textContent = 'Generating prompt — this takes 10–15 seconds...';
 
     try {
       const res = await sendMessage({
@@ -210,7 +226,7 @@
         ad: selectedAd
       });
 
-      if (res.success && res.prompt) {
+      if (res && res.success && res.prompt) {
         // Update local state
         selectedAd.generated_prompt = res.prompt.prompt || res.prompt;
         const idx = allAds.findIndex(a => a.id === selectedAd.id);
@@ -221,13 +237,13 @@
         updateStats();
         renderGallery();
       } else {
-        throw new Error(res.error || 'Generation failed');
+        throw new Error((res && res.error) || 'Generation failed — no response from service worker');
       }
     } catch (err) {
       modalPrompt.textContent = `Error: ${err.message}`;
     } finally {
-      btn.textContent = 'Regenerate Prompt';
-      btn.disabled = false;
+      if (regenBtn) { regenBtn.textContent = 'Regenerate Prompt'; regenBtn.disabled = false; }
+      if (generateBtn) { generateBtn.textContent = 'Generate Now'; generateBtn.disabled = false; }
     }
   }
 
