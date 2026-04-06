@@ -11,6 +11,7 @@
   let allAds = [];
   let currentFilter = 'all';
   let selectedAd = null;
+  let currentVersions = [];
 
   // ─── DOM refs ─────────────────────────────────────────────────────
   const gallery = document.getElementById('gallery');
@@ -42,6 +43,10 @@
   const generateStatus = document.getElementById('generate-status');
   const regenerateBtn = document.getElementById('modal-regenerate-btn');
   const creativeDirectionInput = document.getElementById('creative-direction');
+  const downloadBtn = document.getElementById('modal-download-btn');
+  const versionsSection = document.getElementById('versions-section');
+  const versionsStrip = document.getElementById('versions-strip');
+  const versionsCount = document.getElementById('versions-count');
 
   // ─── Config helper (reads directly from chrome.storage.local) ─────
   function getConfig() {
@@ -224,6 +229,16 @@
     regenerateBtn.textContent = '↻ New Prompt';
     creativeDirectionInput.value = '';
 
+    // Download button — show only if there's a generated image
+    if (ad.generated_image_url) {
+      downloadBtn.classList.remove('hidden');
+    } else {
+      downloadBtn.classList.add('hidden');
+    }
+
+    // Load version history
+    loadVersions(ad.id);
+
     modalOverlay.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
   }
@@ -233,6 +248,117 @@
     modalOverlay.classList.add('hidden');
     document.body.style.overflow = '';
     selectedAd = null;
+    currentVersions = [];
+  }
+
+  // ─── Download image ───────────────────────────────────────────────
+  async function downloadImage() {
+    const url = modalGeneratedImg.src;
+    if (!url) return;
+
+    downloadBtn.textContent = '↓ Saving...';
+    downloadBtn.disabled = true;
+
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const ext = blob.type.includes('png') ? 'png' : 'jpg';
+      const brand = (selectedAd?.advertiser_name || 'chefly').replace(/[^a-z0-9]/gi, '-').toLowerCase();
+      const ts = new Date().toISOString().slice(0, 10);
+      const filename = `${brand}-${ts}-v${currentVersions.length || 1}.${ext}`;
+
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+
+      downloadBtn.textContent = '✓ Saved';
+      setTimeout(() => { downloadBtn.textContent = '↓ Download'; }, 2000);
+    } catch (err) {
+      console.error('Download failed:', err);
+      downloadBtn.textContent = '↓ Download';
+    } finally {
+      downloadBtn.disabled = false;
+    }
+  }
+
+  // ─── Load versions for an ad ──────────────────────────────────────
+  async function loadVersions(adId) {
+    try {
+      const versions = await supabaseRest(
+        `/rest/v1/generated_versions?saved_ad_id=eq.${adId}&select=*&order=created_at.desc`
+      );
+      currentVersions = versions || [];
+      renderVersions();
+    } catch (err) {
+      console.error('Failed to load versions:', err);
+      currentVersions = [];
+      renderVersions();
+    }
+  }
+
+  // ─── Save a new version ───────────────────────────────────────────
+  async function saveVersion(adId, imageUrl, prompt, creativeDirection) {
+    try {
+      const result = await supabaseRest('/rest/v1/generated_versions', {
+        method: 'POST',
+        body: {
+          saved_ad_id: adId,
+          image_url: imageUrl,
+          prompt: prompt,
+          creative_direction: creativeDirection || null
+        }
+      });
+      // Reload versions to show the new one
+      await loadVersions(adId);
+    } catch (err) {
+      console.error('Failed to save version:', err);
+    }
+  }
+
+  // ─── Render version thumbnails ────────────────────────────────────
+  function renderVersions() {
+    if (currentVersions.length === 0) {
+      versionsSection.classList.add('hidden');
+      return;
+    }
+
+    versionsSection.classList.remove('hidden');
+    versionsCount.textContent = `${currentVersions.length} version${currentVersions.length !== 1 ? 's' : ''}`;
+
+    versionsStrip.innerHTML = currentVersions.map((v, i) => {
+      const num = currentVersions.length - i;
+      const isActive = modalGeneratedImg.src === v.image_url;
+      const date = new Date(v.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      return `
+        <div class="version-thumb ${isActive ? 'active' : ''}" data-version-idx="${i}" title="${date} — ${v.rating || 'unrated'}">
+          <img src="${v.image_url}" alt="Version ${num}" loading="lazy" />
+          <span class="version-thumb-label">v${num}</span>
+        </div>
+      `;
+    }).join('');
+
+    // Click to swap the displayed image + prompt
+    versionsStrip.querySelectorAll('.version-thumb').forEach(thumb => {
+      thumb.addEventListener('click', () => {
+        const idx = parseInt(thumb.dataset.versionIdx);
+        const v = currentVersions[idx];
+        if (!v) return;
+
+        modalGeneratedImg.src = v.image_url;
+        modalGeneratedImg.classList.remove('hidden');
+        modalNoGenerated.classList.add('hidden');
+        modalPrompt.value = v.prompt || '';
+        downloadBtn.classList.remove('hidden');
+
+        // Update active state
+        versionsStrip.querySelectorAll('.version-thumb').forEach(t => t.classList.remove('active'));
+        thumb.classList.add('active');
+      });
+    });
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -394,7 +520,14 @@
         console.error('Failed to save image URL to DB:', dbErr);
       }
 
-      // 6. Update local state
+      // 6. Save as version
+      const direction = creativeDirectionInput.value.trim();
+      await saveVersion(selectedAd.id, imageUrl, prompt, direction);
+
+      // 7. Show download button
+      downloadBtn.classList.remove('hidden');
+
+      // 8. Update local state
       selectedAd.generated_image_url = imageUrl;
       selectedAd.generated_prompt = prompt;
       const idx = allAds.findIndex(a => a.id === selectedAd.id);
@@ -402,7 +535,7 @@
       updateStats();
       renderGallery();
 
-      generateStatus.textContent = 'Done — image generated with nano-banana-2.';
+      generateStatus.textContent = `Done — v${currentVersions.length} saved.`;
 
     } catch (err) {
       generateStatus.textContent = `Error: ${err.message}`;
@@ -492,6 +625,9 @@
   regenerateBtn.addEventListener('click', regeneratePrompt);
   // Generate Image = fal.ai nano-banana-2 (uses whatever is in the textarea)
   generateImageBtn.addEventListener('click', generateImage);
+
+  // Download
+  downloadBtn.addEventListener('click', downloadImage);
 
   // Copy & other actions
   document.getElementById('copy-prompt-btn').addEventListener('click', copyPrompt);

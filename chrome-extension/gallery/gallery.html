@@ -102,11 +102,23 @@
         </div>
       </div>
 
+      <!-- ─── Version History ─────────────────────────── -->
+      <div class="versions-section hidden" id="versions-section">
+        <div class="versions-header">
+          <span class="section-title">Generated Versions</span>
+          <span class="versions-count" id="versions-count"></span>
+        </div>
+        <div class="versions-strip" id="versions-strip">
+          <!-- Thumbnails injected by JS -->
+        </div>
+      </div>
+
       <!-- ─── Action Bar (always visible) ──────────────── -->
       <div class="action-bar" id="action-bar">
         <div class="action-bar-left">
           <button class="btn btn-accent" id="modal-regenerate-btn">↻ New Prompt</button>
           <button class="btn btn-primary" id="modal-generate-image-btn">⚡ Generate Image</button>
+          <button class="btn btn-small btn-secondary hidden" id="modal-download-btn">↓ Download</button>
         </div>
         <div class="action-bar-right">
           <span class="generate-status" id="generate-status"></span>
