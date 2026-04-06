@@ -1,5 +1,5 @@
-// Creative Kitchen — Ad Comparison Gallery (v2)
-// Integrated pipeline: save ad → generate Chefly prompt → generate image → compare
+// Creative Kitchen — Ad Comparison Gallery (v3)
+// Integrated pipeline: save ad → generate Chefly prompt → generate image → refine → compare
 // All Supabase + fal.ai calls are DIRECT (no service worker middleman)
 
 (() => {
@@ -48,6 +48,11 @@
   const versionsSection = document.getElementById('versions-section');
   const versionsStrip = document.getElementById('versions-strip');
   const versionsCount = document.getElementById('versions-count');
+
+  // Feedback / Refine elements
+  const feedbackSection = document.getElementById('feedback-section');
+  const feedbackInput = document.getElementById('feedback-input');
+  const refineBtn = document.getElementById('refine-btn');
 
   // ─── Config helper (reads directly from chrome.storage.local) ─────
   function getConfig() {
@@ -240,6 +245,15 @@
       downloadBtn.classList.add('hidden');
     }
 
+    // Reset feedback
+    feedbackInput.value = '';
+    // Show feedback section only if there's already a generated image to refine
+    if (ad.generated_image_url) {
+      feedbackSection.classList.remove('hidden');
+    } else {
+      feedbackSection.classList.add('hidden');
+    }
+
     // Load version history
     loadVersions(ad.id);
 
@@ -305,7 +319,7 @@
   }
 
   // ─── Save a new version ───────────────────────────────────────────
-  async function saveVersion(adId, imageUrl, prompt, creativeDirection, aspectRatio) {
+  async function saveVersion(adId, imageUrl, prompt, creativeDirection, aspectRatio, userFeedback) {
     try {
       const result = await supabaseRest('/rest/v1/generated_versions', {
         method: 'POST',
@@ -314,7 +328,8 @@
           image_url: imageUrl,
           prompt: prompt,
           creative_direction: creativeDirection || null,
-          aspect_ratio: aspectRatio || '1:1'
+          aspect_ratio: aspectRatio || '1:1',
+          user_feedback: userFeedback || null
         }
       });
       // Reload versions to show the new one
@@ -339,10 +354,13 @@
       const isActive = modalGeneratedImg.src === v.image_url;
       const date = new Date(v.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
       const ratio = v.aspect_ratio || '—';
+      const isRefined = !!v.user_feedback;
+      const refinedClass = isRefined ? ' refined' : '';
+      const label = isRefined ? `v${num} · ${ratio} · refined` : `v${num} · ${ratio}`;
       return `
-        <div class="version-thumb ${isActive ? 'active' : ''}" data-version-idx="${i}" title="${date} · ${ratio} · ${v.rating || 'unrated'}">
+        <div class="version-thumb${refinedClass} ${isActive ? 'active' : ''}" data-version-idx="${i}" title="${date} · ${ratio}${isRefined ? ' · feedback: ' + v.user_feedback.slice(0, 60) : ''} · ${v.rating || 'unrated'}">
           <img src="${v.image_url}" alt="Version ${num}" loading="lazy" />
-          <span class="version-thumb-label">v${num} · ${ratio}</span>
+          <span class="version-thumb-label">${label}</span>
         </div>
       `;
     }).join('');
@@ -359,6 +377,9 @@
         modalNoGenerated.classList.add('hidden');
         modalPrompt.value = v.prompt || '';
         downloadBtn.classList.remove('hidden');
+
+        // Show feedback section now that we have a generated image
+        feedbackSection.classList.remove('hidden');
 
         // Set the aspect ratio pill to match this version
         if (v.aspect_ratio) {
@@ -425,14 +446,76 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // GENERATE IMAGE — calls fal.ai directly with nano-banana-2
-  // Queue → Poll → Result pattern
+  // REFINE PROMPT — sends current prompt + user feedback to Claude
+  // Claude makes surgical edits, then auto-generates a new image
   // ═══════════════════════════════════════════════════════════════════
-  async function generateImage() {
+  async function refineAndRegenerate() {
     if (!selectedAd) return;
 
-    // Use whatever is currently in the textarea (could be edited)
-    const prompt = modalPrompt.value.trim();
+    const feedback = feedbackInput.value.trim();
+    if (!feedback) {
+      generateStatus.textContent = 'Type your feedback first — what should change?';
+      return;
+    }
+
+    const currentPrompt = modalPrompt.value.trim();
+    if (!currentPrompt) {
+      generateStatus.textContent = 'No prompt to refine — generate one first.';
+      return;
+    }
+
+    refineBtn.disabled = true;
+    refineBtn.textContent = 'Refining prompt...';
+    generateStatus.textContent = 'Sending feedback to Claude...';
+
+    try {
+      const config = await getConfig();
+
+      // Step 1: Call refine-prompt edge function
+      const res = await fetch(`${config.supabaseUrl}/functions/v1/refine-prompt`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.supabaseAnonKey}`
+        },
+        body: JSON.stringify({
+          current_prompt: currentPrompt,
+          user_feedback: feedback
+        })
+      });
+
+      const data = await safeJson(res);
+
+      if (!data || !data.refined_prompt) {
+        throw new Error(data?.error || 'Empty response from refine function');
+      }
+
+      // Step 2: Update the prompt textarea with refined version
+      modalPrompt.value = data.refined_prompt;
+      generateStatus.textContent = 'Prompt refined — now generating image...';
+
+      // Step 3: Auto-generate the image with the refined prompt
+      refineBtn.textContent = 'Generating image...';
+      await generateImageWithPrompt(data.refined_prompt, feedback);
+
+      // Clear the feedback input for next round
+      feedbackInput.value = '';
+
+    } catch (err) {
+      generateStatus.textContent = `Refine error: ${err.message}`;
+    } finally {
+      refineBtn.textContent = '↻ Refine & Regenerate';
+      refineBtn.disabled = false;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // GENERATE IMAGE — calls fal.ai directly with nano-banana-2
+  // Shared between Generate Image button and Refine flow
+  // ═══════════════════════════════════════════════════════════════════
+  async function generateImageWithPrompt(prompt, userFeedback) {
+    if (!selectedAd) return;
+
     if (!prompt) {
       generateStatus.textContent = 'No prompt — regenerate one first or type your own.';
       return;
@@ -530,12 +613,13 @@
         console.error('Failed to save image URL to DB:', dbErr);
       }
 
-      // 6. Save as version
+      // 6. Save as version (with feedback if this was a refine)
       const direction = creativeDirectionInput.value.trim();
-      await saveVersion(selectedAd.id, imageUrl, prompt, direction, selectedAspectRatio);
+      await saveVersion(selectedAd.id, imageUrl, prompt, direction, selectedAspectRatio, userFeedback || null);
 
-      // 7. Show download button
+      // 7. Show download + feedback sections
       downloadBtn.classList.remove('hidden');
+      feedbackSection.classList.remove('hidden');
 
       // 8. Update local state
       selectedAd.generated_image_url = imageUrl;
@@ -545,7 +629,8 @@
       updateStats();
       renderGallery();
 
-      generateStatus.textContent = `Done — v${currentVersions.length} saved (${selectedAspectRatio}).`;
+      const statusLabel = userFeedback ? 'refined' : 'saved';
+      generateStatus.textContent = `Done — v${currentVersions.length} ${statusLabel} (${selectedAspectRatio}).`;
 
     } catch (err) {
       generateStatus.textContent = `Error: ${err.message}`;
@@ -553,6 +638,12 @@
       generateImageBtn.textContent = '⚡ Regenerate Image';
       generateImageBtn.disabled = false;
     }
+  }
+
+  // ─── Generate Image (button click — no feedback) ──────────────────
+  async function generateImage() {
+    const prompt = modalPrompt.value.trim();
+    await generateImageWithPrompt(prompt, null);
   }
 
   // ─── Delete ad (direct) ───────────────────────────────────────────
@@ -645,11 +736,13 @@
     if (e.key === 'Escape') closeModal();
   });
 
-  // === THE TWO KEY BUTTONS ===
+  // === THE THREE KEY BUTTONS ===
   // Regenerate Prompt = Claude via Edge Function (Chefly brand DNA)
   regenerateBtn.addEventListener('click', regeneratePrompt);
   // Generate Image = fal.ai nano-banana-2 (uses whatever is in the textarea)
   generateImageBtn.addEventListener('click', generateImage);
+  // Refine & Regenerate = feedback → Claude edits prompt → auto-generate
+  refineBtn.addEventListener('click', refineAndRegenerate);
 
   // Download
   downloadBtn.addEventListener('click', downloadImage);
