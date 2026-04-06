@@ -12,6 +12,7 @@
   let currentFilter = 'all';
   let selectedAd = null;
   let currentVersions = [];
+  let selectedAspectRatio = '1:1';
 
   // ─── DOM refs ─────────────────────────────────────────────────────
   const gallery = document.getElementById('gallery');
@@ -229,6 +230,9 @@
     regenerateBtn.textContent = '↻ New Prompt';
     creativeDirectionInput.value = '';
 
+    // Reset aspect ratio to default
+    setAspectRatio('1:1');
+
     // Download button — show only if there's a generated image
     if (ad.generated_image_url) {
       downloadBtn.classList.remove('hidden');
@@ -301,7 +305,7 @@
   }
 
   // ─── Save a new version ───────────────────────────────────────────
-  async function saveVersion(adId, imageUrl, prompt, creativeDirection) {
+  async function saveVersion(adId, imageUrl, prompt, creativeDirection, aspectRatio) {
     try {
       const result = await supabaseRest('/rest/v1/generated_versions', {
         method: 'POST',
@@ -309,7 +313,8 @@
           saved_ad_id: adId,
           image_url: imageUrl,
           prompt: prompt,
-          creative_direction: creativeDirection || null
+          creative_direction: creativeDirection || null,
+          aspect_ratio: aspectRatio || '1:1'
         }
       });
       // Reload versions to show the new one
@@ -333,10 +338,11 @@
       const num = currentVersions.length - i;
       const isActive = modalGeneratedImg.src === v.image_url;
       const date = new Date(v.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      const ratio = v.aspect_ratio || '—';
       return `
-        <div class="version-thumb ${isActive ? 'active' : ''}" data-version-idx="${i}" title="${date} — ${v.rating || 'unrated'}">
+        <div class="version-thumb ${isActive ? 'active' : ''}" data-version-idx="${i}" title="${date} · ${ratio} · ${v.rating || 'unrated'}">
           <img src="${v.image_url}" alt="Version ${num}" loading="lazy" />
-          <span class="version-thumb-label">v${num}</span>
+          <span class="version-thumb-label">v${num} · ${ratio}</span>
         </div>
       `;
     }).join('');
@@ -353,6 +359,11 @@
         modalNoGenerated.classList.add('hidden');
         modalPrompt.value = v.prompt || '';
         downloadBtn.classList.remove('hidden');
+
+        // Set the aspect ratio pill to match this version
+        if (v.aspect_ratio) {
+          setAspectRatio(v.aspect_ratio);
+        }
 
         // Update active state
         versionsStrip.querySelectorAll('.version-thumb').forEach(t => t.classList.remove('active'));
@@ -435,7 +446,7 @@
 
     generateImageBtn.textContent = 'Generating...';
     generateImageBtn.disabled = true;
-    generateStatus.textContent = 'Submitting to fal.ai queue...';
+    generateStatus.textContent = `Submitting to fal.ai (${selectedAspectRatio})...`;
 
     try {
       const headers = {
@@ -450,7 +461,7 @@
         body: JSON.stringify({
           prompt,
           num_images: 1,
-          image_size: 'portrait_4_3',
+          aspect_ratio: selectedAspectRatio,
           enable_safety_checker: false
         })
       });
@@ -512,7 +523,6 @@
           body: {
             generated_image_url: imageUrl,
             image_generated_at: new Date().toISOString(),
-            // Also save the prompt that was used (in case user edited it)
             generated_prompt: prompt
           }
         });
@@ -522,7 +532,7 @@
 
       // 6. Save as version
       const direction = creativeDirectionInput.value.trim();
-      await saveVersion(selectedAd.id, imageUrl, prompt, direction);
+      await saveVersion(selectedAd.id, imageUrl, prompt, direction, selectedAspectRatio);
 
       // 7. Show download button
       downloadBtn.classList.remove('hidden');
@@ -535,7 +545,7 @@
       updateStats();
       renderGallery();
 
-      generateStatus.textContent = `Done — v${currentVersions.length} saved.`;
+      generateStatus.textContent = `Done — v${currentVersions.length} saved (${selectedAspectRatio}).`;
 
     } catch (err) {
       generateStatus.textContent = `Error: ${err.message}`;
@@ -596,7 +606,22 @@
     } catch { return dateStr; }
   }
 
+  // ─── Aspect ratio helper ─────────────────────────────────────────
+  function setAspectRatio(ratio) {
+    selectedAspectRatio = ratio;
+    document.querySelectorAll('.aspect-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.ratio === ratio);
+    });
+  }
+
   // ─── Event listeners ──────────────────────────────────────────────
+
+  // Aspect ratio pills
+  document.querySelectorAll('.aspect-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      setAspectRatio(pill.dataset.ratio);
+    });
+  });
 
   // Filter buttons
   document.querySelectorAll('.filter-btn').forEach(btn => {

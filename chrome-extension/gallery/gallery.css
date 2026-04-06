@@ -514,6 +514,44 @@ body {
   background: rgba(249, 115, 22, 0.15);
 }
 
+/* ─── Aspect Ratio Selector ───────────────────────────────────────── */
+.aspect-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 24px;
+  padding: 10px 0;
+}
+
+.aspect-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.aspect-pill {
+  padding: 5px 14px;
+  border: 1px solid var(--bg-3);
+  border-radius: 20px;
+  background: var(--bg-1);
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.aspect-pill:hover {
+  border-color: var(--accent);
+  color: var(--text-0);
+}
+
+.aspect-pill.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
 /* ─── Prompt Section ───────────────────────────────────────────────── */
 .prompt-section {
   margin: 0 24px;
