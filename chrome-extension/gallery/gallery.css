@@ -272,7 +272,7 @@ body {
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 24px;
   overflow-y: auto;
@@ -410,6 +410,43 @@ body {
   color: var(--text-1);
 }
 
+/* ─── Action Bar (sticky) ─────────────────────────────────────────── */
+.action-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: rgba(24, 24, 27, 0.95);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--bg-2);
+  border-top: 1px solid var(--bg-2);
+  gap: 12px;
+}
+
+.action-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-bar-right {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-accent {
+  background: var(--bg-2);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.btn-accent:hover {
+  background: rgba(249, 115, 22, 0.15);
+}
+
 /* ─── Prompt Section ───────────────────────────────────────────────── */
 .prompt-section {
   margin: 0 24px;
@@ -445,6 +482,63 @@ body {
   word-break: break-word;
   max-height: 200px;
   overflow-y: auto;
+}
+
+.creative-direction-row {
+  padding: 10px 14px 0;
+}
+
+.creative-direction-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text-0);
+  background: var(--bg-0);
+  border: 1px solid var(--bg-3);
+  border-radius: 6px;
+  outline: none;
+}
+
+.creative-direction-input:focus {
+  border-color: var(--accent);
+}
+
+.creative-direction-input::placeholder {
+  color: var(--text-2);
+}
+
+.prompt-textarea {
+  width: 100%;
+  min-height: 200px;
+  max-height: 300px;
+  padding: 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-0);
+  background: var(--bg-0);
+  border: none;
+  border-bottom: 1px solid var(--bg-2);
+  resize: vertical;
+  outline: none;
+}
+
+.prompt-textarea:focus {
+  background: #111113;
+}
+
+.prompt-textarea::placeholder {
+  color: var(--text-2);
+}
+
+.generate-status {
+  font-size: 12px;
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ─── Metadata Section ─────────────────────────────────────────────── */

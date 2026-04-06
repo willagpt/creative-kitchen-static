@@ -71,7 +71,7 @@
         <span class="modal-date" id="modal-date">Captured Jan 29, 2026</span>
       </div>
 
-      <!-- ─── Before / After Comparison ─────────────────── -->
+      <!-- ─── Before / After Comparison ───────────────────── -->
       <div class="comparison">
         <div class="comparison-panel">
           <div class="panel-header">
@@ -92,26 +92,40 @@
             <span class="panel-tag panel-tag-generated">AI Generated</span>
           </div>
           <div class="panel-image" id="modal-generated-image">
-            <img id="modal-generated-img" class="hidden" src="" alt="Generated version" />
-            <div class="panel-placeholder" id="modal-no-generated">
-              <p id="generate-placeholder-text">No generated image yet</p>
-              <button class="btn btn-primary" id="modal-generate-btn">Generate Image</button>
+            <img id="modal-generated-img" src="" alt="Generated version" />
+            <div class="panel-placeholder hidden" id="modal-no-generated">
+              <p>No generated image yet</p>
+              <p style="font-size:12px;color:var(--text-2);margin-top:4px;">Write or regenerate a prompt below, then hit Generate Image</p>
             </div>
           </div>
           <div class="panel-copy" id="modal-generated-notes"></div>
         </div>
       </div>
 
-      <!-- ─── Prompt Section ────────────────────────── -->
-      <div class="prompt-section">
-        <div class="prompt-header">
-          <span class="section-title">Generated Prompt</span>
-          <button class="btn btn-small btn-secondary" id="copy-prompt-btn">Copy</button>
+      <!-- ─── Action Bar (always visible) ──────────────── -->
+      <div class="action-bar" id="action-bar">
+        <div class="action-bar-left">
+          <button class="btn btn-accent" id="modal-regenerate-btn">↻ New Prompt</button>
+          <button class="btn btn-primary" id="modal-generate-image-btn">⚡ Generate Image</button>
         </div>
-        <pre class="prompt-text" id="modal-prompt">No prompt generated yet.</pre>
+        <div class="action-bar-right">
+          <span class="generate-status" id="generate-status"></span>
+        </div>
       </div>
 
-      <!-- ─── Ad Metadata ───────────────────────────── -->
+      <!-- ─── Prompt Section (editable) ─────────────────── -->
+      <div class="prompt-section">
+        <div class="prompt-header">
+          <span class="section-title">Chefly Prompt</span>
+          <button class="btn btn-small btn-secondary" id="copy-prompt-btn">Copy</button>
+        </div>
+        <div class="creative-direction-row">
+          <input type="text" class="creative-direction-input" id="creative-direction" placeholder="creative direction (optional) — e.g. &quot;9:16 story, coloured background like Jones Road, packaging flat-lay&quot;" />
+        </div>
+        <textarea class="prompt-textarea" id="modal-prompt" rows="12" placeholder="No prompt generated yet. Click 'New Prompt' above to create a Chefly prompt from this ad."></textarea>
+      </div>
+
+      <!-- ─── Ad Metadata ─────────────────────────────────── -->
       <div class="metadata-section">
         <div class="section-title">Ad Details</div>
         <div class="metadata-grid">
@@ -134,9 +148,8 @@
         </div>
       </div>
 
-      <!-- ─── Actions ───────────────────────────────── -->
+      <!-- ─── Actions ─────────────────────────────────────── -->
       <div class="modal-actions">
-        <button class="btn btn-primary" id="modal-regenerate-btn">Regenerate Prompt</button>
         <button class="btn btn-secondary" id="modal-open-ad-btn">Open in Ad Library</button>
         <button class="btn btn-danger" id="modal-delete-btn">Delete</button>
       </div>

@@ -1,16 +1,16 @@
-// Creative Kitchen — Ad Comparison Gallery
-// Save ads, generate prompts (Claude), generate images (fal.ai nano-banana-2), compare
+// Creative Kitchen — Ad Comparison Gallery (v2)
+// Integrated pipeline: save ad → generate Chefly prompt → generate image → compare
+// All Supabase + fal.ai calls are DIRECT (no service worker middleman)
 
 (() => {
   'use strict';
+
+  const FAL_MODEL = 'fal-ai/nano-banana-2';
 
   // ─── State ────────────────────────────────────────────────────────
   let allAds = [];
   let currentFilter = 'all';
   let selectedAd = null;
-  let supabaseConfig = null;
-
-  const FAL_MODEL = 'fal-ai/nano-banana-2';
 
   // ─── DOM refs ─────────────────────────────────────────────────────
   const gallery = document.getElementById('gallery');
@@ -19,11 +19,13 @@
   const modalOverlay = document.getElementById('modal-overlay');
   const refreshBtn = document.getElementById('refresh-btn');
 
+  // Stats
   const statTotal = document.getElementById('stat-total');
   const statPrompts = document.getElementById('stat-prompts');
   const statCompared = document.getElementById('stat-compared');
   const statBrands = document.getElementById('stat-brands');
 
+  // Modal elements
   const modalBrand = document.getElementById('modal-brand');
   const modalDate = document.getElementById('modal-date');
   const modalOriginalImg = document.getElementById('modal-original-img');
@@ -36,33 +38,32 @@
   const modalPlatform = document.getElementById('modal-platform');
   const modalRunningDate = document.getElementById('modal-running-date');
   const modalStatus = document.getElementById('modal-status');
-  const generatePlaceholderText = document.getElementById('generate-placeholder-text');
+  const generateImageBtn = document.getElementById('modal-generate-image-btn');
+  const generateStatus = document.getElementById('generate-status');
+  const regenerateBtn = document.getElementById('modal-regenerate-btn');
+  const creativeDirectionInput = document.getElementById('creative-direction');
 
-  // ─── Config helper ────────────────────────────────────────────────
-  async function getConfig() {
-    if (supabaseConfig) return supabaseConfig;
-    const { config } = await chrome.storage.local.get('config');
-    supabaseConfig = config || {};
-    return supabaseConfig;
+  // ─── Config helper (reads directly from chrome.storage.local) ─────
+  function getConfig() {
+    return new Promise((resolve) => {
+      chrome.storage.local.get('config', ({ config }) => {
+        resolve(config || {});
+      });
+    });
   }
 
-  // ─── Safe JSON parse helper ─────────────────────────────────────
+  // ─── Safe JSON parser (handles empty responses) ───────────────────
   async function safeJson(res) {
     const text = await res.text();
-    if (!text) return null;
-    try {
-      return JSON.parse(text);
-    } catch (e) {
-      console.error('JSON parse failed for:', text.substring(0, 200));
-      throw new Error('Invalid JSON response from server');
-    }
+    if (!text || !text.trim()) return null;
+    return JSON.parse(text);
   }
 
-  // ─── Direct Supabase REST call ───────────────────────────────────
+  // ─── Direct Supabase REST call ────────────────────────────────────
   async function supabaseRest(path, { method = 'GET', body } = {}) {
     const config = await getConfig();
     if (!config.supabaseUrl || !config.supabaseAnonKey) {
-      throw new Error('Supabase not configured. Open extension settings.');
+      throw new Error('Supabase not configured — open extension settings.');
     }
 
     const headers = {
@@ -70,7 +71,6 @@
       'apikey': config.supabaseAnonKey,
       'Authorization': `Bearer ${config.supabaseAnonKey}`
     };
-
     if (method === 'POST' || method === 'PATCH') {
       headers['Prefer'] = 'return=representation';
     }
@@ -83,125 +83,13 @@
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`${res.status}: ${text}`);
+      throw new Error(`Supabase ${res.status}: ${text}`);
     }
 
     return safeJson(res);
   }
 
-  // ─── Direct Edge Function call (prompt generation) ──────────────
-  async function callGeneratePrompt(ad) {
-    const config = await getConfig();
-    const res = await fetch(`${config.supabaseUrl}/functions/v1/generate-ad-prompt`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.supabaseAnonKey}`
-      },
-      body: JSON.stringify({
-        saved_ad_id: ad.id,
-        advertiser_name: ad.advertiser_name,
-        ad_copy: ad.ad_copy,
-        image_url: ad.image_url,
-        media_type: ad.media_type
-      })
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Prompt generation failed: ${res.status} — ${text}`);
-    }
-
-    return safeJson(res);
-  }
-
-  // ─── fal.ai image generation (queue → poll → result) ───────────
-  async function generateImageWithFal(prompt, onStatus) {
-    const config = await getConfig();
-    if (!config.falApiKey) {
-      throw new Error('fal.ai API key not set. Open extension settings (popup) and add it.');
-    }
-
-    const headers = {
-      'Authorization': 'Key ' + config.falApiKey,
-      'Content-Type': 'application/json'
-    };
-
-    // 1. Submit job to fal.ai queue
-    onStatus('Submitting to nano-banana-2...');
-    const submitRes = await fetch('https://queue.fal.run/' + FAL_MODEL, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        prompt,
-        num_images: 1,
-        image_size: 'portrait_4_3',
-        enable_safety_checker: false
-      })
-    });
-
-    if (!submitRes.ok) {
-      const errText = await submitRes.text();
-      throw new Error(`fal.ai submit failed (${submitRes.status}): ${errText}`);
-    }
-
-    const submitData = await safeJson(submitRes);
-    if (!submitData || !submitData.request_id) {
-      throw new Error('fal.ai did not return a request_id. Check your API key.');
-    }
-    const requestId = submitData.request_id;
-
-    // 2. Poll for completion
-    const statusUrl = 'https://queue.fal.run/' + FAL_MODEL + '/requests/' + requestId + '/status';
-    let attempts = 0;
-    const maxAttempts = 120;
-
-    while (attempts < maxAttempts) {
-      await new Promise(r => setTimeout(r, 1500));
-      attempts++;
-
-      try {
-        const pollRes = await fetch(statusUrl, { headers });
-        const pollData = await safeJson(pollRes);
-
-        if (!pollData) {
-          onStatus(`Waiting for fal.ai... (${Math.round(attempts * 1.5)}s)`);
-          continue;
-        }
-
-        if (pollData.status === 'COMPLETED') {
-          onStatus('Downloading image...');
-          break;
-        } else if (pollData.status === 'FAILED') {
-          throw new Error('fal.ai generation failed: ' + (pollData.error || 'Unknown error'));
-        } else {
-          onStatus(`Generating image... (${Math.round(attempts * 1.5)}s)`);
-        }
-      } catch (pollErr) {
-        if (pollErr.message.includes('fal.ai generation failed')) throw pollErr;
-        // Network hiccup — retry
-        onStatus(`Retrying... (${Math.round(attempts * 1.5)}s)`);
-      }
-    }
-
-    if (attempts >= maxAttempts) {
-      throw new Error('Image generation timed out after 3 minutes');
-    }
-
-    // 3. Fetch the result
-    const resultUrl = 'https://queue.fal.run/' + FAL_MODEL + '/requests/' + requestId;
-    const resultRes = await fetch(resultUrl, { headers });
-    const resultData = await safeJson(resultRes);
-
-    if (!resultData || !resultData.images || !resultData.images[0]) {
-      console.error('fal.ai result:', resultData);
-      throw new Error('fal.ai returned no images');
-    }
-
-    return resultData.images[0].url;
-  }
-
-  // ─── Load ads ─────────────────────────────────────────────────────
+  // ─── Load ads (direct) ────────────────────────────────────────────
   async function loadAds() {
     loading.classList.remove('hidden');
     gallery.classList.add('hidden');
@@ -221,7 +109,7 @@
     }
   }
 
-  // ─── Stats ───────────────────────────────────────────────────────
+  // ─── Update stats ─────────────────────────────────────────────────
   function updateStats() {
     statTotal.textContent = allAds.length;
     statPrompts.textContent = allAds.filter(a => a.generated_prompt).length;
@@ -230,7 +118,7 @@
     statBrands.textContent = brands.size;
   }
 
-  // ─── Filter ───────────────────────────────────────────────────────
+  // ─── Filter ads ───────────────────────────────────────────────────
   function getFilteredAds() {
     switch (currentFilter) {
       case 'with-prompt': return allAds.filter(a => a.generated_prompt);
@@ -292,7 +180,7 @@
     });
   }
 
-  // ─── Open modal ───────────────────────────────────────────────────
+  // ─── Open comparison modal ────────────────────────────────────────
   function openModal(ad) {
     selectedAd = ad;
 
@@ -308,7 +196,7 @@
     }
     modalOriginalCopy.textContent = ad.ad_copy || 'No ad copy captured';
 
-    // Generated image
+    // Generated version
     if (ad.generated_image_url) {
       modalGeneratedImg.src = ad.generated_image_url;
       modalGeneratedImg.classList.remove('hidden');
@@ -316,27 +204,25 @@
     } else {
       modalGeneratedImg.classList.add('hidden');
       modalNoGenerated.classList.remove('hidden');
-      const generateBtn = document.getElementById('modal-generate-btn');
-      if (ad.generated_prompt) {
-        generatePlaceholderText.textContent = 'Prompt ready — generate the image';
-        generateBtn.textContent = 'Generate Image';
-        generateBtn.disabled = false;
-      } else {
-        generatePlaceholderText.textContent = 'Waiting for prompt generation...';
-        generateBtn.textContent = 'Generate Image';
-        generateBtn.disabled = true;
-      }
     }
     modalGeneratedNotes.textContent = ad.generation_notes || '';
 
-    // Prompt
-    modalPrompt.textContent = ad.generated_prompt || 'Prompt generating in background... Hit Refresh to check.';
+    // Prompt (editable textarea)
+    modalPrompt.value = ad.generated_prompt || '';
 
     // Metadata
     modalLibraryId.textContent = ad.library_id || '—';
     modalPlatform.textContent = ad.platform || '—';
     modalRunningDate.textContent = ad.started_running || '—';
     modalStatus.textContent = ad.metadata?.status || '—';
+
+    // Reset status and creative direction
+    generateStatus.textContent = '';
+    generateImageBtn.disabled = false;
+    generateImageBtn.textContent = ad.generated_image_url ? '⚡ Regenerate Image' : '⚡ Generate Image';
+    regenerateBtn.disabled = false;
+    regenerateBtn.textContent = '↻ New Prompt';
+    creativeDirectionInput.value = '';
 
     modalOverlay.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -349,99 +235,184 @@
     selectedAd = null;
   }
 
-  // ─── REGENERATE PROMPT (Claude via Edge Function) ───────────────
+  // ═══════════════════════════════════════════════════════════════════
+  // REGENERATE PROMPT — calls the Chefly Edge Function via Supabase
+  // ═══════════════════════════════════════════════════════════════════
   async function regeneratePrompt() {
     if (!selectedAd) return;
 
-    const btn = document.getElementById('modal-regenerate-btn');
-    btn.textContent = 'Generating Prompt...';
-    btn.disabled = true;
-    modalPrompt.textContent = 'Generating prompt — this takes 10–15 seconds...';
+    regenerateBtn.textContent = 'Generating prompt...';
+    regenerateBtn.disabled = true;
+    generateStatus.textContent = 'Calling Claude (Opus)...';
 
     try {
-      const result = await callGeneratePrompt(selectedAd);
+      const config = await getConfig();
+      const direction = creativeDirectionInput.value.trim();
+      const res = await fetch(`${config.supabaseUrl}/functions/v1/generate-ad-prompt`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.supabaseAnonKey}`
+        },
+        body: JSON.stringify({
+          saved_ad_id: selectedAd.id,
+          advertiser_name: selectedAd.advertiser_name,
+          ad_copy: selectedAd.ad_copy,
+          image_url: selectedAd.image_url,
+          media_type: selectedAd.media_type,
+          creative_direction: direction || undefined
+        })
+      });
 
-      if (result && result.success && result.prompt) {
-        selectedAd.generated_prompt = result.prompt;
+      const data = await safeJson(res);
+
+      if (data && data.prompt) {
+        // Update textarea with new prompt
+        modalPrompt.value = data.prompt;
+        // Update local state
+        selectedAd.generated_prompt = data.prompt;
         const idx = allAds.findIndex(a => a.id === selectedAd.id);
         if (idx >= 0) allAds[idx] = selectedAd;
-
-        modalPrompt.textContent = selectedAd.generated_prompt;
-
-        const generateBtn = document.getElementById('modal-generate-btn');
-        if (generateBtn) {
-          generateBtn.disabled = false;
-          generatePlaceholderText.textContent = 'Prompt ready — generate the image';
-        }
-
         updateStats();
         renderGallery();
+        generateStatus.textContent = 'Prompt ready — edit it or hit Generate Image.';
       } else {
-        throw new Error((result && result.error) || 'Generation failed');
+        throw new Error(data?.error || 'Empty response from Edge Function');
       }
     } catch (err) {
-      modalPrompt.textContent = `Error: ${err.message}`;
+      generateStatus.textContent = `Prompt error: ${err.message}`;
     } finally {
-      btn.textContent = 'Regenerate Prompt';
-      btn.disabled = false;
+      regenerateBtn.textContent = '↻ New Prompt';
+      regenerateBtn.disabled = false;
     }
   }
 
-  // ─── GENERATE IMAGE (fal.ai nano-banana-2) ──────────────────────
+  // ═══════════════════════════════════════════════════════════════════
+  // GENERATE IMAGE — calls fal.ai directly with nano-banana-2
+  // Queue → Poll → Result pattern
+  // ═══════════════════════════════════════════════════════════════════
   async function generateImage() {
     if (!selectedAd) return;
 
-    if (!selectedAd.generated_prompt) {
-      alert('No prompt available yet. Click "Regenerate Prompt" first, or wait for the auto-generated prompt.');
+    // Use whatever is currently in the textarea (could be edited)
+    const prompt = modalPrompt.value.trim();
+    if (!prompt) {
+      generateStatus.textContent = 'No prompt — regenerate one first or type your own.';
       return;
     }
 
-    const btn = document.getElementById('modal-generate-btn');
-    btn.textContent = 'Starting...';
-    btn.disabled = true;
+    const config = await getConfig();
+    if (!config.falApiKey) {
+      generateStatus.textContent = 'fal.ai API key not set — add it in extension settings.';
+      return;
+    }
+
+    generateImageBtn.textContent = 'Generating...';
+    generateImageBtn.disabled = true;
+    generateStatus.textContent = 'Submitting to fal.ai queue...';
 
     try {
-      const imageUrl = await generateImageWithFal(
-        selectedAd.generated_prompt,
-        (status) => {
-          generatePlaceholderText.textContent = status;
-        }
-      );
+      const headers = {
+        'Authorization': 'Key ' + config.falApiKey,
+        'Content-Type': 'application/json'
+      };
 
-      // Save the generated image URL to Supabase
-      await supabaseRest(`/rest/v1/saved_ads?id=eq.${selectedAd.id}`, {
-        method: 'PATCH',
-        body: {
-          generated_image_url: imageUrl,
-          image_generated_at: new Date().toISOString()
-        }
+      // 1. Submit to queue
+      const submitRes = await fetch(`https://queue.fal.run/${FAL_MODEL}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          prompt,
+          num_images: 1,
+          image_size: 'portrait_4_3',
+          enable_safety_checker: false
+        })
       });
 
-      // Update local state
-      selectedAd.generated_image_url = imageUrl;
-      const idx = allAds.findIndex(a => a.id === selectedAd.id);
-      if (idx >= 0) allAds[idx] = selectedAd;
+      const submitData = await safeJson(submitRes);
+      if (!submitData || !submitData.request_id) {
+        throw new Error('Failed to queue request — no request_id returned');
+      }
 
-      // Show the image in the comparison panel
+      const requestId = submitData.request_id;
+      generateStatus.textContent = `Queued (${requestId.slice(0, 8)}...) — polling...`;
+
+      // 2. Poll for completion
+      let imageUrl = null;
+      const maxAttempts = 60; // 90 seconds max
+      for (let i = 0; i < maxAttempts; i++) {
+        await new Promise(r => setTimeout(r, 1500));
+
+        const statusRes = await fetch(
+          `https://queue.fal.run/${FAL_MODEL}/requests/${requestId}/status`,
+          { headers }
+        );
+        const statusData = await safeJson(statusRes);
+
+        if (!statusData) continue;
+
+        if (statusData.status === 'COMPLETED') {
+          generateStatus.textContent = 'Completed — fetching result...';
+          break;
+        } else if (statusData.status === 'FAILED') {
+          throw new Error('fal.ai generation failed');
+        } else {
+          generateStatus.textContent = `Status: ${statusData.status} (${i + 1}/${maxAttempts})...`;
+        }
+      }
+
+      // 3. Fetch the result
+      const resultRes = await fetch(
+        `https://queue.fal.run/${FAL_MODEL}/requests/${requestId}`,
+        { headers }
+      );
+      const resultData = await safeJson(resultRes);
+
+      if (resultData && resultData.images && resultData.images.length > 0) {
+        imageUrl = resultData.images[0].url;
+      } else {
+        throw new Error('No image in fal.ai result');
+      }
+
+      // 4. Show the generated image
       modalGeneratedImg.src = imageUrl;
       modalGeneratedImg.classList.remove('hidden');
       modalNoGenerated.classList.add('hidden');
 
+      // 5. Save image URL back to Supabase
+      try {
+        await supabaseRest(`/rest/v1/saved_ads?id=eq.${selectedAd.id}`, {
+          method: 'PATCH',
+          body: {
+            generated_image_url: imageUrl,
+            image_generated_at: new Date().toISOString(),
+            // Also save the prompt that was used (in case user edited it)
+            generated_prompt: prompt
+          }
+        });
+      } catch (dbErr) {
+        console.error('Failed to save image URL to DB:', dbErr);
+      }
+
+      // 6. Update local state
+      selectedAd.generated_image_url = imageUrl;
+      selectedAd.generated_prompt = prompt;
+      const idx = allAds.findIndex(a => a.id === selectedAd.id);
+      if (idx >= 0) allAds[idx] = selectedAd;
       updateStats();
       renderGallery();
-    } catch (err) {
-      console.error('Image generation error:', err);
-      generatePlaceholderText.textContent = `Error: ${err.message}`;
-      btn.textContent = 'Retry';
-      btn.disabled = false;
-      return;
-    }
 
-    btn.textContent = 'Generate Image';
-    btn.disabled = false;
+      generateStatus.textContent = 'Done — image generated with nano-banana-2.';
+
+    } catch (err) {
+      generateStatus.textContent = `Error: ${err.message}`;
+    } finally {
+      generateImageBtn.textContent = '⚡ Regenerate Image';
+      generateImageBtn.disabled = false;
+    }
   }
 
-  // ─── Delete ad ────────────────────────────────────────────────────
+  // ─── Delete ad (direct) ───────────────────────────────────────────
   async function deleteSelectedAd() {
     if (!selectedAd) return;
     if (!confirm(`Delete this ${selectedAd.advertiser_name || ''} ad? This can't be undone.`)) return;
@@ -452,7 +423,7 @@
 
     try {
       const config = await getConfig();
-      const res = await fetch(`${config.supabaseUrl}/rest/v1/saved_ads?id=eq.${selectedAd.id}`, {
+      await fetch(`${config.supabaseUrl}/rest/v1/saved_ads?id=eq.${selectedAd.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -460,8 +431,6 @@
           'Authorization': `Bearer ${config.supabaseAnonKey}`
         }
       });
-
-      if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
 
       allAds = allAds.filter(a => a.id !== selectedAd.id);
       closeModal();
@@ -476,7 +445,7 @@
 
   // ─── Copy prompt ──────────────────────────────────────────────────
   function copyPrompt() {
-    const text = modalPrompt.textContent;
+    const text = modalPrompt.value;
     navigator.clipboard.writeText(text).then(() => {
       const btn = document.getElementById('copy-prompt-btn');
       btn.textContent = 'Copied!';
@@ -496,6 +465,7 @@
 
   // ─── Event listeners ──────────────────────────────────────────────
 
+  // Filter buttons
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelector('.filter-btn.active').classList.remove('active');
@@ -505,8 +475,10 @@
     });
   });
 
+  // Refresh
   refreshBtn.addEventListener('click', loadAds);
 
+  // Modal close
   document.getElementById('modal-close').addEventListener('click', closeModal);
   modalOverlay.addEventListener('click', (e) => {
     if (e.target === modalOverlay) closeModal();
@@ -515,9 +487,13 @@
     if (e.key === 'Escape') closeModal();
   });
 
-  // Modal actions — SEPARATE functions
-  document.getElementById('modal-regenerate-btn').addEventListener('click', regeneratePrompt);
-  document.getElementById('modal-generate-btn').addEventListener('click', generateImage);
+  // === THE TWO KEY BUTTONS ===
+  // Regenerate Prompt = Claude via Edge Function (Chefly brand DNA)
+  regenerateBtn.addEventListener('click', regeneratePrompt);
+  // Generate Image = fal.ai nano-banana-2 (uses whatever is in the textarea)
+  generateImageBtn.addEventListener('click', generateImage);
+
+  // Copy & other actions
   document.getElementById('copy-prompt-btn').addEventListener('click', copyPrompt);
   document.getElementById('modal-open-ad-btn').addEventListener('click', () => {
     if (selectedAd?.page_url) window.open(selectedAd.page_url, '_blank');
