@@ -180,7 +180,7 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
                     value={c.hex || ''}
                     onChange={e => updateColour(i, 'hex', e.target.value)}
                     placeholder="#hex"
-                    style={{ width: 90, fontFamily: 'monospace' }}
+                    style={{ width: 90, fontFamily: 'var(--font-body)', fontVariantNumeric: 'tabular-nums' }}
                   />
                   <input
                     className="text-input text-input-sm"

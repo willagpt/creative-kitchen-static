@@ -213,7 +213,7 @@ export default function Review({ brands, activeBrandId }) {
         <div className="review-detail-overlay" onClick={e => { if (e.target === e.currentTarget) setSelectedImage(null) }}>
           <div className="review-detail-panel">
             <div className="detail-header">
-              <span style={{ fontWeight: 700 }}>
+              <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700 }}>
                 {selectedImage.variables_used?.MEAL_NAME || 'Generated Image'}
               </span>
               <button className="detail-close" onClick={() => setSelectedImage(null)}>&times;</button>
@@ -246,15 +246,15 @@ export default function Review({ brands, activeBrandId }) {
                 </button>
 
                 <label className="field-label">Aspect Ratio</label>
-                <p style={{ fontSize: 13, color: 'var(--text-1)', marginBottom: 12 }}>{selectedImage.aspect_ratio}</p>
+                <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-1)', marginBottom: 12, fontVariantNumeric: 'tabular-nums' }}>{selectedImage.aspect_ratio}</p>
 
                 {selectedImage.variables_used && Object.keys(selectedImage.variables_used).length > 0 && (
                   <>
                     <label className="field-label">Variables Used</label>
-                    <div style={{ fontSize: 12, color: 'var(--text-1)' }}>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-1)' }}>
                       {Object.entries(selectedImage.variables_used).map(([k, v]) => (
                         <div key={k} style={{ marginBottom: 4 }}>
-                          <span style={{ color: 'var(--accent)', fontFamily: 'monospace' }}>{`{{${k}}}`}</span>
+                          <span style={{ color: 'var(--accent)', fontFamily: 'var(--font-body)', fontWeight: 600 }}>{`{{${k}}}`}</span>
                           <span style={{ marginLeft: 8 }}>{String(v).slice(0, 100)}</span>
                         </div>
                       ))}
@@ -267,7 +267,7 @@ export default function Review({ brands, activeBrandId }) {
                   className="prompt-textarea"
                   value={selectedImage.prompt_used || ''}
                   readOnly
-                  style={{ minHeight: 160, fontSize: 11 }}
+                  style={{ minHeight: 160, fontSize: 'var(--text-xs)' }}
                 />
               </div>
             </div>

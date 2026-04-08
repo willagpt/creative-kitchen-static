@@ -228,7 +228,7 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
             <p style={{ fontSize: 32, marginBottom: 8 }}>&#128247;</p>
             <h3>Drop photos here</h3>
             <p>Or click to browse. Upload your high-quality product photography.</p>
-            <p style={{ fontSize: 11, marginTop: 8 }}>Each photo will get auto-described by Claude Vision for use in prompts.</p>
+            <p style={{ fontSize: 'var(--text-xs)', marginTop: 8 }}>Each photo will get auto-described by Claude Vision for use in prompts.</p>
           </div>
         </div>
       )}
@@ -250,8 +250,8 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
           >
-            <span style={{ fontSize: 24, color: 'var(--text-2)' }}>+</span>
-            <span style={{ fontSize: 11, color: 'var(--text-2)' }}>Add photos</span>
+            <span style={{ fontSize: 'var(--text-xl)', color: 'var(--text-2)' }}>+</span>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-2)' }}>Add photos</span>
           </div>
 
           {filteredPhotos.map(photo => (

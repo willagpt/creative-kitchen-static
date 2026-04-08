@@ -333,7 +333,7 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {falKey && !showKeyInput && (
             <span
-              style={{ fontSize: 11, color: 'var(--text-2)', cursor: 'pointer' }}
+              style={{ fontSize: 'var(--text-xs)', color: 'var(--text-2)', cursor: 'pointer' }}
               onClick={() => setShowKeyInput(true)}
               title="Click to change API key"
             >
@@ -348,7 +348,7 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
                 placeholder="fal.ai API key"
                 value={falKey}
                 onChange={e => setFalKey(e.target.value)}
-                style={{ width: 220, fontSize: 12 }}
+                style={{ width: 220, fontSize: 'var(--text-xs)' }}
               />
               <button
                 className="btn btn-primary btn-sm"
@@ -427,7 +427,7 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
                   className="prompt-textarea"
                   value={templateText}
                   onChange={e => setTemplateText(e.target.value)}
-                  style={{ minHeight: 200, fontFamily: 'monospace', fontSize: 12 }}
+                  style={{ minHeight: 200, fontFamily: 'var(--font-body)', fontSize: 'var(--text-xs)' }}
                 />
               </div>
 
@@ -484,7 +484,7 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
                       </button>
                     ))}
                   </div>
-                  <span style={{ fontSize: 13, color: 'var(--text-1)' }}>
+                  <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-1)' }}>
                     {combinations.length} combinations x {ratios.length} ratio{ratios.length > 1 ? 's' : ''} = <strong>{totalImages} images</strong>
                   </span>
                 </div>
@@ -507,7 +507,7 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
                   </div>
                 )}
 
-                {status && <p style={{ fontSize: 12, color: 'var(--text-1)', marginTop: 8 }}>{status}</p>}
+                {status && <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-1)', marginTop: 8 }}>{status}</p>}
               </div>
             </>
           )}
@@ -541,7 +541,7 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
             <h3 className="section-title">Reference Photos</h3>
             <p className="section-desc">Select photos for variable generation.</p>
             {photos.length === 0 ? (
-              <p style={{ fontSize: 12, color: 'var(--text-2)', padding: 12 }}>
+              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-2)', padding: 12 }}>
                 No approved photos. Go to Photo Library to upload and approve photos.
               </p>
             ) : (
@@ -568,7 +568,7 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
               </div>
             )}
             {selectedPhotoIds.length > 0 && (
-              <p style={{ fontSize: 11, color: 'var(--accent)', marginTop: 8 }}>
+              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--accent)', marginTop: 8 }}>
                 {selectedPhotoIds.length} photo{selectedPhotoIds.length > 1 ? 's' : ''} selected
               </p>
             )}

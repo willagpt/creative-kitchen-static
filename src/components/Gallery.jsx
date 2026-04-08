@@ -118,7 +118,7 @@ function AdCard({ ad, versions, onClick }) {
             {versions.length > 5 && (
               <div className="ad-card-version-dot" style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'var(--bg-3)', fontSize: 10, color: 'var(--text-2)'
+                background: 'var(--bg-3)', fontSize: 'var(--text-xs)', color: 'var(--text-2)'
               }}>
                 +{versions.length - 5}
               </div>

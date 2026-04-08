@@ -165,8 +165,8 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
         {/* Header */}
         <div className="detail-header">
           <div>
-            <span style={{ fontWeight: 700 }}>{ad.advertiser_name || 'Unknown brand'}</span>
-            <span style={{ color: 'var(--text-2)', fontSize: 12, marginLeft: 8 }}>
+            <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700 }}>{ad.advertiser_name || 'Unknown brand'}</span>
+            <span style={{ color: 'var(--text-2)', fontSize: 'var(--text-xs)', marginLeft: 8 }}>
               {ad.platform} {ad.started_running && `\u00b7 ${ad.started_running}`}
             </span>
           </div>
@@ -185,7 +185,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
               )}
             </div>
             {ad.ad_copy && (
-              <p style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 8, lineHeight: 1.4 }}>
+              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-2)', marginTop: 8, lineHeight: 1.4 }}>
                 {ad.ad_copy.length > 200 ? ad.ad_copy.slice(0, 200) + '...' : ad.ad_copy}
               </p>
             )}
@@ -199,7 +199,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
               ) : (
                 <div className="panel-placeholder">
                   <p>No generated image yet</p>
-                  <p style={{ fontSize: 11 }}>Generate a prompt below, then hit Generate Image</p>
+                  <p style={{ fontSize: 'var(--text-xs)' }}>Generate a prompt below, then hit Generate Image</p>
                 </div>
               )}
             </div>
@@ -298,7 +298,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
               width: '100%', padding: '8px 12px', marginBottom: 12,
               background: 'var(--bg-2)', border: '1px solid var(--bg-3)',
               borderRadius: 'var(--radius)', color: 'var(--text-0)',
-              fontFamily: 'inherit', fontSize: 13
+              fontFamily: 'var(--font-body)', fontSize: 'var(--text-sm)'
             }}
           />
           <span className="prompt-label">Chefly Prompt</span>
@@ -331,7 +331,7 @@ function FalKeySettings() {
       <button
         className="btn btn-ghost btn-sm"
         onClick={() => setShow(!show)}
-        style={{ fontSize: 11 }}
+        style={{ fontSize: 'var(--text-xs)' }}
       >
         {show ? 'Hide settings' : 'Settings (fal.ai key)'}
       </button>
@@ -345,7 +345,7 @@ function FalKeySettings() {
             style={{
               flex: 1, padding: '6px 10px', background: 'var(--bg-2)',
               border: '1px solid var(--bg-3)', borderRadius: 'var(--radius)',
-              color: 'var(--text-0)', fontFamily: 'inherit', fontSize: 12
+              color: 'var(--text-0)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-xs)'
             }}
           />
           <button className="btn btn-secondary btn-sm" onClick={save}>Save</button>
