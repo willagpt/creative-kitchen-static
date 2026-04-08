@@ -1063,6 +1063,44 @@
     return result;
   }
 
+  // Upload base64 image to fal.ai CDN so it can be used as image_url
+  // Returns an HTTP URL that fal.ai can access, or null on failure
+  async function uploadBase64ToFal(base64, mediaType) {
+    try {
+      const config = await getConfig();
+      if (!config.falApiKey) return null;
+
+      // Convert base64 to blob
+      const byteChars = atob(base64);
+      const byteArray = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
+      const blob = new Blob([byteArray], { type: mediaType || 'image/jpeg' });
+
+      // fal.ai file upload endpoint
+      const formData = new FormData();
+      formData.append('file', blob, 'reference.jpg');
+
+      const res = await fetch('https://fal.run/fal-ai/file-upload', {
+        method: 'POST',
+        headers: { 'Authorization': 'Key ' + config.falApiKey },
+        body: formData
+      });
+
+      if (!res.ok) {
+        console.warn('fal.ai file upload failed:', res.status);
+        return null;
+      }
+
+      const data = await res.json();
+      const url = data?.file_url || data?.url || null;
+      if (url) console.log('Reference image uploaded to fal.ai CDN:', url);
+      return url;
+    } catch (e) {
+      console.warn('Failed to upload reference image to fal.ai:', e.message);
+      return null;
+    }
+  }
+
   // Generate a single image via fal.ai (reuses existing pattern)
   // referenceUrl is optional — if provided, used as image_url for img2img guidance
   async function generateSingleBatchImage(prompt, ratio, referenceUrl) {
@@ -1134,21 +1172,27 @@
     // Build reference image lookup: match by label to MEAL_NAME
     // Users label their uploaded photos (e.g. "smoky chipotle chicken")
     // and we match that to the MEAL_NAME variable value
+    // If publicUrl is missing (Supabase upload failed), upload base64 to fal.ai CDN
     const refLookup = {};
-    referenceImages.forEach(ref => {
-      // Update label from the input field in case user edited it
+    for (const ref of referenceImages) {
       const labelInput = document.querySelector(`.ref-card-label[data-ref-id="${ref.id}"]`);
       if (labelInput) ref.label = labelInput.value.trim();
-      if (ref.label) {
-        // Only pass real HTTP URLs to fal.ai (it cannot handle data: URLs)
-        refLookup[ref.label.toLowerCase()] = ref.publicUrl || null;
+      if (!ref.label) continue;
+
+      let url = ref.publicUrl || null;
+      if (!url && ref.base64) {
+        // Supabase storage failed, upload directly to fal.ai CDN instead
+        console.log(`[batch] No publicUrl for "${ref.label}", uploading base64 to fal.ai CDN...`);
+        url = await uploadBase64ToFal(ref.base64, ref.media_type);
+        if (url) ref.publicUrl = url; // Cache for subsequent batches
       }
-    });
+      refLookup[ref.label.toLowerCase()] = url;
+    }
 
     // Build all jobs
     const jobs = [];
     const fallbackRef = referenceImages.length === 1 ? referenceImages[0] : null;
-    const fallbackUrl = fallbackRef ? (fallbackRef.publicUrl || null) : null;
+    const fallbackUrl = fallbackRef ? (refLookup[fallbackRef.label?.toLowerCase()] || null) : null;
     for (const combo of combos) {
       for (const ratio of ratios) {
         // Try to match a reference image to this combo's meal name
