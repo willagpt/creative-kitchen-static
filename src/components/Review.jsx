@@ -201,8 +201,8 @@ export default function Review({ brands, activeBrandId }) {
 
           {filteredImages.length === 0 && !loading && (
             <div className="empty-state">
-              <h3>No images to review</h3>
-              <p>Run a generation first, then come here to rate the outputs.</p>
+              <h3>Nothing on the pass yet</h3>
+              <p>Run a generation first. Your outputs will line up here for tasting.</p>
             </div>
           )}
         </>
@@ -210,8 +210,8 @@ export default function Review({ brands, activeBrandId }) {
 
       {!selectedRun && !loading && (
         <div className="empty-state">
-          <h3>No generation runs yet</h3>
-          <p>Go to the Generator tab to create your first batch.</p>
+          <h3>No batches to review</h3>
+          <p>Head to the Generator tab, fire up a run, then come back to rate the results.</p>
         </div>
       )}
 

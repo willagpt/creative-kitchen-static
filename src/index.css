@@ -752,3 +752,120 @@ body::after {
 .review-detail-info { min-width: 0; }
 .ad-card-body { min-width: 0; }
 .review-card-body { min-width: 0; }
+
+/* ---- DELIGHT: micro-interactions & satisfying touches ---- */
+
+/* Satisfying button press (active state sinks down) */
+.btn:active:not(:disabled) { transform: translateY(1px); transition-duration: 0.05s; }
+.btn-primary:active:not(:disabled) { box-shadow: 0 1px 6px rgba(255, 214, 10, 0.15); }
+
+/* Filter pill pop on select */
+@keyframes pill-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+.filter-pill.active { animation: pill-pop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* Star button pulse on activate */
+@keyframes star-pulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+.star-btn.active { animation: star-pulse 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* Rating button fill-in effect */
+.rating-btn.active { animation: pill-pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* Winner badge shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.winner-badge {
+  background: linear-gradient(
+    110deg,
+    var(--hot-yellow) 0%,
+    var(--hot-yellow) 40%,
+    #FFF6EE 50%,
+    var(--hot-yellow) 60%,
+    var(--hot-yellow) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* Photo badge bounce-in */
+@keyframes badge-in {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.photo-badge { animation: badge-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+/* Detail overlay fade-in */
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes panel-slide-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.detail-overlay, .review-detail-overlay { animation: overlay-in 0.2s ease-out; }
+.detail-panel, .review-detail-panel { animation: panel-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* Photo detail panel slide-in from bottom-right */
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateY(20px) translateX(10px); }
+  to { opacity: 1; transform: translateY(0) translateX(0); }
+}
+.photo-detail-panel { animation: slide-in-right 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* Nav logo pulse on hover */
+@keyframes logo-breathe {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 214, 10, 0.4), 0 0 4px rgba(255, 214, 10, 0.6); }
+  50% { box-shadow: 0 0 28px rgba(255, 214, 10, 0.6), 0 0 8px rgba(255, 214, 10, 0.8); }
+}
+.nav-logo:hover { animation: logo-breathe 1.5s ease-in-out infinite; }
+
+/* Active tab underline slides in */
+.nav-tab.active { transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* Dropzone breathing border */
+@keyframes dropzone-pulse {
+  0%, 100% { border-color: var(--bg-4); }
+  50% { border-color: var(--text-2); }
+}
+.dropzone { animation: dropzone-pulse 3s ease-in-out infinite; }
+.dropzone:hover, .dropzone.drag-over { animation: none; }
+
+/* Progress bar gradient animation */
+@keyframes progress-glow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.progress-fill {
+  background-size: 200% 100%;
+  animation: progress-glow 2s linear infinite;
+}
+
+/* Close button spin on hover */
+.detail-close { transition: all 0.2s; }
+.detail-close:hover { transform: rotate(90deg); background: var(--bg-4); color: var(--text-0); }
+
+/* Smooth image appearance */
+.ad-card-image img, .photo-card-image img, .review-card-image img,
+.panel-image img, .result-image img {
+  transition: transform 0.3s ease;
+}
+.ad-card-image:hover img { transform: scale(1.03); }
+.review-card-image:hover img { transform: scale(1.03); }
+
+/* Scrollbar thumb glow when scrolling */
+::-webkit-scrollbar-thumb:active { background: var(--accent); box-shadow: 0 0 6px rgba(255, 214, 10, 0.3); }
+
+/* Version thumb scale on hover */
+.version-thumb { transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+.version-thumb:hover { transform: scale(1.08); }

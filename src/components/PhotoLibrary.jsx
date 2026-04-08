@@ -226,9 +226,9 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
         >
           <div className="dropzone-content">
             <p style={{ fontSize: 32, marginBottom: 8 }}>&#128247;</p>
-            <h3>Drop photos here</h3>
-            <p>Or click to browse. Upload your high-quality product photography.</p>
-            <p style={{ fontSize: 'var(--text-xs)', marginTop: 8 }}>Each photo will get auto-described by Claude Vision for use in prompts.</p>
+            <h3>Your ingredients start here</h3>
+            <p>Drop product shots, lifestyle photos, or hero images. Click to browse.</p>
+            <p style={{ fontSize: 'var(--text-xs)', marginTop: 8 }}>Claude Vision will auto-describe each photo so your prompts know what they're working with.</p>
           </div>
         </div>
       )}

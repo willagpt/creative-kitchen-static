@@ -205,8 +205,8 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
                 <img src={currentImage} alt="Generated" />
               ) : (
                 <div className="panel-placeholder">
-                  <p>No generated image yet</p>
-                  <p style={{ fontSize: 'var(--text-xs)' }}>Generate a prompt below, then hit Generate Image</p>
+                  <p>Waiting for the magic</p>
+                  <p style={{ fontSize: 'var(--text-xs)' }}>Generate a prompt, then hit Generate Image to bring it to life</p>
                 </div>
               )}
             </div>

@@ -43,17 +43,17 @@ export default function Gallery({ ads, versions, loading, filter, setFilter, sta
       {loading && (
         <div className="empty-state">
           <div className="spinner" style={{ margin: '0 auto 12px' }} />
-          <p>Loading ads...</p>
+          <p>Pulling your saved ads from the kitchen...</p>
         </div>
       )}
 
       {/* Empty state */}
       {!loading && ads.length === 0 && (
         <div className="empty-state">
-          <h3>No ads yet</h3>
+          <h3>The kitchen is empty</h3>
           <p>
             Save ads from the Facebook Ad Library using the Chrome extension.
-            They will appear here automatically.
+            They'll land here, ready to cook with.
           </p>
         </div>
       )}
