@@ -102,24 +102,24 @@ export default function Review({ brands, activeBrandId }) {
         <>
           {/* Stats */}
           <div className="stats-bar">
-            <div className="stat">
+            <div className="stat stat-total">
               <span className="stat-value">{stats.total}</span>
               <span className="stat-label">images</span>
             </div>
-            <div className="stat">
+            <div className="stat stat-rated">
               <span className="stat-value">{stats.rated}</span>
               <span className="stat-label">rated</span>
             </div>
-            <div className="stat">
-              <span className="stat-value" style={{ color: 'var(--success)' }}>{stats.winners}</span>
+            <div className="stat stat-winners">
+              <span className="stat-value">{stats.winners}</span>
               <span className="stat-label">winners</span>
             </div>
-            <div className="stat">
-              <span className="stat-value" style={{ color: '#22c55e' }}>{stats.great}</span>
+            <div className="stat stat-images">
+              <span className="stat-value">{stats.great}</span>
               <span className="stat-label">great</span>
             </div>
-            <div className="stat">
-              <span className="stat-value" style={{ color: '#ef4444' }}>{stats.slop}</span>
+            <div className="stat stat-slop">
+              <span className="stat-value">{stats.slop}</span>
               <span className="stat-label">slop</span>
             </div>
           </div>

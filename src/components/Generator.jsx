@@ -370,7 +370,7 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
         <div className="generator-main">
 
           {/* Step 1: Source ad or existing template */}
-          <div className="section-card">
+          <div className="section-card section-card-orange">
             <h3 className="section-title">1. Choose a template</h3>
             <p className="section-desc">Pick an existing template or create one from a saved ad.</p>
 
@@ -432,7 +432,7 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
               </div>
 
               {/* Step 2: Variables */}
-              <div className="section-card">
+              <div className="section-card section-card-blue">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                   <div>
                     <h3 className="section-title">2. Set variables</h3>
@@ -464,7 +464,7 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
               </div>
 
               {/* Step 3: Ratios + generate */}
-              <div className="section-card">
+              <div className="section-card section-card-green">
                 <h3 className="section-title">3. Generate</h3>
                 <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 12 }}>
                   <div className="aspect-pills">

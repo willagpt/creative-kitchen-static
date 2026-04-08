@@ -111,6 +111,7 @@ export default function App() {
             <button
               key={t.key}
               className={`nav-tab ${tab === t.key ? 'active' : ''}`}
+              data-tab={t.key}
               onClick={() => setTab(t.key)}
             >
               {t.label}

@@ -271,7 +271,7 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
               </div>
               <div className="photo-card-body">
                 <span className="photo-card-name">{photo.name}</span>
-                <span className="photo-card-type">{photo.type}</span>
+                <span className={`photo-card-type photo-type-${photo.type || 'product'}`}>{photo.type}</span>
               </div>
             </div>
           ))}

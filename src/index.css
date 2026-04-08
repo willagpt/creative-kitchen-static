@@ -13,10 +13,11 @@
   --text-0: #FFF6EE;
   --text-1: #B8AFA6;
   --text-2: #9A918A;
-  /* Chefly brand accent: Orange */
-  --accent: #FF6B2C;
-  --accent-hover: #E85A1E;
-  --accent-bg: rgba(255, 107, 44, 0.1);
+  /* Chefly accent: Hot Yellow (dominant) */
+  --accent: #FFD60A;
+  --accent-hover: #E6C009;
+  --accent-bg: rgba(255, 214, 10, 0.1);
+  --accent-text: #0D0D0D;
   /* Food colour system */
   --orange: #FF6B2C;
   --hot-yellow: #FFD60A;
@@ -37,6 +38,18 @@
   --radius-lg: 12px;
   --shadow: 0 1px 3px rgba(13,13,13,0.4);
   --shadow-lg: 0 4px 20px rgba(13,13,13,0.5);
+  /* Food colour backgrounds (10% opacity) */
+  --orange-bg: rgba(255, 107, 44, 0.1);
+  --yellow-bg: rgba(255, 214, 10, 0.08);
+  --green-bg: rgba(168, 225, 12, 0.08);
+  --blush-bg: rgba(255, 143, 163, 0.08);
+  --blue-bg: rgba(92, 207, 255, 0.08);
+  /* Food colour glows */
+  --orange-glow: 0 0 0 2px rgba(255, 107, 44, 0.25);
+  --yellow-glow: 0 0 0 2px rgba(255, 214, 10, 0.2);
+  --green-glow: 0 0 0 2px rgba(168, 225, 12, 0.2);
+  --blush-glow: 0 0 0 2px rgba(255, 143, 163, 0.2);
+  --blue-glow: 0 0 0 2px rgba(92, 207, 255, 0.2);
 }
 
 html { font-size: 16px; }
@@ -65,6 +78,7 @@ body::after {
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--bg-4); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
 /* Layout */
 .container { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
@@ -72,12 +86,13 @@ body::after {
 /* Nav */
 .nav {
   position: sticky; top: 0; z-index: 50;
-  background: var(--bg-1); border-bottom: 1px solid var(--bg-3);
+  background: var(--bg-1);
+  border-bottom: 2px solid var(--accent);
   padding: 12px 24px;
   display: flex; align-items: center; justify-content: space-between;
 }
 .nav-left { display: flex; align-items: center; gap: 10px; }
-.nav-title { font-weight: 700; font-size: 15px; }
+.nav-title { font-weight: 700; font-size: 15px; color: var(--cream); }
 .nav-subtitle { color: var(--text-2); font-size: 13px; }
 .nav-divider { color: var(--bg-4); }
 .nav-right { display: flex; align-items: center; gap: 8px; }
@@ -91,7 +106,7 @@ body::after {
   white-space: nowrap;
 }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary { background: var(--accent); color: var(--accent-text, #0D0D0D); }
 .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
 .btn-secondary { background: var(--bg-3); color: var(--text-0); }
 .btn-secondary:hover:not(:disabled) { background: var(--bg-4); }
@@ -129,8 +144,15 @@ body::after {
   margin-bottom: 20px;
 }
 .stat { display: flex; align-items: baseline; gap: 6px; }
-.stat-value { font-size: 20px; font-weight: 700; }
+.stat-value { font-size: 20px; font-weight: 700; color: var(--stat-color, var(--cream)); }
 .stat-label { font-size: 12px; color: var(--text-2); }
+/* Stat colour coding */
+.stat-total .stat-value { color: var(--cream); }
+.stat-prompts .stat-value { color: var(--hot-yellow); }
+.stat-images .stat-value { color: var(--electric-green); }
+.stat-winners .stat-value { color: var(--orange); }
+.stat-rated .stat-value { color: var(--sky-blue); }
+.stat-slop .stat-value { color: var(--error); }
 
 /* Gallery grid */
 .gallery-grid {
@@ -150,9 +172,10 @@ body::after {
   padding: 3px 8px; border-radius: 4px;
   font-size: 10px; font-weight: 600; text-transform: uppercase;
 }
-.ad-card-badge.has-prompt { background: var(--success); color: #fff; }
-.ad-card-badge.has-image { background: var(--accent); color: #fff; }
+.ad-card-badge.has-prompt { background: var(--sky-blue); color: #0D0D0D; font-weight: 700; }
+.ad-card-badge.has-image { background: var(--electric-green); color: #0D0D0D; font-weight: 700; }
 .ad-card-badge.pending { background: var(--bg-4); color: var(--text-1); }
+.ad-card-badge.has-versions { background: var(--hot-yellow); color: #0D0D0D; font-weight: 700; }
 .ad-card-body { padding: 12px; }
 .ad-card-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
 .ad-card-meta { font-size: 11px; color: var(--text-2); }
@@ -231,7 +254,7 @@ body::after {
 .version-thumb:hover { opacity: 0.8; border-color: var(--bg-4); }
 .version-thumb.active {
   border-color: var(--accent); opacity: 1;
-  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.3);
+  box-shadow: var(--yellow-glow);
 }
 .version-thumb img {
   width: 100%; height: 100%; object-fit: cover;
@@ -301,18 +324,29 @@ body::after {
   padding: 8px 14px; border-radius: 6px; border: none;
   background: transparent; color: var(--text-2);
   font-family: inherit; font-size: 13px; font-weight: 500;
-  cursor: pointer; transition: all 0.15s;
+  cursor: pointer; transition: all 0.2s;
+  border-bottom: 2px solid transparent;
 }
 .nav-tab:hover { color: var(--text-0); background: var(--bg-2); }
 .nav-tab.active {
-  color: var(--accent); background: var(--accent-bg);
   font-weight: 600;
+  color: var(--tab-color, var(--accent));
+  background: var(--tab-bg, var(--accent-bg));
+  border-bottom-color: var(--tab-color, var(--accent));
 }
+/* Per-tab food colours */
+.nav-tab[data-tab="gallery"] { --tab-color: var(--orange); --tab-bg: var(--orange-bg); }
+.nav-tab[data-tab="brand"] { --tab-color: var(--hot-yellow); --tab-bg: var(--yellow-bg); }
+.nav-tab[data-tab="photos"] { --tab-color: var(--electric-green); --tab-bg: var(--green-bg); }
+.nav-tab[data-tab="generator"] { --tab-color: var(--sky-blue); --tab-bg: var(--blue-bg); }
+.nav-tab[data-tab="review"] { --tab-color: var(--blush); --tab-bg: var(--blush-bg); }
+
 .nav-logo {
   width: 28px; height: 28px; border-radius: 6px;
-  background: var(--accent); color: #fff;
+  background: var(--accent); color: var(--accent-text);
   display: flex; align-items: center; justify-content: center;
   font-weight: 800; font-size: 11px;
+  box-shadow: 0 0 12px rgba(255, 214, 10, 0.35);
 }
 
 /* Page layout */
@@ -327,11 +361,21 @@ body::after {
 /* Section cards */
 .section-card {
   background: var(--bg-1); border: 1px solid var(--bg-3);
+  border-left: 3px solid var(--section-accent, var(--bg-4));
   border-radius: var(--radius-lg); padding: 20px;
   margin-bottom: 16px;
+  transition: border-color 0.2s;
 }
-.section-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.section-card:hover { border-left-color: var(--section-accent, var(--accent)); }
+.section-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; color: var(--cream); }
 .section-desc { font-size: 12px; color: var(--text-2); margin-bottom: 12px; }
+
+/* Section accent colours by context */
+.section-card-orange { --section-accent: var(--orange); }
+.section-card-yellow { --section-accent: var(--hot-yellow); }
+.section-card-green { --section-accent: var(--electric-green); }
+.section-card-blue { --section-accent: var(--sky-blue); }
+.section-card-blush { --section-accent: var(--blush); }
 
 /* Form elements */
 .text-input {
@@ -391,7 +435,7 @@ body::after {
   cursor: pointer; transition: all 0.15s;
 }
 .photo-card:hover { border-color: var(--bg-4); }
-.photo-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.3); }
+.photo-card.selected { border-color: var(--accent); box-shadow: var(--yellow-glow); }
 .photo-card-add {
   display: flex; flex-direction: column; align-items: center;
   justify-content: center; min-height: 160px;
@@ -410,7 +454,19 @@ body::after {
 .photo-badge.needs-desc { background: var(--warning); color: #000; }
 .photo-card-body { padding: 8px; }
 .photo-card-name { font-size: 11px; font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.photo-card-type { font-size: 10px; color: var(--text-2); }
+.photo-card-type {
+  font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 1px 6px; border-radius: 3px; display: inline-block; margin-top: 2px;
+  color: var(--type-color, var(--text-2));
+  background: var(--type-bg, transparent);
+}
+/* Photo type colours */
+.photo-type-product { --type-color: var(--orange); --type-bg: var(--orange-bg); }
+.photo-type-lifestyle { --type-color: var(--blush); --type-bg: var(--blush-bg); }
+.photo-type-ingredients { --type-color: var(--electric-green); --type-bg: var(--green-bg); }
+.photo-type-packaging { --type-color: var(--hot-yellow); --type-bg: var(--yellow-bg); }
+.photo-type-texture { --type-color: var(--mid-grey); --type-bg: rgba(154, 145, 138, 0.1); }
+.photo-type-mood { --type-color: var(--sky-blue); --type-bg: var(--blue-bg); }
 
 /* Photo detail panel */
 .photo-detail-panel {
@@ -494,11 +550,13 @@ body::after {
 
 /* Progress bar */
 .progress-bar {
-  height: 4px; background: var(--bg-3); border-radius: 2px; overflow: hidden;
+  height: 6px; background: var(--bg-3); border-radius: 3px; overflow: hidden;
 }
 .progress-fill {
-  height: 100%; background: var(--accent); border-radius: 2px;
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--sky-blue), var(--electric-green), var(--hot-yellow));
   transition: width 0.3s ease;
+  box-shadow: 0 0 8px rgba(92, 207, 255, 0.3);
 }
 
 /* Results grid */
@@ -535,14 +593,15 @@ body::after {
 }
 .review-card:hover { border-color: var(--bg-4); }
 .review-card.selected { border-color: var(--accent); }
-.review-card.winner { border-color: var(--success); box-shadow: 0 0 0 1px var(--success); }
+.review-card.winner { border-color: var(--hot-yellow); box-shadow: 0 0 0 1px var(--hot-yellow), 0 0 16px rgba(255, 214, 10, 0.15); }
 .review-card-image { position: relative; }
 .review-card-image img { width: 100%; display: block; }
 .winner-badge {
   position: absolute; top: 6px; left: 6px;
-  background: var(--success); color: #fff;
+  background: var(--hot-yellow); color: #0D0D0D;
   padding: 2px 8px; border-radius: 4px;
   font-size: 10px; font-weight: 700;
+  box-shadow: 0 0 10px rgba(255, 214, 10, 0.4);
 }
 .rating-badge {
   position: absolute; top: 6px; right: 6px;

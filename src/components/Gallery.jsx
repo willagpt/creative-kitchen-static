@@ -10,15 +10,15 @@ export default function Gallery({ ads, versions, loading, filter, setFilter, sta
     <>
       {/* Stats */}
       <div className="stats-bar">
-        <div className="stat">
+        <div className="stat stat-total">
           <span className="stat-value">{stats.total}</span>
           <span className="stat-label">saved ads</span>
         </div>
-        <div className="stat">
+        <div className="stat stat-prompts">
           <span className="stat-value">{stats.withPrompt}</span>
           <span className="stat-label">with prompts</span>
         </div>
-        <div className="stat">
+        <div className="stat stat-images">
           <span className="stat-value">{stats.withImages}</span>
           <span className="stat-label">with images</span>
         </div>
