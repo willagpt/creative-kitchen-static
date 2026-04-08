@@ -179,10 +179,33 @@
           <div class="batch-template-status" id="batch-template-status"></div>
         </div>
 
-        <!-- Step 2: Variable Lists -->
-        <div class="batch-step hidden" id="batch-step-lists">
+        <!-- Step 2: Reference Images -->
+        <div class="batch-step hidden" id="batch-step-refs">
           <div class="batch-step-header">
             <span class="batch-step-number">2</span>
+            <span class="batch-step-title">Reference Images</span>
+            <span class="batch-list-hint">Upload photos of your actual meals. Each gets paired with a meal variation.</span>
+          </div>
+
+          <div class="ref-upload-area" id="ref-upload-area">
+            <div class="ref-dropzone" id="ref-dropzone">
+              <div class="ref-dropzone-content">
+                <span class="ref-dropzone-icon">+</span>
+                <span class="ref-dropzone-text">Drop meal photos here or click to upload</span>
+                <span class="ref-dropzone-hint">JPG, PNG, WebP. These anchor the AI to your real dishes.</span>
+              </div>
+              <input type="file" id="ref-file-input" multiple accept="image/jpeg,image/png,image/webp" class="ref-file-hidden" />
+            </div>
+            <div class="ref-grid" id="ref-grid">
+              <!-- Uploaded reference image cards injected by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Variable Lists -->
+        <div class="batch-step hidden" id="batch-step-lists">
+          <div class="batch-step-header">
+            <span class="batch-step-number">3</span>
             <span class="batch-step-title">Variable Lists</span>
             <span class="batch-list-hint">One item per line. Only fill in the lists you want to vary.</span>
           </div>
@@ -220,10 +243,10 @@
           </div>
         </div>
 
-        <!-- Step 3: Generate -->
+        <!-- Step 4: Generate -->
         <div class="batch-step hidden" id="batch-step-generate">
           <div class="batch-step-header">
-            <span class="batch-step-number">3</span>
+            <span class="batch-step-number">4</span>
             <span class="batch-step-title">Generate Batch</span>
           </div>
 
