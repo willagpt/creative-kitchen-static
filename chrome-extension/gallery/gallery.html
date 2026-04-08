@@ -119,6 +119,7 @@
           <button class="btn btn-accent" id="modal-regenerate-btn">↻ New Prompt</button>
           <button class="btn btn-primary" id="modal-generate-image-btn">⚡ Generate Image</button>
           <button class="btn btn-small btn-secondary hidden" id="modal-download-btn">↓ Download</button>
+          <button class="btn btn-small btn-batch" id="modal-batch-btn">Batch Variations</button>
         </div>
         <div class="action-bar-right">
           <span class="generate-status" id="generate-status"></span>
@@ -158,6 +159,110 @@
           <input type="text" class="creative-direction-input" id="creative-direction" placeholder="creative direction (optional) — e.g. &quot;9:16 story, coloured background like Jones Road, packaging flat-lay&quot;" />
         </div>
         <textarea class="prompt-textarea" id="modal-prompt" rows="12" placeholder="No prompt generated yet. Click 'New Prompt' above to create a Chefly prompt from this ad."></textarea>
+      </div>
+
+      <!-- ─── Batch Variations ──────────────────────────────── -->
+      <div class="batch-section hidden" id="batch-section">
+        <div class="batch-header">
+          <span class="section-title">Batch Variations</span>
+          <span class="batch-hint">Create a template from this prompt, add variable lists, and generate multiple ad variations in one run</span>
+        </div>
+
+        <!-- Step 1: Template -->
+        <div class="batch-step" id="batch-step-template">
+          <div class="batch-step-header">
+            <span class="batch-step-number">1</span>
+            <span class="batch-step-title">Prompt Template</span>
+            <button class="btn btn-small btn-accent" id="batch-templatize-btn">Create Template from Prompt</button>
+          </div>
+          <textarea class="batch-template-textarea hidden" id="batch-template" rows="8" placeholder="Click 'Create Template' to convert your prompt into a reusable template with {{MEAL_NAME}}, {{HEADLINE}}, {{BACKGROUND_MOOD}}, {{CTA_TEXT}} placeholders..."></textarea>
+          <div class="batch-template-status" id="batch-template-status"></div>
+        </div>
+
+        <!-- Step 2: Variable Lists -->
+        <div class="batch-step hidden" id="batch-step-lists">
+          <div class="batch-step-header">
+            <span class="batch-step-number">2</span>
+            <span class="batch-step-title">Variable Lists</span>
+            <span class="batch-list-hint">One item per line. Only fill in the lists you want to vary.</span>
+          </div>
+
+          <div class="batch-lists-grid">
+            <div class="batch-list-group" id="batch-list-MEAL_NAME">
+              <label class="batch-list-label">Meal Names</label>
+              <textarea class="batch-list-textarea" data-placeholder="MEAL_NAME" rows="4" placeholder="green goddess bowl&#10;smoky chipotle chicken&#10;thai basil prawn stir-fry"></textarea>
+            </div>
+
+            <div class="batch-list-group" id="batch-list-MEAL_DESCRIPTION">
+              <label class="batch-list-label">Meal Descriptions</label>
+              <textarea class="batch-list-textarea" data-placeholder="MEAL_DESCRIPTION" rows="4" placeholder="emerald green blanched broccolini...&#10;chargrilled chicken thigh sliced...&#10;plump king prawns with translucent..."></textarea>
+            </div>
+
+            <div class="batch-list-group" id="batch-list-HEADLINE">
+              <label class="batch-list-label">Headlines</label>
+              <textarea class="batch-list-textarea" data-placeholder="HEADLINE" rows="4" placeholder="bye bye, bloating. hello, energy.&#10;eat like you care about yourself.&#10;chef-made meals. zero effort. all the nutrients."></textarea>
+            </div>
+
+            <div class="batch-list-group" id="batch-list-BACKGROUND_MOOD">
+              <label class="batch-list-label">Background Moods</label>
+              <textarea class="batch-list-textarea" data-placeholder="BACKGROUND_MOOD" rows="4" placeholder="warm cream (#FFF6EE) with subtle paper grain texture&#10;soft sage green (#E8F0E4) with linen texture&#10;pale golden hour (#FFF3E0) with warm light"></textarea>
+            </div>
+
+            <div class="batch-list-group" id="batch-list-CTA_TEXT">
+              <label class="batch-list-label">CTA Text</label>
+              <textarea class="batch-list-textarea" data-placeholder="CTA_TEXT" rows="3" placeholder="try now and feel the difference&#10;get 50% off your first box&#10;start eating better today"></textarea>
+            </div>
+
+            <div class="batch-list-group" id="batch-list-SLEEVE_STYLE">
+              <label class="batch-list-label">Sleeve Styles</label>
+              <textarea class="batch-list-textarea" data-placeholder="SLEEVE_STYLE" rows="3" placeholder="Electric Green (#A8E10C) with tonal botanical leaf patterns&#10;warm terracotta (#D2691E) with tonal flame and chilli patterns"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Generate -->
+        <div class="batch-step hidden" id="batch-step-generate">
+          <div class="batch-step-header">
+            <span class="batch-step-number">3</span>
+            <span class="batch-step-title">Generate Batch</span>
+          </div>
+
+          <div class="batch-generate-controls">
+            <div class="batch-generate-info">
+              <div class="batch-combo-count">
+                <span class="batch-combo-number" id="batch-combo-count">0</span>
+                <span class="batch-combo-label">combinations</span>
+              </div>
+              <div class="batch-ratio-pills">
+                <button class="batch-ratio-pill active" data-ratio="4:5">4:5 Feed</button>
+                <button class="batch-ratio-pill" data-ratio="9:16">9:16 Story</button>
+                <button class="batch-ratio-pill" data-ratio="both">Both</button>
+              </div>
+            </div>
+            <div class="batch-generate-actions">
+              <button class="btn btn-primary" id="batch-generate-btn" disabled>Generate All Variations</button>
+              <button class="btn btn-secondary hidden" id="batch-cancel-btn">Cancel</button>
+            </div>
+            <div class="batch-progress hidden" id="batch-progress">
+              <div class="batch-progress-bar">
+                <div class="batch-progress-fill" id="batch-progress-fill"></div>
+              </div>
+              <span class="batch-progress-text" id="batch-progress-text">0 / 0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results Grid -->
+        <div class="batch-results hidden" id="batch-results">
+          <div class="batch-results-header">
+            <span class="section-title">Results</span>
+            <span class="batch-results-count" id="batch-results-count"></span>
+            <button class="btn btn-small btn-secondary" id="batch-download-all-btn">Download All</button>
+          </div>
+          <div class="batch-results-grid" id="batch-results-grid">
+            <!-- Batch result cards injected by JS -->
+          </div>
+        </div>
       </div>
 
       <!-- ─── Ad Metadata ─────────────────────────────────── -->
