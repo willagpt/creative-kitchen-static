@@ -774,6 +774,7 @@
       {
         method: 'POST',
         headers: {
+          'apikey': config.supabaseAnonKey,
           'Authorization': `Bearer ${config.supabaseAnonKey}`,
           'Content-Type': file.type
         },
