@@ -922,10 +922,14 @@
     } else {
       section.classList.remove('hidden');
       btn.classList.add('active');
-      // If we already have a prompt, show the templatize button as ready
+      // Auto-templatize if we have a prompt and no template yet
       const prompt = modalPrompt.value.trim();
+      const templateArea = document.getElementById('batch-template');
       if (!prompt) {
         document.getElementById('batch-template-status').textContent = 'Generate a prompt first, then create a template from it.';
+      } else if (!templateArea.value.trim()) {
+        // Automatically run templatize so user doesn't need an extra click
+        templatizePrompt();
       }
     }
   }
