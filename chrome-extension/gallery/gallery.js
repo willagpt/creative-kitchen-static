@@ -394,7 +394,7 @@
 
     versionsStrip.innerHTML = currentVersions.map((v, i) => {
       const num = currentVersions.length - i;
-      const isActive = modalGeneratedImg.src === v.image_url;
+      const isActive = i === activeVersionIdx;
       const date = new Date(v.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
       const ratio = v.aspect_ratio || '—';
       const isRefined = !!v.user_feedback;

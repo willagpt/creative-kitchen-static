@@ -449,15 +449,18 @@ body {
   cursor: pointer;
   transition: all 0.15s;
   position: relative;
+  opacity: 0.6;
 }
 
 .version-thumb:hover {
-  border-color: var(--accent);
+  opacity: 0.85;
+  border-color: var(--bg-3);
 }
 
 .version-thumb.active {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.3);
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.4);
+  opacity: 1;
 }
 
 .version-thumb img {
@@ -480,12 +483,13 @@ body {
 }
 
 /* Refined version indicator */
-.version-thumb.refined {
-  border-color: var(--refine);
+.version-thumb.refined .version-thumb-label {
+  background: rgba(139, 92, 246, 0.8);
 }
 
 .version-thumb.refined.active {
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3);
+  border-color: var(--refine);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.4);
 }
 
 /* ─── Action Bar (sticky) ─────────────────────────────────────────── */
