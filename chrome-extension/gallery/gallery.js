@@ -1613,7 +1613,14 @@
     if (e.target === modalOverlay) closeModal();
   });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Escape') {
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') {
+        document.activeElement.blur();
+        return;
+      }
+      closeModal();
+    }
   });
 
   // === THE THREE KEY BUTTONS ===
