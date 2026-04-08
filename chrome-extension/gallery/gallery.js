@@ -1173,6 +1173,10 @@
           </div>
           <div class="batch-result-meta">
             <div class="batch-result-vars">${varsHtml}<br><strong>ratio:</strong> ${job.ratio}</div>
+            <button class="btn-view-prompt" data-job-idx="${i}">View Prompt</button>
+          </div>
+          <div class="batch-result-prompt hidden" id="batch-prompt-${i}">
+            <pre class="batch-prompt-text">${job.prompt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
           </div>
           <div class="batch-result-rating">
             <button class="batch-rating-btn" data-rating="great" data-idx="${i}">Great</button>
@@ -1183,6 +1187,18 @@
         </div>
       `;
     }).join('');
+
+    // Wire up view prompt toggle
+    resultsGrid.querySelectorAll('.btn-view-prompt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = btn.dataset.jobIdx;
+        const promptEl = document.getElementById(`batch-prompt-${idx}`);
+        if (promptEl) {
+          promptEl.classList.toggle('hidden');
+          btn.textContent = promptEl.classList.contains('hidden') ? 'View Prompt' : 'Hide Prompt';
+        }
+      });
+    });
 
     // Wire up rating buttons
     resultsGrid.querySelectorAll('.batch-rating-btn').forEach(btn => {
