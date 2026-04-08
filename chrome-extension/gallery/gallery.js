@@ -1631,6 +1631,137 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════
+  // DESCRIBE FROM PHOTO — Claude Vision describes just the reference
+  // image and fills MEAL_DESCRIPTION only, without touching other fields
+  // ═══════════════════════════════════════════════════════════════════
+
+  async function describeFromPhoto() {
+    const statusEl = document.getElementById('batch-autogen-status');
+    const btn = document.getElementById('batch-describe-btn');
+
+    if (referenceImages.length === 0) {
+      statusEl.textContent = 'Upload a reference photo first.';
+      return;
+    }
+
+    // Find images with base64
+    const refsWithImages = referenceImages.filter(r => r.base64);
+    if (refsWithImages.length === 0) {
+      statusEl.textContent = 'No processed reference images found. Try re-uploading.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Describing...';
+    statusEl.textContent = `Sending ${refsWithImages.length} photo${refsWithImages.length !== 1 ? 's' : ''} to Claude Vision...`;
+
+    try {
+      const config = await getConfig();
+
+      // Build a simple Claude vision request: just describe each photo
+      const contentBlocks = [];
+      const mealTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_NAME"]');
+      const mealNames = mealTextarea ? mealTextarea.value.trim().split('\n').map(s => s.trim()).filter(Boolean) : [];
+
+      for (let i = 0; i < refsWithImages.length; i++) {
+        const ref = refsWithImages[i];
+        const labelInput = document.querySelector(`.ref-card-label[data-ref-id="${ref.id}"]`);
+        const label = labelInput ? labelInput.value.trim() : (ref.label || `Meal ${i + 1}`);
+
+        contentBlocks.push({ type: 'text', text: `Photo ${i + 1}: "${label}"` });
+        contentBlocks.push({
+          type: 'image',
+          source: { type: 'base64', media_type: ref.media_type || 'image/jpeg', data: ref.base64 }
+        });
+      }
+
+      contentBlocks.push({
+        type: 'text',
+        text: `Describe each meal photo above in a single rich paragraph per photo. For each, describe EXACTLY what you see: the specific plating, proteins, sides, garnishes, sauce placement, colours, textures, and any steam or sheen. 40 to 80 words per description. Make it appetising and specific to the actual photo. Do NOT describe a generic version of the dish.
+
+Output ONLY valid JSON in this format:
+{"descriptions": ["description for photo 1", "description for photo 2"]}
+
+No markdown, no code fences, no explanation.`
+      });
+
+      const res = await fetch(`https://api.anthropic.com/v1/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': config.claudeApiKey || Deno?.env?.get?.('CLAUDE_API_KEY') || '',
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-20250514',
+          max_tokens: 2048,
+          messages: [{ role: 'user', content: contentBlocks }]
+        })
+      });
+
+      if (!res.ok) {
+        // Fallback: use the Edge Function instead (it has the API key)
+        console.log('[describe] Direct API call failed, falling back to generate-variables Edge Function...');
+        const names = refsWithImages.map((ref, i) => {
+          const labelInput = document.querySelector(`.ref-card-label[data-ref-id="${ref.id}"]`);
+          return labelInput ? labelInput.value.trim() : (ref.label || `Meal ${i + 1}`);
+        });
+        const refImages = refsWithImages.map((ref, i) => ({
+          meal_index: i, base64: ref.base64, media_type: ref.media_type || 'image/jpeg'
+        }));
+
+        const efRes = await fetch(`${config.supabaseUrl}/functions/v1/generate-variables`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${config.supabaseAnonKey}`
+          },
+          body: JSON.stringify({
+            meal_names: names,
+            original_placeholders: {},
+            reference_images: refImages,
+            brand_guidelines: brandGuidelinesText || undefined
+          })
+        });
+
+        const efData = await safeJson(efRes);
+        if (efData?.variables?.meals) {
+          const descriptions = efData.variables.meals.map(m => m.MEAL_DESCRIPTION);
+          const descTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_DESCRIPTION"]');
+          if (descTextarea) {
+            descTextarea.value = descriptions.join('\n\n');
+            console.log('[describe] MEAL_DESCRIPTION filled from Edge Function:', descriptions.map(d => d.slice(0, 60) + '...'));
+          }
+          statusEl.textContent = `Described ${descriptions.length} meal${descriptions.length !== 1 ? 's' : ''} from photos. Check the descriptions below.`;
+        } else {
+          throw new Error(efData?.error || 'No descriptions returned');
+        }
+      } else {
+        const data = await res.json();
+        const rawText = data.content?.[0]?.text || '';
+        const cleanJson = rawText.replace(/^```json\n?/i, '').replace(/\n?```$/i, '').trim();
+        const parsed = JSON.parse(cleanJson);
+        const descriptions = parsed.descriptions || [];
+
+        const descTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_DESCRIPTION"]');
+        if (descTextarea && descriptions.length > 0) {
+          descTextarea.value = descriptions.join('\n\n');
+          console.log('[describe] MEAL_DESCRIPTION filled from direct API:', descriptions.map(d => d.slice(0, 60) + '...'));
+        }
+        statusEl.textContent = `Described ${descriptions.length} meal${descriptions.length !== 1 ? 's' : ''} from photos. Check the descriptions below.`;
+      }
+    } catch (err) {
+      console.error('[describe] Error:', err);
+      statusEl.textContent = `Error describing photos: ${err.message}`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Describe from photo';
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
   // AUTO-GENERATE VARIABLES — Claude fills descriptions, headlines etc
   // from just the meal names
   // ═══════════════════════════════════════════════════════════════════
@@ -1920,6 +2051,7 @@
   document.getElementById('batch-generate-btn').addEventListener('click', runBatch);
   document.getElementById('batch-cancel-btn').addEventListener('click', cancelBatch);
   document.getElementById('batch-autogen-btn').addEventListener('click', autoGenerateVariables);
+  document.getElementById('batch-describe-btn').addEventListener('click', describeFromPhoto);
   document.getElementById('batch-download-all-btn').addEventListener('click', async () => {
     const imgs = document.querySelectorAll('#batch-results-grid .batch-result-image img');
     if (imgs.length === 0) { alert('No images to download.'); return; }
