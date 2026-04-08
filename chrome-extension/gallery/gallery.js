@@ -1653,8 +1653,13 @@
 
   // Modal close
   document.getElementById('modal-close').addEventListener('click', closeModal);
-  modalOverlay.addEventListener('click', (e) => {
-    if (e.target === modalOverlay) closeModal();
+  let overlayMouseDownTarget = null;
+  modalOverlay.addEventListener('mousedown', (e) => {
+    overlayMouseDownTarget = e.target;
+  });
+  modalOverlay.addEventListener('mouseup', (e) => {
+    if (e.target === modalOverlay && overlayMouseDownTarget === modalOverlay) closeModal();
+    overlayMouseDownTarget = null;
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
