@@ -101,7 +101,8 @@ export default function App() {
 
   return (
     <>
-      <nav className="nav">
+      <header>
+      <nav className="nav" aria-label="Main navigation">
         <div className="nav-left">
           <span className="nav-logo">CK</span>
           <span className="nav-title">Creative Kitchen</span>
@@ -124,8 +125,9 @@ export default function App() {
           </button>
         </div>
       </nav>
+      </header>
 
-      <div className="container">
+      <main className="container">
         {tab === 'gallery' && (
           <Gallery
             ads={filteredAds}
@@ -169,7 +171,7 @@ export default function App() {
             activeBrandId={activeBrandId}
           />
         )}
-      </div>
+      </main>
 
       {selectedAd && (
         <AdDetail

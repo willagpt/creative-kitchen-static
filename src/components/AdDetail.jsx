@@ -31,12 +31,6 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
   const currentImage = versions[activeVersion]?.image_url || ad.generated_image_url
   const hasVersions = versions.length > 0
 
-  // Close on Escape
-  useEffect(() => {
-    const handleKey = (e) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
-  }, [onClose])
 
   // Generate a new prompt via Edge Function
   async function generatePrompt() {

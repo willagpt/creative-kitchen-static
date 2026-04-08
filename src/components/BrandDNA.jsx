@@ -108,6 +108,7 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
               className="select-input"
               value={activeBrandId || ''}
               onChange={e => setActiveBrandId(e.target.value)}
+              aria-label="Select brand"
             >
               {brands.map(b => (
                 <option key={b.id} value={b.id}>{b.name}</option>

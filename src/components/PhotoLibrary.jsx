@@ -79,9 +79,10 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
   function getImageDimensions(file) {
     return new Promise(resolve => {
       const img = new Image()
-      img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight })
-      img.onerror = () => resolve({ width: 0, height: 0 })
-      img.src = URL.createObjectURL(file)
+      const objectUrl = URL.createObjectURL(file)
+      img.onload = () => { URL.revokeObjectURL(objectUrl); resolve({ width: img.naturalWidth, height: img.naturalHeight }) }
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve({ width: 0, height: 0 }) }
+      img.src = objectUrl
     })
   }
 
@@ -158,6 +159,13 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
     e.currentTarget.classList.remove('drag-over')
     if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files)
   }
+
+  // Escape key to close detail panel
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape' && selectedPhoto) setSelectedPhoto(null) }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [selectedPhoto])
 
   const types = ['product', 'lifestyle', 'ingredients', 'packaging', 'texture', 'mood']
   const undescribedCount = photos.filter(p => !p.description).length
@@ -281,7 +289,7 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
 
       {/* Detail panel */}
       {selectedPhoto && (
-        <div className="photo-detail-panel">
+        <div className="photo-detail-panel" role="dialog" aria-modal="false" aria-label="Photo detail">
           <div className="photo-detail-header">
             <h3>{selectedPhoto.name}</h3>
             <button className="detail-close" onClick={() => setSelectedPhoto(null)} aria-label="Close photo detail">&times;</button>

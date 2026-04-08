@@ -89,7 +89,9 @@ export default function Review({ brands, activeBrandId }) {
           <p className="page-subtitle">Rate outputs, mark winners, create variations on what works.</p>
         </div>
         <div>
+          <label htmlFor="run-select" className="sr-only">Generation run</label>
           <select
+            id="run-select"
             className="select-input"
             value={selectedRunId || ''}
             onChange={e => setSelectedRunId(e.target.value || null)}
@@ -158,7 +160,7 @@ export default function Review({ brands, activeBrandId }) {
                 onClick={() => setSelectedImage(selectedImage?.id === img.id ? null : img)}
               >
                 <div className="review-card-image">
-                  <img src={img.image_url} alt="" loading="lazy" />
+                  <img src={img.image_url} alt={img.variables_used?.MEAL_NAME || 'Generated image'} loading="lazy" />
                   {img.is_winner && <span className="winner-badge">&#9733; Winner</span>}
                   {img.rating && (
                     <span
@@ -240,7 +242,7 @@ export default function Review({ brands, activeBrandId }) {
             </div>
             <div className="review-detail-body">
               <div className="review-detail-image">
-                <img src={selectedImage.image_url} alt="" />
+                <img src={selectedImage.image_url} alt={selectedImage.variables_used?.MEAL_NAME || 'Generated image'} />
               </div>
               <div className="review-detail-info">
                 <label className="field-label">Rating</label>

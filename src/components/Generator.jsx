@@ -376,8 +376,9 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
 
             {templates.length > 0 && (
               <div style={{ marginBottom: 12 }}>
-                <label className="field-label">Existing templates</label>
+                <label htmlFor="template-select" className="field-label">Existing templates</label>
                 <select
+                  id="template-select"
                   className="select-input"
                   value={selectedTemplateId || ''}
                   onChange={e => setSelectedTemplateId(e.target.value || null)}
@@ -394,8 +395,9 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
 
             <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
               <div style={{ flex: 1 }}>
-                <label className="field-label">Or templatize from a saved ad</label>
+                <label htmlFor="source-ad-select" className="field-label">Or templatize from a saved ad</label>
                 <select
+                  id="source-ad-select"
                   className="select-input"
                   value={sourceAdId || ''}
                   onChange={e => setSourceAdId(e.target.value || null)}
@@ -520,7 +522,7 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
                 {results.map((r, i) => (
                   <div key={r.id || i} className="result-card">
                     <div className="result-image">
-                      <img src={r.image_url} alt="" loading="lazy" />
+                      <img src={r.image_url} alt={r.variables_used?.MEAL_NAME || 'Generated result'} loading="lazy" />
                       <span className="result-ratio">{r.aspect_ratio}</span>
                     </div>
                     <div className="result-meta">
@@ -558,7 +560,7 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
                       )
                     }}
                   >
-                    <img src={p.thumbnail_url || p.storage_url} alt={p.name} />
+                    <img src={p.thumbnail_url || p.storage_url} alt={p.name || 'Reference photo'} />
                     {selectedPhotoIds.includes(p.id) && (
                       <div className="photo-picker-check">&#10003;</div>
                     )}
