@@ -3,7 +3,7 @@ import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase'
 
 const FAL_MODEL = 'fal-ai/nano-banana-2'
 
-export default function AdDetail({ ad, versions, onClose, onRefresh }) {
+export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatize }) {
   const [prompt, setPrompt] = useState(ad.generated_prompt || '')
   const [direction, setDirection] = useState('')
   const [status, setStatus] = useState('')
@@ -267,6 +267,15 @@ export default function AdDetail({ ad, versions, onClose, onRefresh }) {
               >
                 \u2193 Download
               </a>
+            )}
+
+            {ad.generated_prompt && onTemplatize && (
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => onTemplatize(ad.id)}
+              >
+                Templatize &rarr;
+              </button>
             )}
           </div>
 

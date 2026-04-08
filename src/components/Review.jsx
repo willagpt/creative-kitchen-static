@@ -18,10 +18,12 @@ export default function Review({ brands, activeBrandId }) {
 
   async function loadRuns() {
     setLoading(true)
-    const { data } = await supabase
+    let query = supabase
       .from('generation_runs')
       .select('*')
       .order('created_at', { ascending: false })
+    if (activeBrandId) query = query.eq('brand_id', activeBrandId)
+    const { data } = await query
     setRuns(data || [])
 
     // Auto-select latest
@@ -39,7 +41,7 @@ export default function Review({ brands, activeBrandId }) {
     setImages(data || [])
   }
 
-  useEffect(() => { loadRuns() }, [])
+  useEffect(() => { loadRuns() }, [activeBrandId])
   useEffect(() => { if (selectedRunId) loadImages(selectedRunId) }, [selectedRunId])
 
   async function rateImage(imageId, rating) {

@@ -19,6 +19,10 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
   const [variables, setVariables] = useState({})
   const [ratios, setRatios] = useState(['4:5'])
 
+  // fal.ai API key
+  const [falKey, setFalKey] = useState(() => localStorage.getItem('ck_fal_api_key') || '')
+  const [showKeyInput, setShowKeyInput] = useState(false)
+
   // Generation state
   const [generating, setGenerating] = useState(false)
   const [progress, setProgress] = useState({ done: 0, total: 0 })
@@ -193,9 +197,9 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
   async function runGeneration() {
     if (!templateText.trim() || totalImages === 0) return
 
-    const falKey = localStorage.getItem('ck_fal_api_key')
     if (!falKey) {
-      setStatus('fal.ai API key not set. Go to Gallery > open any ad > Settings to add it.')
+      setShowKeyInput(true)
+      setStatus('Enter your fal.ai API key above to start generating.')
       return
     }
 
@@ -325,6 +329,39 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
         <div>
           <h2 className="page-title">Generator</h2>
           <p className="page-subtitle">Select a template, pick photos, set variables, batch generate.</p>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {falKey && !showKeyInput && (
+            <span
+              style={{ fontSize: 11, color: 'var(--text-2)', cursor: 'pointer' }}
+              onClick={() => setShowKeyInput(true)}
+              title="Click to change API key"
+            >
+              fal.ai key: ****{falKey.slice(-4)}
+            </span>
+          )}
+          {(!falKey || showKeyInput) && (
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <input
+                type="password"
+                className="text-input"
+                placeholder="fal.ai API key"
+                value={falKey}
+                onChange={e => setFalKey(e.target.value)}
+                style={{ width: 220, fontSize: 12 }}
+              />
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => {
+                  localStorage.setItem('ck_fal_api_key', falKey)
+                  setShowKeyInput(false)
+                  setStatus(falKey ? 'API key saved.' : '')
+                }}
+              >
+                Save
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
