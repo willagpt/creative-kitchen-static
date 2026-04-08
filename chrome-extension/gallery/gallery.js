@@ -1342,7 +1342,37 @@
 
     btn.disabled = true;
     btn.textContent = 'Generating...';
-    statusEl.textContent = `Asking Claude to write variables for ${mealNames.length} meal${mealNames.length !== 1 ? 's' : ''}...`;
+
+    // Collect reference images matched to meal names by label
+    const refImages = [];
+    for (let i = 0; i < mealNames.length; i++) {
+      const name = mealNames[i].toLowerCase();
+      // Match reference image by label
+      const ref = referenceImages.find(r => {
+        const labelInput = document.querySelector(`.ref-card-label[data-ref-id="${r.id}"]`);
+        const label = labelInput ? labelInput.value.trim().toLowerCase() : (r.label || '').toLowerCase();
+        return label && label === name;
+      }) || (referenceImages.length === 1 ? referenceImages[0] : null);
+
+      if (ref && ref.publicUrl) {
+        try {
+          statusEl.textContent = `Fetching reference image for "${mealNames[i]}"...`;
+          const imgRes = await fetch(ref.publicUrl);
+          const blob = await imgRes.blob();
+          const base64 = await new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result.split(',')[1]);
+            reader.readAsDataURL(blob);
+          });
+          refImages.push({ meal_index: i, base64, media_type: blob.type || 'image/jpeg' });
+        } catch (e) {
+          console.warn(`Could not fetch reference image for ${mealNames[i]}:`, e);
+        }
+      }
+    }
+
+    const imageNote = refImages.length > 0 ? ` (with ${refImages.length} reference photo${refImages.length !== 1 ? 's' : ''})` : '';
+    statusEl.textContent = `Asking Claude to write variables for ${mealNames.length} meal${mealNames.length !== 1 ? 's' : ''}${imageNote}...`;
 
     try {
       const config = await getConfig();
@@ -1354,7 +1384,8 @@
         },
         body: JSON.stringify({
           meal_names: mealNames,
-          original_placeholders: batchPlaceholders
+          original_placeholders: batchPlaceholders,
+          reference_images: refImages.length > 0 ? refImages : undefined
         })
       });
 
