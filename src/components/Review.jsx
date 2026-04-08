@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
 const RATINGS = [
-  { key: 'great', label: 'Great', color: '#22c55e' },
-  { key: 'good', label: 'Good', color: '#3b82f6' },
-  { key: 'needs-work', label: 'Needs Work', color: '#eab308' },
+  { key: 'great', label: 'Great', color: '#A8E10C' },
+  { key: 'good', label: 'Good', color: '#5CCFFF' },
+  { key: 'needs-work', label: 'Needs Work', color: '#FFD60A' },
   { key: 'slop', label: 'Slop', color: '#ef4444' },
 ]
 

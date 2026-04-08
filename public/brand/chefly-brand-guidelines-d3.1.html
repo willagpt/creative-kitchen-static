@@ -1,0 +1,3717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chefly® — D3.1 Brand Guidelines</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FFF6EE;
+    --warm-white: #FFFAF5;
+    --near-black: #0D0D0D;
+    --orange: #FF6B2C;
+    --hot-yellow: #FFD60A;
+    --electric-green: #A8E10C;
+    --blush: #FF8FA3;
+    --sky-blue: #5CCFFF;
+    --warm-grey: #E8E0D8;
+    --mid-grey: #9A918A;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--cream);
+    color: var(--near-black);
+    font-weight: 400;
+    line-height: 1.6;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ── PAPER GRAIN TEXTURE ── */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 9999;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px 256px;
+    opacity: 0.04;
+  }
+
+  /* ── GRAIN DEMO LAYER (for the visible example) ── */
+  .grain-demo {
+    position: relative;
+    overflow: hidden;
+  }
+  .grain-demo::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 2;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px 256px;
+    opacity: 0.08;
+  }
+  .grain-demo-strong::before {
+    opacity: 0.15;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* ── COVER ── */
+  .cover {
+    padding: 120px 0 80px;
+    border-bottom: 1px solid var(--warm-grey);
+  }
+  .cover h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 64px;
+    line-height: 1.0;
+    text-transform: lowercase;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+  .cover h1 em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--orange);
+  }
+  .cover .subtitle {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    color: var(--mid-grey);
+    font-weight: 400;
+  }
+  .cover .version {
+    display: inline-block;
+    margin-top: 24px;
+    background: var(--near-black);
+    color: var(--cream);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 14px;
+    border-radius: 20px;
+    text-transform: lowercase;
+  }
+
+  /* ── SECTIONS ── */
+  section {
+    padding: 64px 0;
+    border-bottom: 1px solid var(--warm-grey);
+  }
+  section:last-child {
+    border-bottom: none;
+  }
+
+  .section-number {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--mid-grey);
+    margin-bottom: 8px;
+  }
+
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 36px;
+    line-height: 1.1;
+    text-transform: lowercase;
+    letter-spacing: -0.01em;
+    margin-bottom: 24px;
+  }
+  h2 em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--orange);
+  }
+
+  h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    text-transform: lowercase;
+    margin-bottom: 12px;
+    margin-top: 32px;
+  }
+
+  p {
+    margin-bottom: 16px;
+    max-width: 680px;
+  }
+
+  .rule-text {
+    font-size: 14px;
+    color: var(--mid-grey);
+    max-width: 680px;
+  }
+
+  /* ── COLOUR SWATCHES ── */
+  .swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .swatch {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--warm-grey);
+  }
+  .swatch-color {
+    height: 80px;
+  }
+  .swatch-info {
+    padding: 12px;
+    background: white;
+  }
+  .swatch-name {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+  .swatch-hex {
+    font-size: 12px;
+    color: var(--mid-grey);
+    font-family: 'Space Grotesk', monospace;
+  }
+  .swatch-role {
+    font-size: 11px;
+    color: var(--mid-grey);
+    margin-top: 4px;
+  }
+
+  /* ── TYPE SPECIMENS ── */
+  .type-specimen {
+    padding: 32px;
+    background: white;
+    border-radius: 12px;
+    margin: 16px 0;
+    border: 1px solid var(--warm-grey);
+  }
+  .type-specimen .label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--mid-grey);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+  }
+  .type-display {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 42px;
+    line-height: 1.05;
+    text-transform: lowercase;
+    letter-spacing: -0.02em;
+  }
+  .type-accent {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 42px;
+    line-height: 1.15;
+  }
+  .type-body {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    font-weight: 400;
+  }
+  .type-meta {
+    font-size: 12px;
+    color: var(--mid-grey);
+    margin-top: 8px;
+    font-family: 'Space Grotesk', monospace;
+  }
+
+  /* ── EMPHASIS DEMO ── */
+  .emphasis-demo {
+    padding: 40px;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--warm-grey);
+    margin: 16px 0;
+  }
+  .emphasis-headline {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 32px;
+    line-height: 1.1;
+    text-transform: lowercase;
+  }
+  .emphasis-headline em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--orange);
+  }
+
+  /* ── BADGE SYSTEM ── */
+  .badge-section {
+    margin: 24px 0;
+  }
+  .badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+  }
+  .badge {
+    display: inline-block;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: lowercase;
+    letter-spacing: 0.02em;
+  }
+  .badge-food-orange { background: var(--orange); color: white; }
+  .badge-food-yellow { background: var(--hot-yellow); color: var(--near-black); }
+  .badge-food-green { background: var(--electric-green); color: var(--near-black); }
+  .badge-food-blush { background: var(--blush); color: var(--near-black); }
+  .badge-food-blue { background: var(--sky-blue); color: var(--near-black); }
+  .badge-status { background: var(--near-black); color: var(--cream); }
+  .badge-functional { background: var(--warm-grey); color: var(--near-black); }
+  .badge-nutritional { background: #D4EDDA; color: #1B5E20; }
+  .badge-outline { background: transparent; border: 1.5px solid var(--warm-grey); color: var(--near-black); }
+
+  .badge-spec-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .badge-spec-table th {
+    text-align: left;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-bottom: 2px solid var(--near-black);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--mid-grey);
+  }
+  .badge-spec-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--warm-grey);
+    vertical-align: top;
+  }
+  .badge-spec-table code {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 12px;
+    background: var(--warm-white);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  /* ── GRAIN EXAMPLES ── */
+  .grain-comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .grain-box {
+    border-radius: 12px;
+    padding: 40px 24px;
+    text-align: center;
+    border: 1px solid var(--warm-grey);
+    position: relative;
+    overflow: hidden;
+  }
+  .grain-box .grain-label {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    text-transform: lowercase;
+    margin-bottom: 4px;
+    position: relative;
+    z-index: 3;
+  }
+  .grain-box .grain-sublabel {
+    font-size: 12px;
+    color: var(--mid-grey);
+    position: relative;
+    z-index: 3;
+  }
+
+  .grain-opacity-strip {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    margin: 24px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--warm-grey);
+  }
+  .grain-level {
+    padding: 32px 12px;
+    text-align: center;
+    background: var(--cream);
+    position: relative;
+    overflow: hidden;
+  }
+  .grain-level::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px 256px;
+  }
+  .grain-level:nth-child(1)::before { opacity: 0; }
+  .grain-level:nth-child(2)::before { opacity: 0.03; }
+  .grain-level:nth-child(3)::before { opacity: 0.05; }
+  .grain-level:nth-child(4)::before { opacity: 0.08; }
+  .grain-level:nth-child(5)::before { opacity: 0.15; }
+  .grain-level .grain-pct {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    position: relative;
+    z-index: 3;
+  }
+  .grain-level .grain-use {
+    font-size: 10px;
+    color: var(--mid-grey);
+    margin-top: 4px;
+    position: relative;
+    z-index: 3;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+  .grain-level:not(:last-child) {
+    border-right: 1px solid var(--warm-grey);
+  }
+
+  /* ── COLOUR MODE CARDS ── */
+  .mode-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .mode-card {
+    border-radius: 12px;
+    padding: 32px 24px;
+    border: 1px solid var(--warm-grey);
+    min-height: 180px;
+    position: relative;
+  }
+  .mode-card .mode-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    text-transform: lowercase;
+    margin-bottom: 4px;
+  }
+  .mode-card .mode-desc {
+    font-size: 12px;
+    color: var(--mid-grey);
+  }
+  .mode-card .mode-example {
+    margin-top: 16px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    text-transform: lowercase;
+    line-height: 1.1;
+  }
+  .mode-card .mode-example em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-weight: 400;
+  }
+  .mode-cream { background: var(--cream); }
+  .mode-white { background: white; }
+  .mode-colour-band { background: var(--cream); border-left: 6px solid var(--orange); }
+  .mode-food-colour { background: var(--orange); color: white; }
+  .mode-food-colour .mode-desc { color: rgba(255,255,255,0.7); }
+
+  /* ── DO / DON'T ── */
+  .do-dont-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .do-card, .dont-card {
+    border-radius: 12px;
+    padding: 24px;
+    font-size: 14px;
+  }
+  .do-card {
+    background: #D4EDDA;
+    border: 1px solid #A3D9A5;
+  }
+  .dont-card {
+    background: #F8D7DA;
+    border: 1px solid #F5C6CB;
+  }
+  .do-card .card-label, .dont-card .card-label {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+  .do-card .card-label { color: #1B5E20; }
+  .dont-card .card-label { color: #721C24; }
+
+  /* ── SACRED LAYER ── */
+  .sacred-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin: 24px 0;
+    border: 1px solid var(--warm-grey);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .sacred-col {
+    padding: 24px;
+  }
+  .sacred-col:first-child {
+    background: var(--near-black);
+    color: var(--cream);
+    border-right: 1px solid var(--warm-grey);
+  }
+  .sacred-col:last-child {
+    background: white;
+  }
+  .sacred-col h4 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 16px;
+  }
+  .sacred-col ul {
+    list-style: none;
+    padding: 0;
+  }
+  .sacred-col li {
+    font-size: 13px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .sacred-col:last-child li {
+    border-bottom: 1px solid var(--warm-grey);
+  }
+  .sacred-col li:last-child {
+    border-bottom: none;
+  }
+
+  /* ── LOGO SECTION ── */
+  .logo-rules-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .logo-rule-card {
+    background: white;
+    border: 1px solid var(--warm-grey);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .logo-rule-card .label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--mid-grey);
+    margin-bottom: 8px;
+  }
+
+  /* ── CHECKLIST ── */
+  .checklist {
+    list-style: none;
+    padding: 0;
+    margin: 24px 0;
+  }
+  .checklist li {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--warm-grey);
+    font-size: 14px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .checklist li::before {
+    content: '□';
+    font-size: 16px;
+    line-height: 1.4;
+    flex-shrink: 0;
+  }
+
+  /* ── MOTION ── */
+  .motion-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .motion-table th {
+    text-align: left;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-bottom: 2px solid var(--near-black);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--mid-grey);
+  }
+  .motion-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--warm-grey);
+  }
+  .motion-table code {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 12px;
+    background: var(--warm-white);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  /* ── FOOD COLOUR ASSOCIATIONS ── */
+  .food-colour-strip {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    margin: 24px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--warm-grey);
+  }
+  .food-colour-cell {
+    padding: 24px 12px;
+    text-align: center;
+  }
+  .food-colour-cell .fc-protein {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    text-transform: lowercase;
+    margin-bottom: 4px;
+  }
+  .food-colour-cell .fc-hex {
+    font-size: 11px;
+    font-family: 'Space Grotesk', monospace;
+    opacity: 0.7;
+  }
+  .food-colour-cell:not(:last-child) {
+    border-right: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .toc {
+    margin: 32px 0;
+    columns: 2;
+    column-gap: 32px;
+  }
+  .toc-item {
+    padding: 6px 0;
+    font-size: 14px;
+    break-inside: avoid;
+    display: flex;
+    gap: 8px;
+  }
+  .toc-num {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 11px;
+    color: var(--mid-grey);
+    min-width: 24px;
+  }
+
+  .note-box {
+    background: var(--warm-white);
+    border-left: 3px solid var(--orange);
+    padding: 16px 20px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .note-box strong {
+    font-weight: 700;
+  }
+
+  /* ── PACKAGING SYSTEM ── */
+
+  /* System formula diagram */
+  .system-diagram {
+    background: white;
+    border: 1px solid var(--warm-grey);
+    border-radius: 12px;
+    padding: 28px;
+    margin: 24px 0;
+    text-align: center;
+  }
+  .system-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .system-box {
+    padding: 16px 24px;
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 12px;
+    text-transform: lowercase;
+    letter-spacing: -0.01em;
+    min-width: 160px;
+  }
+  .system-plus, .system-equals {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--mid-grey);
+  }
+
+  /* Full sleeve mockup (390:202 ratio) */
+  .sleeve-full {
+    width: 100%;
+    max-width: 700px;
+    aspect-ratio: 390 / 202;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 6px 30px rgba(0,0,0,0.12);
+    margin: 20px auto;
+  }
+  .sleeve-full .sleeve-wrap {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    position: relative;
+  }
+  .sleeve-full .sleeve-front-face {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+  }
+  .sleeve-full .sleeve-back-face {
+    position: relative;
+    overflow: hidden;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+  }
+  .sleeve-full .art-layer {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 1;
+    overflow: hidden;
+  }
+  .sleeve-full .art-layer svg {
+    width: 100%; height: 100%;
+  }
+  .sleeve-full .front-content {
+    position: relative; z-index: 2;
+    display: flex; flex-direction: column; height: 100%;
+  }
+  .sleeve-full .sleeve-logo {
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: 28px; text-transform: lowercase; letter-spacing: -0.02em;
+  }
+  .sleeve-full .sleeve-tagline {
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: 14px; text-transform: lowercase; line-height: 1.15; margin-top: 8px;
+  }
+  .sleeve-full .sleeve-tagline em {
+    font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400;
+  }
+
+  /* Sticker overlay on sleeve */
+  .sticker-overlay {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    background: var(--cream);
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    z-index: 5;
+  }
+  .sticker-overlay .meal-name {
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: 15px; line-height: 1.15; text-transform: lowercase; margin-bottom: 3px;
+  }
+  .sticker-overlay .meal-name em {
+    font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400;
+  }
+  .sticker-overlay .meal-desc {
+    font-size: 10px; color: var(--mid-grey); margin-bottom: 8px; line-height: 1.3;
+  }
+  .sticker-overlay .badge-row {
+    display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 6px;
+  }
+  .sticker-overlay .badge {
+    font-size: 9px; font-weight: 600; padding: 3px 9px; border-radius: 12px;
+    text-transform: lowercase; font-family: 'Space Grotesk', sans-serif;
+  }
+  .sticker-overlay .micro-info {
+    font-size: 8px; color: var(--mid-grey); line-height: 1.3;
+    border-top: 1px solid var(--warm-grey); padding-top: 6px; margin-top: 4px;
+  }
+
+  /* Back panel info */
+  .back-info .back-title {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 11px;
+    text-transform: lowercase; margin-bottom: 3px;
+  }
+  .back-info .back-text {
+    font-size: 8px; color: var(--mid-grey); line-height: 1.4; margin-bottom: 8px;
+  }
+  .back-info .nutrition-grid {
+    display: grid; grid-template-columns: 1fr auto auto;
+    font-size: 7px; gap: 1px; margin: 6px 0;
+  }
+  .back-info .nutrition-grid .nh {
+    font-weight: 600; padding: 2px 4px; border-bottom: 1px solid var(--warm-grey);
+  }
+  .back-info .nutrition-grid .nc {
+    padding: 2px 4px; border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+  .back-info .barcode-area {
+    margin-top: auto;
+    display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  .back-info .barcode-placeholder {
+    width: 80px; height: 30px; background: white; border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 6px; color: var(--mid-grey);
+  }
+  .back-info .sku-text {
+    font-size: 7px; color: var(--mid-grey);
+  }
+
+  /* Mini protein row */
+  .protein-row {
+    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 24px 0;
+  }
+  .protein-mini {
+    width: 180px; height: 94px; border-radius: 6px; overflow: hidden;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.1); position: relative;
+    display: grid; grid-template-columns: 1fr 1fr;
+  }
+  .protein-mini .pm-front {
+    position: relative; display: flex; flex-direction: column;
+    justify-content: flex-end; padding: 8px; overflow: hidden;
+  }
+  .protein-mini .pm-back {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 6px; color: var(--mid-grey);
+  }
+  .protein-mini .pm-label {
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: 11px; text-transform: lowercase; letter-spacing: -0.02em;
+  }
+  .protein-mini .pm-sticker {
+    position: absolute; bottom: 4px; left: 4px; right: 50%;
+    background: var(--cream); border-radius: 5px; padding: 5px 6px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.1); z-index: 5;
+  }
+  .protein-mini .pm-sticker .pm-meal {
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: 7px; text-transform: lowercase; line-height: 1.2; margin-bottom: 2px;
+  }
+  .protein-mini .pm-sticker .pm-badges {
+    display: flex; gap: 2px;
+  }
+  .protein-mini .pm-sticker .pm-badge {
+    font-size: 5px; padding: 1px 4px; border-radius: 6px;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 600;
+    text-transform: lowercase;
+  }
+
+  /* Protein colour strip */
+  .protein-strip {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    margin: 24px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--warm-grey);
+  }
+  .protein-cell {
+    padding: 20px 12px;
+    text-align: center;
+  }
+  .protein-cell:not(:last-child) {
+    border-right: 1px solid rgba(255,255,255,0.2);
+  }
+  .protein-cell .protein-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    text-transform: lowercase;
+    margin-bottom: 2px;
+  }
+  .protein-cell .protein-cut {
+    font-size: 11px;
+    opacity: 0.7;
+  }
+
+  /* Info split grid */
+  .info-split-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin: 24px 0;
+    border: 1px solid var(--warm-grey);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .info-split-col {
+    padding: 24px;
+  }
+  .info-split-col:first-child {
+    background: var(--cream);
+    border-right: 1px solid var(--warm-grey);
+  }
+  .info-split-col:last-child {
+    background: white;
+  }
+  .info-split-col h4 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    text-transform: lowercase;
+    margin-bottom: 12px;
+  }
+  .info-split-col ul {
+    list-style: none;
+    padding: 0;
+  }
+  .info-split-col li {
+    font-size: 13px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--warm-grey);
+  }
+  .info-split-col:first-child li {
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+  .info-split-col li:last-child {
+    border-bottom: none;
+  }
+
+  /* Direction cards */
+  .direction-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .direction-card {
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid var(--warm-grey);
+    background: white;
+  }
+  .direction-card .direction-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    text-transform: lowercase;
+    margin-bottom: 4px;
+  }
+  .direction-card .direction-desc {
+    font-size: 12px;
+    color: var(--mid-grey);
+    line-height: 1.5;
+  }
+  .direction-tag {
+    display: inline-block; padding: 3px 10px; border-radius: 10px;
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px;
+  }
+
+  /* Sticker demo cards */
+  .sticker-demo {
+    display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin: 24px 0;
+  }
+  .sticker-card {
+    width: 190px;
+    background: var(--cream);
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: 0 3px 16px rgba(0,0,0,0.1);
+    border: 1px solid var(--warm-grey);
+  }
+  .sticker-card .meal-name {
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: 12px; line-height: 1.15; text-transform: lowercase; margin-bottom: 3px;
+  }
+  .sticker-card .meal-name em {
+    font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400;
+  }
+  .sticker-card .meal-desc {
+    font-size: 8px; color: var(--mid-grey); margin-bottom: 6px; line-height: 1.3;
+  }
+  .sticker-card .badge-row {
+    display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 5px;
+  }
+  .sticker-card .badge {
+    font-size: 7px; font-weight: 600; padding: 2px 7px; border-radius: 10px;
+    text-transform: lowercase; font-family: 'Space Grotesk', sans-serif;
+  }
+  .sticker-card .micro-info {
+    font-size: 7px; color: var(--mid-grey); line-height: 1.3;
+    border-top: 1px solid var(--warm-grey); padding-top: 5px; margin-top: 3px;
+  }
+
+  /* Sticker spec layout */
+  .sticker-mockup {
+    background: white;
+    border: 1px solid var(--warm-grey);
+    border-radius: 12px;
+    padding: 32px;
+    margin: 24px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+  }
+  .sticker-specs {
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .sticker-specs strong {
+    font-weight: 700;
+  }
+
+  /* Box die-cut diagram */
+  .box-diagram {
+    background: white;
+    border: 1px solid var(--warm-grey);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+    overflow-x: auto;
+  }
+  .box-diecut {
+    display: grid;
+    grid-template-columns: 244fr 446fr 247fr 446fr;
+    grid-template-rows: 223fr 234fr 149fr;
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+    aspect-ratio: 1413 / 606;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+    font-family: 'Syne', sans-serif;
+    font-size: 9px;
+    text-transform: lowercase;
+    letter-spacing: -0.01em;
+  }
+  .box-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    text-align: center;
+    border: 0.5px dashed #ccc;
+    position: relative;
+    overflow: hidden;
+  }
+  .box-panel-kraft {
+    background: #D4B896;
+  }
+  .box-panel-yellow {
+    background: #FFD60A;
+  }
+  .box-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    text-transform: lowercase;
+    color: var(--near-black);
+    letter-spacing: -0.02em;
+  }
+  .box-logo em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-weight: 400;
+  }
+  .box-tagline {
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--near-black);
+    line-height: 1.3;
+    margin-top: 4px;
+  }
+  .box-tagline em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-weight: 400;
+  }
+  .box-social {
+    font-size: 7px;
+    color: var(--near-black);
+    opacity: 0.6;
+    margin-top: 3px;
+  }
+  .box-icon {
+    font-size: 24px;
+    margin-bottom: 4px;
+  }
+  .box-meals {
+    font-size: 5px;
+    color: var(--near-black);
+    opacity: 0.7;
+    line-height: 1.4;
+    text-align: left;
+    max-width: 90%;
+  }
+  .box-dim {
+    position: absolute;
+    font-size: 7px;
+    color: rgba(0,0,0,0.35);
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .box-specs-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    justify-content: center;
+  }
+  .box-specs-row div {
+    font-size: 11px;
+    color: var(--mid-grey);
+  }
+  .box-specs-row strong {
+    color: var(--near-black);
+  }
+
+  .tape-demo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .tape-sample {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--warm-grey);
+  }
+  .tape-visual {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .tape-strip-inner {
+    width: 110%;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 0 16px;
+    transform: rotate(-3deg);
+    white-space: nowrap;
+  }
+  .tape-strip-inner .tw {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 12px;
+    text-transform: lowercase;
+    flex-shrink: 0;
+  }
+  .tape-strip-inner .td {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .tape-label-info {
+    padding: 12px 16px;
+    background: white;
+  }
+  .tape-label-info .tape-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 12px;
+    text-transform: lowercase;
+    margin-bottom: 2px;
+  }
+  .tape-label-info .tape-note {
+    font-size: 11px;
+    color: var(--mid-grey);
+  }
+
+  @media (max-width: 640px) {
+    .cover h1 { font-size: 40px; }
+    h2 { font-size: 28px; }
+    .swatch-grid { grid-template-columns: repeat(2, 1fr); }
+    .mode-grid, .do-dont-grid, .sacred-grid, .logo-rules-grid, .grain-comparison { grid-template-columns: 1fr; }
+    .food-colour-strip { grid-template-columns: repeat(3, 1fr); }
+    .grain-opacity-strip { grid-template-columns: repeat(3, 1fr); }
+    .toc { columns: 1; }
+    .direction-grid, .info-split-grid, .tape-demo, .sticker-mockup { grid-template-columns: 1fr; }
+    .sticker-mockup { flex-direction: column; }
+    .protein-strip { grid-template-columns: repeat(3, 1fr); }
+    .system-row { flex-direction: column; gap: 8px; }
+    .system-plus, .system-equals { font-size: 16px; }
+    .sleeve-full { max-width: 100%; }
+    .protein-mini { width: 140px; height: 72px; }
+    .sticker-demo { gap: 8px; }
+    .sticker-card { width: 160px; }
+  }
+
+  /* ── PRINT / PDF PAGE-BREAK CONTROL ── */
+
+  /* ── FULL-BLEED PRINCIPLE BANNER ── */
+  .principle-banner {
+    margin: 48px -32px;
+    padding: 64px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .principle-banner h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    text-transform: lowercase;
+    line-height: 1.1;
+    margin: 0 0 12px 0;
+  }
+  .principle-banner h3 em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-weight: 400;
+  }
+  .principle-banner p {
+    font-size: 15px;
+    max-width: 560px;
+    opacity: 0.85;
+  }
+
+  /* ── SINGLE-COLUMN DEEP DIVE ── */
+  .deep-dive {
+    max-width: 620px;
+    margin: 32px 0;
+    padding: 32px;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--warm-grey);
+    border-top: 4px solid var(--orange);
+  }
+  .deep-dive h4 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    text-transform: lowercase;
+    margin-bottom: 12px;
+  }
+  .deep-dive p {
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  /* ── COMPONENT PREVIEW CARDS ── */
+  .component-preview {
+    background: white;
+    border: 1px solid var(--warm-grey);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 24px 0;
+  }
+  .component-preview .preview-area {
+    padding: 40px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    min-height: 80px;
+  }
+  .component-preview .preview-specs {
+    padding: 16px 24px;
+    background: var(--warm-white);
+    border-top: 1px solid var(--warm-grey);
+    font-size: 12px;
+    color: var(--mid-grey);
+    font-family: 'Space Grotesk', monospace;
+  }
+
+  /* ── CHEFLY BUTTONS ── */
+  .btn-chefly {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: lowercase;
+    letter-spacing: 0.01em;
+    border: none;
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 12px 28px;
+    transition: all 150ms ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary {
+    background: var(--near-black);
+    color: var(--cream);
+  }
+  .btn-primary:hover { background: #000000; }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-secondary {
+    background: var(--warm-grey);
+    color: var(--near-black);
+  }
+  .btn-secondary:hover { background: #DDD5CC; }
+  .btn-secondary:active { transform: scale(0.97); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--near-black);
+    border: 1.5px solid var(--warm-grey);
+  }
+  .btn-ghost:hover { background: rgba(232,224,216,0.4); }
+  .btn-ghost:active { transform: scale(0.97); }
+  .btn-danger {
+    background: #E53935;
+    color: white;
+  }
+  .btn-danger:hover { background: #C62828; }
+  .btn-danger:active { transform: scale(0.97); }
+  .btn-small {
+    font-size: 12px;
+    padding: 8px 18px;
+  }
+  .btn-large {
+    font-size: 16px;
+    padding: 16px 36px;
+  }
+
+  /* ── FORM FIELDS ── */
+  .input-chefly {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    padding: 12px 16px;
+    border: 1.5px solid var(--warm-grey);
+    border-radius: 8px;
+    background: white;
+    color: var(--near-black);
+    width: 260px;
+    outline: none;
+    transition: border-color 150ms ease;
+  }
+  .input-chefly::placeholder {
+    color: var(--mid-grey);
+    text-transform: lowercase;
+  }
+  .input-chefly:focus {
+    border-color: var(--near-black);
+  }
+  .btn-chefly:focus-visible, .input-chefly:focus-visible {
+    outline: 2px solid var(--near-black);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+  .btn-chefly:focus:not(:focus-visible), .input-chefly:focus:not(:focus-visible) {
+    outline: none;
+  }
+  .input-chefly.input-error {
+    border-color: #E53935;
+    background: #FFF5F5;
+  }
+  .input-label {
+    display: block;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: lowercase;
+    letter-spacing: 0.02em;
+    color: var(--near-black);
+    margin-bottom: 6px;
+  }
+  .input-hint {
+    font-size: 12px;
+    color: var(--mid-grey);
+    margin-top: 4px;
+  }
+  .input-error-msg {
+    font-size: 12px;
+    color: #E53935;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  /* ── CARD COMPONENT ── */
+  .card-chefly {
+    background: white;
+    border: 1px solid var(--warm-grey);
+    border-radius: 12px;
+    overflow: hidden;
+    width: 220px;
+  }
+  .card-chefly .card-img {
+    height: 120px;
+    background: var(--warm-grey);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--mid-grey);
+  }
+  .card-chefly .card-body {
+    padding: 16px;
+  }
+  .card-chefly:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+  .card-chefly .card-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    text-transform: lowercase;
+    margin-bottom: 4px;
+  }
+  .card-chefly .card-title em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-weight: 400;
+  }
+  .card-chefly .card-desc {
+    font-size: 12px;
+    color: var(--mid-grey);
+    line-height: 1.4;
+    margin-bottom: 12px;
+  }
+
+  /* ── NAV COMPONENT ── */
+  .nav-chefly {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 16px 24px;
+    background: var(--cream);
+    border: 1px solid var(--warm-grey);
+    border-radius: 12px;
+    width: 100%;
+  }
+  .nav-chefly .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    text-transform: lowercase;
+    letter-spacing: -0.02em;
+    margin-right: auto;
+  }
+  .nav-chefly .nav-logo em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-weight: 400;
+  }
+  .nav-chefly .nav-link {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--near-black);
+    text-decoration: none;
+    text-transform: lowercase;
+    padding: 6px 0;
+    border-bottom: 1.5px solid transparent;
+    transition: border-color 150ms ease;
+  }
+  .nav-chefly .nav-link:hover {
+    border-bottom-color: var(--mid-grey);
+  }
+  .nav-chefly .nav-link.active {
+    border-bottom-color: var(--near-black);
+  }
+
+  /* ── UX STATE CARDS ── */
+  .state-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .state-card {
+    background: white;
+    border: 1px solid var(--warm-grey);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .state-card .state-preview {
+    padding: 32px 24px;
+    text-align: center;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .state-card .state-meta {
+    padding: 14px 20px;
+    background: var(--warm-white);
+    border-top: 1px solid var(--warm-grey);
+    font-size: 12px;
+  }
+  .state-card .state-meta strong {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 12px;
+    text-transform: lowercase;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .state-card .state-meta span {
+    color: var(--mid-grey);
+    font-size: 11px;
+  }
+
+  /* State-specific styling */
+  .state-empty-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--warm-grey);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 12px;
+  }
+  .state-empty-text {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: lowercase;
+    margin-bottom: 4px;
+  }
+  .state-empty-hint {
+    font-size: 12px;
+    color: var(--mid-grey);
+    margin-bottom: 12px;
+  }
+
+  .state-loading-bar {
+    width: 140px;
+    height: 4px;
+    background: var(--warm-grey);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 12px 0;
+  }
+  .state-loading-bar .bar-fill {
+    width: 40%;
+    height: 100%;
+    background: var(--near-black);
+    border-radius: 2px;
+    animation: loadPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes loadPulse {
+    0%, 100% { width: 30%; margin-left: 0; }
+    50% { width: 50%; margin-left: 30%; }
+  }
+
+  .state-success-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #D4EDDA;
+    color: #1B5E20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin-bottom: 12px;
+  }
+
+  .state-error-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #F8D7DA;
+    color: #721C24;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin-bottom: 12px;
+  }
+
+  /* ── CONTRAST TABLE ── */
+  .contrast-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 24px 0;
+  }
+  .contrast-cell {
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    border: 1px solid var(--warm-grey);
+    position: relative;
+  }
+  .contrast-cell .contrast-sample {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+  .contrast-cell .contrast-ratio {
+    font-size: 11px;
+    font-family: 'Space Grotesk', monospace;
+    margin-bottom: 2px;
+  }
+  .contrast-pass {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 2px 8px;
+    border-radius: 8px;
+    display: inline-block;
+  }
+  .pass-aa { background: #D4EDDA; color: #1B5E20; }
+  .pass-aaa { background: #C8E6C9; color: #1B5E20; }
+  .fail-aa { background: #F8D7DA; color: #721C24; }
+
+  /* ── CODE BLOCK ── */
+  .code-block {
+    background: var(--near-black);
+    color: #E0E0E0;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 16px 0;
+    font-family: 'Space Grotesk', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .code-block .code-comment {
+    color: #6A9955;
+  }
+  .code-block .code-property {
+    color: #9CDCFE;
+  }
+  .code-block .code-value {
+    color: #CE9178;
+  }
+  .code-block .code-selector {
+    color: #D7BA7D;
+  }
+
+  /* ── ACCESSIBILITY BADGE WITH ICON ── */
+  .badge-accessible {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: lowercase;
+    letter-spacing: 0.02em;
+  }
+  .badge-icon {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  /* ── THREE-COLUMN GRID ── */
+  .three-col-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0;
+  }
+
+  /* ── EVALUATION PAIRS ── */
+  .eval-pairs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin: 24px 0;
+    border: 1px solid var(--warm-grey);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .eval-pair {
+    display: flex;
+    border-bottom: 1px solid var(--warm-grey);
+  }
+  .eval-pair:last-child {
+    border-bottom: none;
+  }
+  .eval-yes, .eval-no {
+    flex: 1;
+    padding: 14px 20px;
+    font-size: 13px;
+  }
+  .eval-yes {
+    background: #D4EDDA;
+    border-right: 1px solid var(--warm-grey);
+  }
+  .eval-no {
+    background: #F8D7DA;
+  }
+  .eval-header {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 10px 20px;
+    border-bottom: 2px solid var(--warm-grey);
+  }
+  .eval-header.eval-yes-header { background: #C8E6C9; color: #1B5E20; }
+  .eval-header.eval-no-header { background: #F5C6CB; color: #721C24; }
+
+  @media (max-width: 640px) {
+    /* ── New section grids ── */
+    .state-grid { grid-template-columns: 1fr; }
+    .contrast-grid { grid-template-columns: 1fr; }
+    .three-col-grid { grid-template-columns: 1fr; }
+    .principle-banner { margin: 32px -16px; padding: 40px 24px; }
+    .eval-pairs { grid-template-columns: 1fr; }
+
+    /* ── Buttons: full-width stacked on mobile ── */
+    .btn-chefly { width: 100%; justify-content: center; }
+    .btn-chefly.btn-small { width: auto; } /* inline smalls stay inline */
+    .component-preview .preview-area { flex-direction: column; padding: 24px 16px; }
+    .component-preview .preview-area .btn-chefly { max-width: 320px; }
+
+    /* ── Form fields: full width ── */
+    .input-chefly { width: 100%; }
+
+    /* ── Cards: single column, full bleed ── */
+    .card-chefly { width: 100%; }
+
+    /* ── Nav: hamburger collapse ── */
+    .nav-chefly { flex-wrap: wrap; gap: 8px; padding: 12px 16px; }
+    .nav-chefly .nav-link { display: none; } /* hidden behind hamburger on mobile */
+    .nav-chefly .nav-hamburger { display: flex; }
+    .nav-chefly.nav-open .nav-link {
+      display: block;
+      width: 100%;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--warm-grey);
+      font-size: 16px; /* larger touch target text */
+    }
+
+    /* ── Mobile type minimums ── */
+    .state-card .state-meta span { font-size: 12px; }
+    .input-hint, .input-error-msg { font-size: 13px; }
+    .input-label { font-size: 13px; }
+
+    /* ── Code blocks: scroll horizontal ── */
+    .code-block { font-size: 11px; padding: 16px; }
+  }
+
+  @media print {
+    /* Force each section to start on a new page */
+    section {
+      break-before: page;
+      page-break-before: always;
+    }
+    /* First section after cover should not double-break */
+    .cover + section {
+      break-before: page;
+    }
+
+    /* Cover page stands alone */
+    .cover {
+      break-after: page;
+      page-break-after: always;
+    }
+
+    /* Never split these blocks across pages */
+    section,
+    .sacred-grid,
+    .logo-rules-grid,
+    .logo-rule-card,
+    .swatch-grid,
+    .swatch,
+    .food-colour-strip,
+    .type-specimen,
+    .emphasis-demo,
+    .badge-section,
+    .badge-spec-table,
+    .grain-opacity-strip,
+    .grain-comparison,
+    .grain-box,
+    .mode-grid,
+    .mode-card,
+    .photo-grid,
+    .photo-example,
+    .dont-grid,
+    .dont-item,
+    .note-box,
+    .system-diagram,
+    .system-row,
+    .protein-row,
+    .sleeve-full,
+    .sleeve-wrap,
+    .sticker-card,
+    .sticker-demo,
+    .spec-table,
+    .motion-table,
+    .checklist,
+    table,
+    h2,
+    h3 {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    /* Keep headings with the content that follows them */
+    h2, h3, .section-number {
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    /* Keep note boxes, tables, and grids together */
+    .note-box,
+    .sacred-grid,
+    .logo-rules-grid,
+    .swatch-grid,
+    .food-colour-strip,
+    .badge-spec-table,
+    .grain-comparison,
+    .mode-grid,
+    .system-diagram,
+    .sticker-demo,
+    table {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    /* Sleeve mockups — these are tall; allow break but protect inner components */
+    .sleeve-front-face,
+    .sleeve-back-face,
+    .sticker-overlay,
+    .back-info,
+    .nutrition-grid {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    /* Remove fixed grain overlay for print */
+    body::before {
+      display: none !important;
+    }
+
+    /* Avoid widows/orphans in paragraphs */
+    p {
+      orphans: 3;
+      widows: 3;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ═══════════ COVER ═══════════ -->
+  <div class="cover">
+    <img src="https://images.prismic.io/chefly/fa3394c1-4217-41a3-a749-e65def1c0a93_chefly-logo.svg" alt="Chefly logo" style="width:220px; margin-bottom:1.2rem;">
+    <h1 style="font-size:1.6rem; margin-top:0;">brand <em>guidelines.</em></h1>
+    <p class="subtitle">D2 — Light & Bold system. The definitive reference for every touchpoint, from digital to packaging, including component library, UX states, and accessibility.</p>
+    <span class="version">v3.2 — april 2026</span>
+
+    <div class="toc">
+      <div class="toc-item"><span class="toc-num">01</span> Brand overview</div>
+      <div class="toc-item"><span class="toc-num">02</span> Sacred layer</div>
+      <div class="toc-item"><span class="toc-num">03</span> Logo</div>
+      <div class="toc-item"><span class="toc-num">04</span> Colour palette</div>
+      <div class="toc-item"><span class="toc-num">05</span> Food colour associations</div>
+      <div class="toc-item"><span class="toc-num">06</span> Typography</div>
+      <div class="toc-item"><span class="toc-num">07</span> Emphasis system</div>
+      <div class="toc-item"><span class="toc-num">08</span> Badge / pill system</div>
+      <div class="toc-item"><span class="toc-num">09</span> Paper grain texture</div>
+      <div class="toc-item"><span class="toc-num">10</span> Colour usage modes</div>
+      <div class="toc-item"><span class="toc-num">11</span> Photography</div>
+      <div class="toc-item"><span class="toc-num">12</span> Motion principles</div>
+      <div class="toc-item"><span class="toc-num">13</span> Tone of voice</div>
+      <div class="toc-item"><span class="toc-num">14</span> Do's and don'ts</div>
+      <div class="toc-item"><span class="toc-num">15</span> Packaging system</div>
+      <div class="toc-item"><span class="toc-num">16</span> Sleeve design</div>
+      <div class="toc-item"><span class="toc-num">17</span> Sticker & label system</div>
+      <div class="toc-item"><span class="toc-num">18</span> Outer box & tape</div>
+      <div class="toc-item"><span class="toc-num">19</span> Brand checklist</div>
+      <div class="toc-item"><span class="toc-num">20</span> Digital components</div>
+      <div class="toc-item"><span class="toc-num">21</span> Digital UX states</div>
+      <div class="toc-item"><span class="toc-num">22</span> Accessibility</div>
+    </div>
+  </div>
+
+  <!-- ═══════════ 01 BRAND OVERVIEW ═══════════ -->
+  <section>
+    <div class="section-number">01</div>
+    <h2>brand <em>overview.</em></h2>
+    <p>Chefly is a UK DTC meal delivery brand built for people who care about eating well but don't have the time or energy to cook from scratch every night. The D2 system — Light & Bold — is an evolution of the original Chefly identity, not a replacement. It keeps everything that made Chefly distinctive (the handwritten "ly", food-colour coding, lowercase confidence) and pushes the energy, typography, and sophistication forward.</p>
+    <p>The D2 philosophy is captured in one rule: <strong>95% cream and black, 5% bright colour.</strong> Cream dominates every surface. Black type does the heavy lifting. Colour punctuates — it never floods. This creates a calm, premium canvas where food photography and bold typography can breathe, while the colour system retains its practical function of coding meals by protein type.</p>
+    <h3>brand personality</h3>
+    <p>Confident but never arrogant. Warm but not childish. Bold but not loud. Chefly speaks like a friend who happens to be a great cook — direct, relaxed, occasionally funny, always honest.</p>
+  </section>
+
+  <!-- ═══════════ 02 SACRED LAYER ═══════════ -->
+  <section>
+    <div class="section-number">02</div>
+    <h2>sacred <em>layer.</em></h2>
+    <p>Some elements define Chefly at a molecular level. They never change, regardless of where or how the brand appears. Everything else can evolve.</p>
+
+    <div class="sacred-grid">
+      <div class="sacred-col">
+        <h4>Sacred — never change</h4>
+        <ul>
+          <li>Always lowercase</li>
+          <li>Full stop at end of headlines</li>
+          <li>Left-aligned (never centred body text)</li>
+          <li>Food-colour associations (orange=beef, yellow=poultry, green=veg, blush=pork, blue=fish)</li>
+          <li>The handwritten "ly" element in the logo</li>
+          <li>The logo itself — unchanged</li>
+          <li>Cream/warm-white as the primary background</li>
+        </ul>
+      </div>
+      <div class="sacred-col">
+        <h4>Evolve — can change</h4>
+        <ul>
+          <li>Colour saturation and brightness</li>
+          <li>Number of colours per layout</li>
+          <li>Typography selections</li>
+          <li>Emphasis devices (underlines → serif italic)</li>
+          <li>Photography style and direction</li>
+          <li>Texture treatments (grain, etc.)</li>
+          <li>Badge/label styling</li>
+          <li>Motion and animation approach</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 03 LOGO ═══════════ -->
+  <section>
+    <div class="section-number">03</div>
+    <h2>the <em>logo.</em></h2>
+    <p>The Chefly logo stays exactly as it is. The "chef" in bold sans and the handwritten "ly" script is the single most recognisable element of the brand. The D2 system is designed to work around and elevate the logo, not compete with it.</p>
+
+    <div class="logo-rules-grid">
+      <div class="logo-rule-card">
+        <div class="label">Primary usage</div>
+        <p style="font-size:13px; margin:0;">Black logo on cream or white backgrounds. This is the default for 95% of applications.</p>
+      </div>
+      <div class="logo-rule-card">
+        <div class="label">Reversed</div>
+        <p style="font-size:13px; margin:0;">Cream/white logo on near-black or food-colour backgrounds. Use sparingly — only when the 5% colour moment demands it.</p>
+      </div>
+      <div class="logo-rule-card">
+        <div class="label">Clear space</div>
+        <p style="font-size:13px; margin:0;">Minimum clear space around the logo equals the height of the "c" in "chef". No elements, badges, or text should intrude on this space.</p>
+      </div>
+      <div class="logo-rule-card">
+        <div class="label">Minimum size</div>
+        <p style="font-size:13px; margin:0;">The logo should never be reproduced smaller than 24mm wide in print or 80px wide on screen. The "ly" script must remain legible.</p>
+      </div>
+    </div>
+
+    <div class="note-box">
+      <strong>The ® mark.</strong> Always include the registered trademark symbol at first use on any page, document, or packaging surface. Position it as a superscript to the right of the "ly" script.
+    </div>
+  </section>
+
+  <!-- ═══════════ 04 COLOUR PALETTE ═══════════ -->
+  <section>
+    <div class="section-number">04</div>
+    <h2>colour <em>palette.</em></h2>
+    <p>The D2 palette is split into two tiers: the foundation (cream, warm-white, near-black, warm-grey) which makes up 95% of every piece, and the food colours which provide the remaining 5% of energy.</p>
+
+    <h3>foundation</h3>
+    <div class="swatch-grid">
+      <div class="swatch">
+        <div class="swatch-color" style="background: #FFF6EE;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Cream</div>
+          <div class="swatch-hex">#FFF6EE</div>
+          <div class="swatch-role">Primary background</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #FFFAF5;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Warm White</div>
+          <div class="swatch-hex">#FFFAF5</div>
+          <div class="swatch-role">Secondary background / cards</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #0D0D0D;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Near-Black</div>
+          <div class="swatch-hex">#0D0D0D</div>
+          <div class="swatch-role">All type / primary ink</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #E8E0D8;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Warm Grey</div>
+          <div class="swatch-hex">#E8E0D8</div>
+          <div class="swatch-role">Borders / dividers / subtle UI</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #9A918A;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Mid Grey</div>
+          <div class="swatch-hex">#9A918A</div>
+          <div class="swatch-role">Secondary text / metadata</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>food colours</h3>
+    <div class="swatch-grid">
+      <div class="swatch">
+        <div class="swatch-color" style="background: #FF6B2C;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Orange</div>
+          <div class="swatch-hex">#FF6B2C</div>
+          <div class="swatch-role">Beef / red meat</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #FFD60A;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Hot Yellow</div>
+          <div class="swatch-hex">#FFD60A</div>
+          <div class="swatch-role">Poultry / chicken</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #A8E10C;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Electric Green</div>
+          <div class="swatch-hex">#A8E10C</div>
+          <div class="swatch-role">Vegetarian / plant-based</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #FF8FA3;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Blush</div>
+          <div class="swatch-hex">#FF8FA3</div>
+          <div class="swatch-role">Pork</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #5CCFFF;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Sky Blue</div>
+          <div class="swatch-hex">#5CCFFF</div>
+          <div class="swatch-role">Fish / seafood</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>the 95/5 rule</h3>
+    <p>Every layout, every surface, every touchpoint: 95% of the visible area is cream/warm-white background with near-black type. The remaining 5% is a single food colour used as punctuation — a bar, a badge, a highlight, an accent line. Never more than one food colour per layout unless you are showing the full protein range (e.g. a menu grid).</p>
+  </section>
+
+  <!-- ═══════════ 05 FOOD COLOUR ASSOCIATIONS ═══════════ -->
+  <section>
+    <div class="section-number">05</div>
+    <h2>food colour <em>associations.</em></h2>
+    <p>These colour-to-protein pairings are sacred. They serve a practical function — customers learn to identify their meals by colour — and a brand function, giving Chefly its distinctive visual language.</p>
+
+    <div class="food-colour-strip">
+      <div class="food-colour-cell" style="background: #FF6B2C; color: white;">
+        <div class="fc-protein">beef</div>
+        <div class="fc-hex">#FF6B2C</div>
+      </div>
+      <div class="food-colour-cell" style="background: #FFD60A; color: #0D0D0D;">
+        <div class="fc-protein">poultry</div>
+        <div class="fc-hex">#FFD60A</div>
+      </div>
+      <div class="food-colour-cell" style="background: #A8E10C; color: #0D0D0D;">
+        <div class="fc-protein">veg</div>
+        <div class="fc-hex">#A8E10C</div>
+      </div>
+      <div class="food-colour-cell" style="background: #FF8FA3; color: #0D0D0D;">
+        <div class="fc-protein">pork</div>
+        <div class="fc-hex">#FF8FA3</div>
+      </div>
+      <div class="food-colour-cell" style="background: #5CCFFF; color: #0D0D0D;">
+        <div class="fc-protein">fish</div>
+        <div class="fc-hex">#5CCFFF</div>
+      </div>
+    </div>
+
+    <div class="note-box">
+      <strong>Lamb.</strong> Lamb currently shares the orange/beef colour. If a distinct lamb colour is needed in future, a warm terracotta (#D4714E) is the recommended addition — it sits between orange and blush without clashing.
+    </div>
+
+    <div class="principle-banner" style="background: var(--near-black); color: var(--cream); border-radius: 12px; margin: 32px 0;">
+      <h3 style="margin-top:0;">colour is <em>meaning.</em></h3>
+      <p style="color: rgba(255,246,238,0.7);">In most food brands, colour is decoration. In chefly, colour is information. Every hue maps to a protein. Customers learn to shop by colour before they read a single word. Protect these associations — they are the foundation of chefly's visual shorthand.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════ 06 TYPOGRAPHY ═══════════ -->
+  <section>
+    <div class="section-number">06</div>
+    <h2>type <em>system.</em></h2>
+    <p>Three fonts, three jobs. The type system creates hierarchy through contrast — heavy display type against light body text, with the serif italic adding a flash of personality.</p>
+
+    <div class="type-specimen">
+      <div class="label">Display — Syne Extra Bold (800)</div>
+      <div class="type-display">real food, zero effort.</div>
+      <div class="type-meta">Headlines, hero text, packaging titles. Always lowercase. Tight leading: 1.0–1.1. Letter-spacing: -0.02em.</div>
+    </div>
+
+    <div class="type-specimen">
+      <div class="label">Accent — Instrument Serif Italic</div>
+      <div class="type-accent">effort.</div>
+      <div class="type-meta">Emphasis word within headlines. Replaces the old hand-drawn circle/underline. One word per headline, never more. The serif italic catches the eye against the heavy sans.</div>
+    </div>
+
+    <div class="type-specimen">
+      <div class="label">Body — Space Grotesk (300–600)</div>
+      <div class="type-body">Chef-prepared meals delivered to your door. Each recipe is designed by our team, prepped with fresh ingredients, and ready in under 5 minutes. No chopping. No washing up. Just real food that tastes like someone who loves you made it.</div>
+      <div class="type-meta">Body copy, UI text, labels, badges. Weight 300 for large body, 400 for standard, 500 for emphasis, 600 for labels/badges. Line-height: 1.5–1.6.</div>
+    </div>
+
+    <h3>type scale</h3>
+    <table class="motion-table">
+      <tr><th>Role</th><th>Size</th><th>Font</th><th>Weight</th></tr>
+      <tr><td>Hero</td><td>48–64px</td><td>Syne</td><td>800</td></tr>
+      <tr><td>Section headline</td><td>32–40px</td><td>Syne</td><td>800</td></tr>
+      <tr><td>Sub-headline</td><td>20–24px</td><td>Syne</td><td>700</td></tr>
+      <tr><td>Emphasis word</td><td>Same as headline</td><td>Instrument Serif</td><td>Italic</td></tr>
+      <tr><td>Large body</td><td>18px</td><td>Space Grotesk</td><td>300</td></tr>
+      <tr><td>Body</td><td>15–16px</td><td>Space Grotesk</td><td>400</td></tr>
+      <tr><td>Label / badge</td><td>11–12px</td><td>Space Grotesk</td><td>600</td></tr>
+      <tr><td>Caption / meta</td><td>11px</td><td>Space Grotesk</td><td>400</td></tr>
+    </table>
+  </section>
+
+  <!-- ═══════════ 07 EMPHASIS SYSTEM ═══════════ -->
+  <section>
+    <div class="section-number">07</div>
+    <h2>emphasis <em>system.</em></h2>
+    <p>The old Chefly brand used hand-drawn circles and underlines to draw attention to key words. D2 replaces these with the serif/sans swap: one word in a Syne bold headline is set in Instrument Serif italic. This does the same job — pulls the eye to the important word — but with more sophistication and without the production cost of hand-drawn elements.</p>
+
+    <div class="emphasis-demo">
+      <div class="emphasis-headline">real food, zero <em>effort.</em></div>
+    </div>
+    <div class="emphasis-demo">
+      <div class="emphasis-headline">chef-prepared meals <em>delivered.</em></div>
+    </div>
+    <div class="emphasis-demo">
+      <div class="emphasis-headline">eat well without the <em>work.</em></div>
+    </div>
+
+    <h3>rules</h3>
+    <p>One emphasis word per headline — never two or more. The emphasis word should be the emotional or action word in the phrase, not the subject. Place it toward the end when possible. Always include the full stop after the emphasis word if it ends the headline.</p>
+
+    <h3>colour treatment</h3>
+    <p>On digital surfaces (website, app, marketing emails, social graphics, documents), the emphasis word takes Chefly Orange (#FF6B2C). This creates a double signal — the font swap catches your eye, the colour confirms it's intentional. On dark backgrounds, the emphasis word shifts to cream (#FFF6EE).</p>
+    <p>On packaging labels, the emphasis word stays near-black. Sleeve stickers are printed per-batch as meals change, and adding a second ink colour for one word isn't practical. The Instrument Serif swap alone carries the signature at packaging scale — no colour needed.</p>
+
+    <div style="display: flex; gap: 16px; margin: 20px 0; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 280px; background: white; border-radius: 10px; border: 1px solid var(--warm-grey); padding: 24px;">
+        <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--mid-grey); margin-bottom: 12px;">digital — orange emphasis</div>
+        <div class="emphasis-headline" style="font-size: 24px;">eat well without the <em>work.</em></div>
+      </div>
+      <div style="flex: 1; min-width: 280px; background: white; border-radius: 10px; border: 1px solid var(--warm-grey); padding: 24px;">
+        <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--mid-grey); margin-bottom: 12px;">packaging — black emphasis</div>
+        <div style="font-family: 'Syne', sans-serif; font-weight: 800; font-size: 24px; text-transform: lowercase; line-height: 1.1;">with roasted carrots and sweet <span style="font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400;">potato.</span></div>
+      </div>
+    </div>
+
+    <div class="principle-banner" style="background: var(--orange); color: white; border-radius: 12px; margin: 32px 0;">
+      <h3 style="margin-top:0; color: white;">one word. every <em style="color: var(--cream);">time.</em></h3>
+      <p style="color: rgba(255,255,255,0.8);">The single italic word is chefly's typographic signature. It's the visual equivalent of a chef placing the final garnish — one deliberate gesture that elevates everything around it. The moment you use two, the effect disappears.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════ 08 BADGE / PILL SYSTEM ═══════════ -->
+  <section>
+    <div class="section-number">08</div>
+    <h2>badge / pill <em>system.</em></h2>
+    <p>Badges are the workhorse of Chefly's information design. They communicate functional details — protein type, dietary info, calorie count, status — in a compact, scannable format. They replace long descriptive text and make packaging, menus, and digital interfaces feel clean and organised.</p>
+
+    <h3>badge types</h3>
+
+    <div class="badge-section">
+      <p style="font-size:13px; margin-bottom:8px;"><strong>Food colour badges</strong> — identify the protein type of a meal.</p>
+      <div class="badge-row">
+        <span class="badge badge-food-orange">beef</span>
+        <span class="badge badge-food-yellow">poultry</span>
+        <span class="badge badge-food-green">vegetarian</span>
+        <span class="badge badge-food-blush">pork</span>
+        <span class="badge badge-food-blue">fish</span>
+      </div>
+    </div>
+
+    <div class="badge-section">
+      <p style="font-size:13px; margin-bottom:8px;"><strong>Status badges</strong> — black background, cream text. Used for order status, availability, and state indicators.</p>
+      <div class="badge-row">
+        <span class="badge badge-status">new recipe</span>
+        <span class="badge badge-status">chef's pick</span>
+        <span class="badge badge-status">selling fast</span>
+        <span class="badge badge-status">limited edition</span>
+      </div>
+    </div>
+
+    <div class="badge-section">
+      <p style="font-size:13px; margin-bottom:8px;"><strong>Functional badges</strong> — warm grey background. Used for preparation info, dietary labels, and general metadata.</p>
+      <div class="badge-row">
+        <span class="badge badge-functional">under 5 min</span>
+        <span class="badge badge-functional">gluten free</span>
+        <span class="badge badge-functional">dairy free</span>
+        <span class="badge badge-functional">high protein</span>
+        <span class="badge badge-functional">microwave ready</span>
+      </div>
+    </div>
+
+    <div class="badge-section">
+      <p style="font-size:13px; margin-bottom:8px;"><strong>Nutritional badges</strong> — soft green background. Used specifically for calorie and macro information.</p>
+      <div class="badge-row">
+        <span class="badge badge-nutritional">420 kcal</span>
+        <span class="badge badge-nutritional">38g protein</span>
+        <span class="badge badge-nutritional">12g fat</span>
+        <span class="badge badge-nutritional">low carb</span>
+      </div>
+    </div>
+
+    <div class="badge-section">
+      <p style="font-size:13px; margin-bottom:8px;"><strong>Outline badges</strong> — transparent with warm grey border. Used when you need a badge that's present but not dominant, such as on packaging where space is tight.</p>
+      <div class="badge-row">
+        <span class="badge badge-outline">serves 1</span>
+        <span class="badge badge-outline">keep refrigerated</span>
+        <span class="badge badge-outline">use by date on pack</span>
+      </div>
+    </div>
+
+    <h3>specifications</h3>
+    <table class="badge-spec-table">
+      <tr><th>Property</th><th>Value</th></tr>
+      <tr><td>Border radius</td><td><code>20px</code> (full pill)</td></tr>
+      <tr><td>Padding</td><td><code>5px 14px</code></td></tr>
+      <tr><td>Font</td><td>Space Grotesk</td></tr>
+      <tr><td>Font size</td><td><code>11px</code></td></tr>
+      <tr><td>Font weight</td><td><code>600</code></td></tr>
+      <tr><td>Text transform</td><td><code>lowercase</code></td></tr>
+      <tr><td>Letter spacing</td><td><code>0.02em</code></td></tr>
+      <tr><td>Minimum height</td><td><code>24px</code></td></tr>
+      <tr><td>Outline border</td><td><code>1.5px solid</code> warm grey</td></tr>
+    </table>
+
+    <h3>usage rules</h3>
+    <p>Badges sit in horizontal rows with 8px gaps between them. On packaging sleeves, a maximum of three badges per row to avoid clutter. On digital surfaces, badge rows can wrap but should not exceed two rows. Never stack badges vertically. Badge text is always a short phrase — two to three words maximum.</p>
+
+    <div class="note-box">
+      <strong>On packaging.</strong> Badge backgrounds should be printed as a spot colour or at 100% opacity — never screened back. On kraft or textured stock, use the outline variant to avoid colour matching issues.
+    </div>
+  </section>
+
+  <!-- ═══════════ 09 PAPER GRAIN TEXTURE ═══════════ -->
+  <section>
+    <div class="section-number">09</div>
+    <h2>paper grain <em>texture.</em></h2>
+    <p>The paper grain is a subtle noise layer applied over cream backgrounds on digital surfaces. It mimics the texture of uncoated paper stock, giving screens a tactile, physical warmth that pure flat colour can't achieve. Think of it as the difference between a smooth phone screen and holding a piece of quality stationery.</p>
+    <p>It's deliberately subtle. The point isn't to look textured — it's to <em>feel</em> warmer without the viewer consciously noticing. But it needs to be visible enough that the choice reads as intentional, not accidental.</p>
+
+    <h3>opacity scale</h3>
+    <p>The grain texture is a single SVG noise pattern applied at different opacities depending on the context. Here are five levels so you can see the effect:</p>
+
+    <div class="grain-opacity-strip">
+      <div class="grain-level">
+        <div class="grain-pct">0%</div>
+        <div class="grain-use">No grain</div>
+      </div>
+      <div class="grain-level">
+        <div class="grain-pct">3%</div>
+        <div class="grain-use">Very subtle</div>
+      </div>
+      <div class="grain-level">
+        <div class="grain-pct">5%</div>
+        <div class="grain-use">Standard</div>
+      </div>
+      <div class="grain-level">
+        <div class="grain-pct">8%</div>
+        <div class="grain-use">Visible</div>
+      </div>
+      <div class="grain-level">
+        <div class="grain-pct">15%</div>
+        <div class="grain-use">Heavy (ref only)</div>
+      </div>
+    </div>
+
+    <h3>side-by-side comparison</h3>
+    <div class="grain-comparison">
+      <div class="grain-box" style="background: var(--cream);">
+        <div class="grain-label">without grain</div>
+        <div class="grain-sublabel">Flat cream — clean but digital-feeling</div>
+      </div>
+      <div class="grain-box grain-demo" style="background: var(--cream);">
+        <div class="grain-label">with grain at 8%</div>
+        <div class="grain-sublabel">Same cream — warmer, more tactile</div>
+      </div>
+    </div>
+
+    <h3>recommended opacity by context</h3>
+    <table class="badge-spec-table">
+      <tr><th>Context</th><th>Opacity</th><th>Notes</th></tr>
+      <tr><td>Website backgrounds</td><td><code>4–5%</code></td><td>Subtle but visible on large screens. The recommended default for digital.</td></tr>
+      <tr><td>Social media statics</td><td><code>5–6%</code></td><td>Slightly higher — these are viewed on small screens at speed, so the grain needs to be a touch more present.</td></tr>
+      <tr><td>Ad creatives</td><td><code>5–6%</code></td><td>Same as social — the grain helps the ad feel less "digital" in a feed full of flat colour.</td></tr>
+      <tr><td>Email headers</td><td><code>3–4%</code></td><td>Email clients compress images — go lighter to avoid artefacting.</td></tr>
+      <tr><td>Video overlays</td><td><code>0%</code></td><td>Never apply grain to video. The motion handles the warmth. Grain on moving images creates visual noise.</td></tr>
+      <tr><td>Print / packaging</td><td><code>n/a</code></td><td>The physical paper stock provides the texture. No digital grain needed — in fact, printing a noise pattern on already-textured stock looks muddy.</td></tr>
+    </table>
+
+    <h3>implementation</h3>
+    <p>The grain is applied as a CSS pseudo-element (::before or ::after) using an inline SVG feTurbulence filter. It's positioned fixed to cover the full viewport, set to pointer-events: none so it doesn't interfere with interaction, and layered at a high z-index. This means the grain sits over everything, giving a consistent paper feel across the entire page.</p>
+
+    <div class="note-box">
+      <strong>Performance note.</strong> SVG noise filters are GPU-accelerated in modern browsers and add negligible performance cost. On older devices, the grain can be disabled entirely with a prefers-reduced-motion media query — the brand works perfectly without it.
+    </div>
+
+    <h3>amplified example</h3>
+    <p>Here's the grain pushed to 15% opacity so you can clearly see the texture pattern. This is for reference only — never use this level in production. It shows what the effect is doing: adding organic, fractal noise that mimics paper fibre.</p>
+    <div class="grain-comparison">
+      <div class="grain-box grain-demo grain-demo-strong" style="background: var(--cream); min-height: 120px;">
+        <div class="grain-label">15% — reference only</div>
+        <div class="grain-sublabel">This is what the texture looks like when exaggerated. You can see the fractal noise pattern that mimics paper fibre.</div>
+      </div>
+      <div class="grain-box grain-demo" style="background: var(--cream); min-height: 120px;">
+        <div class="grain-label">8% — visible production use</div>
+        <div class="grain-sublabel">This is closer to what you'd actually use on social statics. Present but not distracting.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 10 COLOUR USAGE MODES ═══════════ -->
+  <section>
+    <div class="section-number">10</div>
+    <h2>colour usage <em>modes.</em></h2>
+    <p>There are four ways to use colour in D2 layouts. Most pieces should use Mode 1 (Cream Hero). The others exist for specific moments where more energy is needed.</p>
+
+    <div class="mode-grid">
+      <div class="mode-card mode-cream">
+        <div class="mode-name">mode 1: cream hero</div>
+        <div class="mode-desc">95% cream bg + black type. Colour appears only in a badge, a thin bar, or a small accent element. This is the default for everything.</div>
+        <div class="mode-example">real food, zero <em>effort.</em></div>
+      </div>
+      <div class="mode-card mode-colour-band">
+        <div class="mode-name">mode 2: colour band</div>
+        <div class="mode-desc">Cream background with a bold left-edge or top-edge colour bar (6px). The bar signals the food colour / protein type without flooding the layout.</div>
+        <div class="mode-example">thai green <em>curry.</em></div>
+      </div>
+      <div class="mode-card mode-white">
+        <div class="mode-name">mode 3: clean white</div>
+        <div class="mode-desc">Pure white background for UI-heavy contexts — menus, order flows, account pages. Cream accents are used for card backgrounds and hover states.</div>
+        <div class="mode-example">your next <em>box.</em></div>
+      </div>
+      <div class="mode-card mode-food-colour">
+        <div class="mode-name">mode 4: food colour</div>
+        <div class="mode-desc">Full food-colour background with white or near-black type. Reserved for single-meal hero moments, packaging accents, and the 5% colour pops. Never for full layouts.</div>
+        <div class="mode-example" style="color: white;">this week's <em>special.</em></div>
+      </div>
+    </div>
+
+    <div class="note-box">
+      <strong>Mode 4 is the 5%.</strong> If you find yourself using a full food-colour background for more than one element in a layout, you've broken the 95/5 rule. Pull back to Mode 1 or 2.
+    </div>
+  </section>
+
+  <!-- ═══════════ 11 PHOTOGRAPHY ═══════════ -->
+  <section>
+    <div class="section-number">11</div>
+    <h2>photography <em>direction.</em></h2>
+    <p>Food photography is the hero of every Chefly touchpoint. The D2 system demands that photography is natural, warm, and appetising — never over-styled or artificially lit. The food should look like it was just plated in a real kitchen, not a studio.</p>
+
+    <h3>principles</h3>
+    <p><strong>Natural light.</strong> Soft, directional daylight. No harsh studio lighting, no dramatic shadows. The light source should feel like a kitchen window.</p>
+    <p><strong>Overhead and three-quarter angles.</strong> Overhead (flat lay) for grid/menu layouts. Three-quarter angle for hero shots where you want depth and appetite appeal.</p>
+    <p><strong>Real surfaces.</strong> Wooden boards, linen, concrete counters, matte ceramics. No glossy surfaces, no pure white styling plates, no artificial props.</p>
+    <p><strong>Steam and freshness.</strong> If the food is hot, show steam. If there are herbs, they should look freshly torn. The food should look alive, not arranged.</p>
+    <p><strong>Minimal styling.</strong> One or two supporting elements maximum — a fork, a napkin, a lemon half. The food is the subject. Everything else is background.</p>
+  </section>
+
+  <!-- ═══════════ 12 MOTION ═══════════ -->
+  <section>
+    <div class="section-number">12</div>
+    <h2>motion <em>principles.</em></h2>
+    <p>Movement in D2 is quick, confident, and purposeful. Nothing floats or drifts. Elements snap in with gentle easing, like placing a plate on a table.</p>
+
+    <table class="motion-table">
+      <tr><th>Action</th><th>Duration</th><th>Easing</th><th>Notes</th></tr>
+      <tr><td>Fade in</td><td><code>200ms</code></td><td><code>ease-out</code></td><td>Page elements, badges, text blocks</td></tr>
+      <tr><td>Slide up</td><td><code>300ms</code></td><td><code>cubic-bezier(0.16, 1, 0.3, 1)</code></td><td>Cards, images, sections on scroll</td></tr>
+      <tr><td>Colour transition</td><td><code>150ms</code></td><td><code>ease</code></td><td>Hover states, badge highlights</td></tr>
+      <tr><td>Scale (badge hover)</td><td><code>150ms</code></td><td><code>ease-out</code></td><td>Subtle 1.02–1.05 scale on interaction</td></tr>
+      <tr><td>Page transition</td><td><code>250ms</code></td><td><code>ease-in-out</code></td><td>Cross-fade between pages/states</td></tr>
+    </table>
+
+    <h3>css implementation</h3>
+    <p>Here are production-ready CSS snippets for the core motion patterns. Copy these directly into your stylesheet.</p>
+
+    <div class="code-block"><span class="code-comment">/* ── chefly fade-in on scroll ── */</span>
+<span class="code-selector">.chefly-reveal</span> {
+  <span class="code-property">opacity</span>: <span class="code-value">0</span>;
+  <span class="code-property">transform</span>: <span class="code-value">translateY(16px)</span>;
+  <span class="code-property">transition</span>: <span class="code-value">opacity 300ms ease-out,
+               transform 300ms cubic-bezier(0.16, 1, 0.3, 1)</span>;
+}
+<span class="code-selector">.chefly-reveal.visible</span> {
+  <span class="code-property">opacity</span>: <span class="code-value">1</span>;
+  <span class="code-property">transform</span>: <span class="code-value">translateY(0)</span>;
+}</div>
+
+    <h3>stagger timing formula</h3>
+    <p>When multiple elements animate in sequence (e.g. a grid of meal cards), each child gets an incremental delay. The formula: <strong>base delay + (index × 60ms)</strong>. Cap the maximum stagger at 6 items (360ms total spread) — after that, additional items animate simultaneously with the 6th.</p>
+
+    <div class="code-block"><span class="code-comment">/* ── stagger children ── */</span>
+<span class="code-selector">.chefly-stagger > *:nth-child(1)</span> { <span class="code-property">transition-delay</span>: <span class="code-value">0ms</span>; }
+<span class="code-selector">.chefly-stagger > *:nth-child(2)</span> { <span class="code-property">transition-delay</span>: <span class="code-value">60ms</span>; }
+<span class="code-selector">.chefly-stagger > *:nth-child(3)</span> { <span class="code-property">transition-delay</span>: <span class="code-value">120ms</span>; }
+<span class="code-selector">.chefly-stagger > *:nth-child(4)</span> { <span class="code-property">transition-delay</span>: <span class="code-value">180ms</span>; }
+<span class="code-selector">.chefly-stagger > *:nth-child(5)</span> { <span class="code-property">transition-delay</span>: <span class="code-value">240ms</span>; }
+<span class="code-selector">.chefly-stagger > *:nth-child(n+6)</span> { <span class="code-property">transition-delay</span>: <span class="code-value">300ms</span>; }</div>
+
+    <h3>page load orchestration</h3>
+    <p>On initial page load, elements animate in this order: (1) navigation fades in immediately, (2) hero headline reveals at 100ms, (3) hero supporting text at 200ms, (4) primary CTA at 350ms, (5) below-fold content animates on scroll via IntersectionObserver. Total load sequence completes within 500ms — fast enough to feel instant, slow enough to feel intentional.</p>
+
+    <h3>reduced motion strategy</h3>
+    <p>Users who set <code>prefers-reduced-motion: reduce</code> in their OS should get a fully functional experience with no animation. This is a legal and ethical requirement, not a nice-to-have.</p>
+
+    <div class="code-block"><span class="code-comment">/* ── respect user motion preferences ── */</span>
+<span class="code-selector">@media (prefers-reduced-motion: reduce)</span> {
+  <span class="code-selector">*, *::before, *::after</span> {
+    <span class="code-property">animation-duration</span>: <span class="code-value">0.01ms !important</span>;
+    <span class="code-property">animation-iteration-count</span>: <span class="code-value">1 !important</span>;
+    <span class="code-property">transition-duration</span>: <span class="code-value">0.01ms !important</span>;
+    <span class="code-property">scroll-behavior</span>: <span class="code-value">auto !important</span>;
+  }
+  <span class="code-selector">.chefly-reveal</span> {
+    <span class="code-property">opacity</span>: <span class="code-value">1</span>;
+    <span class="code-property">transform</span>: <span class="code-value">none</span>;
+  }
+}</div>
+
+    <div class="note-box">
+      <strong>Scroll-triggered animations.</strong> Use IntersectionObserver (threshold: 0.15) to add the <code>.visible</code> class when elements enter the viewport. Never use scroll-hijacking, parallax, or scroll-linked animations that affect page scrolling behaviour. The user controls the scroll — chefly controls the reveal.
+    </div>
+
+    <h3>video motion</h3>
+    <p>For video content (ads, social, Ken Burns clips): cuts are fast (0.8–1.2s per clip in hooks, 2–3s in body). Text overlays use Syne Extra Bold, always lowercase, and animate in from the left or bottom. No spinning, no bouncing, no 3D rotations. The tone is editorial, not energetic.</p>
+  </section>
+
+  <!-- ═══════════ 13 TONE OF VOICE ═══════════ -->
+  <section>
+    <div class="section-number">13</div>
+    <h2>tone of <em>voice.</em></h2>
+
+    <p><strong>Always lowercase.</strong> Headlines, badges, CTAs — everything is lowercase. This is Chefly's most recognisable verbal tic. It signals relaxed confidence. The only exception is the ® mark after Chefly.</p>
+
+    <p><strong>Full stop to close.</strong> Every headline ends with a full stop. It creates a sense of finality and quiet authority. "real food, zero effort." feels more assured than "real food, zero effort".</p>
+
+    <p><strong>Short, direct sentences.</strong> Chefly talks like a good friend, not a copywriter. "ready in 5 minutes." beats "Our meals are designed for convenience and can be prepared in as little as five minutes." Say it once, say it clearly, move on.</p>
+
+    <p><strong>Warm, not cute.</strong> Chefly has personality but doesn't try too hard. No puns. No food wordplay ("we're on a roll!"). No exclamation marks unless genuinely excited. Humour is dry, understated, and rare.</p>
+
+    <h3>example phrases</h3>
+    <div class="emphasis-demo">
+      <div class="emphasis-headline" style="font-size: 24px;">dinner sorted. every <em>night.</em></div>
+    </div>
+    <div class="emphasis-demo">
+      <div class="emphasis-headline" style="font-size: 24px;">chef-prepared. your <em>kitchen.</em></div>
+    </div>
+    <div class="emphasis-demo">
+      <div class="emphasis-headline" style="font-size: 24px;">skip the meal prep. keep the <em>taste.</em></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 14 DO'S AND DON'TS ═══════════ -->
+  <section>
+    <div class="section-number">14</div>
+    <h2>do's and <em>don'ts.</em></h2>
+
+    <div class="do-dont-grid">
+      <div class="do-card">
+        <div class="card-label">Do</div>
+        <p style="margin:0; font-size:13px;">Use cream as the dominant background on every surface. Let the food and type do the work.</p>
+      </div>
+      <div class="dont-card">
+        <div class="card-label">Don't</div>
+        <p style="margin:0; font-size:13px;">Flood a layout with food colour. If more than 5% of the visible area is a bright colour, pull back.</p>
+      </div>
+    </div>
+    <div class="do-dont-grid">
+      <div class="do-card">
+        <div class="card-label">Do</div>
+        <p style="margin:0; font-size:13px;">Use one Instrument Serif italic word per headline to draw the eye.</p>
+      </div>
+      <div class="dont-card">
+        <div class="card-label">Don't</div>
+        <p style="margin:0; font-size:13px;">Italicise multiple words, or use the serif font for body text. It's an accent, not a workhorse.</p>
+      </div>
+    </div>
+    <div class="do-dont-grid">
+      <div class="do-card">
+        <div class="card-label">Do</div>
+        <p style="margin:0; font-size:13px;">Use badges to communicate functional info quickly — protein, dietary, calories, status.</p>
+      </div>
+      <div class="dont-card">
+        <div class="card-label">Don't</div>
+        <p style="margin:0; font-size:13px;">Stack more than three badges in a row on packaging, or use badges for marketing slogans.</p>
+      </div>
+    </div>
+    <div class="do-dont-grid">
+      <div class="do-card">
+        <div class="card-label">Do</div>
+        <p style="margin:0; font-size:13px;">Apply paper grain texture to digital backgrounds at 4–6% opacity for warmth.</p>
+      </div>
+      <div class="dont-card">
+        <div class="card-label">Don't</div>
+        <p style="margin:0; font-size:13px;">Apply grain to video overlays or print. Video doesn't need it; print paper provides its own texture.</p>
+      </div>
+    </div>
+    <div class="do-dont-grid">
+      <div class="do-card">
+        <div class="card-label">Do</div>
+        <p style="margin:0; font-size:13px;">Keep everything lowercase, including CTAs and navigation labels.</p>
+      </div>
+      <div class="dont-card">
+        <div class="card-label">Don't</div>
+        <p style="margin:0; font-size:13px;">Use title case, all caps, or sentence case anywhere in the brand. Lowercase is sacred.</p>
+      </div>
+    </div>
+    <div class="do-dont-grid">
+      <div class="do-card">
+        <div class="card-label">Do</div>
+        <p style="margin:0; font-size:13px;">End every headline with a full stop. It's a brand signature.</p>
+      </div>
+      <div class="dont-card">
+        <div class="card-label">Don't</div>
+        <p style="margin:0; font-size:13px;">Use exclamation marks, ellipses, or question marks in headlines. The full stop is the only acceptable terminator.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 15 PACKAGING SYSTEM ═══════════ -->
+  <section>
+    <div class="section-number">15</div>
+    <h2>packaging <em>system.</em></h2>
+    <p>Chefly's packaging is a modular system designed around five protein types. Every meal ships in a standard black tray with a printed wrap-around sleeve and a cream sticker carrying the variable information. The sleeve is the brand canvas — it carries the tonal ingredient motif pattern, logo, and permanent info. The sticker is the operational layer — it carries the meal-specific details that change with every production run.</p>
+
+    <h3>the formula</h3>
+
+    <div class="system-diagram">
+      <div style="font-family: 'Syne', sans-serif; font-weight: 800; font-size: 13px; text-transform: lowercase; margin-bottom: 16px; color: var(--mid-grey);">how every meal is built</div>
+      <div class="system-row">
+        <div class="system-box" style="background: var(--orange); color: white;">food-colour protein sleeve</div>
+        <div class="system-plus">+</div>
+        <div class="system-box" style="background: var(--cream); border: 1px solid var(--warm-grey);">cream meal sticker</div>
+        <div class="system-equals">=</div>
+        <div class="system-box" style="background: var(--near-black); color: var(--cream);">finished product</div>
+      </div>
+      <div style="margin-top: 16px; display: flex; gap: 24px; justify-content: center; font-size: 11px; color: var(--mid-grey); flex-wrap: wrap;">
+        <div><strong style="color: var(--near-black);">5 designs</strong> · big print runs · low cost</div>
+        <div><strong style="color: var(--near-black);">unlimited</strong> · next-day turnaround · pennies each</div>
+      </div>
+    </div>
+
+    <h3>the five proteins</h3>
+    <p>Each protein has a dedicated food colour. This colour appears on the sleeve as the dominant tone, and on the sticker as a colour-coded badge.</p>
+
+    <div class="protein-strip">
+      <div class="protein-cell" style="background: var(--orange); color: white;">
+        <div class="protein-name">beef</div>
+        <div class="protein-cut">#FF6B2C</div>
+      </div>
+      <div class="protein-cell" style="background: var(--hot-yellow); color: var(--near-black);">
+        <div class="protein-name">poultry</div>
+        <div class="protein-cut">#FFD60A</div>
+      </div>
+      <div class="protein-cell" style="background: var(--electric-green); color: var(--near-black);">
+        <div class="protein-name">veg</div>
+        <div class="protein-cut">#A8E10C</div>
+      </div>
+      <div class="protein-cell" style="background: var(--blush); color: var(--near-black);">
+        <div class="protein-name">pork</div>
+        <div class="protein-cut">#FF8FA3</div>
+      </div>
+      <div class="protein-cell" style="background: var(--sky-blue); color: var(--near-black);">
+        <div class="protein-name">fish</div>
+        <div class="protein-cut">#5CCFFF</div>
+      </div>
+    </div>
+
+    <h3>five proteins, five sleeves</h3>
+    <p>Here's how the system looks across all five proteins. The food-colour changes, the tonal ingredient motifs adapt to each protein's ingredient world, but the structure stays the same.</p>
+
+    <div class="protein-row">
+      <!-- Bavette / Beef -->
+      <div class="protein-mini">
+        <div class="pm-front" style="background: var(--orange);">
+          <svg viewBox="0 0 90 94" fill="none" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;">
+            <g opacity="0.15" stroke="white" stroke-width="0.8" fill="none">
+              <ellipse cx="45" cy="35" rx="25" ry="15"/><path d="M30 30 Q40 24, 50 30 Q55 26, 60 30"/>
+              <path d="M15 60 C18 55, 22 57, 20 62"/><circle cx="70" cy="65" r="3"/>
+              <path d="M35 70 Q45 64, 55 70"/><circle cx="25" cy="80" r="2.5"/>
+            </g>
+          </svg>
+          <div class="pm-label" style="color: white; z-index:2; position:relative;">chef<span style="font-family:'Instrument Serif',serif;font-style:italic;">ly</span>®</div>
+        </div>
+        <div class="pm-back" style="background: var(--cream);">back panel</div>
+        <div class="pm-sticker">
+          <div class="pm-meal">steak <span style="font-family:'Instrument Serif',serif;font-style:italic;">peppercorn.</span></div>
+          <div class="pm-badges">
+            <span class="pm-badge" style="background:var(--orange);color:white;">beef</span>
+            <span class="pm-badge" style="background:#D4EDDA;color:#1B5E20;">504 kcal</span>
+          </div>
+        </div>
+      </div>
+      <!-- Chicken Thigh -->
+      <div class="protein-mini">
+        <div class="pm-front" style="background: var(--hot-yellow);">
+          <svg viewBox="0 0 90 94" fill="none" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;">
+            <g opacity="0.12" stroke="rgba(0,0,0,0.6)" stroke-width="0.8" fill="none">
+              <path d="M30 25 Q45 10, 55 25 Q60 12, 58 25"/><ellipse cx="42" cy="45" rx="22" ry="16"/>
+              <path d="M25 65 C28 60, 32 62, 30 67"/><circle cx="65" cy="60" r="3"/>
+            </g>
+          </svg>
+          <div class="pm-label" style="color: var(--near-black); z-index:2; position:relative;">chef<span style="font-family:'Instrument Serif',serif;font-style:italic;">ly</span>®</div>
+        </div>
+        <div class="pm-back" style="background: var(--cream);">back panel</div>
+        <div class="pm-sticker">
+          <div class="pm-meal">teriyaki <span style="font-family:'Instrument Serif',serif;font-style:italic;">chicken.</span></div>
+          <div class="pm-badges">
+            <span class="pm-badge" style="background:var(--hot-yellow);color:var(--near-black);">poultry</span>
+            <span class="pm-badge" style="background:#D4EDDA;color:#1B5E20;">555 kcal</span>
+          </div>
+        </div>
+      </div>
+      <!-- Veg -->
+      <div class="protein-mini">
+        <div class="pm-front" style="background: var(--electric-green);">
+          <svg viewBox="0 0 90 94" fill="none" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;">
+            <g opacity="0.12" stroke="rgba(0,0,0,0.5)" stroke-width="0.8" fill="none">
+              <path d="M25 30 C30 20, 40 22, 35 32"/><circle cx="55" cy="28" r="8"/>
+              <path d="M60 50 Q50 45, 40 52 Q30 46, 20 52"/><circle cx="70" cy="70" r="5"/>
+            </g>
+          </svg>
+          <div class="pm-label" style="color: var(--near-black); z-index:2; position:relative;">chef<span style="font-family:'Instrument Serif',serif;font-style:italic;">ly</span>®</div>
+        </div>
+        <div class="pm-back" style="background: var(--cream);">back panel</div>
+        <div class="pm-sticker">
+          <div class="pm-meal">roasted <span style="font-family:'Instrument Serif',serif;font-style:italic;">aubergine.</span></div>
+          <div class="pm-badges">
+            <span class="pm-badge" style="background:var(--electric-green);color:var(--near-black);">veg</span>
+            <span class="pm-badge" style="background:#D4EDDA;color:#1B5E20;">380 kcal</span>
+          </div>
+        </div>
+      </div>
+      <!-- Pork -->
+      <div class="protein-mini">
+        <div class="pm-front" style="background: var(--blush);">
+          <svg viewBox="0 0 90 94" fill="none" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;">
+            <g opacity="0.12" stroke="rgba(0,0,0,0.5)" stroke-width="0.8" fill="none">
+              <ellipse cx="45" cy="40" rx="20" ry="14"/><path d="M30 55 Q45 48, 60 55"/>
+              <circle cx="25" cy="70" r="4"/><path d="M55 65 C60 60, 68 63, 64 70"/>
+            </g>
+          </svg>
+          <div class="pm-label" style="color: var(--near-black); z-index:2; position:relative;">chef<span style="font-family:'Instrument Serif',serif;font-style:italic;">ly</span>®</div>
+        </div>
+        <div class="pm-back" style="background: var(--cream);">back panel</div>
+        <div class="pm-sticker">
+          <div class="pm-meal">pulled <span style="font-family:'Instrument Serif',serif;font-style:italic;">pork.</span></div>
+          <div class="pm-badges">
+            <span class="pm-badge" style="background:var(--blush);color:var(--near-black);">pork</span>
+            <span class="pm-badge" style="background:#D4EDDA;color:#1B5E20;">520 kcal</span>
+          </div>
+        </div>
+      </div>
+      <!-- Salmon / Fish -->
+      <div class="protein-mini">
+        <div class="pm-front" style="background: var(--sky-blue);">
+          <svg viewBox="0 0 90 94" fill="none" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;">
+            <g opacity="0.15" stroke="white" stroke-width="0.8" fill="none">
+              <path d="M15 42 Q35 22, 55 38 Q70 25, 80 42 Q70 58, 55 48 Q35 62, 15 42 Z"/>
+              <circle cx="25" cy="40" r="2.5"/>
+              <circle cx="30" cy="75" r="5"/><path d="M27 75 L33 75 M30 72 L30 78"/>
+            </g>
+          </svg>
+          <div class="pm-label" style="color: white; z-index:2; position:relative;">chef<span style="font-family:'Instrument Serif',serif;font-style:italic;">ly</span>®</div>
+        </div>
+        <div class="pm-back" style="background: var(--cream);">back panel</div>
+        <div class="pm-sticker">
+          <div class="pm-meal">teriyaki <span style="font-family:'Instrument Serif',serif;font-style:italic;">salmon.</span></div>
+          <div class="pm-badges">
+            <span class="pm-badge" style="background:var(--sky-blue);color:var(--near-black);">fish</span>
+            <span class="pm-badge" style="background:#D4EDDA;color:#1B5E20;">647 kcal</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3>information architecture</h3>
+    <p>The sleeve and sticker divide responsibilities cleanly. The sleeve carries everything permanent (doesn't change between production runs). The sticker carries everything variable (changes per meal or batch).</p>
+
+    <div class="info-split-grid">
+      <div class="info-split-col">
+        <h4>sleeve (permanent)</h4>
+        <ul>
+          <li>Tonal ingredient motif pattern</li>
+          <li>Chefly logo + ® mark</li>
+          <li>"real easy, real tasty, real food." tagline</li>
+          <li>Cooking instructions</li>
+          <li>Allergen facility warning</li>
+          <li>Website + social handle</li>
+          <li>Brand messaging</li>
+        </ul>
+      </div>
+      <div class="info-split-col">
+        <h4>sticker (variable)</h4>
+        <ul>
+          <li>Meal name in D2 type</li>
+          <li>Ingredient description</li>
+          <li>Protein badge + nutritional badges</li>
+          <li>Full ingredients list</li>
+          <li>Nutrition table</li>
+          <li>Barcode + SKU</li>
+          <li>Use-by date + weight</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note-box">
+      <strong>Why this split matters.</strong> Sleeves can be printed in bulk (one design per protein) and stored. Stickers are printed on-demand with variable data. New recipe? New sticker. Designed in 30 minutes, printed same-day, applied by hand. The packaging problem disappears.
+    </div>
+  </section>
+
+  <!-- ═══════════ 16 SLEEVE DESIGN ═══════════ -->
+  <section>
+    <div class="section-number">16</div>
+    <h2>sleeve <em>design.</em></h2>
+    <p>The sleeve surface is the centrepiece of Chefly's packaging identity. Rather than commissioning bespoke illustrations per recipe, Chefly uses a tonal ingredient motif system: a reusable library of ~20 simple line-drawn ingredient SVGs (herbs, vegetables, grains, proteins) rendered in a lighter or darker tone of the sleeve's food-colour. This gives each sleeve visual depth and recipe-specific character without an ongoing illustrator dependency.</p>
+
+    <h3>the motif library</h3>
+    <div class="note-box">
+      <strong>Design asset, not illustration.</strong> The motif library is a set of ~20 ingredient SVGs: broccoli, chilli, garlic, lemon, carrot, sweet potato, rice, noodles, rosemary, thyme, chickpeas, aubergine, kale, apple, sage, peppercorns, couscous grains, lentils, onion, and ginger. Each is a simple single-stroke line drawing, designed to work at 10–20% opacity on any food-colour background. A designer builds these once; every new recipe picks 4–6 motifs and arranges them across the sleeve's colour zone. No illustrator per SKU, no commissioning cycle, no bottleneck.
+    </div>
+
+    <h3>how it works in practice</h3>
+    <p>On darker backgrounds (orange, sky blue), motifs are white at low opacity. On lighter backgrounds (yellow, green, blush), motifs are near-black at low opacity. The effect is subtle — you notice it when you look closely, but from a distance the solid food-colour dominates. This is the Aesop principle: the system does the work, not individual artwork. Each mockup below shows the full 390×202mm sleeve — front face (motif pattern + logo + sticker) and back face (cooking info + nutrition + barcode).</p>
+
+    <h3>the beef sleeve</h3>
+    <span class="direction-tag" style="background: var(--orange); color: white;">Tonal Motif System</span>
+    <p>Carrot, beetroot, sweet potato, rosemary, and peppercorn motifs on orange, at 15–18% opacity in white. The motifs are specific to this recipe's ingredients — a different beef recipe would use different motifs from the same library.</p>
+
+    <!-- Beef sleeve — Botanical Kitchen -->
+    <div class="sleeve-full">
+      <div class="sleeve-wrap">
+        <div class="sleeve-front-face" style="background: var(--orange);">
+          <div class="art-layer">
+            <svg viewBox="0 0 400 210" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g opacity="0.18" stroke="white" stroke-width="1.2" fill="none">
+                <path d="M30 20 L35 40 M28 25 C32 22, 36 24, 33 28 M32 30 C36 27, 40 30, 37 34"/>
+                <path d="M320 15 L325 38 M318 20 C322 17, 326 19, 323 23"/>
+                <path d="M80 25 L75 70 M82 25 L78 65 M77 25 C72 22, 70 25, 73 30"/>
+                <path d="M250 30 L245 68 M252 30 L248 65"/>
+                <circle cx="150" cy="40" r="14"/><path d="M143 35 Q150 25, 157 35"/>
+                <circle cx="360" cy="50" r="11"/><path d="M355 46 Q360 38, 365 46"/>
+                <circle cx="50" cy="90" r="3"/><circle cx="55" cy="95" r="2.5"/><circle cx="48" cy="98" r="2"/>
+                <circle cx="300" cy="85" r="3"/><circle cx="305" cy="90" r="2"/>
+                <path d="M170 130 C175 120, 185 125, 180 135 L175 145"/>
+                <path d="M100 150 Q110 140, 120 150 Q125 145, 130 150"/>
+                <path d="M220 170 Q240 162, 260 170 Q265 168, 270 172"/>
+                <ellipse cx="110" cy="190" rx="3" ry="1.5" transform="rotate(30 110 190)"/>
+                <ellipse cx="310" cy="190" rx="3" ry="1.5" transform="rotate(-20 310 190)"/>
+              </g>
+            </svg>
+          </div>
+          <div class="front-content">
+            <div class="sleeve-logo" style="color: white;">chef<span style="font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400;">ly</span>®</div>
+            <div class="sleeve-tagline" style="color: white; margin-top: auto;">real easy,<br>real tasty,<br>real <em>food.</em></div>
+          </div>
+          <div class="sticker-overlay">
+            <div class="meal-name">steak <em>peppercorn.</em></div>
+            <div class="meal-desc">rosemary potatoes, broccoli, peppercorn sauce</div>
+            <div class="badge-row">
+              <span class="badge" style="background: var(--orange); color: white;">beef</span>
+              <span class="badge" style="background: #D4EDDA; color: #1B5E20;">504 kcal</span>
+              <span class="badge" style="background: #D4EDDA; color: #1B5E20;">34g protein</span>
+              <span class="badge" style="background: var(--warm-grey); color: var(--near-black);">under 5 min</span>
+            </div>
+            <div class="micro-info">390g · keep refrigerated · SKU058</div>
+          </div>
+        </div>
+        <div class="sleeve-back-face" style="background: var(--cream);">
+          <div class="back-info" style="height: 100%; display: flex; flex-direction: column;">
+            <div class="back-title">steak peppercorn</div>
+            <div class="back-text">rosemary potatoes, broccoli, peppercorn sauce</div>
+            <div class="back-title" style="margin-top: 4px;">cooking instructions:</div>
+            <div class="back-text">microwave: 900w on full power. remove outer sleeve. pierce film several times. heat for 3 minutes until piping hot.<br><br>oven: preheat to 180°c. remove sleeve and film. cook for 20 minutes.</div>
+            <div class="back-title">nutritional information:</div>
+            <div class="nutrition-grid">
+              <div class="nh">typical values</div><div class="nh">per 100g</div><div class="nh">390g</div>
+              <div class="nc">energy (kcal)</div><div class="nc">129</div><div class="nc">504</div>
+              <div class="nc">fat</div><div class="nc">5.2g</div><div class="nc">20.5g</div>
+              <div class="nc">carbohydrate</div><div class="nc">11.2g</div><div class="nc">43.6g</div>
+              <div class="nc">protein</div><div class="nc">8.8g</div><div class="nc">34.4g</div>
+              <div class="nc">salt</div><div class="nc">0.4g</div><div class="nc">1.6g</div>
+            </div>
+            <div class="barcode-area">
+              <div class="barcode-placeholder">barcode</div>
+              <div class="sku-text">www.eatchefly.com<br>@eatchefly</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p style="text-align: center; font-size: 11px; color: var(--mid-grey); margin-top: 8px;">↑ Beef protein sleeve — tonal ingredient motifs with cream sticker applied</p>
+
+    <h3>considered alternative — line portrait</h3>
+    <span class="direction-tag" style="background: var(--sky-blue); color: var(--near-black);">Line Portrait</span>
+    <p><em style="color: var(--mid-grey); font-size: 13px;">Rejected — requires a commissioned illustrator per recipe, creating an ongoing creative dependency. Documented for reference only.</em></p>
+    <p>Single large-scale line drawing of the hero ingredient on cream. Food colour line work, big and confident. More Graza than Fishwife — simpler, bolder, easier to commission.</p>
+
+    <!-- Salmon sleeve — Line Portrait -->
+    <div class="sleeve-full">
+      <div class="sleeve-wrap">
+        <div class="sleeve-front-face" style="background: var(--cream);">
+          <div class="art-layer">
+            <svg viewBox="0 0 400 210" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g stroke="var(--sky-blue)" fill="none">
+                <path d="M40 105 Q100 45, 200 75 Q300 45, 350 105 Q300 165, 200 135 Q100 165, 40 105 Z" stroke-width="2.5" opacity="0.6"/>
+                <path d="M100 85 Q115 78, 130 85 Q145 78, 160 85 Q175 78, 190 85" stroke-width="1" opacity="0.25"/>
+                <path d="M110 95 Q125 88, 140 95 Q155 88, 170 95 Q185 88, 200 95" stroke-width="1" opacity="0.2"/>
+                <path d="M120 105 Q135 98, 150 105 Q165 98, 180 105 Q195 98, 210 105" stroke-width="1" opacity="0.15"/>
+                <circle cx="75" cy="100" r="6" stroke-width="2" opacity="0.5"/>
+                <circle cx="75" cy="100" r="2.5" stroke-width="1.5" opacity="0.4"/>
+                <path d="M200 68 Q210 50, 225 55 Q230 48, 240 55" stroke-width="1.5" opacity="0.3"/>
+                <path d="M310 90 Q330 80, 345 95 Q355 85, 365 100" stroke-width="2" opacity="0.4"/>
+                <path d="M310 115 Q330 125, 345 110 Q355 120, 365 105" stroke-width="2" opacity="0.4"/>
+              </g>
+            </svg>
+          </div>
+          <div class="front-content">
+            <div class="sleeve-logo" style="color: var(--sky-blue);">chef<span style="font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400;">ly</span>®</div>
+            <div class="sleeve-tagline" style="color: var(--sky-blue); margin-top: auto;">real easy,<br>real tasty,<br>real <em>food.</em></div>
+          </div>
+          <div class="sticker-overlay">
+            <div class="meal-name">teriyaki <em>salmon.</em></div>
+            <div class="meal-desc">edamame, sugar snap and fennel, wild basmati rice</div>
+            <div class="badge-row">
+              <span class="badge" style="background: var(--sky-blue); color: var(--near-black);">fish</span>
+              <span class="badge" style="background: #D4EDDA; color: #1B5E20;">628 kcal</span>
+              <span class="badge" style="background: #D4EDDA; color: #1B5E20;">38g protein</span>
+              <span class="badge" style="background: var(--warm-grey); color: var(--near-black);">gluten free</span>
+            </div>
+            <div class="micro-info">380g · keep refrigerated · SKU013</div>
+          </div>
+        </div>
+        <div class="sleeve-back-face" style="background: var(--cream);">
+          <div class="back-info" style="height: 100%; display: flex; flex-direction: column;">
+            <div class="back-title">teriyaki salmon</div>
+            <div class="back-text">edamame, sugar snap and fennel in soy sesame dressing, wild basmati rice</div>
+            <div class="back-title" style="margin-top: 4px;">cooking instructions:</div>
+            <div class="back-text">microwave: 900w on full power. remove outer sleeve. pierce film several times. heat for 3 minutes until piping hot.</div>
+            <div class="back-title">nutritional information:</div>
+            <div class="nutrition-grid">
+              <div class="nh">typical values</div><div class="nh">per 100g</div><div class="nh">380g</div>
+              <div class="nc">energy (kcal)</div><div class="nc">165</div><div class="nc">628</div>
+              <div class="nc">fat</div><div class="nc">5.8g</div><div class="nc">22.1g</div>
+              <div class="nc">carbohydrate</div><div class="nc">14.2g</div><div class="nc">54g</div>
+              <div class="nc">protein</div><div class="nc">10g</div><div class="nc">38.1g</div>
+              <div class="nc">salt</div><div class="nc">0.5g</div><div class="nc">1.9g</div>
+            </div>
+            <div class="barcode-area">
+              <div class="barcode-placeholder">barcode</div>
+              <div class="sku-text">www.eatchefly.com<br>@eatchefly</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p style="text-align: center; font-size: 11px; color: var(--mid-grey); margin-top: 8px;">↑ Salmon protein sleeve — single hero line illustration on cream</p>
+
+    <h3>considered alternative — colour field</h3>
+    <span class="direction-tag" style="background: var(--hot-yellow); color: var(--near-black);">Colour Field</span>
+    <p><em style="color: var(--mid-grey); font-size: 13px;">Rejected — requires a commissioned illustrator per recipe. Documented for reference only.</em></p>
+    <p>The food colour fills the entire sleeve as a bold canvas, with edges bordered by a dense hand-drawn ingredient illustration in a darker tone. Centre stays open with the Chefly logo and tagline. Kaja's original concept pushed to its creative limit — the loudest option on a shelf.</p>
+
+    <!-- Chicken sleeve — Colour Field -->
+    <div class="sleeve-full">
+      <div class="sleeve-wrap">
+        <div class="sleeve-front-face" style="background: var(--hot-yellow);">
+          <div class="art-layer">
+            <svg viewBox="0 0 400 210" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g stroke="rgba(0,0,0,0.12)" stroke-width="1.2" fill="none">
+                <!-- Top border -->
+                <path d="M10 15 C15 5, 22 8, 18 18"/><circle cx="40" cy="12" r="5"/>
+                <path d="M60 8 Q70 2, 78 10 L75 20"/><circle cx="130" cy="10" r="4"/>
+                <path d="M155 12 C160 4, 168 7, 163 16"/><ellipse cx="220" cy="10" rx="8" ry="5"/>
+                <circle cx="275" cy="10" r="4.5"/><path d="M295 8 L300 16"/>
+                <path d="M340 5 C345 0, 352 4, 348 12"/><circle cx="375" cy="12" r="5"/>
+                <!-- Bottom border -->
+                <path d="M15 195 C20 202, 28 198, 24 190"/><circle cx="50" cy="200" r="4"/>
+                <path d="M75 198 Q85 205, 95 196"/><circle cx="140" cy="200" r="5"/>
+                <path d="M180 195 C185 202, 192 199, 188 192"/><circle cx="230" cy="198" r="3.5"/>
+                <path d="M270 200 Q280 205, 290 198"/><circle cx="340" cy="200" r="4.5"/>
+                <!-- Left border -->
+                <path d="M8 40 C2 45, 5 52, 12 48"/><circle cx="10" cy="70" r="4"/>
+                <path d="M5 100 C0 105, 3 112, 10 108"/><circle cx="8" cy="140" r="3.5"/>
+                <!-- Right border -->
+                <path d="M392 45 C398 50, 395 57, 388 53"/><circle cx="393" cy="80" r="3.5"/>
+                <path d="M395 115 C400 120, 397 127, 390 123"/><circle cx="392" cy="160" r="4"/>
+              </g>
+            </svg>
+          </div>
+          <div class="front-content">
+            <div class="sleeve-logo" style="color: var(--near-black);">chef<span style="font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400;">ly</span>®</div>
+            <div class="sleeve-tagline" style="color: var(--near-black); margin-top: auto;">real easy,<br>real tasty,<br>real <em>food.</em></div>
+          </div>
+          <div class="sticker-overlay">
+            <div class="meal-name">teriyaki <em>chicken.</em></div>
+            <div class="meal-desc">wild and basmati rice, tenderstem, teriyaki sauce</div>
+            <div class="badge-row">
+              <span class="badge" style="background: var(--hot-yellow); color: var(--near-black);">poultry</span>
+              <span class="badge" style="background: #D4EDDA; color: #1B5E20;">555 kcal</span>
+              <span class="badge" style="background: #D4EDDA; color: #1B5E20;">47g protein</span>
+              <span class="badge" style="background: var(--warm-grey); color: var(--near-black);">high protein</span>
+            </div>
+            <div class="micro-info">380g · keep refrigerated · SKU002</div>
+          </div>
+        </div>
+        <div class="sleeve-back-face" style="background: var(--cream);">
+          <div class="back-info" style="height: 100%; display: flex; flex-direction: column;">
+            <div class="back-title">teriyaki chicken</div>
+            <div class="back-text">wild and basmati rice, tenderstem and broccoli, teriyaki sauce</div>
+            <div class="back-title" style="margin-top: 4px;">cooking instructions:</div>
+            <div class="back-text">microwave: 900w on full power. remove outer sleeve. pierce film several times. heat for 3 minutes until piping hot.</div>
+            <div class="back-title">nutritional information:</div>
+            <div class="nutrition-grid">
+              <div class="nh">typical values</div><div class="nh">per 100g</div><div class="nh">380g</div>
+              <div class="nc">energy (kcal)</div><div class="nc">146</div><div class="nc">555</div>
+              <div class="nc">fat</div><div class="nc">3.8g</div><div class="nc">14.4g</div>
+              <div class="nc">carbohydrate</div><div class="nc">13.6g</div><div class="nc">51.7g</div>
+              <div class="nc">protein</div><div class="nc">12g</div><div class="nc">46.8g</div>
+              <div class="nc">salt</div><div class="nc">0.6g</div><div class="nc">2.3g</div>
+            </div>
+            <div class="barcode-area">
+              <div class="barcode-placeholder">barcode</div>
+              <div class="sku-text">www.eatchefly.com<br>@eatchefly</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p style="text-align: center; font-size: 11px; color: var(--mid-grey); margin-top: 8px;">↑ Chicken protein sleeve — vibrant yellow with illustrated ingredient border</p>
+
+    <div class="note-box">
+      <strong>The motif approach.</strong> The SVG mockups above use simplified ingredient motifs from the reusable library. In production, a designer selects 4–6 motifs relevant to each recipe's ingredients and arranges them across the sleeve surface. Motifs are rendered in one tone (white at ~15–20% opacity on dark food-colours, or near-black at ~12–16% on light food-colours). New recipes draw from the same library — no commissioned artwork needed per SKU.
+    </div>
+
+    <h3>motif rules</h3>
+    <div class="do-dont-grid">
+      <div class="do-card">
+        <div class="card-label">Do</div>
+        <p style="margin:0; font-size:13px;">Use simple, single-stroke line art. Each motif should feel organic and hand-drawn — slight imperfections are welcome. Keep motifs recognisable at small scale.</p>
+      </div>
+      <div class="dont-card">
+        <div class="card-label">Don't</div>
+        <p style="margin:0; font-size:13px;">Use filled shapes, gradients, multiple stroke weights, photography, clip-art, or overly detailed illustrations. Motifs should be line-only, single stroke weight, and work at 10–20% opacity without becoming muddy.</p>
+      </div>
+    </div>
+
+    <h3>evaluating motif quality</h3>
+    <p>When reviewing new motif additions to the library, use these adjective pairs to assess whether the work "feels chefly." If a motif falls on the right side of any pair, redraw it toward the left.</p>
+
+    <div class="eval-pairs">
+      <div style="display: contents;">
+        <div class="eval-header eval-yes-header">chefly feels…</div>
+        <div class="eval-header eval-no-header">not chefly if it feels…</div>
+      </div>
+      <div class="eval-pair">
+        <div class="eval-yes">organic, hand-drawn, imperfect</div>
+        <div class="eval-no">digital, vector-perfect, machined</div>
+      </div>
+      <div class="eval-pair">
+        <div class="eval-yes">dense, layered, generous</div>
+        <div class="eval-no">sparse, minimal, empty</div>
+      </div>
+      <div class="eval-pair">
+        <div class="eval-yes">craft-authentic, inky, textured</div>
+        <div class="eval-no">clip-art, flat, sterile</div>
+      </div>
+      <div class="eval-pair">
+        <div class="eval-yes">botanical, ingredient-focused</div>
+        <div class="eval-no">abstract, decorative, pattern-only</div>
+      </div>
+      <div class="eval-pair">
+        <div class="eval-yes">warm, inviting, kitchen-feeling</div>
+        <div class="eval-no">cold, clinical, corporate</div>
+      </div>
+      <div class="eval-pair">
+        <div class="eval-yes">confident line weight, visible stroke</div>
+        <div class="eval-no">timid, wispy, over-refined</div>
+      </div>
+    </div>
+
+    <h3>sleeve typography</h3>
+    <table class="badge-spec-table">
+      <tr><th>Element</th><th>Font</th><th>Size</th><th>Notes</th></tr>
+      <tr><td>Meal name</td><td>Syne Extra Bold</td><td><code>15px</code></td><td>Lowercase, on sticker not sleeve</td></tr>
+      <tr><td>Logo on sleeve</td><td>Syne + Instrument Serif</td><td><code>min 24mm</code></td><td>"chef" Syne 800 + "ly" Instrument Serif italic + ® mark</td></tr>
+      <tr><td>Tagline on sleeve</td><td>Syne Extra Bold + Instrument Serif</td><td><code>14px</code></td><td>"real easy, real tasty, real food." with "food" in italic</td></tr>
+      <tr><td>Cooking instructions</td><td>Space Grotesk</td><td><code>8–9px</code></td><td>Back panel, clear and legible</td></tr>
+      <tr><td>Nutrition grid</td><td>Space Grotesk</td><td><code>7px</code></td><td>Tabular layout, back panel</td></tr>
+      <tr><td>Badges on sticker</td><td>Space Grotesk</td><td><code>9px</code></td><td>Max 3 per row, outline variant on textured stock</td></tr>
+    </table>
+  </section>
+
+  <!-- ═══════════ 17 STICKER & LABEL SYSTEM ═══════════ -->
+  <section>
+    <div class="section-number">17</div>
+    <h2>the cream meal <em>sticker.</em></h2>
+    <p>This is the piece that lets you launch a new recipe tomorrow. One template, infinite meals. Cream background, D2 type, badge system, all the meal-specific info. Designed to sit on the front face of any protein sleeve.</p>
+
+    <h3>sticker examples</h3>
+    <p>Five example stickers showing how the system works across different meals. Each carries the meal name in D2 type, protein badge in the correct food colour, nutritional badges, and micro-info.</p>
+
+    <div class="sticker-demo">
+      <div class="sticker-card">
+        <div class="meal-name">steak <em>peppercorn.</em></div>
+        <div class="meal-desc">rosemary potatoes, broccoli, peppercorn sauce</div>
+        <div class="badge-row">
+          <span class="badge" style="background: var(--orange); color: white;">beef</span>
+          <span class="badge" style="background: #D4EDDA; color: #1B5E20;">504 kcal</span>
+          <span class="badge" style="background: var(--warm-grey);">under 5 min</span>
+        </div>
+        <div class="micro-info">390g · SKU058 · keep refrigerated</div>
+      </div>
+
+      <div class="sticker-card">
+        <div class="meal-name">teriyaki <em>chicken.</em></div>
+        <div class="meal-desc">wild and basmati rice, tenderstem and broccoli, teriyaki sauce</div>
+        <div class="badge-row">
+          <span class="badge" style="background: var(--hot-yellow); color: var(--near-black);">poultry</span>
+          <span class="badge" style="background: #D4EDDA; color: #1B5E20;">555 kcal</span>
+          <span class="badge" style="background: var(--warm-grey);">high protein</span>
+        </div>
+        <div class="micro-info">380g · SKU002 · keep refrigerated</div>
+      </div>
+
+      <div class="sticker-card">
+        <div class="meal-name">teriyaki <em>salmon.</em></div>
+        <div class="meal-desc">edamame, sugar snap and fennel in soy sesame dressing, wild basmati rice</div>
+        <div class="badge-row">
+          <span class="badge" style="background: var(--sky-blue); color: var(--near-black);">fish</span>
+          <span class="badge" style="background: #D4EDDA; color: #1B5E20;">628 kcal</span>
+          <span class="badge" style="background: var(--warm-grey);">gluten free</span>
+        </div>
+        <div class="micro-info">380g · SKU013 · keep refrigerated</div>
+      </div>
+
+      <div class="sticker-card">
+        <div class="meal-name">bavette and <em>carrots.</em></div>
+        <div class="meal-desc">flame grilled bavette, roasted heritage carrots, tenderstem and broccoli</div>
+        <div class="badge-row">
+          <span class="badge" style="background: var(--orange); color: white;">beef</span>
+          <span class="badge" style="background: #D4EDDA; color: #1B5E20;">546 kcal</span>
+          <span class="badge" style="background: var(--warm-grey);">low fat</span>
+        </div>
+        <div class="micro-info">380g · SKU004 · keep refrigerated</div>
+      </div>
+
+      <div class="sticker-card">
+        <div class="meal-name">chicken tikka <em>masala.</em></div>
+        <div class="meal-desc">chickpea and cauliflower tikka masala, basmati wild rice</div>
+        <div class="badge-row">
+          <span class="badge" style="background: var(--hot-yellow); color: var(--near-black);">poultry</span>
+          <span class="badge" style="background: #D4EDDA; color: #1B5E20;">670 kcal</span>
+          <span class="badge" style="background: #D4EDDA; color: #1B5E20;">52g protein</span>
+        </div>
+        <div class="micro-info">380g · SKU007 · keep refrigerated</div>
+      </div>
+    </div>
+
+    <h3>sticker specifications</h3>
+    <table class="badge-spec-table">
+      <tr><th>Property</th><th>Specification</th></tr>
+      <tr><td>Size (recommended)</td><td><code>~160 × 80mm</code> (fits front face with margin)</td></tr>
+      <tr><td>Stock</td><td>Uncoated white or cream label stock, matte finish</td></tr>
+      <tr><td>Corners</td><td>Rounded, 4mm radius</td></tr>
+      <tr><td>Background</td><td>#FFF6EE (cream) — or leave white and let the stock provide warmth</td></tr>
+      <tr><td>Adhesive</td><td>Permanent, fridge-safe (must survive 1–5°C and condensation)</td></tr>
+      <tr><td>Print method</td><td>Digital — no minimum run, same-day possible</td></tr>
+      <tr><td>Content</td><td>Meal name, description, badges, weight, SKU, keep refrigerated note</td></tr>
+    </table>
+
+    <h3>sticker typography</h3>
+    <p>The sticker uses the D2 type system at smaller sizes. Meal name in Syne Extra Bold (lowercase) with the emphasis word in Instrument Serif Italic, all other text in Space Grotesk. Food-colour badge identifies the protein type.</p>
+
+    <table class="badge-spec-table">
+      <tr><th>Element</th><th>Font</th><th>Size</th><th>Weight</th></tr>
+      <tr><td>Meal name</td><td>Syne + Instrument Serif</td><td><code>12–15px</code></td><td>800 + italic</td></tr>
+      <tr><td>Meal description</td><td>Space Grotesk</td><td><code>8–10px</code></td><td>400</td></tr>
+      <tr><td>Protein badge</td><td>Space Grotesk</td><td><code>9px</code></td><td>600</td></tr>
+      <tr><td>Nutritional badges</td><td>Space Grotesk</td><td><code>7–9px</code></td><td>600</td></tr>
+      <tr><td>Micro-info line</td><td>Space Grotesk</td><td><code>7–8px</code></td><td>400</td></tr>
+    </table>
+
+    <h3>placement and application</h3>
+    <p>The sticker is positioned on the front face of the sleeve using an L-bracket jig (£20–50) for consistent alignment. The jig holds the sleeve at a fixed angle so the sticker lands in the same position every time, even when applied by hand. For higher volume, a Zonesun ZS-TB160P semi-automatic labeller (~£2,500–2,700) handles approximately 72 sleeves per minute.</p>
+
+    <div class="note-box">
+      <strong>Ingredients and nutrition.</strong> These can either go on the sticker (if it's large enough — ~160×100mm) or on the back panel of the base sleeve. The cleanest solution: front sticker for the customer-facing info (name, badges), back sticker for the regulatory info (ingredients, nutrition, barcode). Two stickers per sleeve, both fast to print.
+    </div>
+
+    <div class="note-box">
+      <strong>Sleeve thickness.</strong> The 390×202mm sleeve is approximately 1.5mm thick. The Zonesun ZS-TB160P has a stated minimum of 2mm. Confirm compatibility by sending sleeve samples to Zonesun before purchasing the machine.
+    </div>
+  </section>
+
+  <!-- ═══════════ 18 OUTER BOX & TAPE ═══════════ -->
+  <section>
+    <div class="section-number">18</div>
+    <h2>outer box & <em>tape.</em></h2>
+    <p>The outer box and tape sit in a different brand layer to the sleeves and stickers. The box is the delivery experience — it handles the arrival moment. The sleeves handle the product identity inside.</p>
+
+    <h3>outer box — no change</h3>
+    <p>The current outer box is kraft corrugated with yellow print. The Chefly logo appears large across the front face — "chef" in bold black, "ly" in the handwritten script. Side panels carry messaging and the full meal listing. This box is distinctive, recognisable, and working well. It stays as-is.</p>
+
+    <table class="badge-spec-table">
+      <tr><th>Property</th><th>Specification</th></tr>
+      <tr><td>Size</td><td><code>443 × 244 × 228mm</code></td></tr>
+      <tr><td>Capacity</td><td>8 meal outer</td></tr>
+      <tr><td>Stock</td><td>Kraft corrugated</td></tr>
+      <tr><td>Print</td><td>Yellow + black on kraft</td></tr>
+      <tr><td>Front panel</td><td>Yellow field with Chefly logo, chef hat icon, "that's another week sorted."</td></tr>
+      <tr><td>Side panel</td><td>"real easy, real tasty, real food."</td></tr>
+      <tr><td>Back panel</td><td>Full meal listing in small type</td></tr>
+      <tr><td>End flaps</td><td>Chefly logo</td></tr>
+      <tr><td>Supplier</td><td>KB Packaging</td></tr>
+      <tr><td>Artist</td><td>Maxwell Birch</td></tr>
+    </table>
+
+    <div class="note-box">
+      <strong>Production reference.</strong> The full die-cut proof is available from KB Packaging (file: 8M Outer, rev 1, dated 18.12.25). Refer to the production PDF for exact bleed, fold, and glue tab specifications.
+    </div>
+
+    <div class="note-box">
+      <strong>Separate layer.</strong> The outer box yellow does not follow the D2 95/5 rule. The box operates in the delivery layer, not the product layer. The yellow has become part of Chefly's doorstep recognition — changing it would cost more brand equity than it gains.
+    </div>
+
+    <h3>branded tape</h3>
+    <p>The tape is the first brand touchpoint a customer touches. Two directions are in development:</p>
+
+    <div class="tape-demo">
+      <div class="tape-sample">
+        <div class="tape-visual" style="background: #F5EDE4;">
+          <div class="tape-strip-inner" style="background: #B8956A;">
+            <span class="tw" style="color: var(--near-black);">chefly.</span>
+            <span class="td" style="background: var(--near-black);"></span>
+            <span class="tw" style="color: var(--near-black);">chefly.</span>
+            <span class="td" style="background: var(--near-black);"></span>
+            <span class="tw" style="color: var(--near-black);">chefly.</span>
+            <span class="td" style="background: var(--near-black);"></span>
+            <span class="tw" style="color: var(--near-black);">chefly.</span>
+          </div>
+        </div>
+        <div class="tape-label-info">
+          <div class="tape-name">kraft + near-black</div>
+          <div class="tape-note">Recommended. High contrast, artisanal feel, safest print. £2–4/roll.</div>
+        </div>
+      </div>
+      <div class="tape-sample">
+        <div class="tape-visual" style="background: #F5EDE4;">
+          <div class="tape-strip-inner" style="background: var(--cream);">
+            <span class="tw" style="color: var(--orange);">chefly.</span>
+            <span class="td" style="background: var(--orange);"></span>
+            <span class="tw" style="color: var(--orange);">chefly.</span>
+            <span class="td" style="background: var(--orange);"></span>
+            <span class="tw" style="color: var(--orange);">chefly.</span>
+            <span class="td" style="background: var(--orange);"></span>
+            <span class="tw" style="color: var(--orange);">chefly.</span>
+          </div>
+        </div>
+        <div class="tape-label-info">
+          <div class="tape-name">cream + primary orange</div>
+          <div class="tape-note">D2 system match. Ties tape to sticker and sleeve palette. Longer lead time.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 19 BRAND CHECKLIST ═══════════ -->
+  <section>
+    <div class="section-number">19</div>
+    <h2>brand <em>checklist.</em></h2>
+    <p>Run through this before shipping anything — ad, social post, packaging, email, webpage.</p>
+
+    <h3>general</h3>
+    <ul class="checklist">
+      <li>Is everything lowercase?</li>
+      <li>Does every headline end with a full stop?</li>
+      <li>Is the layout at least 95% cream/white with near-black type?</li>
+      <li>Is colour used as a 5% accent, not a flood?</li>
+      <li>Does the headline have exactly one Instrument Serif italic emphasis word?</li>
+      <li>Are badges using the correct type (food colour / status / functional / nutritional)?</li>
+      <li>Is the badge text lowercase, max 2–3 words?</li>
+      <li>Is the paper grain applied at the right opacity for the medium?</li>
+      <li>Is the grain disabled for video and print?</li>
+      <li>Does the food photography use natural light on real surfaces?</li>
+      <li>Is the logo at minimum size (24mm print / 80px screen) with correct clear space?</li>
+      <li>Does the copy sound like a friend, not a copywriter?</li>
+      <li>Is the type hierarchy clear: Syne display → Instrument accent → Space Grotesk body?</li>
+      <li>Are food-colour associations correct (orange=beef, yellow=poultry, green=veg, blush=pork, blue=fish)?</li>
+    </ul>
+
+    <h3>digital components & UX states</h3>
+    <ul class="checklist">
+      <li>Are buttons using the correct hierarchy (primary/secondary/ghost/danger)?</li>
+      <li>Do all form fields show focus, error, and disabled states?</li>
+      <li>Is every empty state designed with an icon, headline, and helpful action?</li>
+      <li>Do error messages follow the formula: what happened + why + what to do?</li>
+      <li>Are loading states showing progress feedback with a helpful message?</li>
+      <li>Do success confirmations tell the user what happens next?</li>
+      <li>Are toast notifications using the correct colour (green for success, red for error)?</li>
+    </ul>
+
+    <h3>accessibility & user preferences</h3>
+    <ul class="checklist">
+      <li>Does all text-on-colour meet WCAG AA contrast ratios (4.5:1 for body, 3:1 for large text)?</li>
+      <li>Do food-colour badges include a protein icon alongside the text label?</li>
+      <li>Is the paper grain overlay set to aria-hidden="true"?</li>
+      <li>Can every interactive element be reached and activated via keyboard?</li>
+      <li>Do focus indicators use the 2px near-black outline with 2px offset?</li>
+      <li>Are all touch targets at least 44×44px on mobile?</li>
+      <li>Does the site work with prefers-reduced-motion: reduce?</li>
+      <li>Do error messages use role="alert" for screen readers?</li>
+      <li>Does prefers-color-scheme: dark apply the warm-down palette (not a dark theme)?</li>
+      <li>Does forced-colors: active (Windows High Contrast) add visible borders?</li>
+      <li>Do all aria-labels use sentence case and expand abbreviations?</li>
+      <li>Is the layout fully usable at 200% browser zoom with no horizontal scroll?</li>
+    </ul>
+
+    <h3>responsive & power-user</h3>
+    <ul class="checklist">
+      <li>Do buttons go full-width below 640px?</li>
+      <li>Are form inputs ≥16px font on mobile (prevents iOS zoom)?</li>
+      <li>Does the nav collapse to a hamburger at 640px?</li>
+      <li>Is the "repeat last order" shortcut available on the account dashboard?</li>
+      <li>Do keyboard shortcuts (/, A, B, Esc, ?) work when no input is focused?</li>
+      <li>Does the saved favourites heart use the meal's food colour when active?</li>
+    </ul>
+
+    <h3>packaging-specific</h3>
+    <ul class="checklist">
+      <li>Is the sleeve 390×202mm on standard black tray?</li>
+      <li>Does the sleeve use the correct food colour for its protein?</li>
+      <li>Are sleeve motifs single-stroke line art from the motif library at 10–20% opacity?</li>
+      <li>Is all variable info (meal name, nutrition, allergens, barcode, use-by) on the sticker, not the sleeve?</li>
+      <li>Is the front sticker placed on the front face of the sleeve?</li>
+      <li>Is the nutritional/regulatory info on the back panel?</li>
+      <li>Is the sticker printed on cream stock matching the D2 palette?</li>
+      <li>Does the sticker have a food-colour badge identifying the protein?</li>
+      <li>Is the ® mark present at first use of the Chefly logo on the sleeve?</li>
+      <li>Are packaging badges using the outline variant on textured stock?</li>
+      <li>Is the nutrition grid legible at the printed size (minimum 7px equivalent)?</li>
+    </ul>
+  </section>
+
+
+  <!-- ═══════════ 20 DIGITAL COMPONENTS ═══════════ -->
+  <section>
+    <div class="section-number">20</div>
+    <h2>digital <em>components.</em></h2>
+    <p>Every interactive element on the chefly website and app should use these components. They encode the D2 type system, colour rules, and motion principles into reusable building blocks. If a developer follows these specs, the result will look and feel like chefly without needing a designer for every screen.</p>
+
+    <h3>button hierarchy</h3>
+    <p>Four button types, each with a specific role. Primary is the default for all key actions. Secondary for supporting actions. Ghost for navigation or low-emphasis controls. Danger for destructive actions only.</p>
+
+    <div class="component-preview">
+      <div class="preview-area">
+        <button class="btn-chefly btn-primary">add to box</button>
+        <button class="btn-chefly btn-secondary">view menu</button>
+        <button class="btn-chefly btn-ghost">back to meals</button>
+        <button class="btn-chefly btn-danger">cancel order</button>
+      </div>
+      <div class="preview-specs">font: Space Grotesk 600 · 14px · lowercase · padding: 12px 28px · radius: 8px · transition: 150ms ease</div>
+    </div>
+
+    <div class="component-preview">
+      <div class="preview-area">
+        <button class="btn-chefly btn-primary btn-small">add</button>
+        <button class="btn-chefly btn-primary">add to box</button>
+        <button class="btn-chefly btn-primary btn-large">get started</button>
+      </div>
+      <div class="preview-specs">sizes — small: 12px/8px 18px · default: 14px/12px 28px · large: 16px/16px 36px</div>
+    </div>
+
+    <table class="badge-spec-table">
+      <tr><th>Type</th><th>Background</th><th>Text</th><th>Use case</th></tr>
+      <tr><td>Primary</td><td><code>#0D0D0D</code> (near-black)</td><td><code>#FFF6EE</code> (cream)</td><td>Main CTA — "add to box", "checkout", "get started"</td></tr>
+      <tr><td>Secondary</td><td><code>#E8E0D8</code> (warm grey)</td><td><code>#0D0D0D</code> (near-black)</td><td>Supporting actions — "view menu", "learn more"</td></tr>
+      <tr><td>Ghost</td><td>Transparent + 1.5px warm grey border</td><td><code>#0D0D0D</code></td><td>Navigation, back, filter, toggle</td></tr>
+      <tr><td>Danger</td><td><code>#E53935</code></td><td>White</td><td>Cancel, delete, destructive only</td></tr>
+    </table>
+
+    <div class="note-box">
+      <strong>Hover states.</strong> Primary darkens to <code>#000000</code>. Secondary shifts to <code>#DDD5CC</code>. Ghost fills with <code>rgba(232,224,216,0.4)</code>. All transitions use <code>150ms ease</code>. On touch devices, hover states are skipped — use <code>:active</code> with a subtle 0.97 scale instead.
+    </div>
+
+    <h3>form fields</h3>
+    <p>All text inputs follow the same pattern: subtle border that darkens on focus, cream-compatible white background, lowercase placeholder text. Error states use a warm red, never the food colours.</p>
+
+    <div class="component-preview">
+      <div class="preview-area" style="flex-direction: column; gap: 20px; align-items: flex-start; padding: 32px 48px;">
+        <div>
+          <label class="input-label">email address</label>
+          <input class="input-chefly" type="text" placeholder="kaja@chefly.com">
+          <div class="input-hint">we'll send your order confirmation here.</div>
+        </div>
+        <div>
+          <label class="input-label">postcode</label>
+          <input class="input-chefly input-error" type="text" value="ABCDE" style="width:160px;">
+          <div class="input-error-msg">please enter a valid uk postcode.</div>
+        </div>
+        <div>
+          <label class="input-label">delivery postcode</label>
+          <input class="input-chefly" type="text" value="SW1A 1AA" style="width:160px; border-color: #2E7D32; background: #F1F8E9;">
+          <div class="input-hint" style="color: #2E7D32; font-weight: 500;">✓ we deliver to your area.</div>
+        </div>
+      </div>
+      <div class="preview-specs">font: Space Grotesk 400 · 15px · padding: 12px 16px · border: 1.5px solid · radius: 8px · focus: border → near-black</div>
+    </div>
+
+    <table class="badge-spec-table">
+      <tr><th>State</th><th>Border</th><th>Background</th><th>Notes</th></tr>
+      <tr><td>Default</td><td><code>#E8E0D8</code> (warm grey)</td><td>White</td><td>Resting state</td></tr>
+      <tr><td>Focus</td><td><code>#0D0D0D</code> (near-black)</td><td>White</td><td>No box-shadow — border change only</td></tr>
+      <tr><td>Error</td><td><code>#E53935</code></td><td><code>#FFF5F5</code></td><td>Error message appears below in red</td></tr>
+      <tr><td>Valid / Success</td><td><code>#2E7D32</code></td><td><code>#F1F8E9</code></td><td>Green border + confirmation message below</td></tr>
+      <tr><td>Disabled</td><td><code>#E8E0D8</code></td><td><code>#F5F0EB</code></td><td>Opacity 0.5, cursor: not-allowed</td></tr>
+    </table>
+
+    <h3>navigation bar</h3>
+    <p>The nav bar uses cream background with the chefly logo on the left and text links on the right. Active page is indicated by a near-black underline, not colour. The nav collapses to a hamburger menu at 640px.</p>
+
+    <div class="component-preview">
+      <div class="preview-area" style="padding: 24px;">
+        <div class="nav-chefly">
+          <span class="nav-logo">chef<em>ly</em>®</span>
+          <a class="nav-link active">menu</a>
+          <a class="nav-link">how it works</a>
+          <a class="nav-link">pricing</a>
+          <a class="nav-link">account</a>
+          <button class="btn-chefly btn-primary btn-small">order now</button>
+        </div>
+      </div>
+      <div class="preview-specs">bg: cream · links: Space Grotesk 500 13px · active: 1.5px underline near-black · mobile: hamburger at 640px</div>
+    </div>
+
+    <h3>meal card</h3>
+    <p>The meal card is the most repeated component on the chefly website. It carries food photography, the D2 meal name, description, badges, and a CTA. White card on cream background.</p>
+
+    <div class="component-preview">
+      <div class="preview-area" style="gap: 24px; background: var(--cream);">
+        <div class="card-chefly">
+          <div class="card-img">food photo</div>
+          <div class="card-body">
+            <div class="card-title">steak <em>peppercorn.</em></div>
+            <div class="card-desc">rosemary potatoes, broccoli, peppercorn sauce</div>
+            <div class="badge-row" style="margin:0 0 12px 0;">
+              <span class="badge badge-food-orange" style="font-size:9px;padding:3px 10px;">beef</span>
+              <span class="badge badge-nutritional" style="font-size:9px;padding:3px 10px;">504 kcal</span>
+            </div>
+            <button class="btn-chefly btn-primary btn-small" style="width:100%;justify-content:center;">add to box</button>
+          </div>
+        </div>
+        <div class="card-chefly">
+          <div class="card-img">food photo</div>
+          <div class="card-body">
+            <div class="card-title">teriyaki <em>salmon.</em></div>
+            <div class="card-desc">edamame, sugar snap, wild basmati rice</div>
+            <div class="badge-row" style="margin:0 0 12px 0;">
+              <span class="badge badge-food-blue" style="font-size:9px;padding:3px 10px;">fish</span>
+              <span class="badge badge-nutritional" style="font-size:9px;padding:3px 10px;">628 kcal</span>
+            </div>
+            <button class="btn-chefly btn-primary btn-small" style="width:100%;justify-content:center;">add to box</button>
+          </div>
+        </div>
+      </div>
+      <div class="preview-specs">width: fluid (min 220px) · radius: 12px · border: 1px warm grey · image: 16:10 aspect · hover: translateY(-2px) + shadow</div>
+    </div>
+
+    <h3>keyboard shortcuts & power-user patterns</h3>
+    <p>Expert customers — those who order weekly — should be able to fly through the chefly website without touching the mouse. These accelerators are invisible to new users but dramatically speed up repeat ordering.</p>
+
+    <table class="badge-spec-table">
+      <tr><th>Shortcut</th><th>Action</th><th>Context</th></tr>
+      <tr><td><code>/</code></td><td>Focus search field</td><td>Any page — jump straight to meal search</td></tr>
+      <tr><td><code>A</code></td><td>Add focused meal to box</td><td>Menu grid — when a meal card has keyboard focus</td></tr>
+      <tr><td><code>←</code> <code>→</code></td><td>Navigate between meals</td><td>Menu grid — arrow keys move card focus</td></tr>
+      <tr><td><code>B</code></td><td>Go to box / cart</td><td>Any page — jump to current box</td></tr>
+      <tr><td><code>Esc</code></td><td>Close modal / drawer / overlay</td><td>Any open overlay — always available as an escape route</td></tr>
+      <tr><td><code>?</code></td><td>Show keyboard shortcut cheat sheet</td><td>Any page — toggles a small overlay listing all shortcuts</td></tr>
+    </table>
+
+    <div class="note-box">
+      <strong>Implementation rule.</strong> Shortcuts must only fire when no text input is focused — otherwise typing "a" in the search bar would add a meal to the box. Use a global keydown listener with an <code>event.target.tagName</code> check that ignores INPUT, TEXTAREA, and SELECT elements.
+    </div>
+
+    <h3>bulk actions & repeat ordering</h3>
+    <p>Returning customers often want to re-order the same box from last week. The interface should support two power-user workflows:</p>
+
+    <div class="do-dont-grid">
+      <div class="do-card">
+        <div class="card-label">Repeat last order</div>
+        <p style="margin:0; font-size:13px;">A single button on the account dashboard that re-populates the box with last week's meals. Customer can then swap individual items before checkout.</p>
+      </div>
+      <div class="do-card">
+        <div class="card-label">Saved favourites</div>
+        <p style="margin:0; font-size:13px;">A heart icon on meal cards that saves meals to a persistent favourites list. Favourites page shows all saved meals with "add to box" buttons. No badge clutter — the heart is grey until activated, then fills with the meal's food colour.</p>
+      </div>
+    </div>
+
+    <h3>responsive behaviour</h3>
+    <p>Every component has explicit mobile specs. The breakpoint is 640px — below this, the interface adapts for thumb-zone navigation and single-column layouts.</p>
+
+    <table class="badge-spec-table">
+      <tr><th>Component</th><th>Desktop (>640px)</th><th>Mobile (≤640px)</th></tr>
+      <tr><td>Primary button</td><td>Inline, auto-width, <code>14px</code></td><td>Full-width, centred, <code>16px</code>, min-height <code>48px</code></td></tr>
+      <tr><td>Secondary / Ghost</td><td>Inline alongside primary</td><td>Full-width stacked below primary, 8px gap</td></tr>
+      <tr><td>Form fields</td><td><code>260px</code> default width</td><td><code>100%</code> width, <code>16px</code> font (prevents iOS zoom)</td></tr>
+      <tr><td>Navigation</td><td>Horizontal link row + CTA</td><td>Logo + hamburger icon. Links stack vertically in dropdown, <code>48px</code> row height</td></tr>
+      <tr><td>Meal cards</td><td><code>220px</code> in grid</td><td>Full-width single column. Image scales to 16:10. Button spans card width.</td></tr>
+      <tr><td>Badge rows</td><td>Horizontal wrap, 8px gap</td><td>Same, but min touch target 44×44px per badge</td></tr>
+      <tr><td>Toast notifications</td><td>Max-width <code>420px</code>, bottom-centre</td><td>Full-width with 16px side margin, bottom-centre</td></tr>
+      <tr><td>State cards</td><td>2-column grid</td><td>Single column, full width</td></tr>
+    </table>
+
+    <div class="note-box">
+      <strong>iOS zoom prevention.</strong> On iOS Safari, form fields with a font-size below 16px trigger an automatic page zoom when focused. All chefly inputs must be ≥16px on mobile — this is enforced by the responsive CSS, not just the spec table.
+    </div>
+
+    <div class="deep-dive">
+      <h4>touch targets.</h4>
+      <p>Every interactive element — buttons, links, badge-buttons, card tap areas — must have a minimum touch target of 44×44px (WCAG 2.5.8). On mobile, the "add to box" button should span the full card width. Badge rows on meal cards are tap targets on mobile and must have at least 8px gap between them to prevent mis-taps.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════ 21 DIGITAL UX STATES ═══════════ -->
+  <section>
+    <div class="section-number">21</div>
+    <h2>digital UX <em>states.</em></h2>
+
+    <div class="principle-banner" style="background: var(--near-black); color: var(--cream); border-radius: 12px; margin: 0 0 32px 0;">
+      <h3 style="margin-top:0;">the in-between <em>moments.</em></h3>
+      <p style="color: rgba(255,246,238,0.7);">Empty carts, loading spinners, error messages, and success confirmations are the most emotionally charged moments in the chefly experience. They're where customers decide to trust us or leave. Every state must feel designed, warm, and unmistakably chefly.</p>
+    </div>
+
+    <p>These four states cover 90% of the "what happens when" scenarios developers encounter. Each uses the D2 system — cream backgrounds, Syne headlines, Space Grotesk body, and the badge system for status indicators.</p>
+
+    <h3>the four core states</h3>
+
+    <div class="state-grid">
+      <div class="state-card">
+        <div class="state-preview" style="background: var(--cream);">
+          <div class="state-empty-icon">🛒</div>
+          <div class="state-empty-text">your box is empty.</div>
+          <div class="state-empty-hint">browse the menu and add your first meal.</div>
+          <button class="btn-chefly btn-primary btn-small">explore the menu</button>
+        </div>
+        <div class="state-meta">
+          <strong>empty state</strong>
+          <span>Friendly illustration or icon + headline + helpful action. Never just "no results" — always guide the user forward.</span>
+        </div>
+      </div>
+
+      <div class="state-card">
+        <div class="state-preview" style="background: var(--cream);">
+          <div style="font-family:'Syne',sans-serif; font-weight:800; font-size:14px; text-transform:lowercase; margin-bottom:8px;">preparing your meals…</div>
+          <div class="state-loading-bar"><div class="bar-fill"></div></div>
+          <div style="font-size:11px; color:var(--mid-grey); margin-top:8px;">this usually takes a few seconds.</div>
+        </div>
+        <div class="state-meta">
+          <strong>loading state</strong>
+          <span>Animated progress bar in near-black on warm grey. Always tell the user what's happening and how long it takes.</span>
+        </div>
+      </div>
+
+      <div class="state-card">
+        <div class="state-preview" style="background: var(--cream);">
+          <div class="state-success-icon">✓</div>
+          <div class="state-empty-text">order confirmed.</div>
+          <div class="state-empty-hint">your 6 meals arrive wednesday. check your email for tracking.</div>
+          <span class="badge badge-status" style="margin-top:8px;">order #CHF-2847</span>
+        </div>
+        <div class="state-meta">
+          <strong>success state</strong>
+          <span>Green circle icon + confirmation headline + next-step info. Use status badge for order references.</span>
+        </div>
+      </div>
+
+      <div class="state-card">
+        <div class="state-preview" style="background: var(--cream);">
+          <div class="state-error-icon">!</div>
+          <div class="state-empty-text">payment didn't go through.</div>
+          <div class="state-empty-hint">your card was declined. try a different card or contact your bank.</div>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button class="btn-chefly btn-primary btn-small">try again</button>
+            <button class="btn-chefly btn-ghost btn-small">use another card</button>
+          </div>
+        </div>
+        <div class="state-meta">
+          <strong>error state</strong>
+          <span>Red circle icon + plain-language explanation + recovery action. Never blame the user. Never use technical jargon.</span>
+        </div>
+      </div>
+    </div>
+
+    <h3>error messaging rules</h3>
+    <div class="deep-dive" style="border-top-color: #E53935;">
+      <h4>how chefly talks when things go wrong.</h4>
+      <p>Error messages follow the same tone of voice rules as everything else: lowercase, direct, warm. The formula is: <strong>what happened + why + what to do next.</strong> Never use error codes, stack traces, or "oops!" — chefly is too confident for that.</p>
+    </div>
+
+    <table class="badge-spec-table">
+      <tr><th>Scenario</th><th>Headline</th><th>Body text</th><th>Action</th></tr>
+      <tr><td>Payment failed</td><td>payment didn't go through.</td><td>your card was declined. try a different card or contact your bank.</td><td>try again / use another card</td></tr>
+      <tr><td>Out of stock</td><td>this meal's sold out.</td><td>it went fast this week. we'll have it back on next week's menu.</td><td>browse other meals</td></tr>
+      <tr><td>Delivery area</td><td>we don't deliver there yet.</td><td>we're expanding soon. enter your email and we'll let you know when we reach your area.</td><td>notify me</td></tr>
+      <tr><td>Server error</td><td>something went wrong on our end.</td><td>our team's been notified. try again in a moment.</td><td>refresh page</td></tr>
+      <tr><td>No search results</td><td>no meals match that search.</td><td>try a different keyword or browse the full menu.</td><td>clear search / view all</td></tr>
+      <tr><td>Session expired</td><td>you've been logged out.</td><td>for security, we log you out after 30 minutes of inactivity.</td><td>log back in</td></tr>
+    </table>
+
+    <h3>notification patterns</h3>
+    <p>Transient notifications (toasts) appear at the bottom-centre of the screen. They slide up with the standard 300ms cubic-bezier, persist for 4 seconds, then fade out. Success notifications use a green-tinted background with a checkmark. Error notifications use a red-tinted background with an exclamation mark. Both use Space Grotesk 14px.</p>
+
+    <div class="component-preview">
+      <div class="preview-area" style="flex-direction: column; gap: 12px;">
+        <div style="display:flex; align-items:center; gap:10px; background:#D4EDDA; padding:12px 20px; border-radius:10px; font-size:14px;">
+          <span style="color:#1B5E20; font-weight:700;">✓</span>
+          <span>teriyaki chicken added to your box.</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; background:#F8D7DA; padding:12px 20px; border-radius:10px; font-size:14px;">
+          <span style="color:#721C24; font-weight:700;">!</span>
+          <span>couldn't update your delivery address. try again.</span>
+        </div>
+      </div>
+      <div class="preview-specs">position: fixed bottom-centre · slide-up 300ms · persist 4s · fade-out 200ms · max-width: 420px</div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 22 ACCESSIBILITY ═══════════ -->
+  <section>
+    <div class="section-number">22</div>
+    <h2>accessibility <em>standards.</em></h2>
+    <p>Accessibility isn't a feature — it's a requirement. Roughly 1 in 12 male customers has some form of colour vision deficiency, and every customer benefits from clear contrast, readable text, and keyboard-navigable interfaces. chefly targets WCAG 2.1 AA compliance across all digital surfaces.</p>
+
+    <h3>colour contrast reference</h3>
+    <p>Not every food-colour and background combination passes WCAG AA for text. This table shows which pairings are safe for text and which should only be used for decorative elements (badges, bars, icons) where the information is also communicated through text.</p>
+
+    <table class="badge-spec-table">
+      <tr><th>Foreground</th><th>Background</th><th>Ratio</th><th>AA text</th><th>AA large text</th><th>Use guidance</th></tr>
+      <tr><td>Near-Black on Cream</td><td><code>#0D0D0D</code> / <code>#FFF6EE</code></td><td><code>18.5:1</code></td><td style="color:#1B5E20; font-weight:700;">Pass</td><td style="color:#1B5E20; font-weight:700;">Pass</td><td>Primary text — use everywhere</td></tr>
+      <tr><td>Near-Black on Orange</td><td><code>#0D0D0D</code> / <code>#FF6B2C</code></td><td><code>4.8:1</code></td><td style="color:#1B5E20; font-weight:700;">Pass</td><td style="color:#1B5E20; font-weight:700;">Pass</td><td>Safe for badge text and headlines</td></tr>
+      <tr><td>White on Orange</td><td><code>#FFFFFF</code> / <code>#FF6B2C</code></td><td><code>3.2:1</code></td><td style="color:#721C24; font-weight:700;">Fail</td><td style="color:#1B5E20; font-weight:700;">Pass</td><td>Large headlines only (≥24px). Use near-black text for body.</td></tr>
+      <tr><td>Near-Black on Yellow</td><td><code>#0D0D0D</code> / <code>#FFD60A</code></td><td><code>12.8:1</code></td><td style="color:#1B5E20; font-weight:700;">Pass</td><td style="color:#1B5E20; font-weight:700;">Pass</td><td>Safe — always use dark text on yellow</td></tr>
+      <tr><td>Near-Black on Green</td><td><code>#0D0D0D</code> / <code>#A8E10C</code></td><td><code>10.6:1</code></td><td style="color:#1B5E20; font-weight:700;">Pass</td><td style="color:#1B5E20; font-weight:700;">Pass</td><td>Safe — always use dark text on green</td></tr>
+      <tr><td>Green on Cream</td><td><code>#A8E10C</code> / <code>#FFF6EE</code></td><td><code>1.7:1</code></td><td style="color:#721C24; font-weight:700;">Fail</td><td style="color:#721C24; font-weight:700;">Fail</td><td>Never use green text on cream. Green is for backgrounds/badges only.</td></tr>
+      <tr><td>Yellow on White</td><td><code>#FFD60A</code> / <code>#FFFFFF</code></td><td><code>1.4:1</code></td><td style="color:#721C24; font-weight:700;">Fail</td><td style="color:#721C24; font-weight:700;">Fail</td><td>Never use yellow text on white. Yellow is for backgrounds/badges only.</td></tr>
+      <tr><td>Near-Black on Blush</td><td><code>#0D0D0D</code> / <code>#FF8FA3</code></td><td><code>6.8:1</code></td><td style="color:#1B5E20; font-weight:700;">Pass</td><td style="color:#1B5E20; font-weight:700;">Pass</td><td>Safe — always use dark text on blush</td></tr>
+      <tr><td>Near-Black on Sky Blue</td><td><code>#0D0D0D</code> / <code>#5CCFFF</code></td><td><code>9.4:1</code></td><td style="color:#1B5E20; font-weight:700;">Pass</td><td style="color:#1B5E20; font-weight:700;">Pass</td><td>Safe — always use dark text on sky blue</td></tr>
+      <tr><td>Mid Grey on Cream</td><td><code>#9A918A</code> / <code>#FFF6EE</code></td><td><code>3.1:1</code></td><td style="color:#721C24; font-weight:700;">Fail</td><td style="color:#1B5E20; font-weight:700;">Pass</td><td>Metadata/captions only (≥14px). Not for body text.</td></tr>
+    </table>
+
+    <div class="note-box">
+      <strong>The rule.</strong> If text needs to be read, use near-black (#0D0D0D) on any food-colour background. The only exception is white text on orange for large headlines (≥24px bold). When in doubt, go darker.
+    </div>
+
+    <h3>non-colour badge signals</h3>
+    <p>The food-colour badge system works brilliantly for most users, but ~8% of men have red-green colour vision deficiency and may struggle to distinguish the orange (beef) badge from the green (veg) badge. To ensure every customer can identify their meals, every food-colour badge must include a small protein icon alongside the text label.</p>
+
+    <div class="component-preview">
+      <div class="preview-area" style="flex-direction: column; gap: 16px;">
+        <div style="font-size:12px; color:var(--mid-grey); font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">accessible badge format — colour + icon + text</div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+          <span class="badge-accessible" style="background:var(--orange); color:white;"><span class="badge-icon" style="background:rgba(255,255,255,0.25); color:white;">🥩</span> beef</span>
+          <span class="badge-accessible" style="background:var(--hot-yellow); color:var(--near-black);"><span class="badge-icon" style="background:rgba(0,0,0,0.1); color:var(--near-black);">🍗</span> poultry</span>
+          <span class="badge-accessible" style="background:var(--electric-green); color:var(--near-black);"><span class="badge-icon" style="background:rgba(0,0,0,0.1); color:var(--near-black);">🌱</span> veg</span>
+          <span class="badge-accessible" style="background:var(--blush); color:var(--near-black);"><span class="badge-icon" style="background:rgba(0,0,0,0.1); color:var(--near-black);">🐖</span> pork</span>
+          <span class="badge-accessible" style="background:var(--sky-blue); color:var(--near-black);"><span class="badge-icon" style="background:rgba(0,0,0,0.1); color:var(--near-black);">🐟</span> fish</span>
+        </div>
+        <div style="font-size:11px; color:var(--mid-grey);">Each badge uses three redundant signals: colour + icon + text label. If any one signal is missed, the other two carry the meaning.</div>
+      </div>
+      <div class="preview-specs">icon: 14px circle · emoji or simple SVG glyph · positioned left of text · gap: 6px</div>
+    </div>
+
+    <div class="note-box">
+      <strong>On packaging.</strong> Printed badges should include the protein name as text on every badge (which they already do). On the website, add the icon as an additional signal. The text label is the primary identifier; colour and icon are reinforcement.
+    </div>
+
+    <h3>keyboard navigation</h3>
+    <p>Every interactive element must be reachable via keyboard Tab and activatable via Enter/Space. Focus indicators use a 2px near-black outline with a 2px offset (so it doesn't touch the element). Never remove the outline — style it to match chefly instead.</p>
+
+    <div class="code-block"><span class="code-comment">/* ── chefly focus indicator ── */</span>
+<span class="code-selector">:focus-visible</span> {
+  <span class="code-property">outline</span>: <span class="code-value">2px solid #0D0D0D</span>;
+  <span class="code-property">outline-offset</span>: <span class="code-value">2px</span>;
+  <span class="code-property">border-radius</span>: <span class="code-value">4px</span>;
+}
+<span class="code-comment">/* remove default outline only when :focus-visible is supported */</span>
+<span class="code-selector">:focus:not(:focus-visible)</span> {
+  <span class="code-property">outline</span>: <span class="code-value">none</span>;
+}</div>
+
+    <h3>screen reader guidance</h3>
+    <p>The paper grain texture overlay must have <code>aria-hidden="true"</code> and <code>role="presentation"</code> to prevent screen readers from announcing it. The lowercase-everything rule means screen readers won't get capitalisation cues — ensure all proper nouns and brand names have correct <code>aria-label</code> attributes where disambiguation is needed.</p>
+
+    <table class="badge-spec-table">
+      <tr><th>Element</th><th>Accessible treatment</th></tr>
+      <tr><td>Paper grain overlay</td><td><code>aria-hidden="true"</code> + <code>role="presentation"</code></td></tr>
+      <tr><td>Food-colour badges</td><td>Include protein icon + text label (triple redundancy)</td></tr>
+      <tr><td>Loading states</td><td><code>role="progressbar"</code> + <code>aria-valuenow</code> + <code>aria-label="loading your meals"</code></td></tr>
+      <tr><td>Error messages</td><td><code>role="alert"</code> + <code>aria-live="polite"</code> — announced automatically</td></tr>
+      <tr><td>Success confirmations</td><td><code>role="status"</code> + <code>aria-live="polite"</code></td></tr>
+      <tr><td>Meal cards</td><td><code>aria-label</code> with full meal name, protein type, and calories</td></tr>
+      <tr><td>Navigation</td><td><code>nav</code> landmark + <code>aria-current="page"</code> on active link</td></tr>
+      <tr><td>Toast notifications</td><td><code>role="alert"</code> for errors, <code>role="status"</code> for confirmations</td></tr>
+    </table>
+
+    <h3>concrete aria-label examples</h3>
+    <p>The lowercase-everything rule removes capitalisation cues. Here are the exact <code>aria-label</code> values to use for key elements so screen readers announce them correctly:</p>
+
+    <table class="badge-spec-table">
+      <tr><th>Element</th><th>Visual text</th><th><code>aria-label</code> value</th></tr>
+      <tr><td>Logo</td><td>chefly®</td><td><code>"Chefly — home page"</code></td></tr>
+      <tr><td>Beef badge</td><td>beef</td><td><code>"Protein type: beef"</code></td></tr>
+      <tr><td>Calorie badge</td><td>504 kcal</td><td><code>"504 kilocalories per serving"</code></td></tr>
+      <tr><td>Meal card</td><td>steak peppercorn.</td><td><code>"Steak Peppercorn — beef, 504 calories, under 5 minutes"</code></td></tr>
+      <tr><td>Add to box button</td><td>add to box</td><td><code>"Add Steak Peppercorn to your box"</code></td></tr>
+      <tr><td>Status badge</td><td>selling fast</td><td><code>"Status: selling fast"</code></td></tr>
+    </table>
+
+    <div class="note-box">
+      <strong>The rule.</strong> Every <code>aria-label</code> uses sentence case and expands abbreviations. "kcal" becomes "kilocalories." Lowercase visual text is announced with proper capitalisation so screen readers' pronunciation engines handle proper nouns correctly.
+    </div>
+
+    <h3>minimum touch targets</h3>
+    <p>All interactive elements on mobile must meet a 44×44px minimum touch target (WCAG 2.5.8). Badge buttons, card tap areas, and close buttons are the most common offenders. If the visual element is smaller than 44px, pad the tap area with invisible hit zones using CSS padding or pseudo-elements.</p>
+
+    <h3>dark mode & high contrast</h3>
+    <p>chefly stays light. The cream-dominant palette is a sacred brand decision — it's what makes chefly feel like a kitchen, not an app. When a user's operating system is set to dark mode, the chefly website does not switch to a dark theme.</p>
+
+    <div class="deep-dive" style="border-top-color: var(--near-black);">
+      <h4>the official position.</h4>
+      <p>Respect the user's preference by acknowledging it, but maintain brand identity. The <code>prefers-color-scheme: dark</code> media query should slightly warm the palette — shifting cream from <code>#FFF6EE</code> to <code>#F5EDE4</code> and white cards from <code>#FFFFFF</code> to <code>#FAF5EF</code> — to reduce glare on screens calibrated for dark environments. This is a subtle comfort adjustment, not a theme switch.</p>
+    </div>
+
+    <div class="code-block"><span class="code-comment">/* ── gentle warm-down for dark-mode users ── */</span>
+<span class="code-selector">@media (prefers-color-scheme: dark)</span> {
+  <span class="code-selector">:root</span> {
+    <span class="code-property">--cream</span>: <span class="code-value">#F5EDE4</span>;
+    <span class="code-property">--warm-white</span>: <span class="code-value">#FAF5EF</span>;
+  }
+}
+
+<span class="code-comment">/* ── Windows High Contrast Mode ── */</span>
+<span class="code-selector">@media (forced-colors: active)</span> {
+  <span class="code-selector">.badge, .btn-chefly</span> {
+    <span class="code-property">border</span>: <span class="code-value">1px solid ButtonText</span>;
+  }
+  <span class="code-selector">.paper-grain, body::before</span> {
+    <span class="code-property">display</span>: <span class="code-value">none</span>;
+  }
+  <span class="code-selector">.state-loading-bar .bar-fill</span> {
+    <span class="code-property">background</span>: <span class="code-value">Highlight</span>;
+  }
+}</div>
+
+    <div class="note-box">
+      <strong>Never build a dark chefly.</strong> If a developer or agency asks for a dark mode, the answer is no. The cream palette is as sacred as the lowercase rule. The gentle warm-down above is the only permitted adaptation — it keeps the brand intact while reducing screen brightness for dark-mode users.
+    </div>
+
+    <h3>user preferences & customisation</h3>
+    <p>Beyond dark mode, respect these additional user preferences in CSS:</p>
+
+    <table class="badge-spec-table">
+      <tr><th>Preference</th><th>Media query</th><th>chefly response</th></tr>
+      <tr><td>Reduced motion</td><td><code>prefers-reduced-motion: reduce</code></td><td>Disable all animations and transitions (see Section 12)</td></tr>
+      <tr><td>High contrast</td><td><code>forced-colors: active</code></td><td>Add visible borders to badges and buttons. Remove grain overlay. Use system colours.</td></tr>
+      <tr><td>Reduced transparency</td><td><code>prefers-reduced-transparency: reduce</code></td><td>Remove grain overlay opacity. Set badge backgrounds to fully opaque.</td></tr>
+      <tr><td>Large text / zoom</td><td>Browser zoom up to 200%</td><td>All layouts must remain usable at 200% zoom. No horizontal scroll. No text truncation.</td></tr>
+    </table>
+
+    <div class="principle-banner" style="background: #1B5E20; color: white; border-radius: 12px; margin: 32px 0;">
+      <h3 style="margin-top:0; color: white;">accessibility is <em>permanent.</em></h3>
+      <p style="color: rgba(255,255,255,0.8);">These aren't guidelines you follow once and forget. Every new page, component, and feature must pass these standards before shipping. Add accessibility checks to your QA process: contrast ratios, keyboard navigation, screen reader announcements, and touch target sizing.</p>
+    </div>
+  </section>
+
+  <div style="padding: 48px 0; text-align: center; color: var(--mid-grey); font-size: 12px;">
+    <p style="max-width: 100%; text-align: center;">chefly® — d2 light & bold brand guidelines — v3.2 — april 2026</p>
+  </div>
+
+</div>
+
+</body>
+</html>
