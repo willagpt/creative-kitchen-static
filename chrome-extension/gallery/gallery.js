@@ -1382,22 +1382,49 @@
     }
   }
 
+  function resizeImageToBase64(file, maxDim = 1568) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          const scale = maxDim / Math.max(w, h);
+          w = Math.round(w * scale);
+          h = Math.round(h * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        URL.revokeObjectURL(url);
+        resolve({ base64: dataUrl.split(',')[1], media_type: 'image/jpeg' });
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        // Fallback: read raw file
+        const reader = new FileReader();
+        reader.onloadend = () => resolve({ base64: reader.result.split(',')[1], media_type: file.type || 'image/jpeg' });
+        reader.readAsDataURL(file);
+      };
+      img.src = url;
+    });
+  }
+
   function handleBrandGuideImageUpload(files) {
     const previewsEl = document.getElementById('brand-guide-previews');
     const extractBtn = document.getElementById('brand-guide-extract-btn');
 
-    Array.from(files).forEach(file => {
+    Array.from(files).forEach(async (file) => {
       const id = 'bg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
       const preview = URL.createObjectURL(file);
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result.split(',')[1];
-        brandGuidelineImages.push({ id, file, base64, media_type: file.type || 'image/jpeg', preview });
-        renderBrandGuidePreviews();
-        extractBtn.disabled = false;
-      };
-      reader.readAsDataURL(file);
+      const { base64, media_type } = await resizeImageToBase64(file);
+      brandGuidelineImages.push({ id, file, base64, media_type, preview });
+      renderBrandGuidePreviews();
+      extractBtn.disabled = false;
     });
   }
 
