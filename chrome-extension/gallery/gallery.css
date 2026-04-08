@@ -33,7 +33,7 @@ body {
   min-height: 100vh;
 }
 
-/* ─── Nav ──────────────────────────────────────────────────────────────── */
+/* ─── Nav ──────────────────────────────────────────────────────────── */
 .nav {
   position: sticky;
   top: 0;
@@ -141,7 +141,7 @@ body {
   margin-top: 2px;
 }
 
-/* ─── Gallery Grid ───────────────────────────────────────────────────── */
+/* ─── Gallery Grid ─────────────────────────────────────────────────── */
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -412,7 +412,7 @@ body {
   color: var(--text-1);
 }
 
-/* ─── Version History Strip ─────────────────────────────────────── */
+/* ─── Version History Strip ───────────────────────────────────────── */
 .versions-section {
   margin: 0 24px;
   padding-bottom: 8px;
@@ -488,7 +488,7 @@ body {
   box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3);
 }
 
-/* ─── Action Bar (sticky) ───────────────────────────────────────────── */
+/* ─── Action Bar (sticky) ─────────────────────────────────────────── */
 .action-bar {
   position: sticky;
   top: 0;
@@ -600,7 +600,7 @@ body {
   cursor: not-allowed;
 }
 
-/* ─── Aspect Ratio Selector ─────────────────────────────────────── */
+/* ─── Aspect Ratio Selector ───────────────────────────────────────── */
 .aspect-section {
   display: flex;
   align-items: center;
@@ -732,7 +732,7 @@ body {
   text-overflow: ellipsis;
 }
 
-/* ─── Batch Button ──────────────────────────────────────────────────── */
+/* ─── Batch Button ────────────────────────────────────────────────── */
 .btn-batch {
   background: rgba(34, 197, 94, 0.15);
   color: var(--success);

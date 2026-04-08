@@ -44,439 +44,1308 @@
   const modalNoGenerated = document.getElementById('modal-no-generated');
   const modalGeneratedNotes = document.getElementById('modal-generated-notes');
   const modalPrompt = document.getElementById('modal-prompt');
-  const modalCompareBefore = document.getElementById('compare-before');
-  const modalCompareAfter = document.getElementById('compare-after');
-  const batchSection = document.getElementById('batch-section');
-  const batchTemplateInput = document.getElementById('batch-template-input');
-  const batchPlaceholdersContainer = document.getElementById('batch-placeholders');
-  const batchRatioSelect = document.getElementById('batch-ratio-select');
-  const batchReferenceImages = document.getElementById('batch-reference-images');
-  const batchUploadZone = document.getElementById('batch-upload-zone');
-  const batchGenerateBtn = document.getElementById('batch-generate-btn');
-  const batchCancelBtn = document.getElementById('batch-cancel-btn');
-  const batchStatus = document.getElementById('batch-status');
-  const batchProgressBar = document.getElementById('batch-progress');
-  const batchProgressText = document.getElementById('batch-progress-text');
-  const batchOutputContainer = document.getElementById('batch-output-container');
-  const batchOutputGrid = document.getElementById('batch-output-grid');
+  const modalLibraryId = document.getElementById('modal-library-id');
+  const modalPlatform = document.getElementById('modal-platform');
+  const modalRunningDate = document.getElementById('modal-running-date');
+  const modalStatus = document.getElementById('modal-status');
+  const generateImageBtn = document.getElementById('modal-generate-image-btn');
+  const generateStatus = document.getElementById('generate-status');
+  const regenerateBtn = document.getElementById('modal-regenerate-btn');
+  const creativeDirectionInput = document.getElementById('creative-direction');
+  const downloadBtn = document.getElementById('modal-download-btn');
+  const versionsSection = document.getElementById('versions-section');
+  const versionsStrip = document.getElementById('versions-strip');
+  const versionsCount = document.getElementById('versions-count');
 
-  // ─── Init hooks ────────────────────────────────────────────────────
-  const openModalBtn = document.getElementById('open-modal-btn');
-  const closeModalBtn = document.getElementById('close-modal-btn');
-  const genBtn = document.getElementById('gen-btn');
+  // Feedback / Refine elements
+  const feedbackSection = document.getElementById('feedback-section');
+  const feedbackInput = document.getElementById('feedback-input');
   const refineBtn = document.getElementById('refine-btn');
-  const downloadBtn = document.getElementById('download-btn');
-  const filterBtns = document.querySelectorAll('.filter-btn');
-  const aspectRatioSelect = document.getElementById('aspect-ratio-select');
-  const promptInput = document.getElementById('prompt-input');
 
-  // ─── Refs to sub-elements ──────────────────────────────────────────
-  const uploadInput = document.getElementById('reference-upload-input');
-  const refImageCardTemplate = document.getElementById('ref-image-card-template');
+  // ─── Config helper (reads directly from chrome.storage.local) ─────
+  function getConfig() {
+    return new Promise((resolve) => {
+      chrome.storage.local.get('config', ({ config }) => {
+        resolve(config || {});
+      });
+    });
+  }
 
-  // ─── Supabase ──────────────────────────────────────────────────────
-  const SUPABASE_URL = 'https://bpxqfxdaxazqwdiqklqj.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJweHFmeGRheGF6cXdkaXFrbHFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDU3Nzg2NzMsImV4cCI6MjAyMTM1NDY3M30.NaAcT2dP9KXEQz6IDVQU8aBrMxQz_8vwfLx7H9rU9yY';
+  // ─── Safe JSON parser (handles empty responses) ───────────────────
+  async function safeJson(res) {
+    const text = await res.text();
+    if (!text || !text.trim()) return null;
+    return JSON.parse(text);
+  }
 
-  // ─── Load ADs from localstorage ────────────────────────────────────
-  function loadAds() {
-    const adData = localStorage.getItem('cheflyAds');
-    if (adData) {
-      try {
-        allAds = JSON.parse(adData);
-        renderGallery();
-        updateStats();
-      } catch (e) {
-        console.error('Failed to parse ad data:', e);
-        emptyState.style.display = 'block';
-      }
-    } else {
-      emptyState.style.display = 'block';
+  // ─── Direct Supabase REST call ────────────────────────────────────
+  async function supabaseRest(path, { method = 'GET', body } = {}) {
+    const config = await getConfig();
+    if (!config.supabaseUrl || !config.supabaseAnonKey) {
+      throw new Error('Supabase not configured — open extension settings.');
+    }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'apikey': config.supabaseAnonKey,
+      'Authorization': `Bearer ${config.supabaseAnonKey}`
+    };
+    if (method === 'POST' || method === 'PATCH') {
+      headers['Prefer'] = 'return=representation';
+    }
+
+    const res = await fetch(`${config.supabaseUrl}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Supabase ${res.status}: ${text}`);
+    }
+
+    return safeJson(res);
+  }
+
+  // ─── Load ads (direct) ────────────────────────────────────────────
+  async function loadAds() {
+    loading.classList.remove('hidden');
+    gallery.classList.add('hidden');
+    emptyState.classList.add('hidden');
+
+    try {
+      const ads = await supabaseRest('/rest/v1/saved_ads?select=*&order=created_at.desc');
+      allAds = ads || [];
+      updateStats();
+      renderGallery();
+    } catch (err) {
+      console.error('Failed to load ads:', err);
+      emptyState.classList.remove('hidden');
+      emptyState.querySelector('p').textContent = `Error: ${err.message}. Check your Supabase connection in the extension popup.`;
+    } finally {
+      loading.classList.add('hidden');
     }
   }
 
-  // ─── Render gallery grid ───────────────────────────────────────────
-  function renderGallery() {
-    gallery.innerHTML = '';
-    
-    const filtered = allAds.filter(ad => {
-      if (currentFilter === 'all') return true;
-      return ad.category === currentFilter;
-    });
+  // ─── Update stats ─────────────────────────────────────────────────
+  function updateStats() {
+    statTotal.textContent = allAds.length;
+    statPrompts.textContent = allAds.filter(a => a.generated_prompt).length;
+    statCompared.textContent = allAds.filter(a => a.generated_image_url).length;
+    const brands = new Set(allAds.map(a => a.advertiser_name).filter(Boolean));
+    statBrands.textContent = brands.size;
+  }
 
-    if (filtered.length === 0) {
-      emptyState.style.display = 'block';
+  // ─── Filter ads ───────────────────────────────────────────────────
+  function getFilteredAds() {
+    switch (currentFilter) {
+      case 'with-prompt': return allAds.filter(a => a.generated_prompt);
+      case 'pending': return allAds.filter(a => !a.generated_prompt);
+      case 'compared': return allAds.filter(a => a.generated_image_url);
+      default: return allAds;
+    }
+  }
+
+  // ─── Render gallery grid ──────────────────────────────────────────
+  function renderGallery() {
+    const ads = getFilteredAds();
+
+    if (ads.length === 0) {
+      gallery.classList.add('hidden');
+      emptyState.classList.remove('hidden');
+      if (allAds.length > 0) {
+        emptyState.querySelector('h2').textContent = 'No ads match this filter';
+        emptyState.querySelector('p').textContent = 'Try a different filter or capture more ads.';
+      }
       return;
     }
 
-    emptyState.style.display = 'none';
+    gallery.classList.remove('hidden');
+    emptyState.classList.add('hidden');
 
-    filtered.forEach(ad => {
-      const card = document.createElement('div');
-      card.className = 'ad-card';
-      card.innerHTML = \`
-        <img src=\"\${ad.image || 'placeholder.png'}\" alt=\"\${ad.name}\" />
-        <div class=\"ad-info\">
-          <h3>\${ad.name}</h3>
-          <p class=\"category\">\${ad.category}</p>
+    gallery.innerHTML = ads.map(ad => {
+      const hasPrompt = !!ad.generated_prompt;
+      const hasGenerated = !!ad.generated_image_url;
+      const badgeClass = hasGenerated ? 'badge-compared' : hasPrompt ? 'badge-prompt' : 'badge-pending';
+      const badgeText = hasGenerated ? 'Compared' : hasPrompt ? 'Prompt Ready' : 'Pending';
+
+      return `
+        <div class="ad-card" data-ad-id="${ad.id}">
+          <div class="ad-card-image">
+            ${ad.image_url
+              ? `<img src="${ad.image_url}" alt="${ad.advertiser_name || 'Ad'}" loading="lazy" />`
+              : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-2)">No image</div>`
+            }
+            <span class="ad-card-badge ${badgeClass}">${badgeText}</span>
+          </div>
+          <div class="ad-card-body">
+            <div class="ad-card-brand">${ad.advertiser_name || 'Unknown Brand'}</div>
+            <div class="ad-card-copy">${ad.ad_copy || 'No copy captured'}</div>
+            <div class="ad-card-meta">
+              <span class="ad-card-platform">${ad.platform || 'Unknown'}</span>
+              <span>${ad.started_running || formatDate(ad.created_at)}</span>
+            </div>
+          </div>
         </div>
-      \`;
-      card.addEventListener('click', () => openModal(ad));
-      gallery.appendChild(card);
+      `;
+    }).join('');
+
+    gallery.querySelectorAll('.ad-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const ad = allAds.find(a => a.id === card.dataset.adId);
+        if (ad) openModal(ad);
+      });
     });
   }
 
-  // ─── Open comparison modal ─────────────────────────────────────────
+  // ─── Open comparison modal ────────────────────────────────────────
   function openModal(ad) {
     selectedAd = ad;
-    modalBrand.textContent = ad.name || 'Unknown';
-    modalDate.textContent = new Date(ad.date).toLocaleDateString() || 'N/A';
-    modalOriginalImg.src = ad.image || 'placeholder.png';
-    modalOriginalCopy.textContent = ad.copy || 'No copy available';
-    
-    currentVersions = ad.versions || [];
-    renderVersions();
-    
-    modalOverlay.style.display = 'flex';
-  }
 
-  function renderVersions() {
-    if (currentVersions.length === 0) {
-      modalNoGenerated.style.display = 'block';
-      modalGeneratedImg.style.display = 'none';
-      return;
+    modalBrand.textContent = ad.advertiser_name || 'Unknown Brand';
+    modalDate.textContent = `Captured ${formatDate(ad.created_at)}`;
+
+    // Original ad
+    if (ad.image_url) {
+      modalOriginalImg.src = ad.image_url;
+      modalOriginalImg.classList.remove('hidden');
+    } else {
+      modalOriginalImg.classList.add('hidden');
+    }
+    modalOriginalCopy.textContent = ad.ad_copy || 'No ad copy captured';
+
+    // Generated version
+    if (ad.generated_image_url) {
+      modalGeneratedImg.src = ad.generated_image_url;
+      modalGeneratedImg.classList.remove('hidden');
+      modalNoGenerated.classList.add('hidden');
+    } else {
+      modalGeneratedImg.classList.add('hidden');
+      modalNoGenerated.classList.remove('hidden');
+    }
+    modalGeneratedNotes.textContent = ad.generation_notes || '';
+
+    // Prompt (editable textarea)
+    modalPrompt.value = ad.generated_prompt || '';
+
+    // Metadata
+    modalLibraryId.textContent = ad.library_id || '—';
+    modalPlatform.textContent = ad.platform || '—';
+    modalRunningDate.textContent = ad.started_running || '—';
+    modalStatus.textContent = ad.metadata?.status || '—';
+
+    // Reset status and creative direction
+    generateStatus.textContent = '';
+    generateImageBtn.disabled = false;
+    generateImageBtn.textContent = ad.generated_image_url ? '⚡ Regenerate Image' : '⚡ Generate Image';
+    regenerateBtn.disabled = false;
+    regenerateBtn.textContent = '↻ New Prompt';
+    creativeDirectionInput.value = '';
+
+    // Reset aspect ratio to default
+    setAspectRatio('1:1');
+
+    // Download button — show only if there's a generated image
+    if (ad.generated_image_url) {
+      downloadBtn.classList.remove('hidden');
+    } else {
+      downloadBtn.classList.add('hidden');
     }
 
-    const latest = currentVersions[currentVersions.length - 1];
-    modalGeneratedImg.src = latest.image || 'placeholder.png';
-    modalGeneratedNotes.textContent = latest.notes || '';
-    modalNoGenerated.style.display = 'none';
-    modalGeneratedImg.style.display = 'block';
+    // Reset feedback
+    feedbackInput.value = '';
+    // Show feedback section only if there's already a generated image to refine
+    if (ad.generated_image_url) {
+      feedbackSection.classList.remove('hidden');
+    } else {
+      feedbackSection.classList.add('hidden');
+    }
+
+    // Reset batch section
+    document.getElementById('batch-section').classList.add('hidden');
+    document.getElementById('modal-batch-btn').classList.remove('active');
+    document.getElementById('batch-template').value = '';
+    document.getElementById('batch-template').classList.add('hidden');
+    document.getElementById('batch-template-status').textContent = '';
+    document.getElementById('batch-step-refs').classList.add('hidden');
+    document.getElementById('batch-step-lists').classList.add('hidden');
+    document.getElementById('batch-step-generate').classList.add('hidden');
+    document.getElementById('batch-results').classList.add('hidden');
+    document.getElementById('batch-results-grid').innerHTML = '';
+    document.getElementById('batch-progress').classList.add('hidden');
+    document.getElementById('batch-cancel-btn').classList.add('hidden');
+    document.querySelectorAll('.batch-list-textarea').forEach(t => { t.value = ''; });
+    document.getElementById('ref-grid').innerHTML = '';
+    batchTemplate = '';
+    batchPlaceholders = {};
+    batchRunning = false;
+    batchCancelled = false;
+    // Keep referenceImages across ads — they're your product photos, not ad-specific
+
+    // Load version history
+    loadVersions(ad.id);
+
+    modalOverlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
   }
 
+  // ─── Close modal ──────────────────────────────────────────────────
   function closeModal() {
-    modalOverlay.style.display = 'none';
+    modalOverlay.classList.add('hidden');
+    document.body.style.overflow = '';
     selectedAd = null;
     currentVersions = [];
   }
 
-  // ─── Generate image from prompt ────────────────────────────────────
-  async function generateImage() {
-    if (!selectedAd) return;
+  // ─── Download image ───────────────────────────────────────────────
+  async function downloadImage() {
+    const url = modalGeneratedImg.src;
+    if (!url) return;
 
-    const prompt = promptInput.value.trim();
-    if (!prompt) {
-      alert('Please enter a prompt');
+    downloadBtn.textContent = '↓ Saving...';
+    downloadBtn.disabled = true;
+
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const ext = blob.type.includes('png') ? 'png' : 'jpg';
+      const brand = (selectedAd?.advertiser_name || 'chefly').replace(/[^a-z0-9]/gi, '-').toLowerCase();
+      const ts = new Date().toISOString().slice(0, 10);
+      const filename = `${brand}-${ts}-v${currentVersions.length || 1}.${ext}`;
+
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+
+      downloadBtn.textContent = '✓ Saved';
+      setTimeout(() => { downloadBtn.textContent = '↓ Download'; }, 2000);
+    } catch (err) {
+      console.error('Download failed:', err);
+      downloadBtn.textContent = '↓ Download';
+    } finally {
+      downloadBtn.disabled = false;
+    }
+  }
+
+  // ─── Load versions for an ad ──────────────────────────────────────
+  async function loadVersions(adId) {
+    try {
+      const versions = await supabaseRest(
+        `/rest/v1/generated_versions?saved_ad_id=eq.${adId}&select=*&order=created_at.desc`
+      );
+      currentVersions = versions || [];
+      renderVersions();
+    } catch (err) {
+      console.error('Failed to load versions:', err);
+      currentVersions = [];
+      renderVersions();
+    }
+  }
+
+  // ─── Save a new version ───────────────────────────────────────────
+  async function saveVersion(adId, imageUrl, prompt, creativeDirection, aspectRatio, userFeedback) {
+    try {
+      const result = await supabaseRest('/rest/v1/generated_versions', {
+        method: 'POST',
+        body: {
+          saved_ad_id: adId,
+          image_url: imageUrl,
+          prompt: prompt,
+          creative_direction: creativeDirection || null,
+          aspect_ratio: aspectRatio || '1:1',
+          user_feedback: userFeedback || null
+        }
+      });
+      // Reload versions to show the new one
+      await loadVersions(adId);
+    } catch (err) {
+      console.error('Failed to save version:', err);
+    }
+  }
+
+  // ─── Render version thumbnails ────────────────────────────────────
+  function renderVersions() {
+    if (currentVersions.length === 0) {
+      versionsSection.classList.add('hidden');
       return;
     }
 
-    loading.style.display = 'flex';
-    genBtn.disabled = true;
+    versionsSection.classList.remove('hidden');
+    versionsCount.textContent = `${currentVersions.length} version${currentVersions.length !== 1 ? 's' : ''}`;
+
+    versionsStrip.innerHTML = currentVersions.map((v, i) => {
+      const num = currentVersions.length - i;
+      const isActive = modalGeneratedImg.src === v.image_url;
+      const date = new Date(v.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      const ratio = v.aspect_ratio || '—';
+      const isRefined = !!v.user_feedback;
+      const refinedClass = isRefined ? ' refined' : '';
+      const label = isRefined ? `v${num} · ${ratio} · refined` : `v${num} · ${ratio}`;
+      return `
+        <div class="version-thumb${refinedClass} ${isActive ? 'active' : ''}" data-version-idx="${i}" title="${date} · ${ratio}${isRefined ? ' · feedback: ' + v.user_feedback.slice(0, 60) : ''} · ${v.rating || 'unrated'}">
+          <img src="${v.image_url}" alt="Version ${num}" loading="lazy" />
+          <span class="version-thumb-label">${label}</span>
+        </div>
+      `;
+    }).join('');
+
+    // Click to swap the displayed image + prompt
+    versionsStrip.querySelectorAll('.version-thumb').forEach(thumb => {
+      thumb.addEventListener('click', () => {
+        const idx = parseInt(thumb.dataset.versionIdx);
+        const v = currentVersions[idx];
+        if (!v) return;
+
+        modalGeneratedImg.src = v.image_url;
+        modalGeneratedImg.classList.remove('hidden');
+        modalNoGenerated.classList.add('hidden');
+        modalPrompt.value = v.prompt || '';
+        downloadBtn.classList.remove('hidden');
+
+        // Show feedback section now that we have a generated image
+        feedbackSection.classList.remove('hidden');
+
+        // Set the aspect ratio pill to match this version
+        if (v.aspect_ratio) {
+          setAspectRatio(v.aspect_ratio);
+        }
+
+        // Update active state
+        versionsStrip.querySelectorAll('.version-thumb').forEach(t => t.classList.remove('active'));
+        thumb.classList.add('active');
+      });
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // REGENERATE PROMPT — calls the Chefly Edge Function via Supabase
+  // ═══════════════════════════════════════════════════════════════════
+  async function regeneratePrompt() {
+    if (!selectedAd) return;
+
+    regenerateBtn.textContent = 'Generating prompt...';
+    regenerateBtn.disabled = true;
+    generateStatus.textContent = 'Calling Claude (Opus)...';
 
     try {
-      const response = await fetch('https://api.falai.com/v1/image/generation', {
+      const config = await getConfig();
+      const direction = creativeDirectionInput.value.trim();
+      const res = await fetch(`${config.supabaseUrl}/functions/v1/generate-ad-prompt`, {
         method: 'POST',
         headers: {
-          'Authorization': \`Key \${localStorage.getItem('falApiKey')}\`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.supabaseAnonKey}`
         },
         body: JSON.stringify({
-          model_name: FAL_MODEL,
-          prompt: prompt,
-          image_size: {
-            width: 1024,
-            height: 1024
-          }
+          saved_ad_id: selectedAd.id,
+          advertiser_name: selectedAd.advertiser_name,
+          ad_copy: selectedAd.ad_copy,
+          image_url: selectedAd.image_url,
+          media_type: selectedAd.media_type,
+          creative_direction: direction || undefined
         })
       });
 
-      if (!response.ok) {
-        throw new Error(\`Generation failed: \${response.statusText}\`);
+      const data = await safeJson(res);
+
+      if (data && data.prompt) {
+        // Update textarea with new prompt
+        modalPrompt.value = data.prompt;
+        // Update local state
+        selectedAd.generated_prompt = data.prompt;
+        const idx = allAds.findIndex(a => a.id === selectedAd.id);
+        if (idx >= 0) allAds[idx] = selectedAd;
+        updateStats();
+        renderGallery();
+        generateStatus.textContent = 'Prompt ready — edit it or hit Generate Image.';
+      } else {
+        throw new Error(data?.error || 'Empty response from Edge Function');
       }
-
-      const result = await response.json();
-      const imageUrl = result.images[0]?.url;
-
-      if (imageUrl) {
-        const version = {
-          image: imageUrl,
-          prompt: prompt,
-          notes: '',
-          timestamp: new Date().toISOString()
-        };
-
-        selectedAd.versions = selectedAd.versions || [];
-        selectedAd.versions.push(version);
-        currentVersions = selectedAd.versions;
-
-        localStorage.setItem('cheflyAds', JSON.stringify(allAds));
-        renderVersions();
-        promptInput.value = '';
-      }
-    } catch (e) {
-      console.error('Generation error:', e);
-      alert('Failed to generate image');
+    } catch (err) {
+      generateStatus.textContent = `Prompt error: ${err.message}`;
     } finally {
-      loading.style.display = 'none';
-      genBtn.disabled = false;
+      regenerateBtn.textContent = '↻ New Prompt';
+      regenerateBtn.disabled = false;
     }
   }
 
-  // ─── Refine image ──────────────────────────────────────────────────
-  async function refineImage() {
-    if (!selectedAd || currentVersions.length === 0) return;
+  // ═══════════════════════════════════════════════════════════════════
+  // REFINE PROMPT — sends current prompt + user feedback to Claude
+  // Claude makes surgical edits, then auto-generates a new image
+  // ═══════════════════════════════════════════════════════════════════
+  async function refineAndRegenerate() {
+    if (!selectedAd) return;
 
-    const notes = modalGeneratedNotes.value || '';
-    const latest = currentVersions[currentVersions.length - 1];
-    
-    // In a real refinement, you'd send the notes to an API
-    // For now, just update the notes
-    latest.notes = notes;
-    localStorage.setItem('cheflyAds', JSON.stringify(allAds));
-    alert('Notes saved');
-  }
+    const feedback = feedbackInput.value.trim();
+    if (!feedback) {
+      generateStatus.textContent = 'Type your feedback first — what should change?';
+      return;
+    }
 
-  // ─── Download version ──────────────────────────────────────────────
-  async function downloadVersion() {
-    if (!currentVersions.length) return;
-    
-    const latest = currentVersions[currentVersions.length - 1];
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      
-      const link = document.createElement('a');
-      link.href = canvas.toDataURL('image/png');
-      link.download = \`\${selectedAd.name}-\${Date.now()}.png\`;
-      link.click();
-    };
-    img.src = latest.image;
-  }
+    const currentPrompt = modalPrompt.value.trim();
+    if (!currentPrompt) {
+      generateStatus.textContent = 'No prompt to refine — generate one first.';
+      return;
+    }
 
-  // ─── Batch variations ──────────────────────────────────────────────
-  function setupBatchUI() {
-    // Template input
-    batchTemplateInput.addEventListener('input', (e) => {
-      batchTemplate = e.target.value;
-      updateBatchPlaceholders();
-    });
+    refineBtn.disabled = true;
+    refineBtn.textContent = 'Refining prompt...';
+    generateStatus.textContent = 'Sending feedback to Claude...';
 
-    // Ratio selector
-    batchRatioSelect.addEventListener('change', (e) => {
-      batchSelectedRatio = e.target.value;
-    });
+    try {
+      const config = await getConfig();
 
-    // Reference image upload
-    batchUploadZone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      batchUploadZone.classList.add('dragover');
-    });
-
-    batchUploadZone.addEventListener('dragleave', () => {
-      batchUploadZone.classList.remove('dragover');
-    });
-
-    batchUploadZone.addEventListener('drop', async (e) => {
-      e.preventDefault();
-      batchUploadZone.classList.remove('dragover');
-      
-      const files = e.dataTransfer.files;
-      for (let file of files) {
-        await addReferenceImage(file);
-      }
-    });
-
-    uploadInput.addEventListener('change', async (e) => {
-      const files = e.target.files;
-      for (let file of files) {
-        await addReferenceImage(file);
-      }
-    });
-
-    // Generate batch
-    batchGenerateBtn.addEventListener('click', generateBatchVariations);
-
-    // Cancel batch
-    batchCancelBtn.addEventListener('click', () => {
-      batchCancelled = true;
-    });
-  }
-
-  function updateBatchPlaceholders() {
-    const placeholders = batchTemplate.match(/\{(\w+)\}/g) || [];
-    batchPlaceholders = {};
-    placeholders.forEach(p => {
-      const key = p.slice(1, -1);
-      batchPlaceholders[key] = '';
-    });
-
-    batchPlaceholdersContainer.innerHTML = '';
-    Object.keys(batchPlaceholders).forEach(key => {
-      const row = document.createElement('div');
-      row.className = 'placeholder-row';
-      row.innerHTML = \`
-        <label>\${key}:</label>
-        <textarea placeholder=\"Enter \${key} values (one per line)\"></textarea>
-      \`;
-      
-      const textarea = row.querySelector('textarea');
-      textarea.addEventListener('input', (e) => {
-        batchPlaceholders[key] = e.target.value.split('\\n').filter(v => v.trim());
+      // Step 1: Call refine-prompt edge function
+      const res = await fetch(`${config.supabaseUrl}/functions/v1/refine-prompt`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.supabaseAnonKey}`
+        },
+        body: JSON.stringify({
+          current_prompt: currentPrompt,
+          user_feedback: feedback
+        })
       });
 
-      batchPlaceholdersContainer.appendChild(row);
-    });
+      const data = await safeJson(res);
+
+      if (!data || !data.refined_prompt) {
+        throw new Error(data?.error || 'Empty response from refine function');
+      }
+
+      // Step 2: Update the prompt textarea with refined version
+      modalPrompt.value = data.refined_prompt;
+      generateStatus.textContent = 'Prompt refined — now generating image...';
+
+      // Step 3: Auto-generate the image with the refined prompt
+      refineBtn.textContent = 'Generating image...';
+      await generateImageWithPrompt(data.refined_prompt, feedback);
+
+      // Clear the feedback input for next round
+      feedbackInput.value = '';
+
+    } catch (err) {
+      generateStatus.textContent = `Refine error: ${err.message}`;
+    } finally {
+      refineBtn.textContent = '↻ Refine & Regenerate';
+      refineBtn.disabled = false;
+    }
   }
 
-  async function addReferenceImage(file) {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64 = e.target.result;
-      const id = Date.now().toString();
-      
-      const refImage = {
-        id,
-        name: file.name,
-        label: file.name.replace(/\.[^.]+$/, ''),
-        publicUrl: base64,
-        filePath: \`reference-images/\${id}-\${file.name}\`
-      };
+  // ═══════════════════════════════════════════════════════════════════
+  // GENERATE IMAGE — calls fal.ai directly with nano-banana-2
+  // Shared between Generate Image button and Refine flow
+  // ═══════════════════════════════════════════════════════════════════
+  async function generateImageWithPrompt(prompt, userFeedback) {
+    if (!selectedAd) return;
 
-      referenceImages.push(refImage);
-      renderReferenceImageCard(refImage);
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function renderReferenceImageCard(refImage) {
-    const card = document.createElement('div');
-    card.className = 'ref-image-card';
-    card.innerHTML = \`
-      <img src=\"\${refImage.publicUrl}\" alt=\"\${refImage.label}\" />
-      <p>\${refImage.label}</p>
-      <button class=\"remove-ref\" data-id=\"\${refImage.id}\">Remove</button>
-    \`;
-
-    card.querySelector('.remove-ref').addEventListener('click', () => {
-      referenceImages = referenceImages.filter(r => r.id !== refImage.id);
-      card.remove();
-    });
-
-    batchReferenceImages.appendChild(card);
-  }
-
-  async function generateBatchVariations() {
-    if (!batchTemplate) {
-      alert('Please enter a template');
+    if (!prompt) {
+      generateStatus.textContent = 'No prompt — regenerate one first or type your own.';
       return;
     }
 
-    const totalValues = Object.values(batchPlaceholders).reduce((sum, arr) => Math.max(sum, arr.length), 0);
-    if (totalValues === 0) {
-      alert('Please add variable values');
+    const config = await getConfig();
+    if (!config.falApiKey) {
+      generateStatus.textContent = 'fal.ai API key not set — add it in extension settings.';
       return;
+    }
+
+    generateImageBtn.textContent = 'Generating...';
+    generateImageBtn.disabled = true;
+    generateStatus.textContent = `Submitting to fal.ai (${selectedAspectRatio})...`;
+
+    try {
+      const headers = {
+        'Authorization': 'Key ' + config.falApiKey,
+        'Content-Type': 'application/json'
+      };
+
+      // 1. Submit to queue
+      const submitRes = await fetch(`https://queue.fal.run/${FAL_MODEL}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          prompt,
+          num_images: 1,
+          aspect_ratio: selectedAspectRatio,
+          enable_safety_checker: false
+        })
+      });
+
+      const submitData = await safeJson(submitRes);
+      if (!submitData || !submitData.request_id) {
+        throw new Error('Failed to queue request — no request_id returned');
+      }
+
+      const requestId = submitData.request_id;
+      generateStatus.textContent = `Queued (${requestId.slice(0, 8)}...) — polling...`;
+
+      // 2. Poll for completion
+      let imageUrl = null;
+      const maxAttempts = 60; // 90 seconds max
+      for (let i = 0; i < maxAttempts; i++) {
+        await new Promise(r => setTimeout(r, 1500));
+
+        const statusRes = await fetch(
+          `https://queue.fal.run/${FAL_MODEL}/requests/${requestId}/status`,
+          { headers }
+        );
+        const statusData = await safeJson(statusRes);
+
+        if (!statusData) continue;
+
+        if (statusData.status === 'COMPLETED') {
+          generateStatus.textContent = 'Completed — fetching result...';
+          break;
+        } else if (statusData.status === 'FAILED') {
+          throw new Error('fal.ai generation failed');
+        } else {
+          generateStatus.textContent = `Status: ${statusData.status} (${i + 1}/${maxAttempts})...`;
+        }
+      }
+
+      // 3. Fetch the result
+      const resultRes = await fetch(
+        `https://queue.fal.run/${FAL_MODEL}/requests/${requestId}`,
+        { headers }
+      );
+      const resultData = await safeJson(resultRes);
+
+      if (resultData && resultData.images && resultData.images.length > 0) {
+        imageUrl = resultData.images[0].url;
+      } else {
+        throw new Error('No image in fal.ai result');
+      }
+
+      // 4. Show the generated image
+      modalGeneratedImg.src = imageUrl;
+      modalGeneratedImg.classList.remove('hidden');
+      modalNoGenerated.classList.add('hidden');
+
+      // 5. Save image URL back to Supabase
+      try {
+        await supabaseRest(`/rest/v1/saved_ads?id=eq.${selectedAd.id}`, {
+          method: 'PATCH',
+          body: {
+            generated_image_url: imageUrl,
+            image_generated_at: new Date().toISOString(),
+            generated_prompt: prompt
+          }
+        });
+      } catch (dbErr) {
+        console.error('Failed to save image URL to DB:', dbErr);
+      }
+
+      // 6. Save as version (with feedback if this was a refine)
+      const direction = creativeDirectionInput.value.trim();
+      await saveVersion(selectedAd.id, imageUrl, prompt, direction, selectedAspectRatio, userFeedback || null);
+
+      // 7. Show download + feedback sections
+      downloadBtn.classList.remove('hidden');
+      feedbackSection.classList.remove('hidden');
+
+      // 8. Update local state
+      selectedAd.generated_image_url = imageUrl;
+      selectedAd.generated_prompt = prompt;
+      const idx = allAds.findIndex(a => a.id === selectedAd.id);
+      if (idx >= 0) allAds[idx] = selectedAd;
+      updateStats();
+      renderGallery();
+
+      const statusLabel = userFeedback ? 'refined' : 'saved';
+      generateStatus.textContent = `Done — v${currentVersions.length} ${statusLabel} (${selectedAspectRatio}).`;
+
+    } catch (err) {
+      generateStatus.textContent = `Error: ${err.message}`;
+    } finally {
+      generateImageBtn.textContent = '⚡ Regenerate Image';
+      generateImageBtn.disabled = false;
+    }
+  }
+
+  // ─── Generate Image (button click — no feedback) ──────────────────
+  async function generateImage() {
+    const prompt = modalPrompt.value.trim();
+    await generateImageWithPrompt(prompt, null);
+  }
+
+  // ─── Delete ad (direct) ───────────────────────────────────────────
+  async function deleteSelectedAd() {
+    if (!selectedAd) return;
+    if (!confirm(`Delete this ${selectedAd.advertiser_name || ''} ad? This can't be undone.`)) return;
+
+    const btn = document.getElementById('modal-delete-btn');
+    btn.textContent = 'Deleting...';
+    btn.disabled = true;
+
+    try {
+      const config = await getConfig();
+      await fetch(`${config.supabaseUrl}/rest/v1/saved_ads?id=eq.${selectedAd.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': config.supabaseAnonKey,
+          'Authorization': `Bearer ${config.supabaseAnonKey}`
+        }
+      });
+
+      allAds = allAds.filter(a => a.id !== selectedAd.id);
+      closeModal();
+      updateStats();
+      renderGallery();
+    } catch (err) {
+      alert(`Delete failed: ${err.message}`);
+      btn.textContent = 'Delete';
+      btn.disabled = false;
+    }
+  }
+
+  // ─── Copy prompt ──────────────────────────────────────────────────
+  function copyPrompt() {
+    const text = modalPrompt.value;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copy-prompt-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+    });
+  }
+
+  // ─── Format date ──────────────────────────────────────────────────
+  function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    try {
+      return new Date(dateStr).toLocaleDateString('en-GB', {
+        day: 'numeric', month: 'short', year: 'numeric'
+      });
+    } catch { return dateStr; }
+  }
+
+  // ─── Aspect ratio helper ─────────────────────────────────────────
+  function setAspectRatio(ratio) {
+    selectedAspectRatio = ratio;
+    document.querySelectorAll('.aspect-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.ratio === ratio);
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // REFERENCE IMAGE UPLOAD — upload meal photos to Supabase Storage
+  // ═══════════════════════════════════════════════════════════════════
+
+  async function uploadReferenceImage(file) {
+    const config = await getConfig();
+    if (!config.supabaseUrl || !config.supabaseAnonKey) {
+      throw new Error('Supabase not configured');
+    }
+
+    // Generate unique filename
+    const ext = file.name.split('.').pop().toLowerCase();
+    const safeName = file.name.replace(/[^a-z0-9.-]/gi, '-').toLowerCase();
+    const timestamp = Date.now();
+    const filePath = `meals/${timestamp}-${safeName}`;
+
+    // Upload to Supabase Storage
+    const uploadRes = await fetch(
+      `${config.supabaseUrl}/storage/v1/object/reference-images/${filePath}`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${config.supabaseAnonKey}`,
+          'Content-Type': file.type
+        },
+        body: file
+      }
+    );
+
+    if (!uploadRes.ok) {
+      const errText = await uploadRes.text();
+      throw new Error(`Upload failed: ${errText}`);
+    }
+
+    // Get public URL
+    const publicUrl = `${config.supabaseUrl}/storage/v1/object/public/reference-images/${filePath}`;
+
+    // Save metadata to reference_images table
+    const result = await supabaseRest('/rest/v1/reference_images', {
+      method: 'POST',
+      body: {
+        name: file.name,
+        file_path: filePath,
+        public_url: publicUrl,
+        category: 'meal',
+        mime_type: file.type,
+        file_size: file.size
+      }
+    });
+
+    const record = result?.[0] || { id: crypto.randomUUID() };
+
+    return {
+      id: record.id,
+      name: file.name,
+      label: file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '),
+      publicUrl,
+      filePath
+    };
+  }
+
+  async function handleRefFileUpload(files) {
+    const grid = document.getElementById('ref-grid');
+
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) continue;
+
+      // Create preview card immediately with loading state
+      const tempId = `ref-temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const previewUrl = URL.createObjectURL(file);
+
+      const cardHtml = `
+        <div class="ref-card" data-ref-id="${tempId}" id="ref-card-${tempId}">
+          <div class="ref-card-image">
+            <img src="${previewUrl}" alt="${file.name}" />
+          </div>
+          <div class="ref-card-uploading"></div>
+          <div class="ref-card-meta">
+            <div class="ref-card-name">${file.name}</div>
+            <input class="ref-card-label" type="text" placeholder="e.g. smoky chipotle chicken" data-ref-id="${tempId}" />
+          </div>
+          <button class="ref-card-remove" data-ref-id="${tempId}">x</button>
+        </div>
+      `;
+      grid.insertAdjacentHTML('beforeend', cardHtml);
+
+      try {
+        const ref = await uploadReferenceImage(file);
+        ref.label = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+        referenceImages.push(ref);
+
+        // Update card: remove loading, set real ID
+        const card = document.getElementById(`ref-card-${tempId}`);
+        if (card) {
+          card.dataset.refId = ref.id;
+          card.id = `ref-card-${ref.id}`;
+          const uploading = card.querySelector('.ref-card-uploading');
+          if (uploading) uploading.remove();
+          const labelInput = card.querySelector('.ref-card-label');
+          if (labelInput) {
+            labelInput.dataset.refId = ref.id;
+            labelInput.value = ref.label;
+          }
+          const removeBtn = card.querySelector('.ref-card-remove');
+          if (removeBtn) removeBtn.dataset.refId = ref.id;
+        }
+      } catch (err) {
+        console.error('Upload failed:', err);
+        const card = document.getElementById(`ref-card-${tempId}`);
+        if (card) {
+          const uploading = card.querySelector('.ref-card-uploading');
+          if (uploading) {
+            uploading.className = 'batch-result-error';
+            uploading.textContent = 'Upload failed';
+          }
+        }
+      }
+
+      URL.revokeObjectURL(previewUrl);
+    }
+  }
+
+  function removeReferenceImage(refId) {
+    referenceImages = referenceImages.filter(r => r.id !== refId);
+    const card = document.querySelector(`.ref-card[data-ref-id="${refId}"]`);
+    if (card) card.remove();
+  }
+
+  function renderExistingRefs() {
+    const grid = document.getElementById('ref-grid');
+    grid.innerHTML = referenceImages.map(ref => `
+      <div class="ref-card" data-ref-id="${ref.id}" id="ref-card-${ref.id}">
+        <div class="ref-card-image">
+          <img src="${ref.publicUrl}" alt="${ref.name}" loading="lazy" />
+        </div>
+        <div class="ref-card-meta">
+          <div class="ref-card-name">${ref.name}</div>
+          <input class="ref-card-label" type="text" value="${ref.label}" placeholder="e.g. smoky chipotle chicken" data-ref-id="${ref.id}" />
+        </div>
+        <button class="ref-card-remove" data-ref-id="${ref.id}">x</button>
+      </div>
+    `).join('');
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // BATCH VARIATIONS — templatize, combine, generate at scale
+  // ═══════════════════════════════════════════════════════════════════
+
+  // Toggle batch section visibility
+  function toggleBatch() {
+    const section = document.getElementById('batch-section');
+    const btn = document.getElementById('modal-batch-btn');
+    const isVisible = !section.classList.contains('hidden');
+
+    if (isVisible) {
+      section.classList.add('hidden');
+      btn.classList.remove('active');
+    } else {
+      section.classList.remove('hidden');
+      btn.classList.add('active');
+      // If we already have a prompt, show the templatize button as ready
+      const prompt = modalPrompt.value.trim();
+      if (!prompt) {
+        document.getElementById('batch-template-status').textContent = 'Generate a prompt first, then create a template from it.';
+      }
+    }
+  }
+
+  // Call Edge Function to templatize the prompt
+  async function templatizePrompt() {
+    const prompt = modalPrompt.value.trim();
+    if (!prompt) {
+      document.getElementById('batch-template-status').textContent = 'No prompt to templatize. Generate one first.';
+      return;
+    }
+
+    const btn = document.getElementById('batch-templatize-btn');
+    const statusEl = document.getElementById('batch-template-status');
+    const templateArea = document.getElementById('batch-template');
+
+    btn.disabled = true;
+    btn.textContent = 'Templatizing...';
+    statusEl.textContent = 'Sending prompt to Claude for template extraction...';
+
+    try {
+      const config = await getConfig();
+      const res = await fetch(`${config.supabaseUrl}/functions/v1/templatize-prompt`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.supabaseAnonKey}`
+        },
+        body: JSON.stringify({ prompt })
+      });
+
+      const data = await safeJson(res);
+
+      if (!data || !data.template) {
+        throw new Error(data?.error || 'Empty response from templatize function');
+      }
+
+      batchTemplate = data.template;
+      batchPlaceholders = data.placeholders || {};
+
+      // Show the template
+      templateArea.value = batchTemplate;
+      templateArea.classList.remove('hidden');
+
+      // Pre-fill variable lists with original values
+      Object.entries(batchPlaceholders).forEach(([key, value]) => {
+        const textarea = document.querySelector(`.batch-list-textarea[data-placeholder="${key}"]`);
+        if (textarea && value) {
+          textarea.value = value;
+        }
+      });
+
+      // Show steps 2, 3, and 4
+      document.getElementById('batch-step-refs').classList.remove('hidden');
+      document.getElementById('batch-step-lists').classList.remove('hidden');
+      document.getElementById('batch-step-generate').classList.remove('hidden');
+
+      // Update combination count
+      updateBatchComboCount();
+
+      const placeholderCount = Object.keys(batchPlaceholders).length;
+      statusEl.textContent = `Template created with ${placeholderCount} placeholder${placeholderCount !== 1 ? 's' : ''}. Edit the lists below and generate.`;
+
+    } catch (err) {
+      statusEl.textContent = `Error: ${err.message}`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Create Template from Prompt';
+    }
+  }
+
+  // Get lists from textareas, splitting by newline and using --- as separator for multi-line items
+  function getBatchLists() {
+    const lists = {};
+    document.querySelectorAll('.batch-list-textarea').forEach(textarea => {
+      const key = textarea.dataset.placeholder;
+      const raw = textarea.value.trim();
+      if (!raw) return;
+
+      // For MEAL_DESCRIPTION, split by blank lines (double newline) since descriptions are long
+      if (key === 'MEAL_DESCRIPTION') {
+        lists[key] = raw.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+      } else {
+        lists[key] = raw.split('\n').map(s => s.trim()).filter(Boolean);
+      }
+    });
+    return lists;
+  }
+
+  // Calculate all combinations
+  function getCombinations(lists) {
+    const keys = Object.keys(lists).filter(k => lists[k].length > 0);
+    if (keys.length === 0) return [];
+
+    // Start with the first list
+    let combos = lists[keys[0]].map(val => ({ [keys[0]]: val }));
+
+    // Cross-product with remaining lists
+    for (let i = 1; i < keys.length; i++) {
+      const key = keys[i];
+      const values = lists[key];
+      const newCombos = [];
+      for (const combo of combos) {
+        for (const val of values) {
+          newCombos.push({ ...combo, [key]: val });
+        }
+      }
+      combos = newCombos;
+    }
+
+    return combos;
+  }
+
+  // Update combination count display
+  function updateBatchComboCount() {
+    const lists = getBatchLists();
+    const combos = getCombinations(lists);
+    const multiplier = batchSelectedRatio === 'both' ? 2 : 1;
+    const total = combos.length * multiplier;
+
+    document.getElementById('batch-combo-count').textContent = total;
+    document.getElementById('batch-generate-btn').disabled = total === 0;
+  }
+
+  // Apply a combination to the template
+  function applyTemplate(template, combo) {
+    let result = template;
+    Object.entries(combo).forEach(([key, value]) => {
+      result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value);
+    });
+    return result;
+  }
+
+  // Generate a single image via fal.ai (reuses existing pattern)
+  // referenceUrl is optional — if provided, used as image_url for img2img guidance
+  async function generateSingleBatchImage(prompt, ratio, referenceUrl) {
+    const config = await getConfig();
+    if (!config.falApiKey) throw new Error('fal.ai API key not set');
+
+    const headers = {
+      'Authorization': 'Key ' + config.falApiKey,
+      'Content-Type': 'application/json'
+    };
+
+    const payload = {
+      prompt,
+      num_images: 1,
+      aspect_ratio: ratio,
+      enable_safety_checker: false
+    };
+
+    // If we have a reference image, pass it for image-guided generation
+    if (referenceUrl) {
+      payload.image_url = referenceUrl;
+    }
+
+    // Submit
+    const submitRes = await fetch(`https://queue.fal.run/${FAL_MODEL}`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    });
+
+    const submitData = await safeJson(submitRes);
+    if (!submitData?.request_id) throw new Error('No request_id');
+
+    // Poll
+    for (let i = 0; i < 60; i++) {
+      await new Promise(r => setTimeout(r, 1500));
+      const statusRes = await fetch(
+        `https://queue.fal.run/${FAL_MODEL}/requests/${submitData.request_id}/status`,
+        { headers }
+      );
+      const statusData = await safeJson(statusRes);
+      if (statusData?.status === 'COMPLETED') break;
+      if (statusData?.status === 'FAILED') throw new Error('Generation failed');
+    }
+
+    // Fetch result
+    const resultRes = await fetch(
+      `https://queue.fal.run/${FAL_MODEL}/requests/${submitData.request_id}`,
+      { headers }
+    );
+    const resultData = await safeJson(resultRes);
+    if (resultData?.images?.[0]?.url) return resultData.images[0].url;
+    throw new Error('No image in result');
+  }
+
+  // Run the full batch
+  async function runBatch() {
+    if (batchRunning) return;
+
+    const template = document.getElementById('batch-template').value.trim();
+    if (!template) return;
+
+    const lists = getBatchLists();
+    const combos = getCombinations(lists);
+    if (combos.length === 0) return;
+
+    const ratios = batchSelectedRatio === 'both' ? ['4:5', '9:16'] : [batchSelectedRatio];
+
+    // Build reference image lookup: match by label to MEAL_NAME
+    // Users label their uploaded photos (e.g. "smoky chipotle chicken")
+    // and we match that to the MEAL_NAME variable value
+    const refLookup = {};
+    referenceImages.forEach(ref => {
+      // Update label from the input field in case user edited it
+      const labelInput = document.querySelector(`.ref-card-label[data-ref-id="${ref.id}"]`);
+      if (labelInput) ref.label = labelInput.value.trim();
+      if (ref.label) {
+        refLookup[ref.label.toLowerCase()] = ref.publicUrl;
+      }
+    });
+
+    // Build all jobs
+    const jobs = [];
+    for (const combo of combos) {
+      for (const ratio of ratios) {
+        // Try to match a reference image to this combo's meal name
+        const mealName = (combo.MEAL_NAME || '').toLowerCase();
+        const refUrl = refLookup[mealName] || (referenceImages.length === 1 ? referenceImages[0].publicUrl : null);
+        jobs.push({ combo, ratio, prompt: applyTemplate(template, combo), referenceUrl: refUrl });
+      }
     }
 
     batchRunning = true;
     batchCancelled = false;
-    batchGenerateBtn.disabled = true;
-    batchStatus.style.display = 'block';
-    batchOutputContainer.style.display = 'block';
-    batchOutputGrid.innerHTML = '';
 
-    for (let i = 0; i < totalValues; i++) {
-      if (batchCancelled) break;
+    const generateBtn = document.getElementById('batch-generate-btn');
+    const cancelBtn = document.getElementById('batch-cancel-btn');
+    const progressEl = document.getElementById('batch-progress');
+    const progressFill = document.getElementById('batch-progress-fill');
+    const progressText = document.getElementById('batch-progress-text');
+    const resultsEl = document.getElementById('batch-results');
+    const resultsGrid = document.getElementById('batch-results-grid');
+    const resultsCount = document.getElementById('batch-results-count');
 
-      // Build prompt
-      let prompt = batchTemplate;
-      Object.entries(batchPlaceholders).forEach(([key, values]) => {
-        const value = values[i % values.length] || values[0];
-        prompt = prompt.replace(\`{\${key}}\`, value);
+    generateBtn.disabled = true;
+    generateBtn.textContent = 'Running...';
+    cancelBtn.classList.remove('hidden');
+    progressEl.classList.remove('hidden');
+    resultsEl.classList.remove('hidden');
+
+    // Pre-render result cards as loading
+    resultsGrid.innerHTML = jobs.map((job, i) => {
+      const ratioClass = job.ratio === '9:16' ? 'ratio-9-16' : '';
+      const varsHtml = Object.entries(job.combo)
+        .map(([k, v]) => `<strong>${k}:</strong> ${v.slice(0, 40)}${v.length > 40 ? '...' : ''}`)
+        .join('<br>');
+      return `
+        <div class="batch-result-card" data-job-idx="${i}">
+          <div class="batch-result-image ${ratioClass}" id="batch-img-${i}">
+            <div class="batch-result-loading"></div>
+          </div>
+          <div class="batch-result-meta">
+            <div class="batch-result-vars">${varsHtml}<br><strong>ratio:</strong> ${job.ratio}</div>
+          </div>
+          <div class="batch-result-rating">
+            <button class="batch-rating-btn" data-rating="great" data-idx="${i}">Great</button>
+            <button class="batch-rating-btn" data-rating="good" data-idx="${i}">Good</button>
+            <button class="batch-rating-btn" data-rating="needs-work" data-idx="${i}">Meh</button>
+            <button class="batch-rating-btn" data-rating="slop" data-idx="${i}">Slop</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Wire up rating buttons
+    resultsGrid.querySelectorAll('.batch-rating-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = btn.dataset.idx;
+        const card = resultsGrid.querySelector(`[data-job-idx="${idx}"]`);
+        card.querySelectorAll('.batch-rating-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
       });
+    });
 
-      // Generate image
+    // Process jobs (2 concurrent to avoid rate limits)
+    let completed = 0;
+    const concurrency = 2;
+    const results = new Array(jobs.length);
+
+    async function processJob(idx) {
+      if (batchCancelled) return;
+      const job = jobs[idx];
+      const imgContainer = document.getElementById(`batch-img-${idx}`);
+
       try {
-        batchProgressText.textContent = \`Generating \${i + 1} of \${totalValues}...\`;
-        batchProgressBar.style.width = \`\${(i / totalValues) * 100}%\`;
+        const imageUrl = await generateSingleBatchImage(job.prompt, job.ratio, job.referenceUrl);
+        results[idx] = { success: true, imageUrl };
+        imgContainer.innerHTML = `<img src="${imageUrl}" alt="Variation ${idx + 1}" loading="lazy" />`;
 
-        const response = await fetch('https://api.falai.com/v1/image/generation', {
-          method: 'POST',
-          headers: {
-            'Authorization': \`Key \${localStorage.getItem('falApiKey')}\`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            model_name: FAL_MODEL,
-            prompt: prompt,
-            image_size: {
-              width: batchSelectedRatio === '1:1' ? 1024 : 1280,
-              height: batchSelectedRatio === '1:1' ? 1024 : 1024
-            }
-          })
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          const imageUrl = result.images[0]?.url;
-
-          if (imageUrl) {
-            const img = document.createElement('img');
-            img.src = imageUrl;
-            img.alt = prompt;
-            img.title = prompt;
-            batchOutputGrid.appendChild(img);
+        // Save as generated_version
+        if (selectedAd) {
+          const comboStr = Object.entries(job.combo).map(([k, v]) => `${k}: ${v.slice(0, 50)}`).join(' | ');
+          try {
+            await saveVersion(selectedAd.id, imageUrl, job.prompt, `batch: ${comboStr}`, job.ratio, null);
+          } catch (e) {
+            console.error('Failed to save batch version:', e);
           }
         }
-      } catch (e) {
-        console.error(\`Generation \${i + 1} failed:\`, e);
+      } catch (err) {
+        results[idx] = { success: false, error: err.message };
+        imgContainer.innerHTML = `<div class="batch-result-error">${err.message}</div>`;
       }
+
+      completed++;
+      const pct = Math.round((completed / jobs.length) * 100);
+      progressFill.style.width = `${pct}%`;
+      progressText.textContent = `${completed} / ${jobs.length}`;
+      resultsCount.textContent = `${completed} of ${jobs.length} generated`;
     }
 
+    // Run with controlled concurrency
+    const queue = [...Array(jobs.length).keys()];
+    const workers = [];
+    for (let w = 0; w < concurrency; w++) {
+      workers.push((async () => {
+        while (queue.length > 0 && !batchCancelled) {
+          const idx = queue.shift();
+          if (idx !== undefined) await processJob(idx);
+        }
+      })());
+    }
+
+    await Promise.all(workers);
+
+    // Done
     batchRunning = false;
-    batchGenerateBtn.disabled = false;
-    batchProgressText.textContent = 'Complete';
-    batchProgressBar.style.width = '100%';
+    generateBtn.disabled = false;
+    generateBtn.textContent = 'Generate All Variations';
+    cancelBtn.classList.add('hidden');
+
+    const successCount = results.filter(r => r?.success).length;
+    progressText.textContent = batchCancelled
+      ? `Cancelled. ${successCount} of ${jobs.length} completed.`
+      : `Done. ${successCount} of ${jobs.length} succeeded.`;
   }
 
-  // ─── Filter ads ────────────────────────────────────────────────────
-  filterBtns.forEach(btn => {
+  function cancelBatch() {
+    batchCancelled = true;
+  }
+
+  // ─── Event listeners ──────────────────────────────────────────────
+
+  // Aspect ratio pills
+  document.querySelectorAll('.aspect-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      setAspectRatio(pill.dataset.ratio);
+    });
+  });
+
+  // Filter buttons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      filterBtns.forEach(b => b.classList.remove('active'));
+      document.querySelector('.filter-btn.active').classList.remove('active');
       btn.classList.add('active');
-      currentFilter = btn.dataset.filter || 'all';
+      currentFilter = btn.dataset.filter;
       renderGallery();
     });
   });
 
-  // ─── Aspect ratio ──────────────────────────────────────────────────
-  aspectRatioSelect.addEventListener('change', (e) => {
-    selectedAspectRatio = e.target.value;
-  });
+  // Refresh
+  refreshBtn.addEventListener('click', loadAds);
 
-  // ─── Modal event listeners ─────────────────────────────────────────
-  openModalBtn.addEventListener('click', () => {
-    if (gallery.children.length > 0) {
-      openModal(allAds[0]);
-    }
-  });
-
-  closeModalBtn.addEventListener('click', closeModal);
-  genBtn.addEventListener('click', generateImage);
-  refineBtn.addEventListener('click', refineImage);
-  downloadBtn.addEventListener('click', downloadVersion);
-
+  // Modal close
+  document.getElementById('modal-close').addEventListener('click', closeModal);
   modalOverlay.addEventListener('click', (e) => {
     if (e.target === modalOverlay) closeModal();
   });
-
-  refreshBtn.addEventListener('click', () => {
-    loadAds();
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
   });
+
+  // === THE THREE KEY BUTTONS ===
+  // Regenerate Prompt = Claude via Edge Function (Chefly brand DNA)
+  regenerateBtn.addEventListener('click', regeneratePrompt);
+  // Generate Image = fal.ai nano-banana-2 (uses whatever is in the textarea)
+  generateImageBtn.addEventListener('click', generateImage);
+  // Refine & Regenerate = feedback → Claude edits prompt → auto-generate
+  refineBtn.addEventListener('click', refineAndRegenerate);
+
+  // Download
+  downloadBtn.addEventListener('click', downloadImage);
+
+  // Batch Variations
+  document.getElementById('modal-batch-btn').addEventListener('click', toggleBatch);
+  document.getElementById('batch-templatize-btn').addEventListener('click', templatizePrompt);
+  document.getElementById('batch-generate-btn').addEventListener('click', runBatch);
+  document.getElementById('batch-cancel-btn').addEventListener('click', cancelBatch);
+
+  // Reference image upload
+  const refDropzone = document.getElementById('ref-dropzone');
+  const refFileInput = document.getElementById('ref-file-input');
+
+  refDropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    refDropzone.classList.add('dragover');
+  });
+  refDropzone.addEventListener('dragleave', () => {
+    refDropzone.classList.remove('dragover');
+  });
+  refDropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    refDropzone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handleRefFileUpload(e.dataTransfer.files);
+  });
+  refFileInput.addEventListener('change', () => {
+    if (refFileInput.files.length) handleRefFileUpload(refFileInput.files);
+    refFileInput.value = '';
+  });
+
+  // Delegate remove clicks on ref cards
+  document.getElementById('ref-grid').addEventListener('click', (e) => {
+    const removeBtn = e.target.closest('.ref-card-remove');
+    if (removeBtn) removeReferenceImage(removeBtn.dataset.refId);
+  });
+
+  // Delegate label edits on ref cards
+  document.getElementById('ref-grid').addEventListener('input', (e) => {
+    if (e.target.classList.contains('ref-card-label')) {
+      const refId = e.target.dataset.refId;
+      const ref = referenceImages.find(r => r.id === refId);
+      if (ref) ref.label = e.target.value.trim();
+    }
+  });
+
+  // Batch ratio pills
+  document.querySelectorAll('.batch-ratio-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.batch-ratio-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      batchSelectedRatio = pill.dataset.ratio;
+      updateBatchComboCount();
+    });
+  });
+
+  // Update combo count when lists change
+  document.querySelectorAll('.batch-list-textarea').forEach(textarea => {
+    textarea.addEventListener('input', updateBatchComboCount);
+  });
+
+  // Copy & other actions
+  document.getElementById('copy-prompt-btn').addEventListener('click', copyPrompt);
+  document.getElementById('modal-open-ad-btn').addEventListener('click', () => {
+    if (selectedAd?.page_url) window.open(selectedAd.page_url, '_blank');
+  });
+  document.getElementById('modal-delete-btn').addEventListener('click', deleteSelectedAd);
 
   // ─── Init ─────────────────────────────────────────────────────────
   loadAds();
