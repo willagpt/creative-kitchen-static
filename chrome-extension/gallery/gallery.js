@@ -1664,93 +1664,42 @@
       const mealTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_NAME"]');
       const mealNames = mealTextarea ? mealTextarea.value.trim().split('\n').map(s => s.trim()).filter(Boolean) : [];
 
-      for (let i = 0; i < refsWithImages.length; i++) {
-        const ref = refsWithImages[i];
+      // Build meal names from labels (or from MEAL_NAME textarea)
+      const names = refsWithImages.map((ref, i) => {
         const labelInput = document.querySelector(`.ref-card-label[data-ref-id="${ref.id}"]`);
-        const label = labelInput ? labelInput.value.trim() : (ref.label || `Meal ${i + 1}`);
-
-        contentBlocks.push({ type: 'text', text: `Photo ${i + 1}: "${label}"` });
-        contentBlocks.push({
-          type: 'image',
-          source: { type: 'base64', media_type: ref.media_type || 'image/jpeg', data: ref.base64 }
-        });
-      }
-
-      contentBlocks.push({
-        type: 'text',
-        text: `Describe each meal photo above in a single rich paragraph per photo. For each, describe EXACTLY what you see: the specific plating, proteins, sides, garnishes, sauce placement, colours, textures, and any steam or sheen. 40 to 80 words per description. Make it appetising and specific to the actual photo. Do NOT describe a generic version of the dish.
-
-Output ONLY valid JSON in this format:
-{"descriptions": ["description for photo 1", "description for photo 2"]}
-
-No markdown, no code fences, no explanation.`
+        return labelInput ? labelInput.value.trim() : (ref.label || `Meal ${i + 1}`);
       });
+      const refImages = refsWithImages.map((ref, i) => ({
+        meal_index: i, base64: ref.base64, media_type: ref.media_type || 'image/jpeg'
+      }));
 
-      const res = await fetch(`https://api.anthropic.com/v1/messages`, {
+      // Use the generate-variables Edge Function (it has the Claude API key)
+      // Send empty original_placeholders so no stale examples leak through
+      const res = await fetch(`${config.supabaseUrl}/functions/v1/generate-variables`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': config.claudeApiKey || Deno?.env?.get?.('CLAUDE_API_KEY') || '',
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
+          'Authorization': `Bearer ${config.supabaseAnonKey}`
         },
         body: JSON.stringify({
-          model: 'claude-opus-4-20250514',
-          max_tokens: 2048,
-          messages: [{ role: 'user', content: contentBlocks }]
+          meal_names: names,
+          original_placeholders: {},
+          reference_images: refImages,
+          brand_guidelines: brandGuidelinesText || undefined
         })
       });
 
-      if (!res.ok) {
-        // Fallback: use the Edge Function instead (it has the API key)
-        console.log('[describe] Direct API call failed, falling back to generate-variables Edge Function...');
-        const names = refsWithImages.map((ref, i) => {
-          const labelInput = document.querySelector(`.ref-card-label[data-ref-id="${ref.id}"]`);
-          return labelInput ? labelInput.value.trim() : (ref.label || `Meal ${i + 1}`);
-        });
-        const refImages = refsWithImages.map((ref, i) => ({
-          meal_index: i, base64: ref.base64, media_type: ref.media_type || 'image/jpeg'
-        }));
-
-        const efRes = await fetch(`${config.supabaseUrl}/functions/v1/generate-variables`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${config.supabaseAnonKey}`
-          },
-          body: JSON.stringify({
-            meal_names: names,
-            original_placeholders: {},
-            reference_images: refImages,
-            brand_guidelines: brandGuidelinesText || undefined
-          })
-        });
-
-        const efData = await safeJson(efRes);
-        if (efData?.variables?.meals) {
-          const descriptions = efData.variables.meals.map(m => m.MEAL_DESCRIPTION);
-          const descTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_DESCRIPTION"]');
-          if (descTextarea) {
-            descTextarea.value = descriptions.join('\n\n');
-            console.log('[describe] MEAL_DESCRIPTION filled from Edge Function:', descriptions.map(d => d.slice(0, 60) + '...'));
-          }
-          statusEl.textContent = `Described ${descriptions.length} meal${descriptions.length !== 1 ? 's' : ''} from photos. Check the descriptions below.`;
-        } else {
-          throw new Error(efData?.error || 'No descriptions returned');
-        }
-      } else {
-        const data = await res.json();
-        const rawText = data.content?.[0]?.text || '';
-        const cleanJson = rawText.replace(/^```json\n?/i, '').replace(/\n?```$/i, '').trim();
-        const parsed = JSON.parse(cleanJson);
-        const descriptions = parsed.descriptions || [];
-
+      const data = await safeJson(res);
+      if (data?.variables?.meals) {
+        const descriptions = data.variables.meals.map(m => m.MEAL_DESCRIPTION);
         const descTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_DESCRIPTION"]');
-        if (descTextarea && descriptions.length > 0) {
+        if (descTextarea) {
           descTextarea.value = descriptions.join('\n\n');
-          console.log('[describe] MEAL_DESCRIPTION filled from direct API:', descriptions.map(d => d.slice(0, 60) + '...'));
+          console.log('[describe] MEAL_DESCRIPTION filled from photo:', descriptions.map(d => d.slice(0, 80) + '...'));
         }
-        statusEl.textContent = `Described ${descriptions.length} meal${descriptions.length !== 1 ? 's' : ''} from photos. Check the descriptions below.`;
+        statusEl.textContent = `Described ${descriptions.length} meal${descriptions.length !== 1 ? 's' : ''} from photos. Check the description below, then generate.`;
+      } else {
+        throw new Error(data?.error || 'No descriptions returned');
       }
     } catch (err) {
       console.error('[describe] Error:', err);
