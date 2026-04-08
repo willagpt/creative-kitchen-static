@@ -991,10 +991,11 @@
       templateArea.value = batchTemplate;
       templateArea.classList.remove('hidden');
 
-      // Pre-fill variable lists with original values
+      // Pre-fill variable lists with original values, but only if the textarea
+      // is empty (don't overwrite user-edited or photo-described content)
       Object.entries(batchPlaceholders).forEach(([key, value]) => {
         const textarea = document.querySelector(`.batch-list-textarea[data-placeholder="${key}"]`);
-        if (textarea && value) {
+        if (textarea && value && !textarea.value.trim()) {
           textarea.value = value;
         }
       });
@@ -1186,27 +1187,6 @@
       await templatizePrompt();
       template = document.getElementById('batch-template').value.trim();
       if (!template) return; // templatize failed
-    }
-
-    // If reference images are uploaded but MEAL_DESCRIPTION is empty or unchanged,
-    // auto-run Claude vision to generate descriptions from the photos first
-    if (referenceImages.length > 0) {
-      const descTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_DESCRIPTION"]');
-      const currentDesc = descTextarea ? descTextarea.value.trim() : '';
-      const originalDesc = (batchPlaceholders.MEAL_DESCRIPTION || '').trim();
-
-      if (!currentDesc || currentDesc === originalDesc) {
-        console.log('[batch] Reference images present but MEAL_DESCRIPTION is stale/empty. Running auto-generate first...');
-        const statusEl = document.getElementById('batch-autogen-status');
-        if (statusEl) statusEl.textContent = 'Reference photos detected. Generating descriptions from photos first...';
-        await autoGenerateVariables();
-
-        // Re-check: if MEAL_DESCRIPTION is still empty after auto-generate, warn and continue
-        const newDesc = descTextarea ? descTextarea.value.trim() : '';
-        if (!newDesc) {
-          console.warn('[batch] Auto-generate did not fill MEAL_DESCRIPTION. Continuing with empty description.');
-        }
-      }
     }
 
     const lists = getBatchLists();
