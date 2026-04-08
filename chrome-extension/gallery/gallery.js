@@ -1185,6 +1185,13 @@
     if (combos.length === 0) return;
 
     const ratios = batchSelectedRatio === 'both' ? ['4:5', '9:16'] : [batchSelectedRatio];
+    const totalJobs = combos.length * ratios.length;
+
+    // Warn if generating a large number of images
+    if (totalJobs > 20) {
+      const proceed = confirm(`This will generate ${totalJobs} images. That could take a while and use a lot of fal.ai credits.\n\nTip: trim your variable lists to reduce combinations. Each list multiplies the total.\n\nProceed?`);
+      if (!proceed) return;
+    }
 
     // Build reference image lookup: match by label to MEAL_NAME
     // Users label their uploaded photos (e.g. "smoky chipotle chicken")
@@ -1660,6 +1667,16 @@
           descTextarea.value = descriptions.join('\n\n');
           console.log('[describe] MEAL_DESCRIPTION filled from photo:', descriptions.map(d => d.slice(0, 80) + '...'));
         }
+
+        // Also update MEAL_NAME from the labels if the textarea is still the default
+        const mealTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_NAME"]');
+        const names = refsWithImages.map((ref, i) => {
+          const labelInput = document.querySelector(`.ref-card-label[data-ref-id="${ref.id}"]`);
+          return labelInput ? labelInput.value.trim() : (ref.label || `Meal ${i + 1}`);
+        });
+        if (mealTextarea) mealTextarea.value = names.join('\n');
+
+        updateBatchComboCount();
         statusEl.textContent = `Described ${descriptions.length} meal${descriptions.length !== 1 ? 's' : ''} from photos. Check the description below, then generate.`;
       } else {
         throw new Error(data?.error || 'No descriptions returned');
