@@ -87,7 +87,7 @@ body {
 .filter-btn:hover { color: var(--text-0); background: var(--bg-2); }
 .filter-btn.active { color: var(--text-0); background: var(--accent); }
 
-/* ─── Buttons ──────────────────────────────────────────────────────────── */
+/* ─── Buttons ──────────────────────────────────────────────────────── */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -111,7 +111,7 @@ body {
 .btn-danger { background: var(--error); color: #fff; margin-left: auto; }
 .btn-danger:hover { background: #dc2626; }
 
-/* ─── Stats Bar ────────────────────────────────────────────────────────── */
+/* ─── Stats Bar ────────────────────────────────────────────────────── */
 .stats-bar {
   display: flex;
   gap: 1px;
@@ -141,7 +141,7 @@ body {
   margin-top: 2px;
 }
 
-/* ─── Gallery Grid ───────────────────────────────────────────────────────── */
+/* ─── Gallery Grid ───────────────────────────────────────────────────── */
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -149,7 +149,7 @@ body {
   padding: 24px;
 }
 
-/* ─── Ad Card ──────────────────────────────────────────────────────────── */
+/* ─── Ad Card ──────────────────────────────────────────────────────── */
 .ad-card {
   background: var(--bg-1);
   border: 1px solid var(--bg-2);
@@ -232,7 +232,7 @@ body {
   gap: 4px;
 }
 
-/* ─── Empty State ────────────────────────────────────────────────────────── */
+/* ─── Empty State ──────────────────────────────────────────────────── */
 .empty-state {
   text-align: center;
   padding: 80px 24px;
@@ -243,7 +243,7 @@ body {
 .empty-state p { color: var(--text-1); max-width: 400px; margin: 0 auto; line-height: 1.6; }
 .empty-state a { color: var(--accent); }
 
-/* ─── Loading ──────────────────────────────────────────────────────────── */
+/* ─── Loading ──────────────────────────────────────────────────────── */
 .loading {
   display: flex;
   flex-direction: column;
@@ -266,7 +266,7 @@ body {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ─── Modal ────────────────────────────────────────────────────────────── */
+/* ─── Modal ────────────────────────────────────────────────────────── */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -326,7 +326,7 @@ body {
   color: var(--text-2);
 }
 
-/* ─── Comparison Layout ────────────────────────────────────────────────── */
+/* ─── Comparison Layout ────────────────────────────────────────────── */
 .comparison {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -412,7 +412,7 @@ body {
   color: var(--text-1);
 }
 
-/* ─── Version History Strip ─────────────────────────────────────────── */
+/* ─── Version History Strip ─────────────────────────────────────── */
 .versions-section {
   margin: 0 24px;
   padding-bottom: 8px;
@@ -525,7 +525,7 @@ body {
   background: rgba(249, 115, 22, 0.15);
 }
 
-/* ─── Feedback + Refine Section ─────────────────────────────────────── */
+/* ─── Feedback + Refine Section ───────────────────────────────────── */
 .feedback-section {
   margin: 0 24px;
   padding: 12px 0;
@@ -600,7 +600,7 @@ body {
   cursor: not-allowed;
 }
 
-/* ─── Aspect Ratio Selector ─────────────────────────────────────────── */
+/* ─── Aspect Ratio Selector ─────────────────────────────────────── */
 .aspect-section {
   display: flex;
   align-items: center;
@@ -638,7 +638,7 @@ body {
   color: #fff;
 }
 
-/* ─── Prompt Section ───────────────────────────────────────────────────── */
+/* ─── Prompt Section ───────────────────────────────────────────────── */
 .prompt-section {
   margin: 0 24px;
   background: var(--bg-1);
@@ -732,7 +732,7 @@ body {
   text-overflow: ellipsis;
 }
 
-/* ─── Batch Button ──────────────────────────────────────────────────────── */
+/* ─── Batch Button ──────────────────────────────────────────────────── */
 .btn-batch {
   background: rgba(34, 197, 94, 0.15);
   color: var(--success);
@@ -831,6 +831,168 @@ body {
   font-family: var(--font-mono);
   margin-top: 4px;
   min-height: 16px;
+}
+
+/* Reference Image Upload */
+.ref-upload-area {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ref-dropzone {
+  border: 2px dashed var(--bg-3);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.ref-dropzone:hover,
+.ref-dropzone.dragover {
+  border-color: var(--success);
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.ref-dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.ref-dropzone-icon {
+  font-size: 28px;
+  color: var(--text-2);
+  line-height: 1;
+}
+
+.ref-dropzone-text {
+  font-size: 13px;
+  color: var(--text-1);
+  font-weight: 500;
+}
+
+.ref-dropzone-hint {
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+.ref-file-hidden {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.ref-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.ref-card {
+  background: var(--bg-1);
+  border: 1px solid var(--bg-2);
+  border-radius: var(--radius);
+  overflow: hidden;
+  position: relative;
+}
+
+.ref-card-image {
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--bg-2);
+}
+
+.ref-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ref-card-meta {
+  padding: 6px 8px;
+}
+
+.ref-card-name {
+  font-size: 11px;
+  color: var(--text-0);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ref-card-label {
+  display: block;
+  width: 100%;
+  padding: 4px 6px;
+  margin-top: 4px;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  color: var(--text-0);
+  background: var(--bg-0);
+  border: 1px solid var(--bg-3);
+  border-radius: 4px;
+  outline: none;
+}
+
+.ref-card-label:focus {
+  border-color: var(--success);
+}
+
+.ref-card-label::placeholder {
+  color: var(--text-2);
+}
+
+.ref-card-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  color: var(--text-1);
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.ref-card:hover .ref-card-remove {
+  opacity: 1;
+}
+
+.ref-card-remove:hover {
+  background: var(--error);
+  color: #fff;
+}
+
+.ref-card-uploading {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ref-card-uploading::after {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
 /* Variable Lists */
@@ -1159,7 +1321,7 @@ body {
   border-color: var(--error);
 }
 
-/* ─── Metadata Section ─────────────────────────────────────────────────── */
+/* ─── Metadata Section ─────────────────────────────────────────────── */
 .metadata-section {
   margin: 16px 24px;
 }
@@ -1195,23 +1357,23 @@ body {
   font-weight: 500;
 }
 
-/* ─── Modal Actions ────────────────────────────────────────────────────── */
+/* ─── Modal Actions ────────────────────────────────────────────────── */
 .modal-actions {
   display: flex;
   gap: 8px;
   padding: 16px 24px 24px;
 }
 
-/* ─── Utility ──────────────────────────────────────────────────────────── */
+/* ─── Utility ──────────────────────────────────────────────────────── */
 .hidden { display: none !important; }
 
-/* ─── Scrollbar ────────────────────────────────────────────────────────── */
+/* ─── Scrollbar ────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-2); }
 
-/* ─── Responsive ───────────────────────────────────────────────────────── */
+/* ─── Responsive ───────────────────────────────────────────────────── */
 @media (max-width: 800px) {
   .comparison {
     grid-template-columns: 1fr;
