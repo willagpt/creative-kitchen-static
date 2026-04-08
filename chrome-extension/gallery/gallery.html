@@ -210,6 +210,36 @@
           </div>
         </div>
 
+        <!-- Brand Guidelines (persistent, loads on init) -->
+        <div class="batch-step" id="batch-step-brand">
+          <div class="batch-step-header">
+            <span class="batch-step-number">🎨</span>
+            <span class="batch-step-title">Brand Guidelines</span>
+            <span class="batch-list-hint">Chefly brand rules. Extracted from packaging/guidelines and used in every generation.</span>
+          </div>
+          <div class="brand-guide-content">
+            <div class="brand-guide-upload-row">
+              <div class="brand-guide-dropzone" id="brand-guide-dropzone">
+                <span class="brand-guide-dropzone-icon">+</span>
+                <span class="brand-guide-dropzone-text">Upload packaging photos or brand guideline images</span>
+                <input type="file" id="brand-guide-file-input" multiple accept="image/jpeg,image/png,image/webp,application/pdf" class="ref-file-hidden" />
+              </div>
+              <button class="btn btn-small btn-accent" id="brand-guide-extract-btn" disabled>Extract with Claude Opus</button>
+            </div>
+            <div class="brand-guide-extract-status" id="brand-guide-extract-status"></div>
+            <div class="brand-guide-previews" id="brand-guide-previews"></div>
+            <textarea class="brand-guide-textarea" id="brand-guide-text" rows="6" placeholder="Brand guidelines will appear here after extraction, or paste them manually. These are sent with every auto-generate call."></textarea>
+            <div class="brand-guide-sleeve-row">
+              <label class="brand-guide-sleeve-label">Sleeve / Packaging Notes</label>
+              <textarea class="brand-guide-sleeve-textarea" id="brand-guide-sleeve" rows="3" placeholder="Specific packaging style notes extracted from your images (sleeve colours, patterns, label layout)."></textarea>
+            </div>
+            <div class="brand-guide-actions">
+              <button class="btn btn-small btn-secondary" id="brand-guide-save-btn">Save Guidelines</button>
+              <span class="brand-guide-save-status" id="brand-guide-save-status"></span>
+            </div>
+          </div>
+        </div>
+
         <!-- Step 3: Variable Lists -->
         <div class="batch-step hidden" id="batch-step-lists">
           <div class="batch-step-header">

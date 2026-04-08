@@ -23,6 +23,11 @@
   let referenceImages = []; // { id, name, label, publicUrl, filePath }
   let activeVersionIdx = 0; // which version thumbnail is currently selected
 
+  // Brand guidelines state
+  let brandGuidelinesText = '';
+  let brandSleeveNotes = '';
+  let brandGuidelineImages = []; // { id, file, base64, media_type, preview }
+
   // ─── DOM refs ─────────────────────────────────────────────────────
   const gallery = document.getElementById('gallery');
   const emptyState = document.getElementById('empty-state');
@@ -1324,6 +1329,133 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════
+  // BRAND GUIDELINES — load, save, extract from images
+  // ═══════════════════════════════════════════════════════════════════
+
+  async function loadBrandGuidelines() {
+    try {
+      const config = await getConfig();
+      const data = await supabaseRest('/rest/v1/brand_guidelines?brand_name=eq.chefly&select=guidelines_text,sleeve_notes&limit=1');
+      if (data && data.length > 0) {
+        brandGuidelinesText = data[0].guidelines_text || '';
+        brandSleeveNotes = data[0].sleeve_notes || '';
+        const guideText = document.getElementById('brand-guide-text');
+        const sleeveText = document.getElementById('brand-guide-sleeve');
+        if (guideText) guideText.value = brandGuidelinesText;
+        if (sleeveText) sleeveText.value = brandSleeveNotes;
+      }
+    } catch (err) {
+      console.warn('Could not load brand guidelines:', err);
+    }
+  }
+
+  async function saveBrandGuidelines() {
+    const statusEl = document.getElementById('brand-guide-save-status');
+    const guideText = document.getElementById('brand-guide-text');
+    const sleeveText = document.getElementById('brand-guide-sleeve');
+    brandGuidelinesText = guideText.value.trim();
+    brandSleeveNotes = sleeveText.value.trim();
+
+    try {
+      statusEl.textContent = 'Saving...';
+      const config = await getConfig();
+      const res = await fetch(`${config.supabaseUrl}/rest/v1/brand_guidelines`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': config.supabaseAnonKey,
+          'Authorization': `Bearer ${config.supabaseAnonKey}`,
+          'Prefer': 'resolution=merge-duplicates,return=representation'
+        },
+        body: JSON.stringify({
+          brand_name: 'chefly',
+          guidelines_text: brandGuidelinesText,
+          sleeve_notes: brandSleeveNotes
+        })
+      });
+      if (!res.ok) throw new Error(`Save failed: ${res.status}`);
+      statusEl.textContent = 'Saved!';
+      setTimeout(() => { statusEl.textContent = ''; }, 3000);
+    } catch (err) {
+      statusEl.textContent = `Error: ${err.message}`;
+    }
+  }
+
+  function handleBrandGuideImageUpload(files) {
+    const previewsEl = document.getElementById('brand-guide-previews');
+    const extractBtn = document.getElementById('brand-guide-extract-btn');
+
+    Array.from(files).forEach(file => {
+      const id = 'bg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+      const preview = URL.createObjectURL(file);
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result.split(',')[1];
+        brandGuidelineImages.push({ id, file, base64, media_type: file.type || 'image/jpeg', preview });
+        renderBrandGuidePreviews();
+        extractBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function renderBrandGuidePreviews() {
+    const previewsEl = document.getElementById('brand-guide-previews');
+    previewsEl.innerHTML = brandGuidelineImages.map(img => `
+      <div class="brand-guide-preview" data-bg-id="${img.id}">
+        <img src="${img.preview}" alt="Brand guide" />
+        <button class="brand-guide-preview-remove" data-bg-id="${img.id}">✕</button>
+      </div>
+    `).join('');
+
+    document.getElementById('brand-guide-extract-btn').disabled = brandGuidelineImages.length === 0;
+  }
+
+  async function extractBrandGuidelines() {
+    if (brandGuidelineImages.length === 0) return;
+
+    const extractBtn = document.getElementById('brand-guide-extract-btn');
+    const statusEl = document.getElementById('brand-guide-extract-status');
+    extractBtn.disabled = true;
+    extractBtn.textContent = 'Extracting...';
+    statusEl.textContent = `Sending ${brandGuidelineImages.length} image${brandGuidelineImages.length !== 1 ? 's' : ''} to Claude Opus for brand analysis...`;
+
+    try {
+      const config = await getConfig();
+      const images = brandGuidelineImages.map(img => ({ base64: img.base64, media_type: img.media_type }));
+
+      const res = await fetch(`${config.supabaseUrl}/functions/v1/extract-brand-guidelines`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.supabaseAnonKey}`
+        },
+        body: JSON.stringify({ brand_name: 'chefly', images })
+      });
+
+      const data = await safeJson(res);
+      if (!data || data.error) throw new Error(data?.error || 'Empty response');
+
+      // Fill textareas with extracted guidelines
+      brandGuidelinesText = data.guidelines_text || '';
+      brandSleeveNotes = data.sleeve_notes || '';
+      document.getElementById('brand-guide-text').value = brandGuidelinesText;
+      document.getElementById('brand-guide-sleeve').value = brandSleeveNotes;
+
+      statusEl.textContent = 'Extracted and saved! Guidelines will be used in all future generations.';
+      // Clear uploaded images since they've been processed
+      brandGuidelineImages = [];
+      renderBrandGuidePreviews();
+    } catch (err) {
+      statusEl.textContent = `Error: ${err.message}`;
+    } finally {
+      extractBtn.disabled = brandGuidelineImages.length === 0;
+      extractBtn.textContent = 'Extract with Claude Opus';
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
   // AUTO-GENERATE VARIABLES — Claude fills descriptions, headlines etc
   // from just the meal names
   // ═══════════════════════════════════════════════════════════════════
@@ -1385,7 +1517,9 @@
         body: JSON.stringify({
           meal_names: mealNames,
           original_placeholders: batchPlaceholders,
-          reference_images: refImages.length > 0 ? refImages : undefined
+          reference_images: refImages.length > 0 ? refImages : undefined,
+          brand_guidelines: brandGuidelinesText || undefined,
+          sleeve_notes: brandSleeveNotes || undefined
         })
       });
 
@@ -1402,11 +1536,11 @@
         descTextarea.value = vars.meals.map(m => m.MEAL_DESCRIPTION).join('\n\n');
       }
 
-      // Fill HEADLINE textarea (per-meal + extras)
+      // Fill HEADLINE textarea (per-meal array + extras)
       const headlineTextarea = document.querySelector('.batch-list-textarea[data-placeholder="HEADLINE"]');
       if (headlineTextarea) {
         const allHeadlines = [
-          ...vars.meals.map(m => m.HEADLINE),
+          ...vars.meals.flatMap(m => Array.isArray(m.HEADLINES) ? m.HEADLINES : (m.HEADLINE ? [m.HEADLINE] : [])),
           ...(vars.extra_headlines || [])
         ];
         headlineTextarea.value = [...new Set(allHeadlines)].join('\n');
@@ -1422,10 +1556,13 @@
         moodTextarea.value = [...new Set(allMoods)].join('\n');
       }
 
-      // Fill CTA_TEXT textarea
+      // Fill CTA_TEXT textarea (per-meal array + extras)
       const ctaTextarea = document.querySelector('.batch-list-textarea[data-placeholder="CTA_TEXT"]');
       if (ctaTextarea) {
-        const allCtas = vars.meals.map(m => m.CTA_TEXT);
+        const allCtas = [
+          ...vars.meals.flatMap(m => Array.isArray(m.CTA_TEXTS) ? m.CTA_TEXTS : (m.CTA_TEXT ? [m.CTA_TEXT] : [])),
+          ...(vars.extra_ctas || [])
+        ];
         ctaTextarea.value = [...new Set(allCtas)].join('\n');
       }
 
@@ -1560,6 +1697,42 @@
   });
   document.getElementById('modal-delete-btn').addEventListener('click', deleteSelectedAd);
 
+  // ─── Brand Guidelines listeners ────────────────────────────────────
+  const brandDropzone = document.getElementById('brand-guide-dropzone');
+  const brandFileInput = document.getElementById('brand-guide-file-input');
+
+  brandDropzone.addEventListener('click', () => brandFileInput.click());
+  brandDropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    brandDropzone.classList.add('dragover');
+  });
+  brandDropzone.addEventListener('dragleave', () => {
+    brandDropzone.classList.remove('dragover');
+  });
+  brandDropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    brandDropzone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handleBrandGuideImageUpload(e.dataTransfer.files);
+  });
+  brandFileInput.addEventListener('change', () => {
+    if (brandFileInput.files.length) handleBrandGuideImageUpload(brandFileInput.files);
+    brandFileInput.value = '';
+  });
+
+  document.getElementById('brand-guide-extract-btn').addEventListener('click', extractBrandGuidelines);
+  document.getElementById('brand-guide-save-btn').addEventListener('click', saveBrandGuidelines);
+
+  // Delegate remove clicks on brand guide previews
+  document.getElementById('brand-guide-previews').addEventListener('click', (e) => {
+    const removeBtn = e.target.closest('.brand-guide-preview-remove');
+    if (removeBtn) {
+      const bgId = removeBtn.dataset.bgId;
+      brandGuidelineImages = brandGuidelineImages.filter(img => img.id !== bgId);
+      renderBrandGuidePreviews();
+    }
+  });
+
   // ─── Init ─────────────────────────────────────────────────────────
   loadAds();
+  loadBrandGuidelines();
 })();
