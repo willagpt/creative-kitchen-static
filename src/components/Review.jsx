@@ -125,7 +125,7 @@ export default function Review({ brands, activeBrandId }) {
           </div>
 
           {/* Filters */}
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 'var(--space-lg)' }}>
             <div className="filters">
               <button className={`filter-pill ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All</button>
               <button className={`filter-pill ${filter === 'unrated' ? 'active' : ''}`} onClick={() => setFilter('unrated')}>Unrated</button>
@@ -240,7 +240,7 @@ export default function Review({ brands, activeBrandId }) {
                 <button
                   className={`btn ${selectedImage.is_winner ? 'btn-primary' : 'btn-secondary'}`}
                   onClick={() => toggleWinner(selectedImage.id, selectedImage.is_winner)}
-                  style={{ marginBottom: 16 }}
+                  style={{ marginBottom: 'var(--space-lg)' }}
                 >
                   {selectedImage.is_winner ? '&#9733; Winner' : 'Mark as Winner'}
                 </button>

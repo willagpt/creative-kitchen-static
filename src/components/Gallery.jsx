@@ -25,7 +25,7 @@ export default function Gallery({ ads, versions, loading, filter, setFilter, sta
       </div>
 
       {/* Filters */}
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 'var(--space-lg)' }}>
         <div className="filters">
           {filters.map(f => (
             <button
