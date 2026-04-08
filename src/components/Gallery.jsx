@@ -55,6 +55,19 @@ export default function Gallery({ ads, versions, loading, filter, setFilter, sta
             Save ads from the Facebook Ad Library using the Chrome extension.
             They'll land here, ready to cook with.
           </p>
+          <div className="workflow-steps">
+            <span className="workflow-step current">1. Save ads</span>
+            <span className="workflow-arrow">→</span>
+            <span className="workflow-step">2. Brand DNA</span>
+            <span className="workflow-arrow">→</span>
+            <span className="workflow-step">3. Generate</span>
+            <span className="workflow-arrow">→</span>
+            <span className="workflow-step">4. Review</span>
+          </div>
+          <p className="empty-state-hint">
+            Install the Chrome extension to capture competitor ads from Meta Ad Library.
+            Each ad becomes a template you can remix with your own brand.
+          </p>
         </div>
       )}
 

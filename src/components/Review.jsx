@@ -203,6 +203,10 @@ export default function Review({ brands, activeBrandId }) {
             <div className="empty-state">
               <h3>Nothing on the pass yet</h3>
               <p>Run a generation first. Your outputs will line up here for tasting.</p>
+              <p className="empty-state-hint">
+                Rate each image as great, good, needs work, or slop.
+                Mark your favourites as winners to build your best-of collection.
+              </p>
             </div>
           )}
         </>
@@ -212,6 +216,15 @@ export default function Review({ brands, activeBrandId }) {
         <div className="empty-state">
           <h3>No batches to review</h3>
           <p>Head to the Generator tab, fire up a run, then come back to rate the results.</p>
+          <div className="workflow-steps">
+            <span className="workflow-step done">1. Save ads</span>
+            <span className="workflow-arrow">→</span>
+            <span className="workflow-step done">2. Brand DNA</span>
+            <span className="workflow-arrow">→</span>
+            <span className="workflow-step current">3. Generate</span>
+            <span className="workflow-arrow">→</span>
+            <span className="workflow-step">4. Review</span>
+          </div>
         </div>
       )}
 

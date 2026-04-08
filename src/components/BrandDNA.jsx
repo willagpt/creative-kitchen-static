@@ -139,11 +139,18 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
 
       {!brand && !showNew && (
         <div className="empty-state">
-          <h3>No brand selected</h3>
-          <p>Create a brand to define your visual DNA, packaging specs, and guidelines.</p>
-          <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => setShowNew(true)}>
+          <h3>No brand DNA yet</h3>
+          <p>
+            Your brand's colours, fonts, tone, and packaging rules live here.
+            Once defined, every generated image stays on-brand automatically.
+          </p>
+          <button className="btn btn-primary" onClick={() => setShowNew(true)}>
             + Create your first brand
           </button>
+          <p className="empty-state-hint">
+            Start with your brand name. You can fill in colours, typography,
+            and packaging details at your own pace.
+          </p>
         </div>
       )}
 
