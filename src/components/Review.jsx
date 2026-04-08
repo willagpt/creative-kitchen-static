@@ -72,6 +72,13 @@ export default function Review({ brands, activeBrandId }) {
     slop: images.filter(i => i.rating === 'slop').length,
   }
 
+  // Escape key to close detail
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape' && selectedImage) setSelectedImage(null) }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [selectedImage])
+
   const selectedRun = runs.find(r => r.id === selectedRunId)
 
   return (
@@ -210,13 +217,13 @@ export default function Review({ brands, activeBrandId }) {
 
       {/* Detail panel */}
       {selectedImage && (
-        <div className="review-detail-overlay" onClick={e => { if (e.target === e.currentTarget) setSelectedImage(null) }}>
+        <div className="review-detail-overlay" role="dialog" aria-modal="true" aria-label="Image review detail" onClick={e => { if (e.target === e.currentTarget) setSelectedImage(null) }}>
           <div className="review-detail-panel">
             <div className="detail-header">
               <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700 }}>
                 {selectedImage.variables_used?.MEAL_NAME || 'Generated Image'}
               </span>
-              <button className="detail-close" onClick={() => setSelectedImage(null)}>&times;</button>
+              <button className="detail-close" onClick={() => setSelectedImage(null)} aria-label="Close review detail">&times;</button>
             </div>
             <div className="review-detail-body">
               <div className="review-detail-image">

@@ -13,6 +13,13 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
   const [generating, setGenerating] = useState(false)
   const [generatingPrompt, setGeneratingPrompt] = useState(false)
 
+  // Escape key to close
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
   // Reset when ad changes
   useEffect(() => {
     setPrompt(ad.generated_prompt || '')
@@ -160,7 +167,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
   }
 
   return (
-    <div className="detail-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+    <div className="detail-overlay" role="dialog" aria-modal="true" aria-label="Ad detail" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div className="detail-panel">
         {/* Header */}
         <div className="detail-header">
@@ -170,7 +177,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
               {ad.platform} {ad.started_running && `\u00b7 ${ad.started_running}`}
             </span>
           </div>
-          <button className="detail-close" onClick={onClose}>&times;</button>
+          <button className="detail-close" onClick={onClose} aria-label="Close detail panel">&times;</button>
         </div>
 
         {/* Comparison */}

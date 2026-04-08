@@ -119,7 +119,7 @@ export default function App() {
           ))}
         </div>
         <div className="nav-right">
-          <button className="btn btn-ghost btn-sm" onClick={() => { loadAds(); loadBrands() }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => { loadAds(); loadBrands() }} aria-label="Refresh data" title="Refresh">
             &#x21bb;
           </button>
         </div>

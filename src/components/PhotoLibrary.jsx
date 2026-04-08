@@ -283,7 +283,7 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
         <div className="photo-detail-panel">
           <div className="photo-detail-header">
             <h3>{selectedPhoto.name}</h3>
-            <button className="detail-close" onClick={() => setSelectedPhoto(null)}>&times;</button>
+            <button className="detail-close" onClick={() => setSelectedPhoto(null)} aria-label="Close photo detail">&times;</button>
           </div>
 
           <div className="photo-detail-body">
