@@ -114,13 +114,13 @@
     filtered.forEach(ad => {
       const card = document.createElement('div');
       card.className = 'ad-card';
-      card.innerHTML = `
-        <img src="${ad.image || 'placeholder.png'}" alt="${ad.name}" />
-        <div class="ad-info">
-          <h3>${ad.name}</h3>
-          <p class="category">${ad.category}</p>
+      card.innerHTML = \`
+        <img src=\"\${ad.image || 'placeholder.png'}\" alt=\"\${ad.name}\" />
+        <div class=\"ad-info\">
+          <h3>\${ad.name}</h3>
+          <p class=\"category\">\${ad.category}</p>
         </div>
-      `;
+      \`;
       card.addEventListener('click', () => openModal(ad));
       gallery.appendChild(card);
     });
@@ -177,7 +177,7 @@
       const response = await fetch('https://api.falai.com/v1/image/generation', {
         method: 'POST',
         headers: {
-          'Authorization': `Key ${localStorage.getItem('falApiKey')}`,
+          'Authorization': \`Key \${localStorage.getItem('falApiKey')}\`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -191,7 +191,7 @@
       });
 
       if (!response.ok) {
-        throw new Error(`Generation failed: ${response.statusText}`);
+        throw new Error(\`Generation failed: \${response.statusText}\`);
       }
 
       const result = await response.json();
@@ -252,7 +252,7 @@
       
       const link = document.createElement('a');
       link.href = canvas.toDataURL('image/png');
-      link.download = `${selectedAd.name}-${Date.now()}.png`;
+      link.download = \`\${selectedAd.name}-\${Date.now()}.png\`;
       link.click();
     };
     img.src = latest.image;
@@ -319,14 +319,14 @@
     Object.keys(batchPlaceholders).forEach(key => {
       const row = document.createElement('div');
       row.className = 'placeholder-row';
-      row.innerHTML = `
-        <label>${key}:</label>
-        <textarea placeholder="Enter ${key} values (one per line)"></textarea>
-      `;
+      row.innerHTML = \`
+        <label>\${key}:</label>
+        <textarea placeholder=\"Enter \${key} values (one per line)\"></textarea>
+      \`;
       
       const textarea = row.querySelector('textarea');
       textarea.addEventListener('input', (e) => {
-        batchPlaceholders[key] = e.target.value.split('\n').filter(v => v.trim());
+        batchPlaceholders[key] = e.target.value.split('\\n').filter(v => v.trim());
       });
 
       batchPlaceholdersContainer.appendChild(row);
@@ -344,7 +344,7 @@
         name: file.name,
         label: file.name.replace(/\.[^.]+$/, ''),
         publicUrl: base64,
-        filePath: `reference-images/${id}-${file.name}`
+        filePath: \`reference-images/\${id}-\${file.name}\`
       };
 
       referenceImages.push(refImage);
@@ -356,11 +356,11 @@
   function renderReferenceImageCard(refImage) {
     const card = document.createElement('div');
     card.className = 'ref-image-card';
-    card.innerHTML = `
-      <img src="${refImage.publicUrl}" alt="${refImage.label}" />
-      <p>${refImage.label}</p>
-      <button class="remove-ref" data-id="${refImage.id}">Remove</button>
-    `;
+    card.innerHTML = \`
+      <img src=\"\${refImage.publicUrl}\" alt=\"\${refImage.label}\" />
+      <p>\${refImage.label}</p>
+      <button class=\"remove-ref\" data-id=\"\${refImage.id}\">Remove</button>
+    \`;
 
     card.querySelector('.remove-ref').addEventListener('click', () => {
       referenceImages = referenceImages.filter(r => r.id !== refImage.id);
@@ -396,18 +396,18 @@
       let prompt = batchTemplate;
       Object.entries(batchPlaceholders).forEach(([key, values]) => {
         const value = values[i % values.length] || values[0];
-        prompt = prompt.replace(`{${key}}`, value);
+        prompt = prompt.replace(\`{\${key}}\`, value);
       });
 
       // Generate image
       try {
-        batchProgressText.textContent = `Generating ${i + 1} of ${totalValues}...`;
-        batchProgressBar.style.width = `${(i / totalValues) * 100}%`;
+        batchProgressText.textContent = \`Generating \${i + 1} of \${totalValues}...\`;
+        batchProgressBar.style.width = \`\${(i / totalValues) * 100}%\`;
 
         const response = await fetch('https://api.falai.com/v1/image/generation', {
           method: 'POST',
           headers: {
-            'Authorization': `Key ${localStorage.getItem('falApiKey')}`,
+            'Authorization': \`Key \${localStorage.getItem('falApiKey')}\`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
@@ -433,7 +433,7 @@
           }
         }
       } catch (e) {
-        console.error(`Generation ${i + 1} failed:`, e);
+        console.error(\`Generation \${i + 1} failed:\`, e);
       }
     }
 
