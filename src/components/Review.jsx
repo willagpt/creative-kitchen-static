@@ -132,7 +132,7 @@ export default function Review({ brands, activeBrandId }) {
           </div>
 
           {/* Filters */}
-          <div style={{ marginBottom: 'var(--space-lg)' }}>
+          <div className="mb-lg">
             <div className="filters">
               <button className={`filter-pill ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All</button>
               <button className={`filter-pill ${filter === 'unrated' ? 'active' : ''}`} onClick={() => setFilter('unrated')}>Unrated</button>
@@ -233,7 +233,7 @@ export default function Review({ brands, activeBrandId }) {
         <div className="review-detail-overlay" role="dialog" aria-modal="true" aria-label="Image review detail" onClick={e => { if (e.target === e.currentTarget) setSelectedImage(null) }}>
           <div className="review-detail-panel">
             <div className="detail-header">
-              <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700 }}>
+              <span className="font-heading">
                 {selectedImage.variables_used?.MEAL_NAME || 'Generated Image'}
               </span>
               <button className="detail-close" onClick={() => setSelectedImage(null)} aria-label="Close review detail">&times;</button>
@@ -244,7 +244,7 @@ export default function Review({ brands, activeBrandId }) {
               </div>
               <div className="review-detail-info">
                 <label className="field-label">Rating</label>
-                <div className="rating-buttons" style={{ marginBottom: 12 }}>
+                <div className="rating-buttons mb-md">
                   {RATINGS.map(r => (
                     <button
                       key={r.key}
@@ -258,15 +258,14 @@ export default function Review({ brands, activeBrandId }) {
                 </div>
 
                 <button
-                  className={`btn ${selectedImage.is_winner ? 'btn-primary' : 'btn-secondary'}`}
+                  className={`btn mb-lg ${selectedImage.is_winner ? 'btn-primary' : 'btn-secondary'}`}
                   onClick={() => toggleWinner(selectedImage.id, selectedImage.is_winner)}
-                  style={{ marginBottom: 'var(--space-lg)' }}
                 >
                   {selectedImage.is_winner ? '&#9733; Winner' : 'Mark as Winner'}
                 </button>
 
                 <label className="field-label">Aspect Ratio</label>
-                <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-1)', marginBottom: 12, fontVariantNumeric: 'tabular-nums' }}>{selectedImage.aspect_ratio}</p>
+                <p className="text-sm text-subtle mb-md tabular-nums">{selectedImage.aspect_ratio}</p>
 
                 {selectedImage.variables_used && Object.keys(selectedImage.variables_used).length > 0 && (
                   <>
@@ -282,7 +281,7 @@ export default function Review({ brands, activeBrandId }) {
                   </>
                 )}
 
-                <label className="field-label" style={{ marginTop: 16 }}>Prompt Used</label>
+                <label className="field-label mt-lg">Prompt Used</label>
                 <textarea
                   className="prompt-textarea"
                   value={selectedImage.prompt_used || ''}

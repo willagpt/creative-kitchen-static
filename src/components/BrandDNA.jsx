@@ -102,7 +102,7 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
           <h2 className="page-title">Brand DNA</h2>
           <p className="page-subtitle">Define once. Applied to every generation.</p>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div className="flex-center gap-sm">
           {brands.length > 0 && (
             <select
               className="select-input"
@@ -121,15 +121,14 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
       </div>
 
       {showNew && (
-        <div className="section-card" style={{ marginBottom: 20 }}>
-          <div style={{ display: 'flex', gap: 8 }}>
+        <div className="section-card mb-lg">
+          <div className="flex gap-sm">
             <input
-              className="text-input"
+              className="text-input flex-1"
               value={newBrandName}
               onChange={e => setNewBrandName(e.target.value)}
               placeholder="Brand name"
               onKeyDown={e => e.key === 'Enter' && createBrand()}
-              style={{ flex: 1 }}
             />
             <button className="btn btn-primary btn-sm" onClick={createBrand}>Create</button>
             <button className="btn btn-ghost btn-sm" onClick={() => setShowNew(false)}>Cancel</button>
@@ -183,24 +182,23 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
                     className="colour-picker"
                   />
                   <input
-                    className="text-input text-input-sm"
+                    className="text-input text-input-sm tabular-nums"
                     value={c.hex || ''}
                     onChange={e => updateColour(i, 'hex', e.target.value)}
                     placeholder="#hex"
-                    style={{ width: 90, fontFamily: 'var(--font-body)', fontVariantNumeric: 'tabular-nums' }}
+                    style={{ width: 90 }}
                   />
                   <input
-                    className="text-input text-input-sm"
+                    className="text-input text-input-sm flex-1"
                     value={c.name || ''}
                     onChange={e => updateColour(i, 'name', e.target.value)}
                     placeholder="Name (e.g. Primary Orange)"
-                    style={{ flex: 1 }}
                   />
                   <button className="btn btn-ghost btn-sm" onClick={() => removeColour(i)}>&times;</button>
                 </div>
               ))}
             </div>
-            <button className="btn btn-secondary btn-sm" onClick={addColour} style={{ marginTop: 8 }}>
+            <button className="btn btn-secondary btn-sm mt-sm" onClick={addColour}>
               + Add colour
             </button>
           </div>

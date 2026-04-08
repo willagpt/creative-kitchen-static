@@ -169,7 +169,7 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
           <h2 className="page-title">Photo Library</h2>
           <p className="page-subtitle">{photos.length} photos {undescribedCount > 0 && `(${undescribedCount} need descriptions)`}</p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="flex gap-sm">
           {undescribedCount > 0 && (
             <button className="btn btn-secondary btn-sm" onClick={describeAll} disabled={!!describing}>
               Describe all ({undescribedCount})
@@ -190,7 +190,7 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
       </div>
 
       {/* Filters */}
-      <div style={{ marginBottom: 16 }}>
+      <div className="mb-lg">
         <div className="filters">
           <button className={`filter-pill ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>
             All ({photos.length})
@@ -235,7 +235,7 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
       )}
 
       {uploading && (
-        <div style={{ padding: 12, textAlign: 'center', color: 'var(--text-1)' }}>
+        <div className="text-center text-subtle" style={{ padding: 'var(--space-md)' }}>
           <span className="spinner spinner-inline" style={{ marginRight: 8 }} /> Uploading...
         </div>
       )}
@@ -303,7 +303,7 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
                 <option value="other">other</option>
               </select>
 
-              <label className="field-label" style={{ marginTop: 12 }}>Star Rating</label>
+              <label className="field-label mt-md">Star Rating</label>
               <div className="star-rating">
                 {[1,2,3,4,5].map(n => (
                   <button
@@ -316,7 +316,7 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
                 ))}
               </div>
 
-              <label className="field-label" style={{ marginTop: 12 }}>Approved</label>
+              <label className="field-label mt-md">Approved</label>
               <button
                 className={`btn btn-sm ${selectedPhoto.approved ? 'btn-primary' : 'btn-secondary'}`}
                 onClick={() => updatePhoto(selectedPhoto.id, { approved: !selectedPhoto.approved })}
@@ -324,7 +324,7 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
                 {selectedPhoto.approved ? 'Approved' : 'Mark as Approved'}
               </button>
 
-              <label className="field-label" style={{ marginTop: 16 }}>AI Description</label>
+              <label className="field-label mt-lg">AI Description</label>
               <textarea
                 className="prompt-textarea"
                 value={selectedPhoto.description || ''}
@@ -344,7 +344,7 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
                 {describing === selectedPhoto.id ? 'Describing...' : 'Describe with Claude Vision'}
               </button>
 
-              <label className="field-label" style={{ marginTop: 16 }}>Prompt Snippet</label>
+              <label className="field-label mt-lg">Prompt Snippet</label>
               <textarea
                 className="prompt-textarea"
                 value={selectedPhoto.prompt_snippet || ''}

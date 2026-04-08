@@ -25,7 +25,7 @@ export default function Gallery({ ads, versions, loading, filter, setFilter, sta
       </div>
 
       {/* Filters */}
-      <div style={{ marginBottom: 'var(--space-lg)' }}>
+      <div className="mb-lg">
         <div className="filters">
           {filters.map(f => (
             <button
@@ -129,9 +129,8 @@ function AdCard({ ad, versions, onClick }) {
               </div>
             ))}
             {versions.length > 5 && (
-              <div className="ad-card-version-dot" style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'var(--bg-3)', fontSize: 'var(--text-xs)', color: 'var(--text-2)'
+              <div className="ad-card-version-dot flex-center text-xs text-muted" style={{
+                justifyContent: 'center', background: 'var(--bg-3)'
               }}>
                 +{versions.length - 5}
               </div>

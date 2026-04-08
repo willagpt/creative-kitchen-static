@@ -172,8 +172,8 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
         {/* Header */}
         <div className="detail-header">
           <div>
-            <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700 }}>{ad.advertiser_name || 'Unknown brand'}</span>
-            <span style={{ color: 'var(--text-2)', fontSize: 'var(--text-xs)', marginLeft: 8 }}>
+            <span className="font-heading">{ad.advertiser_name || 'Unknown brand'}</span>
+            <span className="text-xs text-muted" style={{ marginLeft: 'var(--space-sm)' }}>
               {ad.platform} {ad.started_running && `\u00b7 ${ad.started_running}`}
             </span>
           </div>
@@ -293,7 +293,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
 
         {/* Prompt editor */}
         <div className="prompt-section">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <div className="flex-between mb-sm">
             <span className="prompt-label">Creative Direction (optional)</span>
           </div>
           <input
@@ -334,7 +334,7 @@ function FalKeySettings() {
   }
 
   return (
-    <div style={{ padding: '8px 20px 16px', borderTop: '1px solid var(--bg-2)' }}>
+    <div style={{ padding: 'var(--space-sm) var(--space-xl) var(--space-lg)', borderTop: '1px solid var(--bg-2)' }}>
       <button
         className="btn btn-ghost btn-sm"
         onClick={() => setShow(!show)}
@@ -343,7 +343,7 @@ function FalKeySettings() {
         {show ? 'Hide settings' : 'Settings (fal.ai key)'}
       </button>
       {show && (
-        <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
+        <div className="flex-center gap-sm mt-sm">
           <input
             type="password"
             value={key}
