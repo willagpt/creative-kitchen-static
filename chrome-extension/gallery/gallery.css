@@ -1240,6 +1240,43 @@ body {
   color: var(--success);
 }
 
+/* ─── Per-field auto-generate ─────────────────────────────────────── */
+.batch-list-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.batch-list-label-row .batch-list-label {
+  margin-bottom: 0;
+}
+
+.btn-tiny {
+  padding: 3px 10px;
+  font-size: 10px;
+  border-radius: 4px;
+}
+
+.btn-autogen-field {
+  background: var(--bg-2);
+  color: var(--text-1);
+  border: 1px solid var(--bg-3);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-autogen-field:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.btn-autogen-field:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Variable Lists */
 .batch-list-hint {
   font-size: 11px;

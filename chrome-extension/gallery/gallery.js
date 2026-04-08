@@ -1629,7 +1629,80 @@
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // PER-FIELD GENERATE — just headlines or just CTAs
+  // ═══════════════════════════════════════════════════════════════════
+
+  async function autoGenerateField(field) {
+    const mealTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_NAME"]');
+    const mealNames = mealTextarea.value.trim().split('\n').map(s => s.trim()).filter(Boolean);
+
+    if (mealNames.length === 0) {
+      alert('Type at least one meal name first.');
+      return;
+    }
+
+    const isHeadline = field === 'HEADLINE';
+    const btn = document.getElementById(isHeadline ? 'autogen-headlines-btn' : 'autogen-ctas-btn');
+    const origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+
+    try {
+      const config = await getConfig();
+      const res = await fetch(`${config.supabaseUrl}/functions/v1/generate-variables`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.supabaseAnonKey}`
+        },
+        body: JSON.stringify({
+          meal_names: mealNames,
+          original_placeholders: batchPlaceholders,
+          brand_guidelines: brandGuidelinesText || undefined,
+          sleeve_notes: brandSleeveNotes || undefined
+        })
+      });
+
+      const data = await safeJson(res);
+      if (!data?.variables?.meals) throw new Error(data?.error || 'No variables returned');
+
+      const vars = data.variables;
+
+      if (isHeadline) {
+        const textarea = document.querySelector('.batch-list-textarea[data-placeholder="HEADLINE"]');
+        if (textarea) {
+          const allHeadlines = [
+            ...vars.meals.flatMap(m => Array.isArray(m.HEADLINES) ? m.HEADLINES : (m.HEADLINE ? [m.HEADLINE] : [])),
+            ...(vars.extra_headlines || [])
+          ];
+          textarea.value = [...new Set(allHeadlines)].join('\n');
+        }
+      } else {
+        const textarea = document.querySelector('.batch-list-textarea[data-placeholder="CTA_TEXT"]');
+        if (textarea) {
+          const allCtas = [
+            ...vars.meals.flatMap(m => Array.isArray(m.CTA_TEXTS) ? m.CTA_TEXTS : (m.CTA_TEXT ? [m.CTA_TEXT] : [])),
+            ...(vars.extra_ctas || [])
+          ];
+          textarea.value = [...new Set(allCtas)].join('\n');
+        }
+      }
+
+      updateBatchComboCount();
+    } catch (err) {
+      alert(`Error generating ${isHeadline ? 'headlines' : 'CTAs'}: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
+  }
+
   // ─── Event listeners ──────────────────────────────────────────────
+
+  // Per-field generate buttons
+  document.getElementById('autogen-headlines-btn').addEventListener('click', () => autoGenerateField('HEADLINE'));
+  document.getElementById('autogen-ctas-btn').addEventListener('click', () => autoGenerateField('CTA_TEXT'));
 
   // Aspect ratio pills
   document.querySelectorAll('.aspect-pill').forEach(pill => {
@@ -1695,6 +1768,32 @@
   document.getElementById('batch-generate-btn').addEventListener('click', runBatch);
   document.getElementById('batch-cancel-btn').addEventListener('click', cancelBatch);
   document.getElementById('batch-autogen-btn').addEventListener('click', autoGenerateVariables);
+  document.getElementById('batch-download-all-btn').addEventListener('click', async () => {
+    const imgs = document.querySelectorAll('#batch-results-grid .batch-result-image img');
+    if (imgs.length === 0) { alert('No images to download.'); return; }
+    const btn = document.getElementById('batch-download-all-btn');
+    btn.disabled = true;
+    btn.textContent = 'Downloading...';
+    let count = 0;
+    for (const img of imgs) {
+      try {
+        const res = await fetch(img.src);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `chefly-variation-${++count}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        // Small delay between downloads so browser doesn't block them
+        await new Promise(r => setTimeout(r, 300));
+      } catch (e) { console.error('Download failed:', e); }
+    }
+    btn.disabled = false;
+    btn.textContent = 'Download All';
+  });
 
   // Reference image upload
   const refDropzone = document.getElementById('ref-dropzone');
