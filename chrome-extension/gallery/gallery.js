@@ -869,15 +869,6 @@
           console.log('[ref-upload] Cleared MEAL_DESCRIPTION textarea (new reference image uploaded, old description is stale)');
         }
 
-        // Also invalidate cached template so next batch forces re-templatize through v2
-        // v2 strips all food-visual DNA aggressively, v1 was too conservative
-        const templateArea = document.getElementById('batch-template');
-        if (templateArea && templateArea.value) {
-          batchTemplate = '';
-          templateArea.value = '';
-          console.log('[ref-upload] Invalidated cached template (will re-templatize with v2 on next generate)');
-        }
-
         // Upload to Supabase Storage in background (for persistence), but don't depend on it
         uploadReferenceImage(file).then(storageRef => {
           ref.publicUrl = storageRef.publicUrl;
@@ -1178,16 +1169,8 @@
   async function runBatch() {
     if (batchRunning) return;
 
-    // If template was invalidated (e.g. by uploading a reference image), re-templatize first
-    let template = document.getElementById('batch-template').value.trim();
-    if (!template) {
-      const prompt = modalPrompt.value.trim();
-      if (!prompt) return;
-      console.log('[batch] Template is empty, re-templatizing prompt through v2...');
-      await templatizePrompt();
-      template = document.getElementById('batch-template').value.trim();
-      if (!template) return; // templatize failed
-    }
+    const template = document.getElementById('batch-template').value.trim();
+    if (!template) return;
 
     const lists = getBatchLists();
 
