@@ -821,52 +821,61 @@
       if (!file.type.startsWith('image/')) continue;
 
       // Create preview card immediately with loading state
-      const tempId = `ref-temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const refId = `ref-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const previewUrl = URL.createObjectURL(file);
+      const defaultLabel = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
 
       const cardHtml = `
-        <div class="ref-card" data-ref-id="${tempId}" id="ref-card-${tempId}">
+        <div class="ref-card" data-ref-id="${refId}" id="ref-card-${refId}">
           <div class="ref-card-image">
             <img src="${previewUrl}" alt="${file.name}" />
           </div>
           <div class="ref-card-uploading"></div>
           <div class="ref-card-meta">
             <div class="ref-card-name">${file.name}</div>
-            <input class="ref-card-label" type="text" placeholder="e.g. smoky chipotle chicken" data-ref-id="${tempId}" />
+            <input class="ref-card-label" type="text" placeholder="e.g. smoky chipotle chicken" data-ref-id="${refId}" value="${defaultLabel}" />
           </div>
-          <button class="ref-card-remove" data-ref-id="${tempId}">x</button>
+          <button class="ref-card-remove" data-ref-id="${refId}">x</button>
         </div>
       `;
       grid.insertAdjacentHTML('beforeend', cardHtml);
 
       try {
-        const ref = await uploadReferenceImage(file);
-        ref.label = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+        // Convert to base64 locally (same as brand guide images) so Claude can see it
+        const { base64, media_type } = await resizeImageToBase64(file);
+
+        const ref = {
+          id: refId,
+          name: file.name,
+          label: defaultLabel,
+          base64,
+          media_type,
+          publicUrl: null
+        };
         referenceImages.push(ref);
 
-        // Update card: remove loading, set real ID
-        const card = document.getElementById(`ref-card-${tempId}`);
+        // Remove loading indicator
+        const card = document.getElementById(`ref-card-${refId}`);
         if (card) {
-          card.dataset.refId = ref.id;
-          card.id = `ref-card-${ref.id}`;
           const uploading = card.querySelector('.ref-card-uploading');
           if (uploading) uploading.remove();
-          const labelInput = card.querySelector('.ref-card-label');
-          if (labelInput) {
-            labelInput.dataset.refId = ref.id;
-            labelInput.value = ref.label;
-          }
-          const removeBtn = card.querySelector('.ref-card-remove');
-          if (removeBtn) removeBtn.dataset.refId = ref.id;
         }
+
+        // Upload to Supabase Storage in background (for persistence), but don't depend on it
+        uploadReferenceImage(file).then(storageRef => {
+          ref.publicUrl = storageRef.publicUrl;
+          console.log('Reference image also saved to storage:', storageRef.publicUrl);
+        }).catch(e => {
+          console.warn('Background storage upload failed (base64 still available):', e.message);
+        });
       } catch (err) {
-        console.error('Upload failed:', err);
-        const card = document.getElementById(`ref-card-${tempId}`);
+        console.error('Image processing failed:', err);
+        const card = document.getElementById(`ref-card-${refId}`);
         if (card) {
           const uploading = card.querySelector('.ref-card-uploading');
           if (uploading) {
             uploading.className = 'batch-result-error';
-            uploading.textContent = 'Upload failed';
+            uploading.textContent = 'Processing failed';
           }
         }
       }
@@ -1127,17 +1136,20 @@
       const labelInput = document.querySelector(`.ref-card-label[data-ref-id="${ref.id}"]`);
       if (labelInput) ref.label = labelInput.value.trim();
       if (ref.label) {
-        refLookup[ref.label.toLowerCase()] = ref.publicUrl;
+        // Only pass real HTTP URLs to fal.ai (it cannot handle data: URLs)
+        refLookup[ref.label.toLowerCase()] = ref.publicUrl || null;
       }
     });
 
     // Build all jobs
     const jobs = [];
+    const fallbackRef = referenceImages.length === 1 ? referenceImages[0] : null;
+    const fallbackUrl = fallbackRef ? (fallbackRef.publicUrl || null) : null;
     for (const combo of combos) {
       for (const ratio of ratios) {
         // Try to match a reference image to this combo's meal name
         const mealName = (combo.MEAL_NAME || '').toLowerCase();
-        const refUrl = refLookup[mealName] || (referenceImages.length === 1 ? referenceImages[0].publicUrl : null);
+        const refUrl = refLookup[mealName] || fallbackUrl;
         jobs.push({ combo, ratio, prompt: applyTemplate(template, combo), referenceUrl: refUrl });
       }
     }
@@ -1547,7 +1559,12 @@
         return label && label === name;
       }) || (referenceImages.length === 1 ? referenceImages[0] : null);
 
-      if (ref && ref.publicUrl) {
+      if (ref && ref.base64) {
+        // Use locally stored base64 directly (no network round-trip needed)
+        refImages.push({ meal_index: i, base64: ref.base64, media_type: ref.media_type || 'image/jpeg' });
+        statusEl.textContent = `Reference image matched for "${mealNames[i]}"`;
+      } else if (ref && ref.publicUrl) {
+        // Fallback: fetch from Supabase Storage if base64 not available (legacy refs)
         try {
           statusEl.textContent = `Fetching reference image for "${mealNames[i]}"...`;
           const imgRes = await fetch(ref.publicUrl);
@@ -1564,7 +1581,16 @@
       }
     }
 
-    const imageNote = refImages.length > 0 ? ` (with ${refImages.length} reference photo${refImages.length !== 1 ? 's' : ''})` : '';
+    // Diagnostic: log what reference images were matched
+    console.log(`[generate-variables] ${referenceImages.length} ref images uploaded, ${refImages.length} matched to meals`);
+    referenceImages.forEach(r => {
+      const labelInput = document.querySelector(`.ref-card-label[data-ref-id="${r.id}"]`);
+      const label = labelInput ? labelInput.value.trim() : r.label;
+      console.log(`  ref "${label}" | has base64: ${!!r.base64} (${r.base64 ? r.base64.length + ' chars' : 'none'}) | publicUrl: ${r.publicUrl || 'none'}`);
+    });
+    refImages.forEach(ri => console.log(`  sending to Claude: meal_index=${ri.meal_index}, base64 length=${ri.base64?.length}, type=${ri.media_type}`));
+
+    const imageNote = refImages.length > 0 ? ` (with ${refImages.length} reference photo${refImages.length !== 1 ? 's' : ''})` : ' (no reference photos matched)';
     statusEl.textContent = `Asking Claude to write variables for ${mealNames.length} meal${mealNames.length !== 1 ? 's' : ''}${imageNote}...`;
 
     try {
