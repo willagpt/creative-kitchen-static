@@ -467,6 +467,8 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  pointer-events: none;
+  user-select: none;
 }
 
 .version-thumb-label {
@@ -1024,10 +1026,44 @@ body {
   color: var(--text-2);
 }
 
-.ref-card-remove {
+.ref-card-actions {
   position: absolute;
   top: 4px;
   right: 4px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.ref-card:hover .ref-card-actions {
+  opacity: 1;
+}
+
+.ref-card-describe {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Inter', sans-serif;
+}
+
+.ref-card-describe:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.ref-card-describe:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.ref-card-remove {
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -1039,12 +1075,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-
-.ref-card:hover .ref-card-remove {
-  opacity: 1;
 }
 
 .ref-card-remove:hover {

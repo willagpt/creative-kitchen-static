@@ -250,7 +250,7 @@
     creativeDirectionInput.value = '';
 
     // Reset aspect ratio to default
-    setAspectRatio('1:1');
+    setAspectRatio('4:5');
 
     // Download button — show only if there's a generated image
     if (ad.generated_image_url) {
@@ -402,7 +402,7 @@
       const label = isRefined ? `v${num} · ${ratio} · refined` : `v${num} · ${ratio}`;
       return `
         <div class="version-thumb${refinedClass} ${isActive ? 'active' : ''}" data-version-idx="${i}" title="${date} · ${ratio}${isRefined ? ' · feedback: ' + v.user_feedback.slice(0, 60) : ''} · ${v.rating || 'unrated'}">
-          <img src="${v.image_url}" alt="Version ${num}" loading="lazy" />
+          <img src="${v.image_url}" alt="Version ${num}" loading="lazy" draggable="false" />
           <span class="version-thumb-label">${label}</span>
         </div>
       `;
@@ -410,7 +410,9 @@
 
     // Click to swap the displayed image + prompt
     versionsStrip.querySelectorAll('.version-thumb').forEach(thumb => {
-      thumb.addEventListener('click', () => {
+      thumb.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         const idx = parseInt(thumb.dataset.versionIdx);
         const v = currentVersions[idx];
         if (!v) return;
@@ -849,7 +851,10 @@
             <div class="ref-card-name">${file.name}</div>
             <input class="ref-card-label" type="text" placeholder="e.g. smoky chipotle chicken" data-ref-id="${refId}" value="${defaultLabel}" />
           </div>
-          <button class="ref-card-remove" data-ref-id="${refId}">x</button>
+          <div class="ref-card-actions">
+            <button class="ref-card-describe" data-ref-id="${refId}" title="Ask Claude to describe this image">describe</button>
+            <button class="ref-card-remove" data-ref-id="${refId}">x</button>
+          </div>
         </div>
       `;
       grid.insertAdjacentHTML('beforeend', cardHtml);
@@ -904,18 +909,81 @@
     if (card) card.remove();
   }
 
+  // Describe a single reference image using Claude vision
+  async function describeReferenceImage(refId) {
+    const ref = referenceImages.find(r => r.id === refId);
+    if (!ref || !ref.base64) {
+      console.warn('No base64 for ref', refId);
+      return;
+    }
+
+    const btn = document.querySelector(`.ref-card-describe[data-ref-id="${refId}"]`);
+    if (btn) { btn.disabled = true; btn.textContent = 'describing...'; }
+
+    const labelInput = document.querySelector(`.ref-card-label[data-ref-id="${refId}"]`);
+    const mealName = labelInput ? labelInput.value.trim() : ref.label || 'this meal';
+
+    try {
+      const config = await getConfig();
+      const res = await fetch(`${config.supabaseUrl}/functions/v1/generate-variables`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.supabaseAnonKey}`
+        },
+        body: JSON.stringify({
+          meal_names: [mealName],
+          reference_images: [{ meal_index: 0, base64: ref.base64, media_type: ref.media_type || 'image/jpeg' }],
+          brand_guidelines: brandGuidelinesText || undefined,
+          sleeve_notes: brandSleeveNotes || undefined
+        })
+      });
+
+      const data = await safeJson(res);
+      if (!data?.variables?.meals?.[0]) {
+        throw new Error(data?.error || 'No description returned');
+      }
+
+      const meal = data.variables.meals[0];
+
+      // Put the description into MEAL_DESCRIPTION textarea
+      const descTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_DESCRIPTION"]');
+      if (descTextarea) {
+        const existing = descTextarea.value.trim();
+        descTextarea.value = existing ? existing + '\n\n' + meal.MEAL_DESCRIPTION : meal.MEAL_DESCRIPTION;
+      }
+
+      // Also add the meal name to MEAL_NAME if not already there
+      const nameTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_NAME"]');
+      if (nameTextarea) {
+        const existingNames = nameTextarea.value.trim().split('\n').map(s => s.trim().toLowerCase()).filter(Boolean);
+        if (!existingNames.includes(mealName.toLowerCase())) {
+          nameTextarea.value = nameTextarea.value.trim() ? nameTextarea.value.trim() + '\n' + mealName : mealName;
+        }
+      }
+
+      if (btn) { btn.textContent = 'done'; setTimeout(() => { btn.textContent = 'describe'; btn.disabled = false; }, 2000); }
+    } catch (err) {
+      console.error('Describe image failed:', err);
+      if (btn) { btn.textContent = 'failed'; setTimeout(() => { btn.textContent = 'describe'; btn.disabled = false; }, 2000); }
+    }
+  }
+
   function renderExistingRefs() {
     const grid = document.getElementById('ref-grid');
     grid.innerHTML = referenceImages.map(ref => `
       <div class="ref-card" data-ref-id="${ref.id}" id="ref-card-${ref.id}">
         <div class="ref-card-image">
-          <img src="${ref.publicUrl}" alt="${ref.name}" loading="lazy" />
+          <img src="${ref.base64 ? 'data:' + (ref.media_type || 'image/jpeg') + ';base64,' + ref.base64 : ref.publicUrl}" alt="${ref.name}" loading="lazy" />
         </div>
         <div class="ref-card-meta">
           <div class="ref-card-name">${ref.name}</div>
           <input class="ref-card-label" type="text" value="${ref.label}" placeholder="e.g. smoky chipotle chicken" data-ref-id="${ref.id}" />
         </div>
-        <button class="ref-card-remove" data-ref-id="${ref.id}">x</button>
+        <div class="ref-card-actions">
+          <button class="ref-card-describe" data-ref-id="${ref.id}" title="Ask Claude to describe this image">describe</button>
+          <button class="ref-card-remove" data-ref-id="${ref.id}">x</button>
+        </div>
       </div>
     `).join('');
   }
@@ -1876,10 +1944,12 @@
     refFileInput.value = '';
   });
 
-  // Delegate remove clicks on ref cards
+  // Delegate clicks on ref cards (remove + describe)
   document.getElementById('ref-grid').addEventListener('click', (e) => {
     const removeBtn = e.target.closest('.ref-card-remove');
     if (removeBtn) removeReferenceImage(removeBtn.dataset.refId);
+    const describeBtn = e.target.closest('.ref-card-describe');
+    if (describeBtn) describeReferenceImage(describeBtn.dataset.refId);
   });
 
   // Delegate label edits on ref cards
