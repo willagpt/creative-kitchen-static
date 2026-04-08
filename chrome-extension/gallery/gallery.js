@@ -861,6 +861,14 @@
           if (uploading) uploading.remove();
         }
 
+        // Clear stale MEAL_DESCRIPTION so the user (or auto-generate) replaces it
+        // This prevents the original salmon description from persisting when a new meal photo is uploaded
+        const descTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_DESCRIPTION"]');
+        if (descTextarea && descTextarea.value) {
+          descTextarea.value = '';
+          console.log('[ref-upload] Cleared MEAL_DESCRIPTION textarea (new reference image uploaded, old description is stale)');
+        }
+
         // Upload to Supabase Storage in background (for persistence), but don't depend on it
         uploadReferenceImage(file).then(storageRef => {
           ref.publicUrl = storageRef.publicUrl;
@@ -1076,11 +1084,11 @@
       for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
       const blob = new Blob([byteArray], { type: mediaType || 'image/jpeg' });
 
-      // fal.ai file upload endpoint
+      // fal.ai storage upload endpoint
       const formData = new FormData();
       formData.append('file', blob, 'reference.jpg');
 
-      const res = await fetch('https://fal.run/fal-ai/file-upload', {
+      const res = await fetch('https://fal.ai/api/storage/upload', {
         method: 'POST',
         headers: { 'Authorization': 'Key ' + config.falApiKey },
         body: formData
@@ -1162,6 +1170,27 @@
 
     const template = document.getElementById('batch-template').value.trim();
     if (!template) return;
+
+    // If reference images are uploaded but MEAL_DESCRIPTION is empty or unchanged,
+    // auto-run Claude vision to generate descriptions from the photos first
+    if (referenceImages.length > 0) {
+      const descTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_DESCRIPTION"]');
+      const currentDesc = descTextarea ? descTextarea.value.trim() : '';
+      const originalDesc = (batchPlaceholders.MEAL_DESCRIPTION || '').trim();
+
+      if (!currentDesc || currentDesc === originalDesc) {
+        console.log('[batch] Reference images present but MEAL_DESCRIPTION is stale/empty. Running auto-generate first...');
+        const statusEl = document.getElementById('batch-autogen-status');
+        if (statusEl) statusEl.textContent = 'Reference photos detected. Generating descriptions from photos first...';
+        await autoGenerateVariables();
+
+        // Re-check: if MEAL_DESCRIPTION is still empty after auto-generate, warn and continue
+        const newDesc = descTextarea ? descTextarea.value.trim() : '';
+        if (!newDesc) {
+          console.warn('[batch] Auto-generate did not fill MEAL_DESCRIPTION. Continuing with empty description.');
+        }
+      }
+    }
 
     const lists = getBatchLists();
     const combos = getCombinations(lists);
