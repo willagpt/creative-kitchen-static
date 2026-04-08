@@ -1597,6 +1597,14 @@
     const imageNote = refImages.length > 0 ? ` (with ${refImages.length} reference photo${refImages.length !== 1 ? 's' : ''})` : ' (no reference photos matched)';
     statusEl.textContent = `Asking Claude to write variables for ${mealNames.length} meal${mealNames.length !== 1 ? 's' : ''}${imageNote}...`;
 
+    // When reference images are matched, strip MEAL_DESCRIPTION from examples
+    // so Claude describes the photo instead of copying the old description
+    const placeholdersToSend = { ...batchPlaceholders };
+    if (refImages.length > 0) {
+      delete placeholdersToSend.MEAL_DESCRIPTION;
+      console.log('[generate-variables] Stripped MEAL_DESCRIPTION from examples (ref images present, Claude should describe the photo)');
+    }
+
     try {
       const config = await getConfig();
       const res = await fetch(`${config.supabaseUrl}/functions/v1/generate-variables`, {
@@ -1607,7 +1615,7 @@
         },
         body: JSON.stringify({
           meal_names: mealNames,
-          original_placeholders: batchPlaceholders,
+          original_placeholders: placeholdersToSend,
           reference_images: refImages.length > 0 ? refImages : undefined,
           brand_guidelines: brandGuidelinesText || undefined,
           sleeve_notes: brandSleeveNotes || undefined
