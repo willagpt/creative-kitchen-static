@@ -21,6 +21,7 @@
   let batchRunning = false;
   let batchCancelled = false;
   let referenceImages = []; // { id, name, label, publicUrl, filePath }
+  let activeVersionIdx = 0; // which version thumbnail is currently selected
 
   // ─── DOM refs ─────────────────────────────────────────────────────
   const gallery = document.getElementById('gallery');
@@ -378,6 +379,14 @@
     versionsSection.classList.remove('hidden');
     versionsCount.textContent = `${currentVersions.length} version${currentVersions.length !== 1 ? 's' : ''}`;
 
+    // Show "What changed?" button if 2+ versions
+    const compareBtn = document.getElementById('compare-btn');
+    if (currentVersions.length >= 2) {
+      compareBtn.classList.remove('hidden');
+    } else {
+      compareBtn.classList.add('hidden');
+    }
+
     versionsStrip.innerHTML = currentVersions.map((v, i) => {
       const num = currentVersions.length - i;
       const isActive = modalGeneratedImg.src === v.image_url;
@@ -416,8 +425,12 @@
         }
 
         // Update active state
+        activeVersionIdx = idx;
         versionsStrip.querySelectorAll('.version-thumb').forEach(t => t.classList.remove('active'));
         thumb.classList.add('active');
+
+        // Hide previous compare summary when switching versions
+        document.getElementById('compare-summary').classList.add('hidden');
       });
     });
   }
@@ -1241,6 +1254,168 @@
     batchCancelled = true;
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // COMPARE VERSIONS — "What changed?" between two prompts
+  // ═══════════════════════════════════════════════════════════════════
+
+  async function compareVersions() {
+    if (currentVersions.length < 2) return;
+
+    // Compare active version with the one after it (older, since sorted desc)
+    const currentIdx = activeVersionIdx;
+    const previousIdx = currentIdx + 1;
+
+    if (previousIdx >= currentVersions.length) {
+      // Active is the oldest version, compare with the one before it (newer)
+      return;
+    }
+
+    const vCurrent = currentVersions[currentIdx];
+    const vPrevious = currentVersions[previousIdx];
+
+    if (!vCurrent?.prompt || !vPrevious?.prompt) {
+      document.getElementById('compare-summary-body').textContent = 'One of these versions has no saved prompt.';
+      document.getElementById('compare-summary').classList.remove('hidden');
+      return;
+    }
+
+    const compareBtn = document.getElementById('compare-btn');
+    const summaryEl = document.getElementById('compare-summary');
+    const summaryBody = document.getElementById('compare-summary-body');
+    const summaryTitle = document.getElementById('compare-summary-title');
+
+    compareBtn.classList.add('loading');
+    compareBtn.textContent = 'Comparing...';
+    summaryBody.textContent = 'Asking Claude what changed...';
+    summaryEl.classList.remove('hidden');
+
+    const numCurrent = currentVersions.length - currentIdx;
+    const numPrevious = currentVersions.length - previousIdx;
+    summaryTitle.textContent = `v${numPrevious} → v${numCurrent}`;
+
+    try {
+      const config = await getConfig();
+      const res = await fetch(`${config.supabaseUrl}/functions/v1/compare-prompts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.supabaseAnonKey}`
+        },
+        body: JSON.stringify({
+          prompt_a: vPrevious.prompt,
+          prompt_b: vCurrent.prompt,
+          label_a: `v${numPrevious}`,
+          label_b: `v${numCurrent}`
+        })
+      });
+
+      const data = await safeJson(res);
+      if (data?.summary) {
+        summaryBody.textContent = data.summary;
+      } else {
+        summaryBody.textContent = data?.error || 'Could not compare these versions.';
+      }
+    } catch (err) {
+      summaryBody.textContent = `Error: ${err.message}`;
+    } finally {
+      compareBtn.classList.remove('loading');
+      compareBtn.textContent = 'What changed?';
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // AUTO-GENERATE VARIABLES — Claude fills descriptions, headlines etc
+  // from just the meal names
+  // ═══════════════════════════════════════════════════════════════════
+
+  async function autoGenerateVariables() {
+    const mealTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_NAME"]');
+    const mealNames = mealTextarea.value.trim().split('\n').map(s => s.trim()).filter(Boolean);
+
+    if (mealNames.length === 0) {
+      document.getElementById('batch-autogen-status').textContent = 'Type at least one meal name first.';
+      return;
+    }
+
+    const btn = document.getElementById('batch-autogen-btn');
+    const statusEl = document.getElementById('batch-autogen-status');
+
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+    statusEl.textContent = `Asking Claude to write variables for ${mealNames.length} meal${mealNames.length !== 1 ? 's' : ''}...`;
+
+    try {
+      const config = await getConfig();
+      const res = await fetch(`${config.supabaseUrl}/functions/v1/generate-variables`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.supabaseAnonKey}`
+        },
+        body: JSON.stringify({
+          meal_names: mealNames,
+          original_placeholders: batchPlaceholders
+        })
+      });
+
+      const data = await safeJson(res);
+      if (!data?.variables?.meals) {
+        throw new Error(data?.error || 'No variables returned');
+      }
+
+      const vars = data.variables;
+
+      // Fill MEAL_DESCRIPTION textarea
+      const descTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_DESCRIPTION"]');
+      if (descTextarea) {
+        descTextarea.value = vars.meals.map(m => m.MEAL_DESCRIPTION).join('\n\n');
+      }
+
+      // Fill HEADLINE textarea (per-meal + extras)
+      const headlineTextarea = document.querySelector('.batch-list-textarea[data-placeholder="HEADLINE"]');
+      if (headlineTextarea) {
+        const allHeadlines = [
+          ...vars.meals.map(m => m.HEADLINE),
+          ...(vars.extra_headlines || [])
+        ];
+        headlineTextarea.value = [...new Set(allHeadlines)].join('\n');
+      }
+
+      // Fill BACKGROUND_MOOD textarea (per-meal + extras)
+      const moodTextarea = document.querySelector('.batch-list-textarea[data-placeholder="BACKGROUND_MOOD"]');
+      if (moodTextarea) {
+        const allMoods = [
+          ...vars.meals.map(m => m.BACKGROUND_MOOD),
+          ...(vars.extra_moods || [])
+        ];
+        moodTextarea.value = [...new Set(allMoods)].join('\n');
+      }
+
+      // Fill CTA_TEXT textarea
+      const ctaTextarea = document.querySelector('.batch-list-textarea[data-placeholder="CTA_TEXT"]');
+      if (ctaTextarea) {
+        const allCtas = vars.meals.map(m => m.CTA_TEXT);
+        ctaTextarea.value = [...new Set(allCtas)].join('\n');
+      }
+
+      // Fill SLEEVE_STYLE textarea
+      const sleeveTextarea = document.querySelector('.batch-list-textarea[data-placeholder="SLEEVE_STYLE"]');
+      if (sleeveTextarea) {
+        const allSleeves = vars.meals.map(m => m.SLEEVE_STYLE);
+        sleeveTextarea.value = [...new Set(allSleeves)].join('\n');
+      }
+
+      updateBatchComboCount();
+      statusEl.textContent = `Done. Generated variables for ${vars.meals.length} meals + bonus headlines and moods.`;
+
+    } catch (err) {
+      statusEl.textContent = `Error: ${err.message}`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Auto-generate from meal names';
+    }
+  }
+
   // ─── Event listeners ──────────────────────────────────────────────
 
   // Aspect ratio pills
@@ -1283,11 +1458,18 @@
   // Download
   downloadBtn.addEventListener('click', downloadImage);
 
+  // Compare versions
+  document.getElementById('compare-btn').addEventListener('click', compareVersions);
+  document.getElementById('compare-summary-close').addEventListener('click', () => {
+    document.getElementById('compare-summary').classList.add('hidden');
+  });
+
   // Batch Variations
   document.getElementById('modal-batch-btn').addEventListener('click', toggleBatch);
   document.getElementById('batch-templatize-btn').addEventListener('click', templatizePrompt);
   document.getElementById('batch-generate-btn').addEventListener('click', runBatch);
   document.getElementById('batch-cancel-btn').addEventListener('click', cancelBatch);
+  document.getElementById('batch-autogen-btn').addEventListener('click', autoGenerateVariables);
 
   // Reference image upload
   const refDropzone = document.getElementById('ref-dropzone');

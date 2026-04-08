@@ -107,9 +107,17 @@
         <div class="versions-header">
           <span class="section-title">Generated Versions</span>
           <span class="versions-count" id="versions-count"></span>
+          <button class="btn btn-small btn-compare hidden" id="compare-btn">What changed?</button>
         </div>
         <div class="versions-strip" id="versions-strip">
           <!-- Thumbnails injected by JS -->
+        </div>
+        <div class="compare-summary hidden" id="compare-summary">
+          <div class="compare-summary-header">
+            <span class="compare-summary-title" id="compare-summary-title">Changes</span>
+            <button class="compare-summary-close" id="compare-summary-close">✕</button>
+          </div>
+          <div class="compare-summary-body" id="compare-summary-body"></div>
         </div>
       </div>
 
@@ -207,7 +215,11 @@
           <div class="batch-step-header">
             <span class="batch-step-number">3</span>
             <span class="batch-step-title">Variable Lists</span>
-            <span class="batch-list-hint">One item per line. Only fill in the lists you want to vary.</span>
+            <span class="batch-list-hint">Type your meal names, then hit Auto-generate to fill everything else.</span>
+          </div>
+          <div class="batch-autogen-bar">
+            <button class="btn btn-small btn-autogen" id="batch-autogen-btn">Auto-generate from meal names</button>
+            <span class="batch-autogen-status" id="batch-autogen-status"></span>
           </div>
 
           <div class="batch-lists-grid">

@@ -748,6 +748,78 @@ body {
   color: #fff;
 }
 
+/* ─── Compare / What Changed ─────────────────────────────────────── */
+.btn-compare {
+  background: var(--bg-2);
+  color: var(--text-1);
+  border: 1px solid var(--bg-3);
+  font-size: 11px;
+  padding: 4px 10px;
+  margin-left: auto;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-compare:hover { color: var(--text-0); border-color: var(--accent); }
+.btn-compare.loading { opacity: 0.6; pointer-events: none; }
+
+.compare-summary {
+  margin-top: 10px;
+  background: var(--bg-1);
+  border: 1px solid var(--bg-2);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.compare-summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-2);
+}
+.compare-summary-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.compare-summary-close {
+  background: none;
+  border: none;
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+}
+.compare-summary-close:hover { color: var(--text-0); }
+.compare-summary-body {
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-1);
+  white-space: pre-wrap;
+}
+
+/* ─── Auto-generate Bar ──────────────────────────────────────────── */
+.batch-autogen-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.btn-autogen {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-autogen:hover { background: var(--accent-hover); }
+.btn-autogen:disabled { opacity: 0.6; cursor: default; }
+.batch-autogen-status {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
 /* ─── Batch Variations Section ────────────────────────────────────── */
 .batch-section {
   margin: 0 24px;
