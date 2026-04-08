@@ -12,7 +12,7 @@
   let currentFilter = 'all';
   let selectedAd = null;
   let currentVersions = [];
-  let selectedAspectRatio = '1:1';
+  let selectedAspectRatio = '4:5';
 
   // Batch state
   let batchTemplate = '';
@@ -363,7 +363,7 @@
           image_url: imageUrl,
           prompt: prompt,
           creative_direction: creativeDirection || null,
-          aspect_ratio: aspectRatio || '1:1',
+          aspect_ratio: aspectRatio || '4:5',
           user_feedback: userFeedback || null
         }
       });
@@ -875,14 +875,6 @@
           if (uploading) uploading.remove();
         }
 
-        // Clear stale MEAL_DESCRIPTION so the user (or auto-generate) replaces it
-        // This prevents the original salmon description from persisting when a new meal photo is uploaded
-        const descTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_DESCRIPTION"]');
-        if (descTextarea && descTextarea.value) {
-          descTextarea.value = '';
-          console.log('[ref-upload] Cleared MEAL_DESCRIPTION textarea (new reference image uploaded, old description is stale)');
-        }
-
         // Upload to Supabase Storage in background (for persistence), but don't depend on it
         uploadReferenceImage(file).then(storageRef => {
           ref.publicUrl = storageRef.publicUrl;
@@ -996,11 +988,10 @@
       templateArea.value = batchTemplate;
       templateArea.classList.remove('hidden');
 
-      // Pre-fill variable lists with original values, but only if the textarea
-      // is empty (don't overwrite user-edited or photo-described content)
+      // Pre-fill variable lists with original values
       Object.entries(batchPlaceholders).forEach(([key, value]) => {
         const textarea = document.querySelector(`.batch-list-textarea[data-placeholder="${key}"]`);
-        if (textarea && value && !textarea.value.trim()) {
+        if (textarea && value) {
           textarea.value = value;
         }
       });
@@ -1086,44 +1077,6 @@
     return result;
   }
 
-  // Upload base64 image to fal.ai CDN so it can be used as image_url
-  // Returns an HTTP URL that fal.ai can access, or null on failure
-  async function uploadBase64ToFal(base64, mediaType) {
-    try {
-      const config = await getConfig();
-      if (!config.falApiKey) return null;
-
-      // Convert base64 to blob
-      const byteChars = atob(base64);
-      const byteArray = new Uint8Array(byteChars.length);
-      for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
-      const blob = new Blob([byteArray], { type: mediaType || 'image/jpeg' });
-
-      // fal.ai storage upload endpoint
-      const formData = new FormData();
-      formData.append('file', blob, 'reference.jpg');
-
-      const res = await fetch('https://fal.ai/api/storage/upload', {
-        method: 'POST',
-        headers: { 'Authorization': 'Key ' + config.falApiKey },
-        body: formData
-      });
-
-      if (!res.ok) {
-        console.warn('fal.ai file upload failed:', res.status);
-        return null;
-      }
-
-      const data = await res.json();
-      const url = data?.file_url || data?.url || null;
-      if (url) console.log('Reference image uploaded to fal.ai CDN:', url);
-      return url;
-    } catch (e) {
-      console.warn('Failed to upload reference image to fal.ai:', e.message);
-      return null;
-    }
-  }
-
   // Generate a single image via fal.ai (reuses existing pattern)
   // referenceUrl is optional — if provided, used as image_url for img2img guidance
   async function generateSingleBatchImage(prompt, ratio, referenceUrl) {
@@ -1187,50 +1140,29 @@
     if (!template) return;
 
     const lists = getBatchLists();
-
-    // Diagnostic: log what MEAL_DESCRIPTION will be sent to fal.ai
-    if (lists.MEAL_DESCRIPTION) {
-      console.log('[batch] MEAL_DESCRIPTION values going to fal.ai:', lists.MEAL_DESCRIPTION.map(d => d.slice(0, 80) + '...'));
-    } else {
-      console.warn('[batch] No MEAL_DESCRIPTION in lists! Template placeholders may not be substituted.');
-    }
-
     const combos = getCombinations(lists);
     if (combos.length === 0) return;
 
     const ratios = batchSelectedRatio === 'both' ? ['4:5', '9:16'] : [batchSelectedRatio];
-    const totalJobs = combos.length * ratios.length;
-
-    // Warn if generating a large number of images
-    if (totalJobs > 20) {
-      const proceed = confirm(`This will generate ${totalJobs} images. That could take a while and use a lot of fal.ai credits.\n\nTip: trim your variable lists to reduce combinations. Each list multiplies the total.\n\nProceed?`);
-      if (!proceed) return;
-    }
 
     // Build reference image lookup: match by label to MEAL_NAME
     // Users label their uploaded photos (e.g. "smoky chipotle chicken")
     // and we match that to the MEAL_NAME variable value
-    // If publicUrl is missing (Supabase upload failed), upload base64 to fal.ai CDN
     const refLookup = {};
-    for (const ref of referenceImages) {
+    referenceImages.forEach(ref => {
+      // Update label from the input field in case user edited it
       const labelInput = document.querySelector(`.ref-card-label[data-ref-id="${ref.id}"]`);
       if (labelInput) ref.label = labelInput.value.trim();
-      if (!ref.label) continue;
-
-      let url = ref.publicUrl || null;
-      if (!url && ref.base64) {
-        // Supabase storage failed, upload directly to fal.ai CDN instead
-        console.log(`[batch] No publicUrl for "${ref.label}", uploading base64 to fal.ai CDN...`);
-        url = await uploadBase64ToFal(ref.base64, ref.media_type);
-        if (url) ref.publicUrl = url; // Cache for subsequent batches
+      if (ref.label) {
+        // Only pass real HTTP URLs to fal.ai (it cannot handle data: URLs)
+        refLookup[ref.label.toLowerCase()] = ref.publicUrl || null;
       }
-      refLookup[ref.label.toLowerCase()] = url;
-    }
+    });
 
     // Build all jobs
     const jobs = [];
     const fallbackRef = referenceImages.length === 1 ? referenceImages[0] : null;
-    const fallbackUrl = fallbackRef ? (refLookup[fallbackRef.label?.toLowerCase()] || null) : null;
+    const fallbackUrl = fallbackRef ? (fallbackRef.publicUrl || null) : null;
     for (const combo of combos) {
       for (const ratio of ratios) {
         // Try to match a reference image to this combo's meal name
@@ -1615,96 +1547,6 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // ═══════════════════════════════════════════════════════════════════
-  // DESCRIBE FROM PHOTO — Claude Vision describes just the reference
-  // image and fills MEAL_DESCRIPTION only, without touching other fields
-  // ═══════════════════════════════════════════════════════════════════
-
-  async function describeFromPhoto() {
-    const statusEl = document.getElementById('batch-autogen-status');
-    const btn = document.getElementById('batch-describe-btn');
-
-    if (referenceImages.length === 0) {
-      statusEl.textContent = 'Upload a reference photo first.';
-      return;
-    }
-
-    // Find images with base64
-    const refsWithImages = referenceImages.filter(r => r.base64);
-    if (refsWithImages.length === 0) {
-      statusEl.textContent = 'No processed reference images found. Try re-uploading.';
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'Describing...';
-    statusEl.textContent = `Sending ${refsWithImages.length} photo${refsWithImages.length !== 1 ? 's' : ''} to Claude Vision...`;
-
-    try {
-      const config = await getConfig();
-
-      // Build a simple Claude vision request: just describe each photo
-      const contentBlocks = [];
-      const mealTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_NAME"]');
-      const mealNames = mealTextarea ? mealTextarea.value.trim().split('\n').map(s => s.trim()).filter(Boolean) : [];
-
-      // Build meal names from labels (or from MEAL_NAME textarea)
-      const names = refsWithImages.map((ref, i) => {
-        const labelInput = document.querySelector(`.ref-card-label[data-ref-id="${ref.id}"]`);
-        return labelInput ? labelInput.value.trim() : (ref.label || `Meal ${i + 1}`);
-      });
-      const refImages = refsWithImages.map((ref, i) => ({
-        meal_index: i, base64: ref.base64, media_type: ref.media_type || 'image/jpeg'
-      }));
-
-      // Use the generate-variables Edge Function (it has the Claude API key)
-      // Send empty original_placeholders so no stale examples leak through
-      const res = await fetch(`${config.supabaseUrl}/functions/v1/generate-variables`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${config.supabaseAnonKey}`
-        },
-        body: JSON.stringify({
-          meal_names: names,
-          original_placeholders: {},
-          reference_images: refImages,
-          brand_guidelines: brandGuidelinesText || undefined
-        })
-      });
-
-      const data = await safeJson(res);
-      if (data?.variables?.meals) {
-        const descriptions = data.variables.meals.map(m => m.MEAL_DESCRIPTION);
-        const descTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_DESCRIPTION"]');
-        if (descTextarea) {
-          descTextarea.value = descriptions.join('\n\n');
-          console.log('[describe] MEAL_DESCRIPTION filled from photo:', descriptions.map(d => d.slice(0, 80) + '...'));
-        }
-
-        // Also update MEAL_NAME from the labels if the textarea is still the default
-        const mealTextarea = document.querySelector('.batch-list-textarea[data-placeholder="MEAL_NAME"]');
-        const names = refsWithImages.map((ref, i) => {
-          const labelInput = document.querySelector(`.ref-card-label[data-ref-id="${ref.id}"]`);
-          return labelInput ? labelInput.value.trim() : (ref.label || `Meal ${i + 1}`);
-        });
-        if (mealTextarea) mealTextarea.value = names.join('\n');
-
-        updateBatchComboCount();
-        statusEl.textContent = `Described ${descriptions.length} meal${descriptions.length !== 1 ? 's' : ''} from photos. Check the description below, then generate.`;
-      } else {
-        throw new Error(data?.error || 'No descriptions returned');
-      }
-    } catch (err) {
-      console.error('[describe] Error:', err);
-      statusEl.textContent = `Error describing photos: ${err.message}`;
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Describe from photo';
-    }
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
   // AUTO-GENERATE VARIABLES — Claude fills descriptions, headlines etc
   // from just the meal names
   // ═══════════════════════════════════════════════════════════════════
@@ -1769,14 +1611,6 @@
     const imageNote = refImages.length > 0 ? ` (with ${refImages.length} reference photo${refImages.length !== 1 ? 's' : ''})` : ' (no reference photos matched)';
     statusEl.textContent = `Asking Claude to write variables for ${mealNames.length} meal${mealNames.length !== 1 ? 's' : ''}${imageNote}...`;
 
-    // When reference images are matched, strip MEAL_DESCRIPTION from examples
-    // so Claude describes the photo instead of copying the old description
-    const placeholdersToSend = { ...batchPlaceholders };
-    if (refImages.length > 0) {
-      delete placeholdersToSend.MEAL_DESCRIPTION;
-      console.log('[generate-variables] Stripped MEAL_DESCRIPTION from examples (ref images present, Claude should describe the photo)');
-    }
-
     try {
       const config = await getConfig();
       const res = await fetch(`${config.supabaseUrl}/functions/v1/generate-variables`, {
@@ -1787,7 +1621,7 @@
         },
         body: JSON.stringify({
           meal_names: mealNames,
-          original_placeholders: placeholdersToSend,
+          original_placeholders: batchPlaceholders,
           reference_images: refImages.length > 0 ? refImages : undefined,
           brand_guidelines: brandGuidelinesText || undefined,
           sleeve_notes: brandSleeveNotes || undefined
@@ -1994,7 +1828,6 @@
   document.getElementById('batch-generate-btn').addEventListener('click', runBatch);
   document.getElementById('batch-cancel-btn').addEventListener('click', cancelBatch);
   document.getElementById('batch-autogen-btn').addEventListener('click', autoGenerateVariables);
-  document.getElementById('batch-describe-btn').addEventListener('click', describeFromPhoto);
   document.getElementById('batch-download-all-btn').addEventListener('click', async () => {
     const imgs = document.querySelectorAll('#batch-results-grid .batch-result-image img');
     if (imgs.length === 0) { alert('No images to download.'); return; }
