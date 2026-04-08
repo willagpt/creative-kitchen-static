@@ -1333,34 +1333,47 @@
   // BRAND GUIDELINES — load, save, extract from images
   // ═══════════════════════════════════════════════════════════════════
 
-  async function loadBrandGuidelines() {
+  async function loadBrandGuidelines(brandName) {
+    const name = brandName || 'chefly';
     try {
-      const config = await getConfig();
-      const data = await supabaseRest('/rest/v1/brand_guidelines?brand_name=eq.chefly&select=guidelines_text,sleeve_notes&limit=1');
+      const data = await supabaseRest(`/rest/v1/brand_guidelines?brand_name=eq.${encodeURIComponent(name)}&select=brand_name,guidelines_text,sleeve_notes&limit=1`);
       if (data && data.length > 0) {
         brandGuidelinesText = data[0].guidelines_text || '';
         brandSleeveNotes = data[0].sleeve_notes || '';
         const guideText = document.getElementById('brand-guide-text');
         const sleeveText = document.getElementById('brand-guide-sleeve');
+        const nameInput = document.getElementById('brand-guide-name');
         if (guideText) guideText.value = brandGuidelinesText;
         if (sleeveText) sleeveText.value = brandSleeveNotes;
+        if (nameInput) nameInput.value = data[0].brand_name || name;
       }
     } catch (err) {
       console.warn('Could not load brand guidelines:', err);
     }
   }
 
+  function getActiveBrandName() {
+    const nameInput = document.getElementById('brand-guide-name');
+    return (nameInput ? nameInput.value.trim() : 'chefly') || 'chefly';
+  }
+
   async function saveBrandGuidelines() {
     const statusEl = document.getElementById('brand-guide-save-status');
     const guideText = document.getElementById('brand-guide-text');
     const sleeveText = document.getElementById('brand-guide-sleeve');
+    const brandName = getActiveBrandName();
     brandGuidelinesText = guideText.value.trim();
     brandSleeveNotes = sleeveText.value.trim();
+
+    if (!brandGuidelinesText) {
+      statusEl.textContent = 'Nothing to save. Paste or type guidelines first.';
+      return;
+    }
 
     try {
       statusEl.textContent = 'Saving...';
       const config = await getConfig();
-      const res = await fetch(`${config.supabaseUrl}/rest/v1/brand_guidelines`, {
+      const res = await fetch(`${config.supabaseUrl}/rest/v1/brand_guidelines?on_conflict=brand_name`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1369,13 +1382,17 @@
           'Prefer': 'resolution=merge-duplicates,return=representation'
         },
         body: JSON.stringify({
-          brand_name: 'chefly',
+          brand_name: brandName,
           guidelines_text: brandGuidelinesText,
-          sleeve_notes: brandSleeveNotes
+          sleeve_notes: brandSleeveNotes,
+          updated_at: new Date().toISOString()
         })
       });
-      if (!res.ok) throw new Error(`Save failed: ${res.status}`);
-      statusEl.textContent = 'Saved!';
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Save failed (${res.status}): ${errText}`);
+      }
+      statusEl.textContent = `Saved as "${brandName}"!`;
       setTimeout(() => { statusEl.textContent = ''; }, 3000);
     } catch (err) {
       statusEl.textContent = `Error: ${err.message}`;
@@ -1459,7 +1476,7 @@
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${config.supabaseAnonKey}`
         },
-        body: JSON.stringify({ brand_name: 'chefly', images })
+        body: JSON.stringify({ brand_name: getActiveBrandName(), images })
       });
 
       const data = await safeJson(res);
@@ -1756,6 +1773,14 @@
 
   document.getElementById('brand-guide-extract-btn').addEventListener('click', extractBrandGuidelines);
   document.getElementById('brand-guide-save-btn').addEventListener('click', saveBrandGuidelines);
+
+  // Load a different brand profile when the name field changes
+  let brandNameDebounce;
+  document.getElementById('brand-guide-name').addEventListener('change', (e) => {
+    clearTimeout(brandNameDebounce);
+    const name = e.target.value.trim();
+    if (name) loadBrandGuidelines(name);
+  });
 
   // Delegate remove clicks on brand guide previews
   document.getElementById('brand-guide-previews').addEventListener('click', (e) => {

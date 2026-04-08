@@ -1074,6 +1074,29 @@ body {
   gap: 10px;
 }
 
+.brand-guide-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-guide-name-input {
+  flex: 0 0 160px;
+  padding: 6px 10px;
+  background: var(--bg-1);
+  border: 1px solid var(--bg-2);
+  border-radius: var(--radius);
+  color: var(--text-0);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.brand-guide-name-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 .brand-guide-upload-row {
   display: flex;
   align-items: center;
