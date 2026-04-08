@@ -33,7 +33,7 @@ body {
   min-height: 100vh;
 }
 
-/* ─── Nav ──────────────────────────────────────────────────────────── */
+/* ─── Nav ──────────────────────────────────────────────────────────────── */
 .nav {
   position: sticky;
   top: 0;
@@ -87,7 +87,7 @@ body {
 .filter-btn:hover { color: var(--text-0); background: var(--bg-2); }
 .filter-btn.active { color: var(--text-0); background: var(--accent); }
 
-/* ─── Buttons ──────────────────────────────────────────────────────── */
+/* ─── Buttons ──────────────────────────────────────────────────────────── */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -111,7 +111,7 @@ body {
 .btn-danger { background: var(--error); color: #fff; margin-left: auto; }
 .btn-danger:hover { background: #dc2626; }
 
-/* ─── Stats Bar ────────────────────────────────────────────────────── */
+/* ─── Stats Bar ────────────────────────────────────────────────────────── */
 .stats-bar {
   display: flex;
   gap: 1px;
@@ -141,7 +141,7 @@ body {
   margin-top: 2px;
 }
 
-/* ─── Gallery Grid ─────────────────────────────────────────────────── */
+/* ─── Gallery Grid ───────────────────────────────────────────────────────── */
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -149,7 +149,7 @@ body {
   padding: 24px;
 }
 
-/* ─── Ad Card ──────────────────────────────────────────────────────── */
+/* ─── Ad Card ──────────────────────────────────────────────────────────── */
 .ad-card {
   background: var(--bg-1);
   border: 1px solid var(--bg-2);
@@ -232,7 +232,7 @@ body {
   gap: 4px;
 }
 
-/* ─── Empty State ──────────────────────────────────────────────────── */
+/* ─── Empty State ────────────────────────────────────────────────────────── */
 .empty-state {
   text-align: center;
   padding: 80px 24px;
@@ -243,7 +243,7 @@ body {
 .empty-state p { color: var(--text-1); max-width: 400px; margin: 0 auto; line-height: 1.6; }
 .empty-state a { color: var(--accent); }
 
-/* ─── Loading ──────────────────────────────────────────────────────── */
+/* ─── Loading ──────────────────────────────────────────────────────────── */
 .loading {
   display: flex;
   flex-direction: column;
@@ -266,7 +266,7 @@ body {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ─── Modal ────────────────────────────────────────────────────────── */
+/* ─── Modal ────────────────────────────────────────────────────────────── */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -326,7 +326,7 @@ body {
   color: var(--text-2);
 }
 
-/* ─── Comparison Layout ────────────────────────────────────────────── */
+/* ─── Comparison Layout ────────────────────────────────────────────────── */
 .comparison {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -412,7 +412,7 @@ body {
   color: var(--text-1);
 }
 
-/* ─── Version History Strip ───────────────────────────────────────── */
+/* ─── Version History Strip ─────────────────────────────────────────── */
 .versions-section {
   margin: 0 24px;
   padding-bottom: 8px;
@@ -488,7 +488,7 @@ body {
   box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3);
 }
 
-/* ─── Action Bar (sticky) ─────────────────────────────────────────── */
+/* ─── Action Bar (sticky) ───────────────────────────────────────────── */
 .action-bar {
   position: sticky;
   top: 0;
@@ -525,7 +525,7 @@ body {
   background: rgba(249, 115, 22, 0.15);
 }
 
-/* ─── Feedback + Refine Section ───────────────────────────────────── */
+/* ─── Feedback + Refine Section ─────────────────────────────────────── */
 .feedback-section {
   margin: 0 24px;
   padding: 12px 0;
@@ -600,7 +600,7 @@ body {
   cursor: not-allowed;
 }
 
-/* ─── Aspect Ratio Selector ───────────────────────────────────────── */
+/* ─── Aspect Ratio Selector ─────────────────────────────────────────── */
 .aspect-section {
   display: flex;
   align-items: center;
@@ -638,7 +638,7 @@ body {
   color: #fff;
 }
 
-/* ─── Prompt Section ───────────────────────────────────────────────── */
+/* ─── Prompt Section ───────────────────────────────────────────────────── */
 .prompt-section {
   margin: 0 24px;
   background: var(--bg-1);
@@ -732,7 +732,7 @@ body {
   text-overflow: ellipsis;
 }
 
-/* ─── Batch Button ────────────────────────────────────────────────── */
+/* ─── Batch Button ──────────────────────────────────────────────────────── */
 .btn-batch {
   background: rgba(34, 197, 94, 0.15);
   color: var(--success);
@@ -1159,7 +1159,7 @@ body {
   border-color: var(--error);
 }
 
-/* ─── Metadata Section ─────────────────────────────────────────────── */
+/* ─── Metadata Section ─────────────────────────────────────────────────── */
 .metadata-section {
   margin: 16px 24px;
 }
@@ -1195,23 +1195,23 @@ body {
   font-weight: 500;
 }
 
-/* ─── Modal Actions ────────────────────────────────────────────────── */
+/* ─── Modal Actions ────────────────────────────────────────────────────── */
 .modal-actions {
   display: flex;
   gap: 8px;
   padding: 16px 24px 24px;
 }
 
-/* ─── Utility ──────────────────────────────────────────────────────── */
+/* ─── Utility ──────────────────────────────────────────────────────────── */
 .hidden { display: none !important; }
 
-/* ─── Scrollbar ────────────────────────────────────────────────────── */
+/* ─── Scrollbar ────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-2); }
 
-/* ─── Responsive ───────────────────────────────────────────────────── */
+/* ─── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 800px) {
   .comparison {
     grid-template-columns: 1fr;
