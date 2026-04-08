@@ -596,6 +596,12 @@
         })
       });
 
+      if (!submitRes.ok) {
+        const errText = await submitRes.text();
+        console.error('[fal.ai] Submit failed:', submitRes.status, errText);
+        throw new Error(`fal.ai submit failed (${submitRes.status}): ${errText.slice(0, 200)}`);
+      }
+
       const submitData = await safeJson(submitRes);
       if (!submitData || !submitData.request_id) {
         throw new Error('Failed to queue request — no request_id returned');
@@ -633,12 +639,20 @@
         `https://queue.fal.run/${FAL_MODEL}/requests/${requestId}`,
         { headers }
       );
+
+      if (!resultRes.ok) {
+        const errText = await resultRes.text();
+        console.error('[fal.ai] Result fetch failed:', resultRes.status, errText);
+        throw new Error(`fal.ai result fetch failed (${resultRes.status}): ${errText.slice(0, 200)}`);
+      }
+
       const resultData = await safeJson(resultRes);
+      console.log('[fal.ai] Result data:', JSON.stringify(resultData).slice(0, 500));
 
       if (resultData && resultData.images && resultData.images.length > 0) {
         imageUrl = resultData.images[0].url;
       } else {
-        throw new Error('No image in fal.ai result');
+        throw new Error(`No image in fal.ai result: ${JSON.stringify(resultData).slice(0, 300)}`);
       }
 
       // 4. Show the generated image
