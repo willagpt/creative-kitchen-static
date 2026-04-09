@@ -138,6 +138,8 @@ export default function App() {
             stats={stats}
             onSelectAd={setSelectedAdId}
             onRefresh={loadAds}
+            brands={brands}
+            activeBrandId={activeBrandId}
           />
         )}
 
@@ -181,6 +183,8 @@ export default function App() {
           onClose={() => setSelectedAdId(null)}
           onRefresh={loadAds}
           onTemplatize={goToGenerator}
+          brands={brands}
+          activeBrandId={activeBrandId}
         />
       )}
     </>

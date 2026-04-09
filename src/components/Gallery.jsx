@@ -3,7 +3,8 @@ import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase'
 
 const FAL_MODEL = 'fal-ai/nano-banana-2'
 
-export default function Gallery({ ads, versions, loading, filter, setFilter, stats, onSelectAd, onRefresh }) {
+export default function Gallery({ ads, versions, loading, filter, setFilter, stats, onSelectAd, onRefresh, brands, activeBrandId }) {
+  const activeBrand = brands?.find(b => b.id === activeBrandId)
   const [processing, setProcessing] = useState(false)
   const [processStatus, setProcessStatus] = useState('')
   const [processProgress, setProcessProgress] = useState({ done: 0, total: 0 })
@@ -32,6 +33,12 @@ export default function Gallery({ ads, versions, loading, filter, setFilter, sta
             ad_copy: ad.ad_copy,
             image_url: ad.image_url,
             media_type: ad.media_type,
+            ...(activeBrand ? {
+              brand_name: activeBrand.name,
+              brand_guidelines: activeBrand.guidelines_text || '',
+              tone_of_voice: activeBrand.tone_of_voice || '',
+              colour_palette: activeBrand.colour_palette || [],
+            } : {}),
           })
         })
         const promptData = await promptRes.json()

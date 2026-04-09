@@ -3,7 +3,7 @@ import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase'
 
 const FAL_MODEL = 'fal-ai/nano-banana-2'
 
-export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatize }) {
+export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatize, brands, activeBrandId }) {
   const [prompt, setPrompt] = useState(ad.generated_prompt || '')
   const [direction, setDirection] = useState('')
   const [status, setStatus] = useState('')
@@ -33,6 +33,21 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
 
   const currentImage = versions[activeVersion]?.image_url || ad.generated_image_url
   const hasVersions = versions.length > 0
+  const activeBrand = brands?.find(b => b.id === activeBrandId)
+
+  // Build brand context for prompt generation
+  function getBrandContext() {
+    if (!activeBrand) return {}
+    return {
+      brand_name: activeBrand.name,
+      brand_guidelines: activeBrand.guidelines_text || '',
+      tone_of_voice: activeBrand.tone_of_voice || '',
+      sleeve_notes: activeBrand.sleeve_notes || '',
+      colour_palette: activeBrand.colour_palette || [],
+      typography: activeBrand.typography || {},
+      packaging_specs: activeBrand.packaging_specs || {},
+    }
+  }
 
   // Auto-pipeline: when opening an ad with no prompt, auto-generate prompt then image
   useEffect(() => {
@@ -63,6 +78,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
           ad_copy: ad.ad_copy,
           image_url: ad.image_url,
           media_type: ad.media_type,
+          ...getBrandContext(),
         })
       })
       const data = await res.json()
@@ -156,7 +172,8 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
           ad_copy: ad.ad_copy,
           image_url: ad.image_url,
           media_type: ad.media_type,
-          creative_direction: direction || undefined
+          creative_direction: direction || undefined,
+          ...getBrandContext(),
         })
       })
 
@@ -305,8 +322,17 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
                 <img src={currentImage} alt="Generated" />
               ) : (
                 <div className="panel-placeholder">
-                  <p>Waiting for the magic</p>
-                  <p className="text-xs">Generate a prompt, then hit Generate Image to bring it to life</p>
+                  {autoPipeline ? (
+                    <>
+                      <span className="spinner" style={{ marginBottom: 'var(--space-sm)' }} />
+                      <p>{status || 'Processing...'}</p>
+                    </>
+                  ) : (
+                    <>
+                      <p>No image yet</p>
+                      <p className="text-xs">Click an ad with no prompt to auto-generate, or use the buttons below</p>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -372,7 +398,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
                 rel="noreferrer"
                 className="btn btn-ghost btn-sm"
               >
-                \u2193 Download
+                {'\u2193'} Download
               </a>
             )}
 
@@ -393,23 +419,25 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
 
         {/* Prompt editor */}
         <div className="prompt-section">
-          <div className="flex-between mb-sm">
+          <div className="mb-lg">
             <span className="prompt-label">Creative Direction (optional)</span>
+            <input
+              type="text"
+              className="text-input"
+              value={direction}
+              onChange={(e) => setDirection(e.target.value)}
+              placeholder='e.g. "9:16 story, coloured background, packaging flat-lay"'
+            />
           </div>
-          <input
-            type="text"
-            className="text-input mb-md"
-            value={direction}
-            onChange={(e) => setDirection(e.target.value)}
-            placeholder='e.g. "9:16 story, coloured background, packaging flat-lay"'
-          />
-          <span className="prompt-label">Chefly Prompt</span>
-          <textarea
-            className="prompt-textarea"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="No prompt generated yet. Click 'New Prompt' above to create one from this ad."
-          />
+          <div>
+            <span className="prompt-label">Chefly Prompt</span>
+            <textarea
+              className="prompt-textarea"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="No prompt generated yet. Click 'New Prompt' above to create one from this ad."
+            />
+          </div>
         </div>
 
         {/* Settings hint */}
