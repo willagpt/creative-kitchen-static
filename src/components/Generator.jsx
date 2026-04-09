@@ -330,10 +330,10 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
           <h2 className="page-title">Generator</h2>
           <p className="page-subtitle">Select a template, pick photos, set variables, batch generate.</p>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div className="flex-center gap-sm">
           {falKey && !showKeyInput && (
             <span
-              style={{ fontSize: 'var(--text-xs)', color: 'var(--text-2)', cursor: 'pointer' }}
+              className="text-xs text-muted cursor-pointer"
               onClick={() => setShowKeyInput(true)}
               title="Click to change API key"
             >
@@ -341,14 +341,13 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
             </span>
           )}
           {(!falKey || showKeyInput) && (
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <div className="flex-center gap-sm">
               <input
                 type="password"
-                className="text-input"
+                className="text-input text-input-sm"
                 placeholder="fal.ai API key"
                 value={falKey}
                 onChange={e => setFalKey(e.target.value)}
-                style={{ width: 220, fontSize: 'var(--text-xs)' }}
               />
               <button
                 className="btn btn-primary btn-sm"
@@ -375,7 +374,7 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
             <p className="section-desc">Pick an existing template or create one from a saved ad.</p>
 
             {templates.length > 0 && (
-              <div style={{ marginBottom: 12 }}>
+              <div className="mb-md">
                 <label htmlFor="template-select" className="field-label">Existing templates</label>
                 <select
                   id="template-select"
@@ -393,8 +392,8 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-              <div style={{ flex: 1 }}>
+            <div className="flex gap-sm items-end">
+              <div className="flex-1">
                 <label htmlFor="source-ad-select" className="field-label">Or templatize from a saved ad</label>
                 <select
                   id="source-ad-select"
@@ -429,13 +428,13 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
                   className="prompt-textarea"
                   value={templateText}
                   onChange={e => setTemplateText(e.target.value)}
-                  style={{ minHeight: 200, fontFamily: 'var(--font-body)', fontSize: 'var(--text-xs)' }}
+                  style={{ minHeight: 200 }}
                 />
               </div>
 
               {/* Step 2: Variables */}
               <div className="section-card section-card-blue">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div className="flex-between mb-sm">
                   <div>
                     <h3 className="section-title">2. Set variables</h3>
                     <p className="section-desc">One value per line. All combinations will be generated.</p>
@@ -468,7 +467,7 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
               {/* Step 3: Ratios + generate */}
               <div className="section-card section-card-green">
                 <h3 className="section-title">3. Generate</h3>
-                <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 12 }}>
+                <div className="flex-center gap-lg mb-md">
                   <div className="aspect-pills">
                     {['4:5', '9:16'].map(r => (
                       <button
@@ -486,16 +485,15 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
                       </button>
                     ))}
                   </div>
-                  <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-1)' }}>
+                  <span className="text-sm text-subtle">
                     {combinations.length} combinations x {ratios.length} ratio{ratios.length > 1 ? 's' : ''} = <strong>{totalImages} images</strong>
                   </span>
                 </div>
 
                 <button
-                  className="btn btn-primary"
+                  className="btn btn-primary w-full"
                   onClick={runGeneration}
                   disabled={generating || totalImages === 0}
-                  style={{ width: '100%' }}
                 >
                   {generating
                     ? `Generating... ${progress.done}/${progress.total}`
@@ -504,12 +502,12 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
                 </button>
 
                 {generating && (
-                  <div className="progress-bar" style={{ marginTop: 8 }}>
+                  <div className="progress-bar mt-sm">
                     <div className="progress-fill" style={{ width: `${(progress.done / progress.total) * 100}%` }} />
                   </div>
                 )}
 
-                {status && <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-1)', marginTop: 8 }}>{status}</p>}
+                {status && <p className="text-xs text-subtle mt-sm">{status}</p>}
               </div>
             </>
           )}
@@ -543,7 +541,7 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
             <h3 className="section-title">Reference Photos</h3>
             <p className="section-desc">Select photos for variable generation.</p>
             {photos.length === 0 ? (
-              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-2)', padding: 12 }}>
+              <p className="text-xs text-muted" style={{ padding: 'var(--space-md)' }}>
                 No approved photos. Go to Photo Library to upload and approve photos.
               </p>
             ) : (
@@ -570,7 +568,7 @@ export default function Generator({ ads, versions, brands, activeBrandId }) {
               </div>
             )}
             {selectedPhotoIds.length > 0 && (
-              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--accent)', marginTop: 8 }}>
+              <p className="text-xs text-accent mt-sm">
                 {selectedPhotoIds.length} photo{selectedPhotoIds.length > 1 ? 's' : ''} selected
               </p>
             )}

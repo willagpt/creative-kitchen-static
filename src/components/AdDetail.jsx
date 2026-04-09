@@ -186,7 +186,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
               )}
             </div>
             {ad.ad_copy && (
-              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-2)', marginTop: 8, lineHeight: 1.4 }}>
+              <p className="text-xs text-muted mt-sm" style={{ lineHeight: 1.4 }}>
                 {ad.ad_copy.length > 200 ? ad.ad_copy.slice(0, 200) + '...' : ad.ad_copy}
               </p>
             )}
@@ -200,7 +200,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
               ) : (
                 <div className="panel-placeholder">
                   <p>Waiting for the magic</p>
-                  <p style={{ fontSize: 'var(--text-xs)' }}>Generate a prompt, then hit Generate Image to bring it to life</p>
+                  <p className="text-xs">Generate a prompt, then hit Generate Image to bring it to life</p>
                 </div>
               )}
             </div>
@@ -292,15 +292,10 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
           </div>
           <input
             type="text"
+            className="text-input mb-md"
             value={direction}
             onChange={(e) => setDirection(e.target.value)}
             placeholder='e.g. "9:16 story, coloured background, packaging flat-lay"'
-            style={{
-              width: '100%', padding: '8px 12px', marginBottom: 12,
-              background: 'var(--bg-2)', border: '1px solid var(--bg-3)',
-              borderRadius: 'var(--radius)', color: 'var(--text-0)',
-              fontFamily: 'var(--font-body)', fontSize: 'var(--text-sm)'
-            }}
           />
           <span className="prompt-label">Chefly Prompt</span>
           <textarea
@@ -328,11 +323,10 @@ function FalKeySettings() {
   }
 
   return (
-    <div style={{ padding: 'var(--space-sm) var(--space-xl) var(--space-lg)', borderTop: '1px solid var(--bg-2)' }}>
+    <div className="fal-settings-bar">
       <button
-        className="btn btn-ghost btn-sm"
+        className="btn btn-ghost btn-sm text-xs"
         onClick={() => setShow(!show)}
-        style={{ fontSize: 'var(--text-xs)' }}
       >
         {show ? 'Hide settings' : 'Settings (fal.ai key)'}
       </button>
@@ -340,14 +334,10 @@ function FalKeySettings() {
         <div className="flex-center gap-sm mt-sm">
           <input
             type="password"
+            className="text-input text-input-sm flex-1"
             value={key}
             onChange={(e) => setKey(e.target.value)}
             placeholder="fal.ai API key"
-            style={{
-              flex: 1, padding: '6px 10px', background: 'var(--bg-2)',
-              border: '1px solid var(--bg-3)', borderRadius: 'var(--radius)',
-              color: 'var(--text-0)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-xs)'
-            }}
           />
           <button className="btn btn-secondary btn-sm" onClick={save}>Save</button>
         </div>

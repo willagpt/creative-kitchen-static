@@ -338,6 +338,12 @@ body::after {
 .prompt-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(255, 214, 10, 0.15); }
 .prompt-textarea::placeholder { color: var(--text-2); }
 
+/* fal.ai settings bar */
+.fal-settings-bar {
+  padding: var(--space-sm) var(--space-xl) var(--space-lg);
+  border-top: 1px solid var(--bg-2);
+}
+
 /* Aspect pills */
 .aspect-pills { display: flex; gap: var(--space-xs); }
 .aspect-pill {
@@ -956,6 +962,10 @@ body::after {
 .text-center { text-align: center; }
 .font-heading { font-family: var(--font-heading); font-weight: var(--weight-bold); }
 .tabular-nums { font-variant-numeric: tabular-nums; }
+.text-accent { color: var(--accent); }
+.w-full { width: 100%; }
+.cursor-pointer { cursor: pointer; }
+.items-end { align-items: flex-end; }
 
 /* ---- POLISH: final micro-details and missing states ---- */
 
