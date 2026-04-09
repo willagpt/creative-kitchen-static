@@ -279,7 +279,7 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
                 {!photo.description && <span className="photo-badge needs-desc">?</span>}
               </div>
               <div className="photo-card-body">
-                <span className="photo-card-name">{photo.name}</span>
+                <span className="photo-card-name">{photo.meal_name || photo.name}</span>
                 <span className={`photo-card-type photo-type-${photo.type || 'product'}`}>{photo.type}</span>
               </div>
             </div>
@@ -310,6 +310,16 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
                 {types.map(t => <option key={t} value={t}>{t}</option>)}
                 <option value="other">other</option>
               </select>
+
+              <label className="field-label mt-md">Meal Name</label>
+              <input
+                type="text"
+                className="text-input"
+                value={selectedPhoto.meal_name || ''}
+                onChange={e => setSelectedPhoto(prev => ({ ...prev, meal_name: e.target.value }))}
+                onBlur={e => updatePhoto(selectedPhoto.id, { meal_name: e.target.value })}
+                placeholder="e.g. Thai Green Curry, Beef Bourguignon"
+              />
 
               <label className="field-label mt-md">Star Rating</label>
               <div className="star-rating">

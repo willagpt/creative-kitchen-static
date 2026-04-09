@@ -17,7 +17,7 @@ export default function Gallery({ ads, versions, loading, filter, setFilter, sta
     try {
       let query = supabase
         .from('photo_library')
-        .select('name, type, description, prompt_snippet')
+        .select('name, type, description, prompt_snippet, meal_name')
         .not('description', 'is', null)
       if (activeBrandId) query = query.eq('brand_id', activeBrandId)
       const { data } = await query

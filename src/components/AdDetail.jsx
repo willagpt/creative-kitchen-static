@@ -59,7 +59,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
     try {
       let query = supabase
         .from('photo_library')
-        .select('name, type, description, prompt_snippet')
+        .select('name, type, description, prompt_snippet, meal_name')
         .not('description', 'is', null)
       if (activeBrandId) query = query.eq('brand_id', activeBrandId)
       const { data } = await query
