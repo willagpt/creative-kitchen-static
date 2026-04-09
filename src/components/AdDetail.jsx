@@ -49,6 +49,22 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
     }
   }
 
+  // Fetch described photos from the photo library for the active brand
+  async function getPhotoDescriptions() {
+    try {
+      let query = supabase
+        .from('photo_library')
+        .select('name, type, description, prompt_snippet')
+        .not('description', 'is', null)
+      if (activeBrandId) query = query.eq('brand_id', activeBrandId)
+      const { data } = await query
+      return data || []
+    } catch (err) {
+      console.error('Failed to fetch photo descriptions:', err)
+      return []
+    }
+  }
+
   // Auto-pipeline: when opening an ad with no prompt, auto-generate prompt then image
   useEffect(() => {
     if (pipelineRanRef.current) return
@@ -63,9 +79,10 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
   async function runAutoPipeline() {
     // Step 1: Generate prompt
     setGeneratingPrompt(true)
-    setStatus('Auto-pipeline: generating prompt...')
+    setStatus('Auto-pipeline: loading photos + generating prompt...')
     setStatusType('')
     try {
+      const photoDescs = await getPhotoDescriptions()
       const res = await fetch(`${supabaseUrl}/functions/v1/generate-ad-prompt`, {
         method: 'POST',
         headers: {
@@ -79,6 +96,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
           image_url: ad.image_url,
           media_type: ad.media_type,
           ...getBrandContext(),
+          photo_descriptions: photoDescs.length > 0 ? photoDescs : undefined,
         })
       })
       const data = await res.json()
@@ -157,9 +175,10 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
   // Manual: Generate a new prompt via Edge Function
   async function generatePrompt() {
     setGeneratingPrompt(true)
-    setStatus('Generating prompt with Claude Opus...')
+    setStatus('Loading photos + generating prompt with Claude Opus...')
     setStatusType('')
     try {
+      const photoDescs = await getPhotoDescriptions()
       const res = await fetch(`${supabaseUrl}/functions/v1/generate-ad-prompt`, {
         method: 'POST',
         headers: {
@@ -174,6 +193,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
           media_type: ad.media_type,
           creative_direction: direction || undefined,
           ...getBrandContext(),
+          photo_descriptions: photoDescs.length > 0 ? photoDescs : undefined,
         })
       })
 

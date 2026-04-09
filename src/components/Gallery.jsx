@@ -12,12 +12,31 @@ export default function Gallery({ ads, versions, loading, filter, setFilter, sta
   const pendingAds = ads.filter(a => !a.generated_prompt)
   const hasFalKey = !!localStorage.getItem('ck_fal_api_key')
 
+  // Fetch described photos from photo library for the active brand
+  async function getPhotoDescriptions() {
+    try {
+      let query = supabase
+        .from('photo_library')
+        .select('name, type, description, prompt_snippet')
+        .not('description', 'is', null)
+      if (activeBrandId) query = query.eq('brand_id', activeBrandId)
+      const { data } = await query
+      return data || []
+    } catch (err) {
+      console.error('Failed to fetch photo descriptions:', err)
+      return []
+    }
+  }
+
   async function processAllPending() {
     const toProcess = pendingAds
     if (toProcess.length === 0) return
     setProcessing(true)
     setProcessProgress({ done: 0, total: toProcess.length })
     const falKey = localStorage.getItem('ck_fal_api_key')
+
+    // Fetch photo descriptions once for the entire batch
+    const photoDescs = await getPhotoDescriptions()
 
     for (let i = 0; i < toProcess.length; i++) {
       const ad = toProcess[i]
@@ -37,8 +56,12 @@ export default function Gallery({ ads, versions, loading, filter, setFilter, sta
               brand_name: activeBrand.name,
               brand_guidelines: activeBrand.guidelines_text || '',
               tone_of_voice: activeBrand.tone_of_voice || '',
+              sleeve_notes: activeBrand.sleeve_notes || '',
               colour_palette: activeBrand.colour_palette || [],
+              typography: activeBrand.typography || {},
+              packaging_specs: activeBrand.packaging_specs || {},
             } : {}),
+            photo_descriptions: photoDescs.length > 0 ? photoDescs : undefined,
           })
         })
         const promptData = await promptRes.json()
