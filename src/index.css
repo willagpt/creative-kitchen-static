@@ -358,6 +358,14 @@ body::after {
 .prompt-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(255, 214, 10, 0.15); }
 .prompt-textarea::placeholder { color: var(--text-2); }
 
+.version-meta {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: var(--space-xs);
+  font-family: 'JetBrains Mono', monospace;
+  opacity: 0.7;
+}
+
 /* fal.ai settings bar */
 .fal-settings-bar {
   padding: var(--space-sm) var(--space-xl) var(--space-lg);

@@ -380,7 +380,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
                 <div
                   key={v.id}
                   className={`version-thumb ${i === activeVersion ? 'active' : ''}`}
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveVersion(i) }}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveVersion(i); if (v.prompt) setPrompt(v.prompt) }}
                 >
                   <img src={v.image_url} alt={`v${num}`} draggable="false" />
                   <span className="version-thumb-label">v{num} {ratioLabel}</span>
@@ -488,6 +488,11 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="No prompt generated yet. Click 'Study Ad & Write Prompt' above to analyse the competitor ad and design your Chefly ad creative."
             />
+            {hasVersions && versions[activeVersion] && (
+              <div className="version-meta">
+                v{versions.length - activeVersion} {versions[activeVersion].aspect_ratio || ''} · generated {new Date(versions[activeVersion].created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} · {versions[activeVersion].prompt ? `${versions[activeVersion].prompt.length.toLocaleString()} chars` : 'no prompt saved'}
+              </div>
+            )}
           </div>
         </div>
 
