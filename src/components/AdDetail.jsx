@@ -38,11 +38,16 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
   // Build brand context for prompt generation
   function getBrandContext() {
     if (!activeBrand) return {}
+    // Send the correct sleeve notes based on the active_sleeve toggle
+    const activeSleeveMode = activeBrand.active_sleeve || 'primary'
+    const sleeveNotes = activeSleeveMode === 'alt'
+      ? (activeBrand.sleeve_notes_alt || activeBrand.sleeve_notes || '')
+      : (activeBrand.sleeve_notes || '')
     return {
       brand_name: activeBrand.name,
       brand_guidelines: activeBrand.guidelines_text || '',
       tone_of_voice: activeBrand.tone_of_voice || '',
-      sleeve_notes: activeBrand.sleeve_notes || '',
+      sleeve_notes: sleeveNotes,
       colour_palette: activeBrand.colour_palette || [],
       typography: activeBrand.typography || {},
       packaging_specs: activeBrand.packaging_specs || {},

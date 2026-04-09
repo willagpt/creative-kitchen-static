@@ -9,14 +9,17 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
   const [showNew, setShowNew] = useState(false)
   const [extracting, setExtracting] = useState(false)
   const [extractStatus, setExtractStatus] = useState('')
-  const [sleeveMode, setSleeveMode] = useState('primary') // 'primary' or 'alt'
+  const [sleeveMode, setSleeveMode] = useState('primary')
   const htmlInputRef = useRef()
 
   // Load active brand details
   useEffect(() => {
     if (!activeBrandId) { setBrand(null); return }
     const b = brands.find(b => b.id === activeBrandId)
-    if (b) setBrand({ ...b })
+    if (b) {
+      setBrand({ ...b })
+      setSleeveMode(b.active_sleeve || 'primary')
+    }
   }, [activeBrandId, brands])
 
   async function saveBrand() {
@@ -30,6 +33,7 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
           guidelines_text: brand.guidelines_text,
           sleeve_notes: brand.sleeve_notes,
           sleeve_notes_alt: brand.sleeve_notes_alt || null,
+          active_sleeve: sleeveMode,
           colour_palette: brand.colour_palette,
           typography: brand.typography,
           tone_of_voice: brand.tone_of_voice,
