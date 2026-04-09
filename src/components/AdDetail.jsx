@@ -392,8 +392,13 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
               className="btn btn-secondary"
               onClick={generatePrompt}
               disabled={generatingPrompt}
+              title="Regenerate the prompt using your current Brand DNA, photos, and creative direction"
             >
-              {generatingPrompt ? <><span className="spinner spinner-inline" /> Generating...</> : '\u21bb New Prompt'}
+              {generatingPrompt
+                ? <><span className="spinner spinner-inline" /> Generating...</>
+                : prompt
+                  ? '\u21bb Regenerate Prompt'
+                  : '\u21bb Generate Prompt'}
             </button>
 
             <div className="aspect-pills">
