@@ -359,7 +359,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
                     <>
                       <p>Your Chefly version will appear here</p>
                       <p className="text-xs text-muted" style={{ lineHeight: 1.5 }}>
-                        Click "New Prompt" to have Claude study the original ad and write a generation prompt.
+                        Click "Study Ad & Write Prompt" to have Claude analyse the competitor ad and design an ad creative for Chefly.
                         Then click "Generate Image" to create your version.
                       </p>
                     </>
@@ -397,13 +397,13 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
               className="btn btn-secondary"
               onClick={generatePrompt}
               disabled={generatingPrompt}
-              title="Regenerate the prompt using your current Brand DNA, photos, and creative direction"
+              title="Re-studies the original competitor ad with your current Brand DNA and writes a fresh ad creative prompt"
             >
               {generatingPrompt
-                ? <><span className="spinner spinner-inline" /> Generating...</>
+                ? <><span className="spinner spinner-inline" /> Studying ad...</>
                 : prompt
-                  ? '\u21bb Regenerate Prompt'
-                  : '\u21bb Generate Prompt'}
+                  ? '\u21bb Re-study Ad'
+                  : '\u21bb Study Ad & Write Prompt'}
             </button>
 
             <div className="aspect-pills">
@@ -486,7 +486,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
               className="prompt-textarea"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="No prompt generated yet. Click 'New Prompt' above to create one from this ad."
+              placeholder="No prompt generated yet. Click 'Study Ad & Write Prompt' above to analyse the competitor ad and design your Chefly ad creative."
             />
           </div>
         </div>
