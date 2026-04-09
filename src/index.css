@@ -878,6 +878,17 @@ body::after {
 
 /* ---- ONBOARD: empty states, workflow hints, first-run guidance ---- */
 
+/* Workflow banner (shown in gallery when work remains) */
+.workflow-banner {
+  background: var(--bg-2);
+  border: 1px solid var(--bg-3);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md) var(--space-lg);
+}
+.workflow-banner .workflow-steps {
+  margin: 0 auto;
+}
+
 /* Workflow steps (horizontal pipeline) */
 .workflow-steps {
   display: flex; align-items: center; gap: var(--space-sm);

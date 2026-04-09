@@ -119,6 +119,24 @@ export default function Gallery({ ads, versions, loading, filter, setFilter, sta
 
   return (
     <>
+      {/* Workflow context */}
+      {ads.length > 0 && stats.withImages === 0 && (
+        <div className="workflow-banner mb-lg">
+          <div className="workflow-steps">
+            <span className="workflow-step done">1. Save ads</span>
+            <span className="workflow-arrow">{'\u2192'}</span>
+            <span className={`workflow-step ${stats.withPrompt > 0 ? 'done' : 'current'}`}>2. Generate prompts</span>
+            <span className="workflow-arrow">{'\u2192'}</span>
+            <span className="workflow-step">3. Generate images</span>
+            <span className="workflow-arrow">{'\u2192'}</span>
+            <span className="workflow-step">4. Review + download</span>
+          </div>
+          <p className="text-xs text-muted" style={{ marginTop: 'var(--space-xs)', textAlign: 'center' }}>
+            Click any ad to open it, or hit "Process {pendingAds.length} pending" to auto-generate prompts + images for all ads at once.
+          </p>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="stats-bar">
         <div className="stat stat-total">

@@ -79,7 +79,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
   async function runAutoPipeline() {
     // Step 1: Generate prompt
     setGeneratingPrompt(true)
-    setStatus('Auto-pipeline: loading photos + generating prompt...')
+    setStatus('Studying the ad and writing your prompt...')
     setStatusType('')
     try {
       const photoDescs = await getPhotoDescriptions()
@@ -103,7 +103,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
       if (!res.ok || !data.prompt) throw new Error(data.error || 'No prompt returned')
       setPrompt(data.prompt)
       setGeneratingPrompt(false)
-      setStatus('Prompt ready. Generating image...')
+      setStatus('Prompt written. Now generating your image...')
       onRefresh()
 
       // Step 2: Generate image immediately
@@ -157,7 +157,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
         .update({ generated_image_url: imageUrl, image_generated_at: new Date().toISOString() })
         .eq('id', ad.id)
 
-      setStatus('Done. Prompt + image generated automatically.')
+      setStatus('Done. Your Chefly version is ready.')
       setStatusType('success')
       setActiveVersion(0)
       onRefresh()
@@ -175,7 +175,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
   // Manual: Generate a new prompt via Edge Function
   async function generatePrompt() {
     setGeneratingPrompt(true)
-    setStatus('Loading photos + generating prompt with Claude Opus...')
+    setStatus('Studying the ad and writing your prompt...')
     setStatusType('')
     try {
       const photoDescs = await getPhotoDescriptions()
@@ -346,11 +346,17 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
                     <>
                       <span className="spinner" style={{ marginBottom: 'var(--space-sm)' }} />
                       <p>{status || 'Processing...'}</p>
+                      <p className="text-xs text-muted" style={{ marginTop: 'var(--space-xs)' }}>
+                        Claude is studying the original ad and writing a detailed prompt, then generating an image.
+                      </p>
                     </>
                   ) : (
                     <>
-                      <p>No image yet</p>
-                      <p className="text-xs">Click an ad with no prompt to auto-generate, or use the buttons below</p>
+                      <p>Your Chefly version will appear here</p>
+                      <p className="text-xs text-muted" style={{ lineHeight: 1.5 }}>
+                        Click "New Prompt" to have Claude study the original ad and write a generation prompt.
+                        Then click "Generate Image" to create your version.
+                      </p>
                     </>
                   )}
                 </div>
