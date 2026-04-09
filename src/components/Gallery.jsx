@@ -1,4 +1,85 @@
-export default function Gallery({ ads, versions, loading, filter, setFilter, stats, onSelectAd }) {
+import { useState } from 'react'
+import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase'
+
+const FAL_MODEL = 'fal-ai/nano-banana-2'
+
+export default function Gallery({ ads, versions, loading, filter, setFilter, stats, onSelectAd, onRefresh }) {
+  const [processing, setProcessing] = useState(false)
+  const [processStatus, setProcessStatus] = useState('')
+  const [processProgress, setProcessProgress] = useState({ done: 0, total: 0 })
+
+  const pendingAds = ads.filter(a => !a.generated_prompt)
+  const hasFalKey = !!localStorage.getItem('ck_fal_api_key')
+
+  async function processAllPending() {
+    const toProcess = pendingAds
+    if (toProcess.length === 0) return
+    setProcessing(true)
+    setProcessProgress({ done: 0, total: toProcess.length })
+    const falKey = localStorage.getItem('ck_fal_api_key')
+
+    for (let i = 0; i < toProcess.length; i++) {
+      const ad = toProcess[i]
+      setProcessStatus(`Processing ${i + 1}/${toProcess.length}: ${ad.advertiser_name || 'Ad'}...`)
+      try {
+        // Step 1: Generate prompt
+        const promptRes = await fetch(`${supabaseUrl}/functions/v1/generate-ad-prompt`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseAnonKey}` },
+          body: JSON.stringify({
+            saved_ad_id: ad.id,
+            advertiser_name: ad.advertiser_name,
+            ad_copy: ad.ad_copy,
+            image_url: ad.image_url,
+            media_type: ad.media_type,
+          })
+        })
+        const promptData = await promptRes.json()
+        if (!promptRes.ok || !promptData.prompt) throw new Error(promptData.error || 'No prompt')
+
+        // Step 2: Generate image (if fal key exists)
+        if (falKey) {
+          setProcessStatus(`Generating image ${i + 1}/${toProcess.length}: ${ad.advertiser_name || 'Ad'}...`)
+          const headers = { 'Authorization': `Key ${falKey}`, 'Content-Type': 'application/json' }
+          const submitRes = await fetch(`https://queue.fal.run/${FAL_MODEL}`, {
+            method: 'POST', headers,
+            body: JSON.stringify({ prompt: promptData.prompt.trim(), num_images: 1, aspect_ratio: '4:5', enable_safety_checker: false })
+          })
+          const submitData = await submitRes.json()
+          if (submitData.request_id) {
+            for (let j = 0; j < 60; j++) {
+              await new Promise(r => setTimeout(r, 1500))
+              const sRes = await fetch(`https://queue.fal.run/${FAL_MODEL}/requests/${submitData.request_id}/status`, { headers })
+              const sData = await sRes.json()
+              if (sData.status === 'COMPLETED') break
+              if (sData.status === 'FAILED') throw new Error('Image generation failed')
+            }
+            const resultRes = await fetch(`https://queue.fal.run/${FAL_MODEL}/requests/${submitData.request_id}`, { headers })
+            const resultData = await resultRes.json()
+            const imageUrl = resultData?.images?.[0]?.url || resultData?.image?.url
+            if (imageUrl) {
+              await supabase.from('generated_versions').insert({
+                saved_ad_id: ad.id, image_url: imageUrl,
+                prompt: promptData.prompt.trim(), aspect_ratio: '4:5'
+              })
+              await supabase.from('saved_ads').update({
+                generated_image_url: imageUrl,
+                image_generated_at: new Date().toISOString()
+              }).eq('id', ad.id)
+            }
+          }
+        }
+      } catch (err) {
+        console.error(`Failed processing ${ad.advertiser_name}:`, err)
+      }
+      setProcessProgress({ done: i + 1, total: toProcess.length })
+      if (onRefresh) onRefresh()
+    }
+    setProcessing(false)
+    setProcessStatus(`Done. ${toProcess.length} ads processed.`)
+    setTimeout(() => setProcessStatus(''), 5000)
+  }
+
   const filters = [
     { key: 'all', label: 'All' },
     { key: 'with-prompt', label: 'With Prompt' },
@@ -24,8 +105,8 @@ export default function Gallery({ ads, versions, loading, filter, setFilter, sta
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="mb-lg">
+      {/* Filters + Process All */}
+      <div className="flex-between mb-lg">
         <div className="filters">
           {filters.map(f => (
             <button
@@ -37,7 +118,29 @@ export default function Gallery({ ads, versions, loading, filter, setFilter, sta
             </button>
           ))}
         </div>
+        {pendingAds.length > 0 && !processing && (
+          <button className="btn btn-primary btn-sm" onClick={processAllPending}>
+            Process {pendingAds.length} pending
+          </button>
+        )}
+        {processing && (
+          <span className="text-xs text-accent">
+            <span className="spinner spinner-inline" style={{ marginRight: 'var(--space-xs)' }} />
+            {processStatus}
+          </span>
+        )}
       </div>
+
+      {/* Processing progress bar */}
+      {processing && (
+        <div className="progress-bar mb-lg">
+          <div className="progress-fill" style={{ width: `${(processProgress.done / processProgress.total) * 100}%` }} />
+        </div>
+      )}
+
+      {!processing && processStatus && (
+        <p className="text-xs text-subtle mb-lg">{processStatus}</p>
+      )}
 
       {/* Loading */}
       {loading && (

@@ -137,6 +137,7 @@ export default function App() {
             setFilter={setFilter}
             stats={stats}
             onSelectAd={setSelectedAdId}
+            onRefresh={loadAds}
           />
         )}
 

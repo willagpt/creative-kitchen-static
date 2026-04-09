@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase'
 
 const FAL_MODEL = 'fal-ai/nano-banana-2'
@@ -12,6 +12,8 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
   const [ratio, setRatio] = useState('4:5')
   const [generating, setGenerating] = useState(false)
   const [generatingPrompt, setGeneratingPrompt] = useState(false)
+  const [autoPipeline, setAutoPipeline] = useState(false)
+  const pipelineRanRef = useRef(false)
 
   // Escape key to close
   useEffect(() => {
@@ -26,13 +28,117 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
     setActiveVersion(0)
     setStatus('')
     setDirection('')
+    pipelineRanRef.current = false
   }, [ad.id])
 
   const currentImage = versions[activeVersion]?.image_url || ad.generated_image_url
   const hasVersions = versions.length > 0
 
+  // Auto-pipeline: when opening an ad with no prompt, auto-generate prompt then image
+  useEffect(() => {
+    if (pipelineRanRef.current) return
+    if (ad.generated_prompt || generatingPrompt || generating) return
+    const falKey = localStorage.getItem('ck_fal_api_key')
+    if (!falKey) return // can't auto-pipeline without a fal key
+    pipelineRanRef.current = true
+    setAutoPipeline(true)
+    runAutoPipeline()
+  }, [ad.id])
 
-  // Generate a new prompt via Edge Function
+  async function runAutoPipeline() {
+    // Step 1: Generate prompt
+    setGeneratingPrompt(true)
+    setStatus('Auto-pipeline: generating prompt...')
+    setStatusType('')
+    try {
+      const res = await fetch(`${supabaseUrl}/functions/v1/generate-ad-prompt`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`
+        },
+        body: JSON.stringify({
+          saved_ad_id: ad.id,
+          advertiser_name: ad.advertiser_name,
+          ad_copy: ad.ad_copy,
+          image_url: ad.image_url,
+          media_type: ad.media_type,
+        })
+      })
+      const data = await res.json()
+      if (!res.ok || !data.prompt) throw new Error(data.error || 'No prompt returned')
+      setPrompt(data.prompt)
+      setGeneratingPrompt(false)
+      setStatus('Prompt ready. Generating image...')
+      onRefresh()
+
+      // Step 2: Generate image immediately
+      const falKey = localStorage.getItem('ck_fal_api_key')
+      if (!falKey) {
+        setStatus('Prompt generated. Set your fal.ai key to auto-generate images.')
+        setStatusType('success')
+        setAutoPipeline(false)
+        return
+      }
+      setGenerating(true)
+      const headers = { 'Authorization': `Key ${falKey}`, 'Content-Type': 'application/json' }
+      const payload = { prompt: data.prompt.trim(), num_images: 1, aspect_ratio: ratio, enable_safety_checker: false }
+
+      const submitRes = await fetch(`https://queue.fal.run/${FAL_MODEL}`, {
+        method: 'POST', headers, body: JSON.stringify(payload)
+      })
+      if (!submitRes.ok) throw new Error(`fal.ai submit failed (${submitRes.status})`)
+      const submitData = await submitRes.json()
+      if (!submitData.request_id) throw new Error('No request_id from fal.ai')
+
+      setStatus('Image generating...')
+      for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 1500))
+        const statusRes = await fetch(
+          `https://queue.fal.run/${FAL_MODEL}/requests/${submitData.request_id}/status`,
+          { headers }
+        )
+        const statusData = await statusRes.json()
+        if (statusData.status === 'COMPLETED') break
+        if (statusData.status === 'FAILED') throw new Error('fal.ai generation failed')
+        setStatus(`Image generating... (${Math.round(i * 1.5)}s)`)
+      }
+
+      const resultRes = await fetch(
+        `https://queue.fal.run/${FAL_MODEL}/requests/${submitData.request_id}`,
+        { headers }
+      )
+      const resultData = await resultRes.json()
+      const imageUrl = resultData?.images?.[0]?.url || resultData?.image?.url
+      if (!imageUrl) throw new Error('No image in fal.ai result')
+
+      await supabase.from('generated_versions').insert({
+        saved_ad_id: ad.id,
+        image_url: imageUrl,
+        prompt: data.prompt.trim(),
+        aspect_ratio: ratio
+      })
+      await supabase
+        .from('saved_ads')
+        .update({ generated_image_url: imageUrl, image_generated_at: new Date().toISOString() })
+        .eq('id', ad.id)
+
+      setStatus('Done. Prompt + image generated automatically.')
+      setStatusType('success')
+      setActiveVersion(0)
+      onRefresh()
+    } catch (err) {
+      console.error('Auto-pipeline failed:', err)
+      setStatus(`Pipeline failed: ${err.message}`)
+      setStatusType('error')
+    } finally {
+      setGenerating(false)
+      setGeneratingPrompt(false)
+      setAutoPipeline(false)
+    }
+  }
+
+  // Manual: Generate a new prompt via Edge Function
   async function generatePrompt() {
     setGeneratingPrompt(true)
     setStatus('Generating prompt with Claude Opus...')
