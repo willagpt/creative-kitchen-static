@@ -456,7 +456,22 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
             />
           </div>
           <div>
-            <span className="prompt-label">Chefly Prompt</span>
+            <div className="prompt-header">
+              <span className="prompt-label">Chefly Prompt</span>
+              {prompt && (
+                <button
+                  className="btn-copy"
+                  onClick={() => {
+                    navigator.clipboard.writeText(prompt)
+                    setStatus('Copied to clipboard.')
+                    setStatusType('success')
+                    setTimeout(() => setStatus(''), 2000)
+                  }}
+                >
+                  Copy all
+                </button>
+              )}
+            </div>
             <textarea
               className="prompt-textarea"
               value={prompt}
