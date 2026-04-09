@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { useState, useEffect, useRef } from 'react'
+import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase'
 
 export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRefresh }) {
   const [brand, setBrand] = useState(null)
@@ -7,6 +7,10 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
   const [status, setStatus] = useState('')
   const [newBrandName, setNewBrandName] = useState('')
   const [showNew, setShowNew] = useState(false)
+  const [extracting, setExtracting] = useState(false)
+  const [extractStatus, setExtractStatus] = useState('')
+  const [sleeveMode, setSleeveMode] = useState('primary') // 'primary' or 'alt'
+  const htmlInputRef = useRef()
 
   // Load active brand details
   useEffect(() => {
@@ -25,6 +29,7 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
         .update({
           guidelines_text: brand.guidelines_text,
           sleeve_notes: brand.sleeve_notes,
+          sleeve_notes_alt: brand.sleeve_notes_alt || null,
           colour_palette: brand.colour_palette,
           typography: brand.typography,
           tone_of_voice: brand.tone_of_voice,
@@ -95,6 +100,70 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
     updateField('colour_palette', colours)
   }
 
+  // Upload HTML brand guidelines and extract structured data
+  async function handleHtmlUpload(file) {
+    if (!file || !brand) return
+    setExtracting(true)
+    setExtractStatus('Reading file...')
+    try {
+      const htmlContent = await file.text()
+      setExtractStatus('Sending to Claude for extraction (this takes 20 to 40 seconds)...')
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/extract-brand-guidelines`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`
+        },
+        body: JSON.stringify({
+          html_content: htmlContent,
+          existing_guidelines: brand.guidelines_text || undefined,
+        })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Extraction failed')
+
+      if (data.structured) {
+        // Auto-populate all fields from the structured response
+        setBrand(prev => ({
+          ...prev,
+          guidelines_text: data.guidelines_text || prev.guidelines_text,
+          tone_of_voice: data.tone_of_voice || prev.tone_of_voice,
+          colour_palette: data.colour_palette || prev.colour_palette,
+          typography: data.typography || prev.typography,
+          packaging_specs: data.packaging_specs || prev.packaging_specs,
+          sleeve_notes: data.sleeve_notes || prev.sleeve_notes,
+          sleeve_notes_alt: data.sleeve_notes_alt || prev.sleeve_notes_alt || null,
+        }))
+        setExtractStatus('Fields populated from guidelines. Review and save.')
+        setSleeveMode('primary')
+      } else {
+        // Fallback: put raw text into guidelines
+        setBrand(prev => ({ ...prev, guidelines_text: data.raw_text || prev.guidelines_text }))
+        setExtractStatus('Extracted as text (could not structure). Pasted into Brand Guidelines.')
+      }
+      setTimeout(() => setExtractStatus(''), 5000)
+    } catch (err) {
+      console.error('HTML extraction failed:', err)
+      setExtractStatus(`Error: ${err.message}`)
+    } finally {
+      setExtracting(false)
+      if (htmlInputRef.current) htmlInputRef.current.value = ''
+    }
+  }
+
+  // Sleeve mode helpers
+  function getActiveSleeve() {
+    return sleeveMode === 'alt' ? (brand?.sleeve_notes_alt || '') : (brand?.sleeve_notes || '')
+  }
+  function setActiveSleeve(value) {
+    if (sleeveMode === 'alt') {
+      updateField('sleeve_notes_alt', value)
+    } else {
+      updateField('sleeve_notes', value)
+    }
+  }
+
   return (
     <div className="page-content">
       <div className="page-header">
@@ -156,6 +225,40 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
 
       {brand && (
         <div className="brand-form">
+          {/* Upload bar */}
+          <div className="section-card upload-bar">
+            <div className="flex-between">
+              <div>
+                <h3 className="section-title">Import from Guidelines Document</h3>
+                <p className="section-desc">Upload your brand guidelines HTML file. Claude will read it and populate all fields below automatically.</p>
+              </div>
+              <div className="flex gap-sm">
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => htmlInputRef.current?.click()}
+                  disabled={extracting}
+                >
+                  {extracting ? <><span className="spinner spinner-inline" /> Extracting...</> : 'Upload HTML'}
+                </button>
+                <input
+                  ref={htmlInputRef}
+                  type="file"
+                  accept=".html,.htm"
+                  style={{ display: 'none' }}
+                  onChange={e => {
+                    const file = e.target.files?.[0]
+                    if (file) handleHtmlUpload(file)
+                  }}
+                />
+              </div>
+            </div>
+            {extractStatus && (
+              <p className={`text-xs mt-sm ${extractStatus.startsWith('Error') ? 'text-error' : 'text-accent'}`}>
+                {extractStatus}
+              </p>
+            )}
+          </div>
+
           {/* Guidelines */}
           <div className="section-card">
             <h3 className="section-title">Brand Guidelines</h3>
@@ -267,14 +370,37 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
             <p className="section-desc">Sleeve styles, tray forms, and packaging details for product shots.</p>
             <div className="form-stack">
               <div>
-                <label className="field-label">Sleeve styles</label>
+                <div className="flex-between mb-sm">
+                  <label className="field-label" style={{ margin: 0 }}>Sleeve design</label>
+                  <div className="sleeve-toggle">
+                    <button
+                      className={`sleeve-toggle-btn ${sleeveMode === 'primary' ? 'active' : ''}`}
+                      onClick={() => setSleeveMode('primary')}
+                    >
+                      New design
+                    </button>
+                    <button
+                      className={`sleeve-toggle-btn ${sleeveMode === 'alt' ? 'active' : ''}`}
+                      onClick={() => setSleeveMode('alt')}
+                    >
+                      Existing design
+                    </button>
+                  </div>
+                </div>
                 <textarea
                   className="prompt-textarea"
-                  value={brand.sleeve_notes || ''}
-                  onChange={e => updateField('sleeve_notes', e.target.value)}
-                  placeholder="e.g. Electric Green (#A8E10C) with tonal botanical leaf patterns. Deep Burgundy (#6B1D3A) with subtle warmth-gradient swirl. Each sleeve has the meal name in lowercase Syne Bold, centred..."
+                  value={getActiveSleeve()}
+                  onChange={e => setActiveSleeve(e.target.value)}
+                  placeholder={sleeveMode === 'alt'
+                    ? 'Describe the existing/legacy sleeve design here...'
+                    : 'Describe the new sleeve design here...'}
                   style={{ minHeight: 120 }}
                 />
+                <p className="text-xs text-muted mt-sm">
+                  {sleeveMode === 'primary'
+                    ? 'This is the active sleeve design used in prompt generation.'
+                    : 'This is stored as a reference. Switch to "New design" to make it active in prompts.'}
+                </p>
               </div>
               <div>
                 <label className="field-label">Tray form</label>
