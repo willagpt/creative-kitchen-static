@@ -1,6 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import './CompetitorAds.css'
 
+// ── Supabase config ──
+const SUPABASE_URL = 'https://ifrxylvoufncdxyltgqt.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA'
+
+const sbHeaders = {
+  apikey: SUPABASE_ANON_KEY,
+  Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+  'Content-Type': 'application/json',
+  Prefer: 'resolution=merge-duplicates',
+}
+
+// ── Constants ──
 const FORMAT_FILTERS = [
   { key: 'all', label: 'all' },
   { key: 'image', label: 'image' },
@@ -21,6 +33,7 @@ const COUNTRIES = [
   { value: 'EU', label: 'eu' },
 ]
 
+// ── Helpers ──
 function formatDate(date) {
   const d = new Date(date)
   return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear()
@@ -79,15 +92,67 @@ function extractAdvertisers(rawResults) {
         adCount,
         platforms: Array.from(platforms),
         byline: ad.bylines?.[0] || '',
-        followers: 0,
-        category: '',
-        pictureUrl: null,
       })
     }
   }
   return Array.from(seen.values()).sort((a, b) => b.adCount - a.adCount)
 }
 
+// ── Supabase helpers ──
+
+// Upsert discovered advertisers into Supabase (fire-and-forget)
+async function upsertAdvertisers(advertisers, country) {
+  if (!advertisers.length) return
+  const rows = advertisers.map(a => ({
+    page_id: String(a.pageId),
+    page_name: a.pageName,
+    ad_count: a.adCount,
+    platforms: a.platforms,
+    byline: a.byline || '',
+    country: country || 'GB',
+    last_seen_at: new Date().toISOString(),
+  }))
+
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/advertisers`, {
+      method: 'POST',
+      headers: sbHeaders,
+      body: JSON.stringify(rows),
+    })
+  } catch (err) {
+    console.warn('Advertiser upsert failed:', err)
+  }
+}
+
+// Search advertisers in Supabase (instant autocomplete)
+async function searchSupabaseAdvertisers(query, country) {
+  const trimmed = query.trim().toLowerCase()
+  if (trimmed.length < 2) return []
+
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/advertisers?page_name=ilike.*${encodeURIComponent(trimmed)}*&country=eq.${country}&order=ad_count.desc&limit=25`
+    const res = await fetch(url, {
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    })
+    if (!res.ok) return []
+    const data = await res.json()
+    return data.map(row => ({
+      pageId: row.page_id,
+      pageName: row.page_name,
+      adCount: row.ad_count || 0,
+      platforms: row.platforms || [],
+      byline: row.byline || '',
+      source: 'supabase',
+    }))
+  } catch {
+    return []
+  }
+}
+
+// ── Components ──
 function AdCard({ ad, isSaved, onToggleSave }) {
   return (
     <div className="ca-card">
@@ -209,10 +274,9 @@ export default function CompetitorAds() {
     })
   }, [])
 
-  // Advertiser lookup using ads_archive — the only Meta API endpoint that works
-  // with Ad Library tokens. Shows ALL unique pages, name matches sorted to top.
+  // ── Autocomplete: Supabase first, then ads_archive fallback ──
   const lookupAdvertisers = useCallback(async (query) => {
-    if (!query.trim() || query.trim().length < 2 || !apiKey) {
+    if (!query.trim() || query.trim().length < 2) {
       setSuggestions([])
       setShowSuggestions(false)
       return
@@ -223,48 +287,67 @@ export default function CompetitorAds() {
     const trimmed = query.trim().toLowerCase()
 
     try {
-      const params = new URLSearchParams({
-        access_token: apiKey,
-        search_terms: query.trim(),
-        ad_reached_countries: country,
-        ad_type: 'ALL',
-        fields: 'page_id,page_name,publisher_platforms,bylines',
-        limit: 500,
-        ad_active_status: 'ALL',
-      })
+      // Step 1: Check Supabase (instant, local index)
+      const sbResults = await searchSupabaseAdvertisers(query, country)
 
-      const response = await fetch('https://graph.facebook.com/v19.0/ads_archive?' + params)
-      if (!response.ok) throw new Error('API Error')
-      const data = await response.json()
+      if (sbResults.length > 0) {
+        setSuggestions(sbResults)
+        setSuggestionsLoading(false)
+      }
 
-      if (data.data && data.data.length > 0) {
-        const allPages = extractAdvertisers(data.data)
-
-        // Sort: name matches first (exact > starts-with > contains), then by ad count
-        allPages.sort((a, b) => {
-          const aName = a.pageName.toLowerCase()
-          const bName = b.pageName.toLowerCase()
-          const aMatch = aName.includes(trimmed)
-          const bMatch = bName.includes(trimmed)
-          if (aMatch !== bMatch) return aMatch ? -1 : 1
-          if (aMatch && bMatch) {
-            const aExact = aName === trimmed
-            const bExact = bName === trimmed
-            if (aExact !== bExact) return aExact ? -1 : 1
-            const aStarts = aName.startsWith(trimmed)
-            const bStarts = bName.startsWith(trimmed)
-            if (aStarts !== bStarts) return aStarts ? -1 : 1
-          }
-          return b.adCount - a.adCount
+      // Step 2: Also hit ads_archive for fresh discovery (if we have an API key)
+      if (apiKey) {
+        const params = new URLSearchParams({
+          access_token: apiKey,
+          search_terms: query.trim(),
+          ad_reached_countries: country,
+          ad_type: 'ALL',
+          fields: 'page_id,page_name,publisher_platforms,bylines',
+          limit: 500,
+          ad_active_status: 'ALL',
         })
 
-        setSuggestions(allPages)
-      } else {
-        setSuggestions([])
+        const response = await fetch('https://graph.facebook.com/v19.0/ads_archive?' + params)
+        if (response.ok) {
+          const data = await response.json()
+          if (data.data && data.data.length > 0) {
+            const metaPages = extractAdvertisers(data.data)
+
+            // Upsert to Supabase in background (grows the index)
+            upsertAdvertisers(metaPages, country)
+
+            // Merge: Supabase results + any new Meta pages not already shown
+            const seenIds = new Set(sbResults.map(s => s.pageId))
+            const newFromMeta = metaPages
+              .filter(p => !seenIds.has(p.pageId))
+              .map(p => ({ ...p, source: 'meta' }))
+
+            const merged = [...sbResults, ...newFromMeta]
+
+            // Sort: name matches first (exact > starts-with > contains), then by ad count
+            merged.sort((a, b) => {
+              const aName = a.pageName.toLowerCase()
+              const bName = b.pageName.toLowerCase()
+              const aMatch = aName.includes(trimmed)
+              const bMatch = bName.includes(trimmed)
+              if (aMatch !== bMatch) return aMatch ? -1 : 1
+              if (aMatch && bMatch) {
+                const aExact = aName === trimmed
+                const bExact = bName === trimmed
+                if (aExact !== bExact) return aExact ? -1 : 1
+                const aStarts = aName.startsWith(trimmed)
+                const bStarts = bName.startsWith(trimmed)
+                if (aStarts !== bStarts) return aStarts ? -1 : 1
+              }
+              return b.adCount - a.adCount
+            })
+
+            setSuggestions(merged)
+          }
+        }
       }
     } catch (err) {
       console.error('Lookup error:', err)
-      setSuggestions([])
     } finally {
       setSuggestionsLoading(false)
     }
@@ -275,16 +358,14 @@ export default function CompetitorAds() {
     const value = e.target.value
     setSearchQuery(value)
 
-    // If they had a selected advertiser and are now editing, clear it
     if (selectedAdvertiser) {
       setSelectedAdvertiser(null)
     }
 
-    // Debounce the lookup
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       lookupAdvertisers(value)
-    }, 400)
+    }, 300)
   }
 
   // Select an advertiser from dropdown
@@ -341,6 +422,10 @@ export default function CompetitorAds() {
       if (data.data && data.data.length > 0) {
         const processed = processResults(data.data)
         setResults(sortAds(processed, sortBy))
+
+        // Upsert all discovered pages into Supabase (grows the index)
+        const discovered = extractAdvertisers(data.data)
+        upsertAdvertisers(discovered, country)
       } else {
         setResults([])
       }
