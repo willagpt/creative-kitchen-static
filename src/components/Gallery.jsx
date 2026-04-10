@@ -257,7 +257,7 @@ function AdCard({ ad, versions, onClick }) {
     <div className="card" onClick={onClick}>
       <div className="ad-card-image">
         {ad.image_url ? (
-          <img src={ad.image_url} alt={ad.advertiser_name || 'Ad'} loading="lazy" />
+          <img src={ad.image_url} alt={ad.advertiser_name || 'Ad'} loading="lazy" onError={e => { e.target.style.display = 'none'; e.target.parentElement.classList.add('img-expired') }} />
         ) : (
           <div className="panel-placeholder">
             <p>No image</p>

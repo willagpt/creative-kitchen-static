@@ -210,6 +210,14 @@ body::after {
   aspect-ratio: 1; overflow: hidden; background: var(--bg-2);
   position: relative;
 }
+.ad-card-image.img-expired {
+  display: flex; align-items: center; justify-content: center;
+}
+.ad-card-image.img-expired::after {
+  content: 'image expired';
+  font-size: 10px; color: var(--text-2); text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
 .ad-card-image img { width: 100%; height: 100%; object-fit: cover; }
 .ad-card-badge {
   position: absolute; top: var(--space-sm); right: var(--space-sm);
@@ -1462,32 +1470,40 @@ img { max-width: 100%; height: auto; }
 .pt-history-detail {
   background: var(--bg-2);
   border: 1px solid var(--bg-3);
-  border-radius: var(--radius-md);
-  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius);
+  padding: var(--space-md) var(--space-lg);
   margin-top: var(--space-sm);
   font-size: var(--text-xs);
-  line-height: 1.5;
+  line-height: var(--leading-relaxed);
 }
 
 .pt-detail-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  gap: var(--space-md);
 }
 
 .pt-detail-label {
   color: var(--orange);
   font-weight: var(--weight-semibold);
   font-size: var(--text-xs);
+  white-space: nowrap;
 }
 
 .pt-detail-prompt {
-  color: var(--text-2);
-  max-height: 80px;
+  color: var(--text-1);
+  max-height: 100px;
   overflow-y: auto;
   white-space: pre-wrap;
   word-break: break-word;
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 8px 10px;
+  background: var(--bg-1);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--bg-3);
 }
 
 .pt-history-label {

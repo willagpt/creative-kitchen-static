@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase'
 
 const FAL_MODEL = 'fal-ai/nano-banana-2'
@@ -328,7 +328,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
             <span className="panel-tag panel-tag-original">Original Ad</span>
             <div className="panel-image">
               {ad.image_url ? (
-                <img src={ad.image_url} alt="Original" />
+                <OriginalImage src={ad.image_url} />
               ) : (
                 <div className="panel-placeholder"><p>No image captured</p></div>
               )}
@@ -501,6 +501,22 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
       </div>
     </div>
   )
+}
+
+function OriginalImage({ src }) {
+  const [broken, setBroken] = useState(false)
+  if (broken) {
+    return (
+      <div className="panel-placeholder" style={{ textAlign: 'center' }}>
+        <p style={{ marginBottom: 6 }}>Original image expired</p>
+        <p className="text-xs text-muted" style={{ lineHeight: 1.4 }}>
+          Facebook CDN links are temporary. The image was available when captured but has since expired.
+          Re-save the ad from the Ad Library extension to refresh the link.
+        </p>
+      </div>
+    )
+  }
+  return <img src={src} alt="Original" onError={() => setBroken(true)} />
 }
 
 function FalKeySettings() {

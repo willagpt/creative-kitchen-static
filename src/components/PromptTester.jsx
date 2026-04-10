@@ -276,6 +276,18 @@ export default function PromptTester() {
     setModel(item.model)
     setRatio(item.ratio)
     setResolution(item.resolution)
+    setStatus('prompt loaded from #' + (history.length - history.findIndex(h => h.id === item.id)))
+    // Scroll prompt textarea into view
+    setTimeout(() => {
+      const textarea = document.querySelector('.pt-prompt-input')
+      if (textarea) {
+        textarea.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        textarea.focus()
+        // Brief highlight flash
+        textarea.style.boxShadow = '0 0 0 2px var(--accent)'
+        setTimeout(() => { textarea.style.boxShadow = '' }, 1500)
+      }
+    }, 50)
   }
 
   const selectHistoryItem = (item) => {
@@ -286,13 +298,41 @@ export default function PromptTester() {
   }
 
   const handleClearHistory = async () => {
-    if (!confirm('Delete all saved generations? This cannot be undone.')) return
+    const count = history.length
+    if (!count) return
+    const msg = `This will remove ${count} generation(s) from your local browser history.\n\nBefore clearing, a backup will be saved to Supabase so they can be recovered.\n\nContinue?`
+    if (!confirm(msg)) return
+
+    // Backup to Supabase before clearing
+    try {
+      setStatus('backing up to Supabase...')
+      const backupRows = history.map(h => ({
+        image_url: h.url || h.dataUrl,
+        status: 'complete',
+        aspect_ratio: h.ratio,
+        prompt_used: h.prompt,
+        variables_used: { SOURCE: 'prompt-tester-backup', MODEL: h.model, RESOLUTION: h.resolution, TIME: h.time },
+      }))
+      // Insert in batches of 10
+      for (let i = 0; i < backupRows.length; i += 10) {
+        const batch = backupRows.slice(i, i + 10)
+        await supabase.from('gen_images').upsert(batch, { ignoreDuplicates: true })
+      }
+      setStatus(`backed up ${count} images to Supabase. clearing local...`)
+    } catch (err) {
+      console.error('Backup failed:', err)
+      if (!confirm('Backup to Supabase failed. Clear local history anyway?')) {
+        setStatus('clear cancelled (backup failed)')
+        return
+      }
+    }
+
     try { await clearDB() } catch {}
     setHistory([])
     setSelectedId(null)
     setShowDetail(null)
     setResultImage(null)
-    setStatus('history cleared')
+    setStatus(`history cleared (${count} backed up to Supabase gen_images)`)
   }
 
   // Download current result image
@@ -488,13 +528,17 @@ export default function PromptTester() {
             <div className="pt-history-detail">
               <div className="pt-detail-header">
                 <span className="pt-detail-label">
-                  #{history.length - history.findIndex(h => h.id === showDetail.id)} · {showDetail.model.split('/').pop()} · {showDetail.ratio} · {showDetail.resolution} · {showDetail.time}s
+                  #{history.length - history.findIndex(h => h.id === showDetail.id)} {'\u00B7'} {showDetail.model.split('/').pop()} {'\u00B7'} {showDetail.ratio} {'\u00B7'} {showDetail.resolution} {'\u00B7'} {showDetail.time}s
                 </span>
                 <button className="preset-btn" onClick={() => loadFromHistory(showDetail)}>
-                  &#8593; load prompt
+                  {'\u2191'} load prompt
                 </button>
               </div>
-              <div className="pt-detail-prompt">{showDetail.prompt}</div>
+              <div className="pt-detail-prompt">
+                {showDetail.prompt.length > 300
+                  ? showDetail.prompt.slice(0, 300) + '...'
+                  : showDetail.prompt}
+              </div>
             </div>
           )}
 
