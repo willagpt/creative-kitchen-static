@@ -42,58 +42,72 @@ function validateRow(launch) {
   return { valid: errors.length === 0, errors }
 }
 
-/* Editable cell: click to edit inline */
-function EditableCell({ value, onChange, placeholder = '', maxLength, multiline = false }) {
+/* Editable cell: click to edit inline, V3-quality */
+function EditableCell({ value, onChange, placeholder = '', maxLength, multiline = false, showCharCount = false }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(String(value || ''))
-  const ref = useRef(null)
+  const inputRef = useRef(null)
 
-  // Need useRef import
   function commit() {
     setEditing(false)
     if (draft !== String(value || '')) onChange(draft)
   }
 
   if (!editing) {
+    const charLen = String(value || '').length
+    const isOver = maxLength && charLen > maxLength
     return (
-      <div
-        className="launch-cell-value"
-        onClick={() => { setDraft(String(value || '')); setEditing(true) }}
-        title={String(value || '')}
-      >
-        {value || <span className="launch-cell-placeholder">{placeholder}</span>}
+      <div>
+        <div
+          className={`launch-cell-value ${multiline ? 'multiline' : ''}`}
+          onClick={() => { setDraft(String(value || '')); setEditing(true); setTimeout(() => inputRef.current?.focus(), 0) }}
+          title={String(value || '')}
+        >
+          {value || <span className="launch-cell-placeholder">{placeholder}</span>}
+        </div>
+        {showCharCount && value && (
+          <div className={`launch-charcount ${isOver ? 'over' : ''}`}>{charLen}{maxLength ? `/${maxLength}` : ''}</div>
+        )}
       </div>
     )
   }
 
   if (multiline) {
     return (
-      <textarea
-        autoFocus
-        value={draft}
-        onChange={e => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commit() } if (e.key === 'Escape') setEditing(false) }}
-        maxLength={maxLength}
-        placeholder={placeholder}
-        className="launch-cell-input launch-cell-textarea"
-        rows={3}
-      />
+      <div>
+        <textarea
+          ref={inputRef}
+          autoFocus
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commit() } if (e.key === 'Escape') { setDraft(String(value || '')); setEditing(false) } }}
+          maxLength={maxLength}
+          placeholder={placeholder}
+          className="launch-cell-input launch-cell-textarea"
+          rows={3}
+        />
+        {maxLength && <div className={`launch-charcount ${draft.length > maxLength ? 'over' : ''}`}>{draft.length}/{maxLength}</div>}
+      </div>
     )
   }
 
   return (
-    <input
-      autoFocus
-      type="text"
-      value={draft}
-      onChange={e => setDraft(e.target.value)}
-      onBlur={commit}
-      onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false) }}
-      maxLength={maxLength}
-      placeholder={placeholder}
-      className="launch-cell-input"
-    />
+    <div>
+      <input
+        ref={inputRef}
+        autoFocus
+        type="text"
+        value={draft}
+        onChange={e => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setDraft(String(value || '')); setEditing(false) } }}
+        maxLength={maxLength}
+        placeholder={placeholder}
+        className="launch-cell-input"
+      />
+      {maxLength && <div className={`launch-charcount ${draft.length > maxLength ? 'over' : ''}`}>{draft.length}/{maxLength}</div>}
+    </div>
   )
 }
 
@@ -409,10 +423,24 @@ export default function Launcher({ brands, activeBrandId }) {
             className={`launch-tab ${tab === t ? 'active' : ''}`}
             onClick={() => setTab(t)}
           >
-            {t} ({tabCounts[t] || 0})
+            {t}{' '}
+            <span style={{ opacity: 0.6 }}>({tabCounts[t] || 0})</span>
           </button>
         ))}
       </div>
+
+      {/* Connected account indicator */}
+      {accounts.length > 0 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8, marginBottom: 'var(--space-md)',
+          padding: '6px 12px', background: 'rgba(168, 225, 12, 0.06)', borderRadius: 'var(--radius)',
+          border: '1px solid rgba(168, 225, 12, 0.15)', fontSize: 11, color: 'var(--text-2)',
+        }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--electric-green)', flexShrink: 0 }} />
+          Connected: <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{accounts.map(a => a.account_name).join(', ')}</span>
+          <span style={{ marginLeft: 'auto', color: 'var(--text-2)', fontSize: 10 }}>defaults auto-fill on new rows</span>
+        </div>
+      )}
 
       {/* Spreadsheet table */}
       {loading ? (
@@ -420,8 +448,11 @@ export default function Launcher({ brands, activeBrandId }) {
       ) : filtered.length === 0 ? (
         <div className="empty-state">
           <h3>{tab === 'all' ? 'No launches yet' : `No ${tab} launches`}</h3>
-          <p>Each row here becomes one ad on Meta. Start by clicking one of the buttons above:</p>
-          <div style={{ marginTop: 'var(--space-md)', display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
+          <p style={{ maxWidth: 420, margin: '0 auto var(--space-lg)' }}>
+            Each row becomes one ad on Meta. Add a winner image from Review or Prompt Tester, or start with a blank row.
+            Account defaults (headline, primary text, CTA, URL, budget) auto-fill when you have a connected account.
+          </p>
+          <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button className="btn btn-ghost btn-sm" onClick={() => { loadWinners(); setShowWinnerPicker(true) }}>
               + from winners
             </button>
@@ -429,6 +460,11 @@ export default function Launcher({ brands, activeBrandId }) {
               + add blank row
             </button>
           </div>
+          {accounts.length === 0 && (
+            <p style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 'var(--space-lg)' }}>
+              No ad accounts connected. Set up Meta accounts in V3 Settings to enable defaults and campaign sync.
+            </p>
+          )}
         </div>
       ) : (
         <div className="launch-table-wrap">
@@ -438,18 +474,18 @@ export default function Launcher({ brands, activeBrandId }) {
                 <th className="launch-th launch-th-check">
                   <input type="checkbox" checked={selectedIds.size === filtered.length && filtered.length > 0} onChange={selectAll} />
                 </th>
-                <th className="launch-th" style={{ width: 50 }}>Status</th>
-                <th className="launch-th" style={{ width: 60 }}>Image</th>
-                <th className="launch-th" style={{ width: 120 }}>Account</th>
-                <th className="launch-th" style={{ width: 130 }}>Ad Name</th>
-                <th className="launch-th" style={{ width: 200 }}>Headline</th>
-                <th className="launch-th" style={{ width: 260 }}>Primary Text</th>
-                <th className="launch-th" style={{ width: 80 }}>CTA</th>
-                <th className="launch-th" style={{ width: 140 }}>URL</th>
-                <th className="launch-th" style={{ width: 130 }}>Campaign</th>
-                <th className="launch-th" style={{ width: 130 }}>Ad Set</th>
-                <th className="launch-th" style={{ width: 70 }}>Budget</th>
-                <th className="launch-th" style={{ width: 70 }}>Actions</th>
+                <th className="launch-th" style={{ width: 80 }}>Status</th>
+                <th className="launch-th" style={{ width: 68 }}>Image</th>
+                <th className="launch-th" style={{ width: 130 }}>Account</th>
+                <th className="launch-th" style={{ width: 150 }}>Ad Name</th>
+                <th className="launch-th" style={{ width: 210 }}>Headline</th>
+                <th className="launch-th" style={{ width: 280 }}>Primary Text</th>
+                <th className="launch-th" style={{ width: 100 }}>CTA</th>
+                <th className="launch-th" style={{ width: 150 }}>URL</th>
+                <th className="launch-th" style={{ width: 150 }}>Campaign</th>
+                <th className="launch-th" style={{ width: 150 }}>Ad Set</th>
+                <th className="launch-th" style={{ width: 80 }}>Budget</th>
+                <th className="launch-th" style={{ width: 100 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -548,28 +584,36 @@ export default function Launcher({ brands, activeBrandId }) {
               <button className="detail-close" onClick={() => setShowPushModal(false)}>&times;</button>
             </div>
             <div style={{ padding: 'var(--space-lg)' }}>
-              {readyLaunches.map(l => {
-                const { valid, errors } = validateRow(l)
-                return (
-                  <div key={l.id} className="launch-validate-row">
-                    {valid
-                      ? <span style={{ color: 'var(--electric-green)' }}>✓</span>
-                      : <span style={{ color: 'var(--error)' }}>✕</span>
-                    }
-                    <span className="launch-validate-name">{l.ad_name || 'Unnamed'}</span>
-                    {!valid && <span className="launch-validate-error">{errors[0]}</span>}
-                  </div>
-                )
-              })}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 'var(--space-lg)' }}>
+                {readyLaunches.map(l => {
+                  const { valid, errors } = validateRow(l)
+                  return (
+                    <div key={l.id} className="launch-validate-row">
+                      {valid
+                        ? <span style={{ color: 'var(--electric-green)', fontWeight: 700 }}>&#10003;</span>
+                        : <span style={{ color: 'var(--error)', fontWeight: 700 }}>&#10005;</span>
+                      }
+                      <span className="launch-validate-name">{l.ad_name || 'Unnamed'}</span>
+                      {!valid && <span className="launch-validate-error">{errors[0]}</span>}
+                    </div>
+                  )
+                })}
+              </div>
               <div className="launch-validate-summary">
-                <span>Ready to launch: {readyLaunches.length} ads</span>
-                <span>Est. daily spend: £{readyLaunches.reduce((s, l) => s + Number(l.daily_budget || 0), 0).toFixed(2)}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Ready to launch</span>
+                  <span style={{ color: 'var(--electric-green)', fontWeight: 600 }}>{readyLaunches.length} ads</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Est. daily spend</span>
+                  <span style={{ fontWeight: 600 }}>{'\u00A3'}{readyLaunches.reduce((s, l) => s + Number(l.daily_budget || 0), 0).toFixed(2)}</span>
+                </div>
               </div>
               <div style={{ display: 'flex', gap: 'var(--space-md)', marginTop: 'var(--space-lg)' }}>
                 <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowPushModal(false)}>Cancel</button>
                 <button
-                  className="btn btn-primary"
-                  style={{ flex: 1 }}
+                  className="btn"
+                  style={{ flex: 1, background: 'var(--electric-green)', color: 'var(--bg-0)', fontWeight: 600 }}
                   onClick={() => handlePush(readyLaunches.map(l => l.id))}
                   disabled={pushing}
                 >
@@ -630,24 +674,25 @@ function LaunchRow({
       </td>
 
       {/* Status */}
-      <td className="launch-td">
+      <td className="launch-td" style={{ verticalAlign: 'middle' }}>
         <span
-          className="launch-status-badge"
+          className={`launch-status-badge status-${launch.status}`}
           style={{ background: statusStyle.bg, color: statusStyle.color }}
-          title={errors.length ? errors.join(' | ') : ''}
+          title={errors.length ? errors.join(' \u00B7 ') : launch.status}
         >
+          <span className="status-dot" />
           {launch.status}
         </span>
       </td>
 
       {/* Image */}
-      <td className="launch-td">
+      <td className="launch-td" style={{ verticalAlign: 'middle' }}>
         {launch.image_url ? (
           <div className="launch-img-cell">
-            <img src={launch.image_url} alt="" />
+            <img src={launch.image_url} alt="" loading="lazy" />
           </div>
         ) : (
-          <div className="launch-img-cell launch-img-empty">IMG</div>
+          <div className="launch-img-cell launch-img-empty">no img</div>
         )}
       </td>
 
@@ -658,7 +703,7 @@ function LaunchRow({
           value={launch.ad_account_id || ''}
           onChange={e => onAccountChange(launch.id, e.target.value)}
         >
-          <option value="">Account...</option>
+          <option value="">Select account...</option>
           {accounts.map(a => <option key={a.id} value={a.id}>{a.account_name}</option>)}
         </select>
       </td>
@@ -670,12 +715,12 @@ function LaunchRow({
 
       {/* Headline */}
       <td className="launch-td">
-        <EditableCell value={launch.headline} onChange={v => onCellEdit(launch.id, 'headline', v)} placeholder="Headline..." maxLength={40} />
+        <EditableCell value={launch.headline} onChange={v => onCellEdit(launch.id, 'headline', v)} placeholder="Headline..." maxLength={40} multiline showCharCount />
       </td>
 
       {/* Primary Text */}
       <td className="launch-td">
-        <EditableCell value={launch.primary_text} onChange={v => onCellEdit(launch.id, 'primary_text', v)} placeholder="Primary text..." maxLength={125} multiline />
+        <EditableCell value={launch.primary_text} onChange={v => onCellEdit(launch.id, 'primary_text', v)} placeholder="Primary text..." maxLength={125} multiline showCharCount />
       </td>
 
       {/* CTA */}
@@ -702,7 +747,7 @@ function LaunchRow({
           onChange={e => onCampaignSelect(launch.id, e.target.value, rowCampaigns)}
           disabled={!launch.ad_account_id && !activeAccountId}
         >
-          <option value="">Campaign...</option>
+          <option value="">{rowCampaigns.length ? 'Select campaign...' : 'No campaigns'}</option>
           {rowCampaigns.map(c => (
             <option key={c.id} value={c.id}>{c.name} ({c.status.toLowerCase()})</option>
           ))}
@@ -717,7 +762,7 @@ function LaunchRow({
           onChange={e => onAdSetSelect(launch.id, e.target.value, rowAdsets)}
           disabled={!launch.platform_campaign_id}
         >
-          <option value="">Ad set...</option>
+          <option value="">{launch.platform_campaign_id ? (rowAdsets.length ? 'Select ad set...' : 'No ad sets') : 'Pick campaign first'}</option>
           {rowAdsets.map(a => (
             <option key={a.id} value={a.id}>{a.name} ({a.status.toLowerCase()})</option>
           ))}
@@ -725,19 +770,21 @@ function LaunchRow({
       </td>
 
       {/* Budget */}
-      <td className="launch-td">
-        <EditableCell
-          value={launch.daily_budget || 0}
-          onChange={v => onCellEdit(launch.id, 'daily_budget', v)}
-          placeholder="0"
-        />
+      <td className="launch-td" style={{ verticalAlign: 'middle' }}>
+        <div className="launch-budget-display">
+          <EditableCell
+            value={launch.daily_budget ? `\u00A3${Number(launch.daily_budget).toFixed(0)}` : '\u00A30'}
+            onChange={v => onCellEdit(launch.id, 'daily_budget', v.replace(/[^0-9.]/g, ''))}
+            placeholder="\u00A30/day"
+          />
+        </div>
       </td>
 
       {/* Actions */}
       <td className="launch-td launch-td-actions">
         {launch.status === 'ready' && (
           <button
-            className="launch-action-btn"
+            className="launch-action-btn push-btn"
             onClick={() => onPush([launch.id])}
             disabled={pushing}
             title="Push to Meta"
@@ -748,7 +795,7 @@ function LaunchRow({
         <button
           className="launch-action-btn"
           onClick={() => onDuplicate(launch)}
-          title="Duplicate"
+          title="Duplicate row"
         >
           dup
         </button>
@@ -756,7 +803,7 @@ function LaunchRow({
           <button
             className="launch-action-btn launch-action-delete"
             onClick={() => onDelete(launch.id)}
-            title="Delete"
+            title="Delete row"
           >
             del
           </button>
