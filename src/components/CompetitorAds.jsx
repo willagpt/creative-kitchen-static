@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import './CompetitorAds.css'
 
 const FORMAT_FILTERS = [
@@ -36,7 +36,7 @@ function formatImpressions(impressions) {
   if (typeof impressions === 'object' && impressions !== null) {
     const lower = parseInt(impressions.lower_bound || 0)
     const upper = parseInt(impressions.upper_bound || 0)
-    return formatNumber(lower) + '\u2013' + formatNumber(upper)
+    return formatNumber(lower) + '–' + formatNumber(upper)
   }
   if (typeof impressions === 'number') return formatNumber(impressions)
   return String(impressions)
@@ -62,6 +62,32 @@ function processResults(rawResults) {
   })
 }
 
+// Extract unique advertisers from ad results
+function extractAdvertisers(rawResults) {
+  const seen = new Map()
+  for (const ad of rawResults) {
+    const pageId = ad.page_id
+    if (pageId && !seen.has(pageId)) {
+      // Count ads for this page in the results
+      const adCount = rawResults.filter(a => a.page_id === pageId).length
+      // Collect platforms
+      const platforms = new Set()
+      rawResults.filter(a => a.page_id === pageId).forEach(a => {
+        if (a.publisher_platforms) a.publisher_platforms.forEach(p => platforms.add(p))
+      })
+      seen.set(pageId, {
+        pageId,
+        pageName: ad.page_name || 'Unknown',
+        adCount,
+        platforms: Array.from(platforms),
+        byline: ad.bylines?.[0] || '',
+      })
+    }
+  }
+  // Sort by ad count (most ads first)
+  return Array.from(seen.values()).sort((a, b) => b.adCount - a.adCount)
+}
+
 function AdCard({ ad, isSaved, onToggleSave }) {
   return (
     <div className="ca-card">
@@ -82,7 +108,7 @@ function AdCard({ ad, isSaved, onToggleSave }) {
           onClick={() => onToggleSave(ad)}
           title={isSaved ? 'unsave' : 'save'}
         >
-          <span className="ca-save-icon">{isSaved ? '\u2605' : '\u2606'}</span>
+          <span className="ca-save-icon">{isSaved ? '★' : '☆'}</span>
         </button>
       </div>
       <div className="ca-card-body">
@@ -138,6 +164,14 @@ export default function CompetitorAds() {
   const [hasSearched, setHasSearched] = useState(false)
   const [savedExpanded, setSavedExpanded] = useState(true)
 
+  // Autocomplete state
+  const [suggestions, setSuggestions] = useState([])
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [selectedAdvertiser, setSelectedAdvertiser] = useState(null)
+  const debounceRef = useRef(null)
+  const searchWrapperRef = useRef(null)
+
   const hasKey = apiKey.length > 20
 
   // Persist API key
@@ -152,6 +186,17 @@ export default function CompetitorAds() {
     localStorage.setItem('savedCompetitorAds', JSON.stringify(saved))
   }, [saved])
 
+  // Close suggestions on outside click
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (searchWrapperRef.current && !searchWrapperRef.current.contains(e.target)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   const sortAds = useCallback((ads, sort) => {
     return [...ads].sort((a, b) => {
       switch (sort) {
@@ -164,22 +209,105 @@ export default function CompetitorAds() {
     })
   }, [])
 
-  const performSearch = useCallback(async () => {
-    if (!searchQuery.trim() || !apiKey) return
-    setIsLoading(true)
-    setError(null)
-    setHasSearched(true)
+  // Debounced advertiser lookup — fires as user types
+  const lookupAdvertisers = useCallback(async (query) => {
+    if (!query.trim() || query.trim().length < 2 || !apiKey) {
+      setSuggestions([])
+      setShowSuggestions(false)
+      return
+    }
+
+    setSuggestionsLoading(true)
+    setShowSuggestions(true)
 
     try {
       const params = new URLSearchParams({
         access_token: apiKey,
-        search_terms: searchQuery,
+        search_terms: query.trim(),
+        ad_reached_countries: country,
+        ad_type: 'ALL',
+        fields: 'page_id,page_name,publisher_platforms,bylines',
+        limit: 25,
+        ad_active_status: 'ALL',
+      })
+
+      const response = await fetch('https://graph.facebook.com/v19.0/ads_archive?' + params)
+      if (!response.ok) throw new Error('API Error')
+      const data = await response.json()
+
+      if (data.data && data.data.length > 0) {
+        const advertisers = extractAdvertisers(data.data)
+        setSuggestions(advertisers)
+      } else {
+        setSuggestions([])
+      }
+    } catch (err) {
+      console.error('Lookup error:', err)
+      setSuggestions([])
+    } finally {
+      setSuggestionsLoading(false)
+    }
+  }, [apiKey, country])
+
+  // Handle search input changes with debounce
+  const handleSearchInput = (e) => {
+    const value = e.target.value
+    setSearchQuery(value)
+
+    // If they had a selected advertiser and are now editing, clear it
+    if (selectedAdvertiser) {
+      setSelectedAdvertiser(null)
+    }
+
+    // Debounce the lookup
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      lookupAdvertisers(value)
+    }, 400)
+  }
+
+  // Select an advertiser from dropdown
+  const selectAdvertiser = (advertiser) => {
+    setSelectedAdvertiser(advertiser)
+    setSearchQuery(advertiser.pageName)
+    setShowSuggestions(false)
+    setSuggestions([])
+  }
+
+  // Clear selected advertiser
+  const clearAdvertiser = () => {
+    setSelectedAdvertiser(null)
+    setSearchQuery('')
+    setResults([])
+    setHasSearched(false)
+  }
+
+  // Full ad search — uses page_id if advertiser selected, otherwise text search
+  const performSearch = useCallback(async () => {
+    if (!apiKey) return
+    if (!selectedAdvertiser && !searchQuery.trim()) return
+
+    setIsLoading(true)
+    setError(null)
+    setHasSearched(true)
+    setShowSuggestions(false)
+
+    try {
+      const params = new URLSearchParams({
+        access_token: apiKey,
         ad_reached_countries: country,
         ad_type: 'ALL',
         fields: 'id,ad_creation_time,ad_creative_bodies,ad_creative_link_captions,ad_creative_link_titles,ad_delivery_start_time,ad_delivery_stop_time,ad_snapshot_url,bylines,impressions,page_id,page_name,publisher_platforms,estimated_audience_size',
         limit: 50,
         ad_active_status: 'ALL',
       })
+
+      // If we have a selected advertiser, search by page_id for precision
+      if (selectedAdvertiser) {
+        params.append('search_page_ids', selectedAdvertiser.pageId)
+      } else {
+        params.append('search_terms', searchQuery.trim())
+      }
 
       if (dateFrom) params.append('ad_delivery_date_min', dateFrom)
       if (dateTo) params.append('ad_delivery_date_max', dateTo)
@@ -203,7 +331,7 @@ export default function CompetitorAds() {
     } finally {
       setIsLoading(false)
     }
-  }, [apiKey, searchQuery, country, dateFrom, dateTo, sortBy, sortAds])
+  }, [apiKey, searchQuery, selectedAdvertiser, country, dateFrom, dateTo, sortBy, sortAds])
 
   // Re-sort when sort changes
   useEffect(() => {
@@ -227,8 +355,14 @@ export default function CompetitorAds() {
     return saved.some(s => s.id === adId)
   }, [saved])
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') performSearch()
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      setShowSuggestions(false)
+      performSearch()
+    }
+    if (e.key === 'Escape') {
+      setShowSuggestions(false)
+    }
   }
 
   return (
@@ -251,21 +385,97 @@ export default function CompetitorAds() {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="ca-search-row">
-        <input
-          type="text"
-          className="text-input ca-search-input"
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="search by brand or page name..."
-          disabled={!hasKey}
-        />
+      {/* Search Bar with Autocomplete */}
+      <div className="ca-search-row" ref={searchWrapperRef}>
+        <div className="ca-search-wrapper">
+          {selectedAdvertiser ? (
+            <div className="ca-selected-chip">
+              <div className="ca-chip-info">
+                <span className="ca-chip-name">{selectedAdvertiser.pageName}</span>
+                <span className="ca-chip-meta">
+                  {selectedAdvertiser.platforms.includes('facebook') && 'fb'}
+                  {selectedAdvertiser.platforms.includes('facebook') && selectedAdvertiser.platforms.includes('instagram') && ' · '}
+                  {selectedAdvertiser.platforms.includes('instagram') && 'ig'}
+                  {selectedAdvertiser.adCount > 0 && (' · ' + selectedAdvertiser.adCount + ' ads')}
+                </span>
+              </div>
+              <button className="ca-chip-clear" onClick={clearAdvertiser} title="clear">&times;</button>
+            </div>
+          ) : (
+            <input
+              type="text"
+              className="text-input ca-search-input"
+              value={searchQuery}
+              onChange={handleSearchInput}
+              onKeyDown={handleKeyDown}
+              onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true) }}
+              placeholder="search by brand or page name..."
+              disabled={!hasKey}
+            />
+          )}
+
+          {/* Suggestions Dropdown */}
+          {showSuggestions && (
+            <div className="ca-suggestions">
+              {suggestionsLoading && (
+                <div className="ca-suggestion-loading">
+                  <div className="ca-spinner-sm" />
+                  <span>searching advertisers...</span>
+                </div>
+              )}
+
+              {!suggestionsLoading && suggestions.length === 0 && searchQuery.length >= 2 && (
+                <div className="ca-suggestion-empty">no advertisers found</div>
+              )}
+
+              {!suggestionsLoading && searchQuery.trim().length >= 2 && (
+                <div className="ca-suggestion-item ca-suggestion-text-search" onClick={() => { setShowSuggestions(false); performSearch() }}>
+                  <span className="ca-suggestion-search-icon">&#128269;</span>
+                  <div>
+                    <div className="ca-suggestion-name">" {searchQuery}"</div>
+                    <div className="ca-suggestion-sub">search this exact phrase</div>
+                  </div>
+                </div>
+              )}
+
+              {!suggestionsLoading && suggestions.length > 0 && (
+                <>
+                  <div className="ca-suggestion-divider">
+                    <span>Advertisers</span>
+                  </div>
+                  {suggestions.map(adv => (
+                    <div
+                      key={adv.pageId}
+                      className="ca-suggestion-item"
+                      onClick={() => selectAdvertiser(adv)}
+                    >
+                      <div className="ca-suggestion-avatar">
+                        {adv.pageName.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="ca-suggestion-details">
+                        <div className="ca-suggestion-name">{adv.pageName}</div>
+                        <div className="ca-suggestion-sub">
+                          {adv.platforms.includes('facebook') && (
+                            <span>fb</span>
+                          )}
+                          {adv.platforms.includes('instagram') && (
+                            <span>{adv.platforms.includes('facebook') ? ' · ' : ''}ig</span>
+                          )}
+                          <span> · {adv.adCount} ad{adv.adCount !== 1 ? 's' : ''} found</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
         <button
           className="btn btn-primary btn-sm"
           onClick={performSearch}
-          disabled={!hasKey || isLoading || !searchQuery.trim()}
+          disabled={!hasKey || isLoading || (!selectedAdvertiser && !searchQuery.trim())}
         >
           {isLoading ? 'searching...' : 'search'}
         </button>
