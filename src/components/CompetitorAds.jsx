@@ -12,6 +12,11 @@ const sbHeaders = {
   Prefer: 'resolution=merge-duplicates',
 }
 
+const sbReadHeaders = {
+  apikey: SUPABASE_ANON_KEY,
+  Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+}
+
 // ── Constants ──
 const FORMAT_FILTERS = [
   { key: 'all', label: 'all' },
@@ -75,7 +80,6 @@ function processResults(rawResults) {
   })
 }
 
-// Extract unique advertisers from ad results
 function extractAdvertisers(rawResults) {
   const seen = new Map()
   for (const ad of rawResults) {
@@ -100,7 +104,6 @@ function extractAdvertisers(rawResults) {
 
 // ── Supabase helpers ──
 
-// Upsert discovered advertisers into Supabase (fire-and-forget)
 async function upsertAdvertisers(advertisers, country) {
   if (!advertisers.length) return
   const rows = advertisers.map(a => ({
@@ -112,7 +115,6 @@ async function upsertAdvertisers(advertisers, country) {
     country: country || 'GB',
     last_seen_at: new Date().toISOString(),
   }))
-
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/advertisers`, {
       method: 'POST',
@@ -124,19 +126,12 @@ async function upsertAdvertisers(advertisers, country) {
   }
 }
 
-// Search advertisers in Supabase (instant autocomplete)
 async function searchSupabaseAdvertisers(query, country) {
   const trimmed = query.trim().toLowerCase()
   if (trimmed.length < 2) return []
-
   try {
     const url = `${SUPABASE_URL}/rest/v1/advertisers?page_name=ilike.*${encodeURIComponent(trimmed)}*&country=eq.${country}&order=ad_count.desc&limit=25`
-    const res = await fetch(url, {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-    })
+    const res = await fetch(url, { headers: sbReadHeaders })
     if (!res.ok) return []
     const data = await res.json()
     return data.map(row => ({
@@ -152,7 +147,64 @@ async function searchSupabaseAdvertisers(query, country) {
   }
 }
 
+// ── Followed brands helpers ──
+
+async function fetchFollowedBrands() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/followed_brands?order=created_at.desc`,
+      { headers: sbReadHeaders }
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+    return data.map(row => ({
+      pageId: row.page_id,
+      pageName: row.page_name,
+      platforms: row.platforms || [],
+      byline: row.byline || '',
+      adCount: row.ad_count || 0,
+      notes: row.notes || '',
+      country: row.country || 'GB',
+    }))
+  } catch {
+    return []
+  }
+}
+
+async function followBrand(brand) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/followed_brands`, {
+      method: 'POST',
+      headers: sbHeaders,
+      body: JSON.stringify({
+        page_id: String(brand.pageId),
+        page_name: brand.pageName,
+        platforms: brand.platforms || [],
+        byline: brand.byline || '',
+        ad_count: brand.adCount || 0,
+        country: brand.country || 'GB',
+      }),
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function unfollowBrand(pageId) {
+  try {
+    await fetch(
+      `${SUPABASE_URL}/rest/v1/followed_brands?page_id=eq.${pageId}`,
+      { method: 'DELETE', headers: sbReadHeaders }
+    )
+    return true
+  } catch {
+    return false
+  }
+}
+
 // ── Components ──
+
 function AdCard({ ad, isSaved, onToggleSave }) {
   return (
     <div className="ca-card">
@@ -211,6 +263,58 @@ function AdCard({ ad, isSaved, onToggleSave }) {
   )
 }
 
+function FollowedBrandsPanel({ brands, onSelectBrand, onUnfollow }) {
+  const [expanded, setExpanded] = useState(true)
+
+  if (brands.length === 0) return null
+
+  return (
+    <div className="ca-followed-panel">
+      <div className="ca-followed-header" onClick={() => setExpanded(!expanded)}>
+        <h3 className="ca-followed-title">
+          followed brands
+          <span className="ca-followed-count">{brands.length}</span>
+        </h3>
+        <span className={`ca-toggle-arrow ${expanded ? '' : 'collapsed'}`}>&#9660;</span>
+      </div>
+      {expanded && (
+        <div className="ca-followed-grid">
+          {brands.map(brand => (
+            <div key={brand.pageId} className="ca-followed-card">
+              <div
+                className="ca-followed-card-main"
+                onClick={() => onSelectBrand(brand)}
+                title={'View ads from ' + brand.pageName}
+              >
+                <div className="ca-followed-avatar">
+                  {brand.pageName.charAt(0).toUpperCase()}
+                </div>
+                <div className="ca-followed-info">
+                  <div className="ca-followed-name">{brand.pageName}</div>
+                  <div className="ca-followed-meta">
+                    {brand.adCount > 0 && (brand.adCount + ' ads')}
+                    {brand.platforms.length > 0 && ' \u00b7 '}
+                    {brand.platforms.includes('facebook') && 'fb'}
+                    {brand.platforms.includes('facebook') && brand.platforms.includes('instagram') && ' \u00b7 '}
+                    {brand.platforms.includes('instagram') && 'ig'}
+                  </div>
+                </div>
+              </div>
+              <button
+                className="ca-followed-unfollow"
+                onClick={(e) => { e.stopPropagation(); onUnfollow(brand.pageId) }}
+                title="unfollow"
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function CompetitorAds() {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('metaAdLibraryToken') || '')
   const [searchQuery, setSearchQuery] = useState('')
@@ -237,7 +341,16 @@ export default function CompetitorAds() {
   const debounceRef = useRef(null)
   const searchWrapperRef = useRef(null)
 
+  // Followed brands state
+  const [followedBrands, setFollowedBrands] = useState([])
+  const followedIds = new Set(followedBrands.map(b => b.pageId))
+
   const hasKey = apiKey.length > 20
+
+  // Load followed brands on mount
+  useEffect(() => {
+    fetchFollowedBrands().then(setFollowedBrands)
+  }, [])
 
   // Persist API key
   useEffect(() => {
@@ -274,7 +387,33 @@ export default function CompetitorAds() {
     })
   }, [])
 
-  // ── Autocomplete: Supabase first, then ads_archive fallback ──
+  // ── Follow / unfollow ──
+  const handleFollow = useCallback(async (brand) => {
+    const success = await followBrand({ ...brand, country })
+    if (success) {
+      setFollowedBrands(prev => [
+        { ...brand, country },
+        ...prev.filter(b => b.pageId !== brand.pageId),
+      ])
+    }
+  }, [country])
+
+  const handleUnfollow = useCallback(async (pageId) => {
+    const success = await unfollowBrand(pageId)
+    if (success) {
+      setFollowedBrands(prev => prev.filter(b => b.pageId !== pageId))
+    }
+  }, [])
+
+  // Click a followed brand to search their ads
+  const handleSelectFollowedBrand = useCallback((brand) => {
+    setSelectedAdvertiser(brand)
+    setSearchQuery(brand.pageName)
+    setShowSuggestions(false)
+    setSuggestions([])
+  }, [])
+
+  // ── Autocomplete: Supabase first, then ads_archive ──
   const lookupAdvertisers = useCallback(async (query) => {
     if (!query.trim() || query.trim().length < 2) {
       setSuggestions([])
@@ -287,7 +426,6 @@ export default function CompetitorAds() {
     const trimmed = query.trim().toLowerCase()
 
     try {
-      // Step 1: Check Supabase (instant, local index)
       const sbResults = await searchSupabaseAdvertisers(query, country)
 
       if (sbResults.length > 0) {
@@ -295,7 +433,6 @@ export default function CompetitorAds() {
         setSuggestionsLoading(false)
       }
 
-      // Step 2: Also hit ads_archive for fresh discovery (if we have an API key)
       if (apiKey) {
         const params = new URLSearchParams({
           access_token: apiKey,
@@ -312,11 +449,8 @@ export default function CompetitorAds() {
           const data = await response.json()
           if (data.data && data.data.length > 0) {
             const metaPages = extractAdvertisers(data.data)
-
-            // Upsert to Supabase in background (grows the index)
             upsertAdvertisers(metaPages, country)
 
-            // Merge: Supabase results + any new Meta pages not already shown
             const seenIds = new Set(sbResults.map(s => s.pageId))
             const newFromMeta = metaPages
               .filter(p => !seenIds.has(p.pageId))
@@ -324,7 +458,6 @@ export default function CompetitorAds() {
 
             const merged = [...sbResults, ...newFromMeta]
 
-            // Sort: name matches first (exact > starts-with > contains), then by ad count
             merged.sort((a, b) => {
               const aName = a.pageName.toLowerCase()
               const bName = b.pageName.toLowerCase()
@@ -353,22 +486,16 @@ export default function CompetitorAds() {
     }
   }, [apiKey, country])
 
-  // Handle search input changes with debounce
   const handleSearchInput = (e) => {
     const value = e.target.value
     setSearchQuery(value)
-
-    if (selectedAdvertiser) {
-      setSelectedAdvertiser(null)
-    }
-
+    if (selectedAdvertiser) setSelectedAdvertiser(null)
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       lookupAdvertisers(value)
     }, 300)
   }
 
-  // Select an advertiser from dropdown
   const selectAdvertiser = (advertiser) => {
     setSelectedAdvertiser(advertiser)
     setSearchQuery(advertiser.pageName)
@@ -376,7 +503,6 @@ export default function CompetitorAds() {
     setSuggestions([])
   }
 
-  // Clear selected advertiser
   const clearAdvertiser = () => {
     setSelectedAdvertiser(null)
     setSearchQuery('')
@@ -384,7 +510,6 @@ export default function CompetitorAds() {
     setHasSearched(false)
   }
 
-  // Full ad search — uses page_id if advertiser selected, otherwise text search
   const performSearch = useCallback(async () => {
     if (!apiKey) return
     if (!selectedAdvertiser && !searchQuery.trim()) return
@@ -422,8 +547,6 @@ export default function CompetitorAds() {
       if (data.data && data.data.length > 0) {
         const processed = processResults(data.data)
         setResults(sortAds(processed, sortBy))
-
-        // Upsert all discovered pages into Supabase (grows the index)
         const discovered = extractAdvertisers(data.data)
         upsertAdvertisers(discovered, country)
       } else {
@@ -438,7 +561,6 @@ export default function CompetitorAds() {
     }
   }, [apiKey, searchQuery, selectedAdvertiser, country, dateFrom, dateTo, sortBy, sortAds])
 
-  // Re-sort when sort changes
   useEffect(() => {
     if (results.length > 0) {
       setResults(prev => sortAds(prev, sortBy))
@@ -448,11 +570,8 @@ export default function CompetitorAds() {
   const toggleSave = useCallback((ad) => {
     setSaved(prev => {
       const index = prev.findIndex(s => s.id === ad.id)
-      if (index > -1) {
-        return prev.filter(s => s.id !== ad.id)
-      } else {
-        return [...prev, ad]
-      }
+      if (index > -1) return prev.filter(s => s.id !== ad.id)
+      return [...prev, ad]
     })
   }, [])
 
@@ -461,13 +580,8 @@ export default function CompetitorAds() {
   }, [saved])
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      setShowSuggestions(false)
-      performSearch()
-    }
-    if (e.key === 'Escape') {
-      setShowSuggestions(false)
-    }
+    if (e.key === 'Enter') { setShowSuggestions(false); performSearch() }
+    if (e.key === 'Escape') setShowSuggestions(false)
   }
 
   return (
@@ -490,6 +604,13 @@ export default function CompetitorAds() {
         </div>
       </div>
 
+      {/* Followed Brands Panel */}
+      <FollowedBrandsPanel
+        brands={followedBrands}
+        onSelectBrand={handleSelectFollowedBrand}
+        onUnfollow={handleUnfollow}
+      />
+
       {/* Search Bar with Autocomplete */}
       <div className="ca-search-row" ref={searchWrapperRef}>
         <div className="ca-search-wrapper">
@@ -505,7 +626,20 @@ export default function CompetitorAds() {
                   {selectedAdvertiser.platforms.includes('instagram') && 'ig'}
                 </span>
               </div>
-              <button className="ca-chip-clear" onClick={clearAdvertiser} title="clear">&times;</button>
+              <div className="ca-chip-actions">
+                {!followedIds.has(selectedAdvertiser.pageId) ? (
+                  <button
+                    className="ca-chip-follow"
+                    onClick={() => handleFollow(selectedAdvertiser)}
+                    title="follow this brand"
+                  >
+                    + follow
+                  </button>
+                ) : (
+                  <span className="ca-chip-following">following</span>
+                )}
+                <button className="ca-chip-clear" onClick={clearAdvertiser} title="clear">&times;</button>
+              </div>
             </div>
           ) : (
             <input
@@ -553,21 +687,33 @@ export default function CompetitorAds() {
                     <div
                       key={adv.pageId}
                       className="ca-suggestion-item"
-                      onClick={() => selectAdvertiser(adv)}
                     >
-                      <div className="ca-suggestion-avatar">
-                        {adv.pageName.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="ca-suggestion-details">
-                        <div className="ca-suggestion-name">{adv.pageName}</div>
-                        <div className="ca-suggestion-sub">
-                          {adv.adCount} ad{adv.adCount !== 1 ? 's' : ''} found
-                          {adv.platforms.length > 0 && ' \u00b7 '}
-                          {adv.platforms.includes('facebook') && 'fb'}
-                          {adv.platforms.includes('facebook') && adv.platforms.includes('instagram') && ' \u00b7 '}
-                          {adv.platforms.includes('instagram') && 'ig'}
+                      <div className="ca-suggestion-main" onClick={() => selectAdvertiser(adv)}>
+                        <div className="ca-suggestion-avatar">
+                          {adv.pageName.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="ca-suggestion-details">
+                          <div className="ca-suggestion-name">{adv.pageName}</div>
+                          <div className="ca-suggestion-sub">
+                            {adv.adCount} ad{adv.adCount !== 1 ? 's' : ''} found
+                            {adv.platforms.length > 0 && ' \u00b7 '}
+                            {adv.platforms.includes('facebook') && 'fb'}
+                            {adv.platforms.includes('facebook') && adv.platforms.includes('instagram') && ' \u00b7 '}
+                            {adv.platforms.includes('instagram') && 'ig'}
+                          </div>
                         </div>
                       </div>
+                      {!followedIds.has(adv.pageId) ? (
+                        <button
+                          className="ca-suggestion-follow-btn"
+                          onClick={(e) => { e.stopPropagation(); handleFollow(adv) }}
+                          title="follow"
+                        >
+                          +
+                        </button>
+                      ) : (
+                        <span className="ca-suggestion-following-badge">\u2713;</span>
+                      )}
                     </div>
                   ))}
                 </>
