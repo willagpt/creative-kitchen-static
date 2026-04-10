@@ -68,9 +68,7 @@ function extractAdvertisers(rawResults) {
   for (const ad of rawResults) {
     const pageId = ad.page_id
     if (pageId && !seen.has(pageId)) {
-      // Count ads for this page in the results
       const adCount = rawResults.filter(a => a.page_id === pageId).length
-      // Collect platforms
       const platforms = new Set()
       rawResults.filter(a => a.page_id === pageId).forEach(a => {
         if (a.publisher_platforms) a.publisher_platforms.forEach(p => platforms.add(p))
@@ -87,7 +85,6 @@ function extractAdvertisers(rawResults) {
       })
     }
   }
-  // Sort by ad count (most ads first)
   return Array.from(seen.values()).sort((a, b) => b.adCount - a.adCount)
 }
 
@@ -212,9 +209,45 @@ export default function CompetitorAds() {
     })
   }, [])
 
+  // Resolve a page by username/URL \u2014 works with any valid token, no special permissions
+  const resolvePageDirect = async (input) => {
+    let slug = input.trim()
+    // Handle URLs like facebook.com/SimmerEats or fb.com/SimmerEats
+    const urlMatch = slug.match(/(?:facebook\.com|fb\.com)\/(?:pg\/)?([^/?&#]+)/i)
+    if (urlMatch) slug = urlMatch[1]
+    // Remove @ prefix
+    slug = slug.replace(/^@/, '')
+    // Skip if it has spaces (not a valid page username)
+    if (/\s/.test(slug) || slug.length < 2) return null
+
+    try {
+      const params = new URLSearchParams({
+        access_token: apiKey,
+        fields: 'id,name,category,fan_count,picture',
+      })
+      const resp = await fetch('https://graph.facebook.com/v19.0/' + encodeURIComponent(slug) + '?' + params)
+      const data = await resp.json()
+      if (data.error || !data.id) return null
+      return {
+        pageId: data.id,
+        pageName: data.name || slug,
+        category: data.category || '',
+        followers: data.fan_count || 0,
+        platforms: ['facebook'],
+        adCount: 0,
+        byline: data.category || '',
+        pictureUrl: data.picture?.data?.url || null,
+        source: 'direct_lookup',
+      }
+    } catch {
+      return null
+    }
+  }
+
   // Debounced advertiser lookup \u2014 fires as user types
-  // Two strategies: (1) Facebook Pages Search API for direct page name matching,
-  // (2) Fallback to ads_archive with high limit + client-side name filtering
+  // Strategy: (1) Try direct page lookup by username/URL,
+  // (2) Ads archive with high limit + name filtering,
+  // (3) Try common username variants (e.g. "simmer" \u2192 "simmer.eats")
   const lookupAdvertisers = useCallback(async (query) => {
     if (!query.trim() || query.trim().length < 2 || !apiKey) {
       setSuggestions([])
@@ -229,79 +262,36 @@ export default function CompetitorAds() {
     try {
       let advertisers = []
 
-      // Strategy 1: Facebook Pages Search API \u2014 searches page NAMES directly
-      // Requires pages_read_engagement permission on the token
-      const pageSearchEndpoints = [
-        'https://graph.facebook.com/v19.0/pages/search',
-        'https://graph.facebook.com/v19.0/search',
-      ]
-
-      for (const endpoint of pageSearchEndpoints) {
-        if (advertisers.length > 0) break
-        try {
-          const pageParams = new URLSearchParams({
-            access_token: apiKey,
-            q: query.trim(),
-            fields: 'id,name,category,fan_count,picture',
-            limit: 25,
-          })
-          // The /search endpoint needs type=page
-          if (endpoint.endsWith('/search')) {
-            pageParams.append('type', 'page')
-          }
-          const pageResp = await fetch(endpoint + '?' + pageParams)
-          const pageData = await pageResp.json()
-
-          // Log for debugging \u2014 visible in browser console
-          if (pageData.error) {
-            console.warn('[Pages Search] ' + endpoint + ' \u2192', pageData.error.message)
-            continue
-          }
-
-          if (pageData.data && pageData.data.length > 0) {
-            console.info('[Pages Search] ' + endpoint + ' \u2192 found ' + pageData.data.length + ' pages')
-            advertisers = pageData.data.map(page => ({
-              pageId: page.id,
-              pageName: page.name,
-              category: page.category || '',
-              followers: page.fan_count || 0,
-              platforms: ['facebook'],
-              adCount: 0,
-              byline: page.category || '',
-              pictureUrl: page.picture?.data?.url || null,
-              source: 'pages_search',
-            }))
-          }
-        } catch (e) {
-          console.warn('[Pages Search] ' + endpoint + ' failed:', e.message)
-        }
+      // Strategy 1: Direct page lookup \u2014 try the query as a page username
+      // This works instantly if someone types a handle like "Simmer.Eats"
+      const directPage = await resolvePageDirect(query.trim())
+      if (directPage) {
+        advertisers.push(directPage)
       }
 
-      // Strategy 2: Fallback \u2014 ads_archive with high limit + smart name filtering
-      if (advertisers.length === 0) {
-        const params = new URLSearchParams({
-          access_token: apiKey,
-          search_terms: query.trim(),
-          ad_reached_countries: country,
-          ad_type: 'ALL',
-          fields: 'page_id,page_name,publisher_platforms,bylines',
-          limit: 500,
-          ad_active_status: 'ALL',
-        })
+      // Strategy 2: Ads archive \u2014 search ad content, extract unique pages
+      const params = new URLSearchParams({
+        access_token: apiKey,
+        search_terms: query.trim(),
+        ad_reached_countries: country,
+        ad_type: 'ALL',
+        fields: 'page_id,page_name,publisher_platforms,bylines',
+        limit: 500,
+        ad_active_status: 'ALL',
+      })
 
-        const response = await fetch('https://graph.facebook.com/v19.0/ads_archive?' + params)
-        if (!response.ok) throw new Error('API Error')
+      const response = await fetch('https://graph.facebook.com/v19.0/ads_archive?' + params)
+      if (response.ok) {
         const data = await response.json()
-
         if (data.data && data.data.length > 0) {
           const allPages = extractAdvertisers(data.data)
 
-          // Filter to pages whose name actually matches the query
+          // Filter to pages whose name matches the query
           const nameMatches = allPages.filter(adv =>
             adv.pageName.toLowerCase().includes(trimmed)
           )
 
-          // Sort matches: exact match first, then starts-with, then contains
+          // Sort: exact \u2192 starts-with \u2192 contains \u2192 by ad count
           nameMatches.sort((a, b) => {
             const aName = a.pageName.toLowerCase()
             const bName = b.pageName.toLowerCase()
@@ -314,8 +304,37 @@ export default function CompetitorAds() {
             return b.adCount - a.adCount
           })
 
-          // Use name-filtered results if we have them, otherwise show all
-          advertisers = nameMatches.length > 0 ? nameMatches : allPages
+          const adResults = nameMatches.length > 0 ? nameMatches : allPages
+
+          // Merge with direct lookup, avoiding duplicates
+          const seenIds = new Set(advertisers.map(a => a.pageId))
+          for (const adv of adResults) {
+            if (!seenIds.has(adv.pageId)) {
+              advertisers.push(adv)
+              seenIds.add(adv.pageId)
+            }
+          }
+        }
+      }
+
+      // Strategy 3: Try common username patterns if we don't have many results
+      // e.g. for "simmer" try "simmer.eats", "simmerfood", etc.
+      if (advertisers.length < 3 && !query.includes('.') && !query.includes('/')) {
+        const variants = [
+          query.trim().replace(/\s+/g, ''),
+          query.trim().replace(/\s+/g, '.'),
+          query.trim().replace(/\s+/g, '') + '.eats',
+          query.trim().replace(/\s+/g, '') + 'uk',
+          query.trim().replace(/\s+/g, '') + 'food',
+        ]
+        const seenIds = new Set(advertisers.map(a => a.pageId))
+        const variantPromises = variants.map(v => resolvePageDirect(v))
+        const variantResults = await Promise.allSettled(variantPromises)
+        for (const result of variantResults) {
+          if (result.status === 'fulfilled' && result.value && !seenIds.has(result.value.pageId)) {
+            advertisers.push(result.value)
+            seenIds.add(result.value.pageId)
+          }
         }
       }
 
@@ -495,7 +514,7 @@ export default function CompetitorAds() {
               onChange={handleSearchInput}
               onKeyDown={handleKeyDown}
               onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true) }}
-              placeholder="search by brand or page name..."
+              placeholder="search brand name, @handle, or paste page URL..."
               disabled={!hasKey}
             />
           )}
