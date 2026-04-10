@@ -7,6 +7,7 @@ import PhotoLibrary from './components/PhotoLibrary'
 import Generator from './components/Generator'
 import Review from './components/Review'
 import Launcher from './components/Launcher'
+import PromptTester from './components/PromptTester'
 
 const TABS = [
   { key: 'gallery', label: 'Ad Library' },
@@ -15,6 +16,7 @@ const TABS = [
   { key: 'generator', label: 'Generator' },
   { key: 'review', label: 'Review' },
   { key: 'launcher', label: 'Launcher' },
+  { key: 'tester', label: 'Prompt Tester' },
 ]
 
 export default function App() {
@@ -182,6 +184,10 @@ export default function App() {
             brands={brands}
             activeBrandId={activeBrandId}
           />
+        )}
+
+        {tab === 'tester' && (
+          <PromptTester />
         )}
       </main>
 
