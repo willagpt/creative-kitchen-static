@@ -6,6 +6,7 @@ import BrandDNA from './components/BrandDNA'
 import PhotoLibrary from './components/PhotoLibrary'
 import Generator from './components/Generator'
 import Review from './components/Review'
+import Launcher from './components/Launcher'
 
 const TABS = [
   { key: 'gallery', label: 'Ad Library' },
@@ -13,6 +14,7 @@ const TABS = [
   { key: 'photos', label: 'Photo Library' },
   { key: 'generator', label: 'Generator' },
   { key: 'review', label: 'Review' },
+  { key: 'launcher', label: 'Launcher' },
 ]
 
 export default function App() {
@@ -170,6 +172,13 @@ export default function App() {
 
         {tab === 'review' && (
           <Review
+            brands={brands}
+            activeBrandId={activeBrandId}
+          />
+        )}
+
+        {tab === 'launcher' && (
+          <Launcher
             brands={brands}
             activeBrandId={activeBrandId}
           />
