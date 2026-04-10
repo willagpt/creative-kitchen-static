@@ -254,18 +254,47 @@ function AvatarWithFallback({ pageId, pageName, size = 32 }) {
   )
 }
 
+function LazyIframe({ src, title }) {
+  const ref = useRef(null)
+  const [isVisible, setIsVisible] = useState(false)
+  const [hasError, setHasError] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setIsVisible(true); observer.disconnect() } },
+      { rootMargin: '200px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div ref={ref} className="ca-card-iframe-wrap">
+      {isVisible && !hasError ? (
+        <iframe
+          src={src}
+          className="ca-card-iframe"
+          sandbox="allow-scripts allow-same-origin"
+          title={title}
+          onError={() => setHasError(true)}
+        />
+      ) : hasError ? (
+        <div className="ca-card-placeholder">preview unavailable</div>
+      ) : (
+        <div className="ca-card-placeholder">loading...</div>
+      )}
+    </div>
+  )
+}
+
 function AdCard({ ad, isSaved, onToggleSave }) {
   return (
     <div className="ca-card">
       <div className="ca-card-preview">
         {ad.snapshotUrl ? (
-          <iframe
-            src={ad.snapshotUrl}
-            className="ca-card-iframe"
-            sandbox="allow-scripts allow-same-origin"
-            loading="lazy"
-            title="ad preview"
-          />
+          <LazyIframe src={ad.snapshotUrl} title="ad preview" />
         ) : (
           <div className="ca-card-placeholder">no preview available.</div>
         )}
@@ -415,7 +444,7 @@ export default function CompetitorAds() {
     }
   }, [activeBrand])
 
-  // ── Load ads for a brand ──
+  // ── Load ALL ads for a brand (with pagination) ──
   const loadBrandAds = useCallback(async (brand) => {
     if (!apiKey) return
 
@@ -424,6 +453,10 @@ export default function CompetitorAds() {
     setError(null)
 
     try {
+      let allAds = []
+      let nextUrl = null
+
+      // First request
       const params = new URLSearchParams({
         access_token: apiKey,
         search_page_ids: brand.pageId,
@@ -431,7 +464,7 @@ export default function CompetitorAds() {
         ad_reached_countries: country,
         ad_type: 'ALL',
         fields: 'id,ad_creation_time,ad_creative_bodies,ad_creative_link_captions,ad_creative_link_titles,ad_delivery_start_time,ad_delivery_stop_time,ad_snapshot_url,bylines,impressions,page_id,page_name,publisher_platforms,estimated_audience_size',
-        limit: 50,
+        limit: 250,
         ad_active_status: 'ALL',
       })
 
@@ -440,8 +473,20 @@ export default function CompetitorAds() {
       if (data.error) throw new Error(data.error.message)
       if (!response.ok) throw new Error('API Error: ' + response.status)
 
-      if (data.data && data.data.length > 0) {
-        const processed = processResults(data.data)
+      if (data.data) allAds = [...data.data]
+      nextUrl = data.paging?.next || null
+
+      // Follow pagination cursors (up to 2000 ads max to avoid runaway)
+      while (nextUrl && allAds.length < 2000) {
+        const pageRes = await fetch(nextUrl)
+        const pageData = await pageRes.json()
+        if (pageData.error) break
+        if (pageData.data) allAds = [...allAds, ...pageData.data]
+        nextUrl = pageData.paging?.next || null
+      }
+
+      if (allAds.length > 0) {
+        const processed = processResults(allAds)
         setResults(sortAds(processed, sortBy))
       } else {
         setResults([])
