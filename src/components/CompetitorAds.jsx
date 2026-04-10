@@ -203,6 +203,36 @@ async function unfollowBrand(pageId) {
   }
 }
 
+// ── Profile picture helper ──
+// Facebook public endpoint — works without auth for public pages
+function getPagePictureUrl(pageId) {
+  return `https://graph.facebook.com/${pageId}/picture?type=small`
+}
+
+function AvatarWithFallback({ pageId, pageName, size = 32 }) {
+  const [failed, setFailed] = useState(false)
+  const letter = pageName?.charAt(0)?.toUpperCase() || '?'
+
+  if (failed || !pageId) {
+    return (
+      <div className="ca-suggestion-avatar" style={{ width: size, height: size, fontSize: size * 0.44 }}>
+        {letter}
+      </div>
+    )
+  }
+
+  return (
+    <img
+      src={getPagePictureUrl(pageId)}
+      alt={pageName}
+      className="ca-suggestion-avatar-img"
+      style={{ width: size, height: size }}
+      onError={() => setFailed(true)}
+      referrerPolicy="no-referrer"
+    />
+  )
+}
+
 // ── Components ──
 
 function AdCard({ ad, isSaved, onToggleSave }) {
@@ -286,9 +316,7 @@ function FollowedBrandsPanel({ brands, onSelectBrand, onUnfollow }) {
                 onClick={() => onSelectBrand(brand)}
                 title={'View ads from ' + brand.pageName}
               >
-                <div className="ca-followed-avatar">
-                  {brand.pageName.charAt(0).toUpperCase()}
-                </div>
+                <AvatarWithFallback pageId={brand.pageId} pageName={brand.pageName} size={28} />
                 <div className="ca-followed-info">
                   <div className="ca-followed-name">{brand.pageName}</div>
                   <div className="ca-followed-meta">
@@ -589,7 +617,7 @@ export default function CompetitorAds() {
       <div className="page-header">
         <div>
           <h2 className="page-title">Competitor Ads</h2>
-          <p className="page-subtitle">search meta ad library &mdash; find what's working, save what matters.</p>
+          <p className="page-subtitle">search meta ad library — find what's working, save what matters.</p>
         </div>
         <div className="ca-api-row">
           <span className={`ca-api-dot ${hasKey ? 'active' : apiKey.length > 0 ? 'invalid' : ''}`} />
@@ -689,9 +717,7 @@ export default function CompetitorAds() {
                       className="ca-suggestion-item"
                     >
                       <div className="ca-suggestion-main" onClick={() => selectAdvertiser(adv)}>
-                        <div className="ca-suggestion-avatar">
-                          {adv.pageName.charAt(0).toUpperCase()}
-                        </div>
+                        <AvatarWithFallback pageId={adv.pageId} pageName={adv.pageName} size={32} />
                         <div className="ca-suggestion-details">
                           <div className="ca-suggestion-name">{adv.pageName}</div>
                           <div className="ca-suggestion-sub">
@@ -712,7 +738,7 @@ export default function CompetitorAds() {
                           +
                         </button>
                       ) : (
-                        <span className="ca-suggestion-following-badge">\u2713;</span>
+                        <span className="ca-suggestion-following-badge">&#check;</span>
                       )}
                     </div>
                   ))}

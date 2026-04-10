@@ -176,6 +176,11 @@
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
+  background-color: rgba(255, 107, 44, 0.15);
+}
+.ca-followed-card-main .ca-suggestion-avatar-img {
+  width: 28px;
+  height: 28px;
 }
 
 .ca-suggestion-details {
