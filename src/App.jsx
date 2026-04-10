@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabase'
+import CompetitorAds from './components/CompetitorAds'
 import Gallery from './components/Gallery'
 import AdDetail from './components/AdDetail'
 import BrandDNA from './components/BrandDNA'
@@ -10,6 +11,7 @@ import Launcher from './components/Launcher'
 import PromptTester from './components/PromptTester'
 
 const TABS = [
+  { key: 'competitors', label: 'Competitor Ads' },
   { key: 'gallery', label: 'Ad Library' },
   { key: 'brand', label: 'Brand DNA' },
   { key: 'photos', label: 'Photo Library' },
@@ -20,7 +22,7 @@ const TABS = [
 ]
 
 export default function App() {
-  const [tab, setTab] = useState('gallery')
+  const [tab, setTab] = useState('competitors')
 
   // Gallery state
   const [ads, setAds] = useState([])
@@ -132,6 +134,10 @@ export default function App() {
       </header>
 
       <main className="container">
+        {tab === 'competitors' && (
+          <CompetitorAds />
+        )}
+
         {tab === 'gallery' && (
           <Gallery
             ads={filteredAds}
