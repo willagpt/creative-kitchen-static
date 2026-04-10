@@ -722,6 +722,7 @@
 .ad-meta {
   display: flex;
   gap: 8px;
+  align-items: center;
   margin-bottom: 4px;
 }
 
@@ -739,6 +740,21 @@
   color: var(--text-2, rgb(154, 145, 138));
 }
 
+.meta-status {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.meta-status.active {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+.meta-status.ended {
+  color: var(--text-3, rgb(107, 114, 128));
+  background: rgba(107, 114, 128, 0.1);
+}
+
 .ad-impressions {
   font-size: 11px;
   color: var(--text-3, rgb(107, 114, 128));
@@ -750,6 +766,13 @@
   gap: 16px;
 }
 
+/* ── Results toolbar ── */
+.results-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2, rgb(154, 145, 138));
+}
+
 /* ── Cache badge ── */
 .cache-badge {
   font-size: 10px;
@@ -758,6 +781,21 @@
   background: rgba(34, 197, 94, 0.1);
   padding: 3px 8px;
   border-radius: 4px;
+}
+
+/* ── Modal ad body ── */
+.modal-ad-body {
+  font-size: 13px;
+  color: var(--text-2, rgb(154, 145, 138));
+  line-height: 1.5;
+  white-space: pre-wrap;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  border-left: 3px solid rgba(255, 214, 10, 0.3);
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 /* Responsive */
