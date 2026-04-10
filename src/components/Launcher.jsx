@@ -381,7 +381,7 @@ export default function Launcher({ brands, activeBrandId }) {
           <p className="page-subtitle">Build and push static ads to Meta. Each row is one ad.</p>
         </div>
         <div className="launch-header-actions">
-          <button className="btn btn-ghost btn-sm" onClick={loadLaunches}>↻ refresh</button>
+          <button className="btn btn-ghost btn-sm" onClick={loadLaunches}>refresh</button>
           <button className="btn btn-ghost btn-sm" onClick={() => { loadWinners(); setShowWinnerPicker(true) }}>
             + from winners
           </button>
@@ -395,7 +395,7 @@ export default function Launcher({ brands, activeBrandId }) {
               onClick={() => setShowPushModal(true)}
               disabled={pushing}
             >
-              {pushing ? 'pushing...' : `🚀 push ${readyLaunches.length} to Meta`}
+              {pushing ? 'pushing...' : `push ${readyLaunches.length} to Meta`}
             </button>
           )}
         </div>
@@ -420,7 +420,15 @@ export default function Launcher({ brands, activeBrandId }) {
       ) : filtered.length === 0 ? (
         <div className="empty-state">
           <h3>{tab === 'all' ? 'No launches yet' : `No ${tab} launches`}</h3>
-          <p>Click "+ add row" to create a static ad, or "+ from winners" to use a reviewed image.</p>
+          <p>Each row here becomes one ad on Meta. Start by clicking one of the buttons above:</p>
+          <div style={{ marginTop: 'var(--space-md)', display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
+            <button className="btn btn-ghost btn-sm" onClick={() => { loadWinners(); setShowWinnerPicker(true) }}>
+              + from winners
+            </button>
+            <button className="btn btn-primary btn-sm" onClick={() => addRow()}>
+              + add blank row
+            </button>
+          </div>
         </div>
       ) : (
         <div className="launch-table-wrap">
@@ -734,7 +742,7 @@ function LaunchRow({
             disabled={pushing}
             title="Push to Meta"
           >
-            🚀
+            push
           </button>
         )}
         <button
@@ -742,7 +750,7 @@ function LaunchRow({
           onClick={() => onDuplicate(launch)}
           title="Duplicate"
         >
-          ⧉
+          dup
         </button>
         {(launch.status === 'draft' || launch.status === 'error') && (
           <button
@@ -750,7 +758,7 @@ function LaunchRow({
             onClick={() => onDelete(launch.id)}
             title="Delete"
           >
-            ✕
+            del
           </button>
         )}
       </td>

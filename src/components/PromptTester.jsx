@@ -470,14 +470,14 @@ export default function PromptTester() {
               </div>
               <div className="pt-actions">
                 <button className="btn btn-ghost btn-sm" onClick={handleDownload}>
-                  ⬇ download
+                  download
                 </button>
                 <button
                   className="btn btn-primary btn-sm"
                   onClick={handlePromote}
                   disabled={promoting || promoted}
                 >
-                  {promoted ? '✓ promoted' : promoting ? 'promoting...' : '🚀 send to launcher'}
+                  {promoted ? 'promoted' : promoting ? 'promoting...' : 'send to launcher'}
                 </button>
               </div>
             </>
