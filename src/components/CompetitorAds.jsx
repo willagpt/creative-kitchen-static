@@ -68,6 +68,9 @@ function processResults(rawResults) {
       impressions: ad.impressions || null,
       isActive: !ad.ad_delivery_stop_time,
       creativeBody: ad.ad_creative_bodies ? ad.ad_creative_bodies[0] : '',
+      creativeTitle: ad.ad_creative_link_titles ? ad.ad_creative_link_titles[0] : '',
+      creativeCaption: ad.ad_creative_link_captions ? ad.ad_creative_link_captions[0] : '',
+      creativeDescription: ad.ad_creative_link_descriptions ? ad.ad_creative_link_descriptions[0] : '',
     }
   })
 }
@@ -254,53 +257,72 @@ function AvatarWithFallback({ pageId, pageName, size = 32 }) {
   )
 }
 
-function LazyIframe({ src, title }) {
-  const ref = useRef(null)
-  const [isVisible, setIsVisible] = useState(false)
-  const [hasError, setHasError] = useState(false)
-
+function AdPreviewModal({ ad, onClose }) {
   useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setIsVisible(true); observer.disconnect() } },
-      { rootMargin: '200px' }
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
+    const handleKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleKey)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', handleKey)
+      document.body.style.overflow = ''
+    }
+  }, [onClose])
 
   return (
-    <div ref={ref} className="ca-card-iframe-wrap">
-      {isVisible && !hasError ? (
-        <iframe
-          src={src}
-          className="ca-card-iframe"
-          sandbox="allow-scripts allow-same-origin"
-          title={title}
-          onError={() => setHasError(true)}
-        />
-      ) : hasError ? (
-        <div className="ca-card-placeholder">preview unavailable</div>
-      ) : (
-        <div className="ca-card-placeholder">loading...</div>
-      )}
+    <div className="ca-modal-overlay" onClick={onClose}>
+      <div className="ca-modal" onClick={e => e.stopPropagation()}>
+        <button className="ca-modal-close" onClick={onClose}>&times;</button>
+        <div className="ca-modal-content">
+          {ad.snapshotUrl ? (
+            <iframe
+              src={ad.snapshotUrl}
+              className="ca-modal-iframe"
+              sandbox="allow-scripts allow-same-origin"
+              title="ad preview"
+            />
+          ) : (
+            <div className="ca-modal-text-preview">
+              {ad.creativeBody || 'No preview available.'}
+            </div>
+          )}
+        </div>
+        <div className="ca-modal-footer">
+          <div className="ca-modal-info">
+            <strong>{ad.pageName}</strong>
+            <span>{ad.isActive ? 'running since ' : 'ran from '}{formatDate(ad.startDate)} &middot; {ad.daysActive}d active</span>
+          </div>
+          {ad.snapshotUrl && (
+            <a href={ad.snapshotUrl} target="_blank" rel="noopener noreferrer" className="ca-modal-link">
+              open on meta &#x2197;
+            </a>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
 
-function AdCard({ ad, isSaved, onToggleSave }) {
+function AdCard({ ad, isSaved, onToggleSave, onExpand }) {
   return (
     <div className="ca-card">
-      <div className="ca-card-preview">
-        {ad.snapshotUrl ? (
-          <LazyIframe src={ad.snapshotUrl} title="ad preview" />
-        ) : (
-          <div className="ca-card-placeholder">no preview available.</div>
-        )}
+      <div className="ca-card-preview" onClick={() => onExpand(ad)} title="click to expand">
+        <div className="ca-card-text-preview">
+          {ad.creativeTitle && (
+            <div className="ca-preview-title">{ad.creativeTitle}</div>
+          )}
+          <div className="ca-preview-body">
+            {ad.creativeBody
+              ? (ad.creativeBody.length > 160 ? ad.creativeBody.substring(0, 160) + '...' : ad.creativeBody)
+              : 'No text content'}
+          </div>
+          {ad.creativeCaption && (
+            <div className="ca-preview-caption">{ad.creativeCaption}</div>
+          )}
+        </div>
+        <div className="ca-preview-expand-hint">click to preview</div>
         <button
           className={`ca-save-btn ${isSaved ? 'saved' : ''}`}
-          onClick={() => onToggleSave(ad)}
+          onClick={(e) => { e.stopPropagation(); onToggleSave(ad) }}
           title={isSaved ? 'unsave' : 'save'}
         >
           <span className="ca-save-icon">{isSaved ? '\u2605' : '\u2606'}</span>
@@ -318,13 +340,6 @@ function AdCard({ ad, isSaved, onToggleSave }) {
             <span className="ca-badge">{formatImpressions(ad.impressions)}</span>
           )}
         </div>
-        {ad.creativeBody && (
-          <div className="ca-card-excerpt">
-            {ad.creativeBody.length > 80
-              ? ad.creativeBody.substring(0, 80) + '...'
-              : ad.creativeBody}
-          </div>
-        )}
         <div className="ca-card-footer">
           <div className="ca-platforms">
             {ad.platforms.includes('facebook') && <span className="ca-platform-icon">f</span>}
@@ -363,6 +378,12 @@ export default function CompetitorAds() {
   const [addLoading, setAddLoading] = useState(false)
   const [addError, setAddError] = useState(null)
   const [showAddForm, setShowAddForm] = useState(false)
+
+  // Modal
+  const [modalAd, setModalAd] = useState(null)
+
+  // Loading progress
+  const [loadingProgress, setLoadingProgress] = useState(0)
 
   const hasKey = apiKey.length > 20
 
@@ -444,16 +465,18 @@ export default function CompetitorAds() {
     }
   }, [activeBrand])
 
-  // ── Load ALL ads for a brand (with pagination) ──
+  // ── Load ALL ads for a brand (progressive — shows results as they arrive) ──
   const loadBrandAds = useCallback(async (brand) => {
     if (!apiKey) return
 
     setActiveBrand(brand)
     setIsLoading(true)
     setError(null)
+    setResults([])
+    setLoadingProgress(0)
 
     try {
-      let allAds = []
+      let allRaw = []
       let nextUrl = null
 
       // First request
@@ -463,7 +486,7 @@ export default function CompetitorAds() {
         search_terms: ' ',
         ad_reached_countries: country,
         ad_type: 'ALL',
-        fields: 'id,ad_creation_time,ad_creative_bodies,ad_creative_link_captions,ad_creative_link_titles,ad_delivery_start_time,ad_delivery_stop_time,ad_snapshot_url,bylines,impressions,page_id,page_name,publisher_platforms,estimated_audience_size',
+        fields: 'id,ad_creation_time,ad_creative_bodies,ad_creative_link_captions,ad_creative_link_titles,ad_creative_link_descriptions,ad_delivery_start_time,ad_delivery_stop_time,ad_snapshot_url,bylines,impressions,page_id,page_name,publisher_platforms,estimated_audience_size',
         limit: 250,
         ad_active_status: 'ALL',
       })
@@ -473,29 +496,42 @@ export default function CompetitorAds() {
       if (data.error) throw new Error(data.error.message)
       if (!response.ok) throw new Error('API Error: ' + response.status)
 
-      if (data.data) allAds = [...data.data]
+      if (data.data) {
+        allRaw = [...data.data]
+        // Show first batch immediately
+        const firstBatch = processResults(allRaw)
+        setResults(sortAds(firstBatch, sortBy))
+        setLoadingProgress(allRaw.length)
+      }
       nextUrl = data.paging?.next || null
 
-      // Follow pagination cursors (up to 2000 ads max to avoid runaway)
-      while (nextUrl && allAds.length < 2000) {
+      // Follow pagination cursors in background (up to 2000 max)
+      while (nextUrl && allRaw.length < 2000) {
         const pageRes = await fetch(nextUrl)
         const pageData = await pageRes.json()
         if (pageData.error) break
-        if (pageData.data) allAds = [...allAds, ...pageData.data]
+        if (pageData.data) {
+          allRaw = [...allRaw, ...pageData.data]
+          // Update results progressively
+          const processed = processResults(allRaw)
+          setResults(sortAds(processed, sortBy))
+          setLoadingProgress(allRaw.length)
+        }
         nextUrl = pageData.paging?.next || null
       }
 
-      if (allAds.length > 0) {
-        const processed = processResults(allAds)
-        setResults(sortAds(processed, sortBy))
-      } else {
-        setResults([])
-      }
+      // Update the brand card's ad count
+      setFollowedBrands(prev => prev.map(b =>
+        b.pageId === brand.pageId ? { ...b, adCount: allRaw.length } : b
+      ))
+
+      if (allRaw.length === 0) setResults([])
     } catch (err) {
       setError(err.message)
       setResults([])
     } finally {
       setIsLoading(false)
+      setLoadingProgress(0)
     }
   }, [apiKey, country, sortBy, sortAds])
 
@@ -673,12 +709,18 @@ export default function CompetitorAds() {
         <div className="ca-stats">
           <span className="ca-badge">{results.length} ads found</span>
           <span className="ca-badge">{saved.length} saved</span>
+          {isLoading && loadingProgress > 0 && (
+            <span className="ca-badge ca-badge-loading">
+              <span className="ca-spinner-sm" />
+              fetching more... {loadingProgress} so far
+            </span>
+          )}
         </div>
       )}
 
       {/* ── Results ── */}
       <div className="ca-results">
-        {isLoading && (
+        {isLoading && results.length === 0 && (
           <div className="ca-state-msg">
             <div className="ca-spinner" />
             <span>loading ads...</span>
@@ -699,7 +741,7 @@ export default function CompetitorAds() {
           <div className="ca-state-msg">click a brand above to see their ads.</div>
         )}
 
-        {!isLoading && results.length > 0 && (
+        {results.length > 0 && (
           <div className="ca-grid">
             {results.map(ad => (
               <AdCard
@@ -707,6 +749,7 @@ export default function CompetitorAds() {
                 ad={ad}
                 isSaved={isAdSaved(ad.id)}
                 onToggleSave={toggleSave}
+                onExpand={setModalAd}
               />
             ))}
           </div>
@@ -728,11 +771,17 @@ export default function CompetitorAds() {
                   ad={ad}
                   isSaved={true}
                   onToggleSave={toggleSave}
+                  onExpand={setModalAd}
                 />
               ))}
             </div>
           )}
         </div>
+      )}
+
+      {/* ── Lightbox Modal ── */}
+      {modalAd && (
+        <AdPreviewModal ad={modalAd} onClose={() => setModalAd(null)} />
       )}
     </div>
   )
