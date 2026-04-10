@@ -26,6 +26,12 @@ const SORT_OPTIONS = [
   { value: 'impressions', label: 'most impressions' },
 ]
 
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'all ads' },
+  { value: 'live', label: 'live only' },
+  { value: 'ended', label: 'ended only' },
+]
+
 const COUNTRIES = [
   { value: 'GB', label: 'gb' },
   { value: 'US', label: 'us' },
@@ -344,17 +350,30 @@ function AdPreviewModal({ ad, onClose }) {
       <div className="ca-modal" onClick={e => e.stopPropagation()}>
         <button className="ca-modal-close" onClick={onClose}>&times;</button>
 
-        {/* Thumbnail image if we have one */}
-        {ad.thumbnailUrl && (
+        {/* Ad preview: iframe for full ad (including video playback) */}
+        {ad.snapshotUrl && (
+          <div className="ca-modal-image-wrap" style={{ position: 'relative', width: '100%', minHeight: 400, background: 'var(--bg-1)', borderRadius: 'var(--radius)' }}>
+            <iframe
+              src={ad.snapshotUrl}
+              title="Ad preview"
+              style={{ width: '100%', height: 400, border: 'none', borderRadius: 'var(--radius)' }}
+              sandbox="allow-scripts allow-same-origin allow-popups"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+        )}
+
+        {/* Fallback: thumbnail if no snapshot URL */}
+        {!ad.snapshotUrl && ad.thumbnailUrl && (
           <div className="ca-modal-image-wrap">
             <img src={ad.thumbnailUrl} alt="Ad creative" className="ca-modal-image" referrerPolicy="no-referrer" />
           </div>
         )}
 
-        {/* Primary CTA */}
+        {/* Open on Meta link */}
         {ad.snapshotUrl && (
           <a href={ad.snapshotUrl} target="_blank" rel="noopener noreferrer" className="ca-modal-open-btn">
-            View Full Ad on Meta &#x2197;
+            Open Full Ad on Meta &#x2197;
           </a>
         )}
 
@@ -481,6 +500,7 @@ function AdCard({ ad, isSaved, onToggleSave, onExpand }) {
 export default function CompetitorAds() {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('metaAdLibraryToken') || '')
   const [sortBy, setSortBy] = useState('longest')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [country, setCountry] = useState('GB')
   const [results, setResults] = useState([])
   const [saved, setSaved] = useState(() => {
@@ -687,15 +707,59 @@ export default function CompetitorAds() {
     }
   }, [activeBrand])
 
-  const toggleSave = useCallback((ad) => {
-    setSaved(prev => {
-      const exists = prev.findIndex(s => s.id === ad.id)
-      if (exists > -1) return prev.filter(s => s.id !== ad.id)
-      return [...prev, ad]
-    })
-  }, [])
+  const toggleSave = useCallback(async (ad) => {
+    const exists = saved.some(s => s.id === ad.id)
+    if (exists) {
+      // Remove from local state + Supabase
+      setSaved(prev => prev.filter(s => s.id !== ad.id))
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/saved_ads?library_id=eq.${ad.id}`, {
+          method: 'DELETE', headers: sbReadHeaders,
+        })
+      } catch (err) { console.error('Failed to unsave:', err) }
+    } else {
+      // Add to local state + Supabase
+      setSaved(prev => [...prev, ad])
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/saved_ads`, {
+          method: 'POST',
+          headers: { ...sbHeaders, Prefer: 'resolution=merge-duplicates' },
+          body: JSON.stringify({
+            advertiser_name: ad.pageName,
+            ad_copy: ad.creativeBody || '',
+            image_url: ad.thumbnailUrl || ad.snapshotUrl || '',
+            media_type: 'image',
+            library_id: String(ad.id),
+            platform: ad.platforms?.join(', ') || 'facebook',
+            started_running: ad.startDate ? new Date(ad.startDate).toISOString().split('T')[0] : null,
+            page_url: `https://www.facebook.com/ads/library/?id=${ad.id}`,
+            metadata: {
+              days_active: ad.daysActive,
+              is_active: ad.isActive,
+              impressions_lower: ad.impressionsLower,
+              impressions_upper: ad.impressionsUpper,
+              creative_title: ad.creativeTitle,
+              creative_caption: ad.creativeCaption,
+              creative_description: ad.creativeDescription,
+              snapshot_url: ad.snapshotUrl,
+            },
+          }),
+        })
+      } catch (err) { console.error('Failed to save to library:', err) }
+    }
+  }, [saved])
 
   const isAdSaved = useCallback((adId) => saved.some(s => s.id === adId), [saved])
+
+  // Apply status filter
+  const filteredResults = results.filter(ad => {
+    if (statusFilter === 'live') return ad.isActive
+    if (statusFilter === 'ended') return !ad.isActive
+    return true
+  })
+
+  const liveCount = results.filter(a => a.isActive).length
+  const endedCount = results.length - liveCount
 
   const handleAddKeyDown = (e) => {
     if (e.key === 'Enter') handleAddBrand()
@@ -789,6 +853,13 @@ export default function CompetitorAds() {
           </div>
           <div className="ca-active-controls">
             <div className="ca-filter-group">
+              <span className="ca-filter-label">status</span>
+              <select className="select-input" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
+                style={{ fontSize: 'var(--text-xs)', width: 110 }}>
+                {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+            <div className="ca-filter-group">
               <span className="ca-filter-label">sort</span>
               <select className="select-input" value={sortBy} onChange={e => setSortBy(e.target.value)}
                 style={{ fontSize: 'var(--text-xs)' }}>
@@ -809,7 +880,9 @@ export default function CompetitorAds() {
       {/* ── Stats ── */}
       {activeBrand && (
         <div className="ca-stats">
-          <span className="ca-badge">{results.length} ads</span>
+          <span className="ca-badge">{filteredResults.length} of {results.length} ads</span>
+          <span className="ca-badge">{liveCount} live</span>
+          <span className="ca-badge">{endedCount} ended</span>
           <span className="ca-badge">{saved.length} saved</span>
           {isCached && <span className="ca-badge ca-badge-cached">from cache</span>}
           {isLoading && loadingStatus && (
@@ -835,12 +908,15 @@ export default function CompetitorAds() {
         {!isLoading && !error && activeBrand && results.length === 0 && (
           <div className="ca-state-msg">no ads found for {activeBrand.pageName}.</div>
         )}
+        {!isLoading && !error && activeBrand && results.length > 0 && filteredResults.length === 0 && (
+          <div className="ca-state-msg">no {statusFilter === 'live' ? 'live' : 'ended'} ads. try changing the status filter.</div>
+        )}
         {!isLoading && !activeBrand && followedBrands.length > 0 && (
           <div className="ca-state-msg">click a brand above to see their ads.</div>
         )}
-        {results.length > 0 && (
+        {filteredResults.length > 0 && (
           <div className="ca-grid">
-            {results.map(ad => (
+            {filteredResults.map(ad => (
               <AdCard key={ad.id} ad={ad} isSaved={isAdSaved(ad.id)}
                 onToggleSave={toggleSave} onExpand={setModalAd} />
             ))}
