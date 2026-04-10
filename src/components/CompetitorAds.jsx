@@ -36,7 +36,7 @@ function formatImpressions(impressions) {
   if (typeof impressions === 'object' && impressions !== null) {
     const lower = parseInt(impressions.lower_bound || 0)
     const upper = parseInt(impressions.upper_bound || 0)
-    return formatNumber(lower) + '–' + formatNumber(upper)
+    return formatNumber(lower) + '\u2013' + formatNumber(upper)
   }
   if (typeof impressions === 'number') return formatNumber(impressions)
   return String(impressions)
@@ -81,6 +81,9 @@ function extractAdvertisers(rawResults) {
         adCount,
         platforms: Array.from(platforms),
         byline: ad.bylines?.[0] || '',
+        followers: 0,
+        category: '',
+        pictureUrl: null,
       })
     }
   }
@@ -108,7 +111,7 @@ function AdCard({ ad, isSaved, onToggleSave }) {
           onClick={() => onToggleSave(ad)}
           title={isSaved ? 'unsave' : 'save'}
         >
-          <span className="ca-save-icon">{isSaved ? '★' : '☆'}</span>
+          <span className="ca-save-icon">{isSaved ? '\u2605' : '\u2606'}</span>
         </button>
       </div>
       <div className="ca-card-body">
@@ -210,6 +213,8 @@ export default function CompetitorAds() {
   }, [])
 
   // Debounced advertiser lookup — fires as user types
+  // Two strategies: (1) Facebook Pages Search API for direct page name matching,
+  // (2) Fallback to ads_archive with high limit + client-side name filtering
   const lookupAdvertisers = useCallback(async (query) => {
     if (!query.trim() || query.trim().length < 2 || !apiKey) {
       setSuggestions([])
@@ -219,28 +224,84 @@ export default function CompetitorAds() {
 
     setSuggestionsLoading(true)
     setShowSuggestions(true)
+    const trimmed = query.trim().toLowerCase()
 
     try {
-      const params = new URLSearchParams({
-        access_token: apiKey,
-        search_terms: query.trim(),
-        ad_reached_countries: country,
-        ad_type: 'ALL',
-        fields: 'page_id,page_name,publisher_platforms,bylines',
-        limit: 25,
-        ad_active_status: 'ALL',
-      })
+      let advertisers = []
 
-      const response = await fetch('https://graph.facebook.com/v19.0/ads_archive?' + params)
-      if (!response.ok) throw new Error('API Error')
-      const data = await response.json()
-
-      if (data.data && data.data.length > 0) {
-        const advertisers = extractAdvertisers(data.data)
-        setSuggestions(advertisers)
-      } else {
-        setSuggestions([])
+      // Strategy 1: Facebook Pages Search API — searches page NAMES directly
+      // This is what Meta's own Ad Library autocomplete uses internally
+      try {
+        const pageParams = new URLSearchParams({
+          access_token: apiKey,
+          q: query.trim(),
+          fields: 'id,name,category,fan_count,picture,verification_status',
+          limit: 25,
+        })
+        const pageResp = await fetch('https://graph.facebook.com/v19.0/pages/search?' + pageParams)
+        if (pageResp.ok) {
+          const pageData = await pageResp.json()
+          if (pageData.data && pageData.data.length > 0) {
+            advertisers = pageData.data.map(page => ({
+              pageId: page.id,
+              pageName: page.name,
+              category: page.category || '',
+              followers: page.fan_count || 0,
+              platforms: ['facebook'],
+              adCount: 0,
+              byline: page.category || '',
+              pictureUrl: page.picture?.data?.url || null,
+              source: 'pages_search',
+            }))
+          }
+        }
+      } catch (e) {
+        // Pages Search not available with this token — fall through
       }
+
+      // Strategy 2: Fallback — ads_archive with high limit + smart name filtering
+      if (advertisers.length === 0) {
+        const params = new URLSearchParams({
+          access_token: apiKey,
+          search_terms: query.trim(),
+          ad_reached_countries: country,
+          ad_type: 'ALL',
+          fields: 'page_id,page_name,publisher_platforms,bylines',
+          limit: 500,
+          ad_active_status: 'ALL',
+        })
+
+        const response = await fetch('https://graph.facebook.com/v19.0/ads_archive?' + params)
+        if (!response.ok) throw new Error('API Error')
+        const data = await response.json()
+
+        if (data.data && data.data.length > 0) {
+          const allPages = extractAdvertisers(data.data)
+
+          // Filter to pages whose name actually matches the query
+          const nameMatches = allPages.filter(adv =>
+            adv.pageName.toLowerCase().includes(trimmed)
+          )
+
+          // Sort matches: exact match first, then starts-with, then contains
+          nameMatches.sort((a, b) => {
+            const aName = a.pageName.toLowerCase()
+            const bName = b.pageName.toLowerCase()
+            const aExact = aName === trimmed
+            const bExact = bName === trimmed
+            if (aExact !== bExact) return aExact ? -1 : 1
+            const aStarts = aName.startsWith(trimmed)
+            const bStarts = bName.startsWith(trimmed)
+            if (aStarts !== bStarts) return aStarts ? -1 : 1
+            return b.adCount - a.adCount
+          })
+
+          // Use name-filtered results if we have them, otherwise show all
+          advertisers = nameMatches.length > 0 ? nameMatches : allPages
+        }
+      }
+
+      setSuggestions(advertisers)
     } catch (err) {
       console.error('Lookup error:', err)
       setSuggestions([])
@@ -393,10 +454,17 @@ export default function CompetitorAds() {
               <div className="ca-chip-info">
                 <span className="ca-chip-name">{selectedAdvertiser.pageName}</span>
                 <span className="ca-chip-meta">
-                  {selectedAdvertiser.platforms.includes('facebook') && 'fb'}
-                  {selectedAdvertiser.platforms.includes('facebook') && selectedAdvertiser.platforms.includes('instagram') && ' · '}
-                  {selectedAdvertiser.platforms.includes('instagram') && 'ig'}
-                  {selectedAdvertiser.adCount > 0 && (' · ' + selectedAdvertiser.adCount + ' ads')}
+                  {selectedAdvertiser.followers > 0 && (formatNumber(selectedAdvertiser.followers) + ' followers')}
+                  {selectedAdvertiser.followers > 0 && selectedAdvertiser.category && ' · '}
+                  {selectedAdvertiser.category && selectedAdvertiser.category}
+                  {!selectedAdvertiser.followers && !selectedAdvertiser.category && (
+                    <>
+                      {selectedAdvertiser.platforms.includes('facebook') && 'fb'}
+                      {selectedAdvertiser.platforms.includes('facebook') && selectedAdvertiser.platforms.includes('instagram') && ' · '}
+                      {selectedAdvertiser.platforms.includes('instagram') && 'ig'}
+                      {selectedAdvertiser.adCount > 0 && (' · ' + selectedAdvertiser.adCount + ' ads')}
+                    </>
+                  )}
                 </span>
               </div>
               <button className="ca-chip-clear" onClick={clearAdvertiser} title="clear">&times;</button>
@@ -432,7 +500,7 @@ export default function CompetitorAds() {
                 <div className="ca-suggestion-item ca-suggestion-text-search" onClick={() => { setShowSuggestions(false); performSearch() }}>
                   <span className="ca-suggestion-search-icon">&#128269;</span>
                   <div>
-                    <div className="ca-suggestion-name">" {searchQuery}"</div>
+                    <div className="ca-suggestion-name">"{searchQuery}"</div>
                     <div className="ca-suggestion-sub">search this exact phrase</div>
                   </div>
                 </div>
@@ -449,19 +517,35 @@ export default function CompetitorAds() {
                       className="ca-suggestion-item"
                       onClick={() => selectAdvertiser(adv)}
                     >
-                      <div className="ca-suggestion-avatar">
-                        {adv.pageName.charAt(0).toUpperCase()}
-                      </div>
+                      {adv.pictureUrl ? (
+                        <img src={adv.pictureUrl} alt="" className="ca-suggestion-avatar-img" />
+                      ) : (
+                        <div className="ca-suggestion-avatar">
+                          {adv.pageName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <div className="ca-suggestion-details">
                         <div className="ca-suggestion-name">{adv.pageName}</div>
                         <div className="ca-suggestion-sub">
-                          {adv.platforms.includes('facebook') && (
-                            <span>fb</span>
+                          {adv.followers > 0 && (
+                            <span>{formatNumber(adv.followers)} followers</span>
                           )}
-                          {adv.platforms.includes('instagram') && (
-                            <span>{adv.platforms.includes('facebook') ? ' · ' : ''}ig</span>
+                          {adv.followers > 0 && (adv.category || adv.adCount > 0) && ' · '}
+                          {adv.category && <span>{adv.category}</span>}
+                          {!adv.category && adv.adCount > 0 && (
+                            <span>{adv.adCount} ad{adv.adCount !== 1 ? 's' : ''} found</span>
                           )}
-                          <span> · {adv.adCount} ad{adv.adCount !== 1 ? 's' : ''} found</span>
+                          {adv.category && adv.adCount > 0 && (
+                            <span> · {adv.adCount} ad{adv.adCount !== 1 ? 's' : ''}</span>
+                          )}
+                          {!adv.followers && !adv.category && adv.adCount === 0 && (
+                            <>
+                              {adv.platforms.includes('facebook') && <span>fb</span>}
+                              {adv.platforms.includes('instagram') && (
+                                <span>{adv.platforms.includes('facebook') ? ' · ' : ''}ig</span>
+                              )}
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
