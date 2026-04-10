@@ -188,7 +188,7 @@ export default function Launcher({ brands, activeBrandId }) {
       .from('gen_images')
       .select('*')
       .eq('is_winner', true)
-      .eq('status', 'completed')
+      .eq('status', 'complete')
       .order('created_at', { ascending: false })
     setWinners(data || [])
   }
@@ -381,7 +381,7 @@ export default function Launcher({ brands, activeBrandId }) {
           <p className="page-subtitle">Build and push static ads to Meta. Each row is one ad.</p>
         </div>
         <div className="launch-header-actions">
-          <button className="btn btn-ghost btn-sm" onClick={loadLaunches}>&#x21bb; refresh</button>
+          <button className="btn btn-ghost btn-sm" onClick={loadLaunches}>↻ refresh</button>
           <button className="btn btn-ghost btn-sm" onClick={() => { loadWinners(); setShowWinnerPicker(true) }}>
             + from winners
           </button>
@@ -395,7 +395,7 @@ export default function Launcher({ brands, activeBrandId }) {
               onClick={() => setShowPushModal(true)}
               disabled={pushing}
             >
-              {pushing ? 'pushing...' : `&#x1F680; push ${readyLaunches.length} to Meta`}
+              {pushing ? 'pushing...' : `🚀 push ${readyLaunches.length} to Meta`}
             </button>
           )}
         </div>
@@ -545,8 +545,8 @@ export default function Launcher({ brands, activeBrandId }) {
                 return (
                   <div key={l.id} className="launch-validate-row">
                     {valid
-                      ? <span style={{ color: 'var(--electric-green)' }}>&#10003;</span>
-                      : <span style={{ color: 'var(--error)' }}>&#10005;</span>
+                      ? <span style={{ color: 'var(--electric-green)' }}>✓</span>
+                      : <span style={{ color: 'var(--error)' }}>✕</span>
                     }
                     <span className="launch-validate-name">{l.ad_name || 'Unnamed'}</span>
                     {!valid && <span className="launch-validate-error">{errors[0]}</span>}
@@ -734,7 +734,7 @@ function LaunchRow({
             disabled={pushing}
             title="Push to Meta"
           >
-            &#x1F680;
+            🚀
           </button>
         )}
         <button
@@ -742,7 +742,7 @@ function LaunchRow({
           onClick={() => onDuplicate(launch)}
           title="Duplicate"
         >
-          &#x2398;
+          ⧉
         </button>
         {(launch.status === 'draft' || launch.status === 'error') && (
           <button
@@ -750,7 +750,7 @@ function LaunchRow({
             onClick={() => onDelete(launch.id)}
             title="Delete"
           >
-            &#x2715;
+            ✕
           </button>
         )}
       </td>

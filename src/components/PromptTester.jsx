@@ -316,7 +316,7 @@ export default function PromptTester() {
       const { error } = await supabase.from('gen_images').insert({
         image_url: showDetail.url || showDetail.dataUrl,
         is_winner: true,
-        status: 'completed',
+        status: 'complete',
         aspect_ratio: showDetail.ratio,
         prompt_used: showDetail.prompt,
         variables_used: { SOURCE: 'prompt-tester', MODEL: showDetail.model },
@@ -470,14 +470,14 @@ export default function PromptTester() {
               </div>
               <div className="pt-actions">
                 <button className="btn btn-ghost btn-sm" onClick={handleDownload}>
-                  &#x2B07; download
+                  ⬇ download
                 </button>
                 <button
                   className="btn btn-primary btn-sm"
                   onClick={handlePromote}
                   disabled={promoting || promoted}
                 >
-                  {promoted ? '&#10003; promoted' : promoting ? 'promoting...' : '&#x1F680; send to launcher'}
+                  {promoted ? '✓ promoted' : promoting ? 'promoting...' : '🚀 send to launcher'}
                 </button>
               </div>
             </>
