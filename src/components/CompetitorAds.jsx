@@ -26,12 +26,6 @@ const SORT_OPTIONS = [
   { value: 'impressions', label: 'most impressions' },
 ]
 
-const STATUS_OPTIONS = [
-  { value: 'all', label: 'all ads' },
-  { value: 'live', label: 'live only' },
-  { value: 'ended', label: 'ended only' },
-]
-
 const COUNTRIES = [
   { value: 'GB', label: 'gb' },
   { value: 'US', label: 'us' },
@@ -62,41 +56,39 @@ function fmtImpressions(lower, upper) {
 function processResults(rawResults) {
   return rawResults.map(ad => {
     const startTime = new Date(ad.ad_delivery_start_time)
-    const endTime = ad.ad_delivery_stop_time ? new Date(ad.ad_delivery_stop_time) : new Date()
-    const daysActive = Math.max(Math.floor((endTime - startTime) / (1000 * 60 * 60 * 24)), 0)
-
-    let impLower = null, impUpper = null
-    if (ad.impressions) {
-      if (typeof ad.impressions === 'object') {
-        impLower = parseInt(ad.impressions.lower_bound || 0) || null
-        impUpper = parseInt(ad.impressions.upper_bound || 0) || null
-      } else if (typeof ad.impressions === 'number') {
-        impUpper = ad.impressions
-      }
-    }
+    const endTime = new Date(ad.ad_delivery_stop_time)
+    const daysActive = Math.floor((endTime - startTime) / (1000 * 60 * 60 * 24))
+    const startDate = formatDate(startTime)
+    const endDate = formatDate(endTime)
+    const impressionsText = fmtImpressions(ad.estimated_impressions_lower_bound, ad.estimated_impressions_upper_bound)
+    const status = ad.ad_status || 'unknown'
+    const startTime_text = startDate
 
     return {
-      id: ad.id,
-      pageName: ad.page_name || 'unknown',
-      pageId: ad.page_id,
-      snapshotUrl: ad.ad_snapshot_url || null,
-      thumbnailUrl: null, // will be filled from cache or edge fn
-      startDate: startTime.toISOString(),
-      endDate: ad.ad_delivery_stop_time || null,
-      daysActive,
-      platforms: ad.publisher_platforms || [],
-      impressionsLower: impLower,
-      impressionsUpper: impUpper,
-      isActive: !ad.ad_delivery_stop_time,
-      creativeBody: ad.ad_creative_bodies ? ad.ad_creative_bodies[0] : '',
-      creativeTitle: ad.ad_creative_link_titles ? ad.ad_creative_link_titles[0] : '',
-      creativeCaption: ad.ad_creative_link_captions ? ad.ad_creative_link_captions[0] : '',
-      creativeDescription: ad.ad_creative_link_descriptions ? ad.ad_creative_link_descriptions[0] : '',
+      adId: ad.ad_id || 'N/A',
+      adName: ad.ad_name || 'Untitled Ad',
+      pageId: ad.page_id || 'N/A',
+      pageName: ad.page_name || 'Unknown Brand',
+      platform: 'Meta',
+      creativeType: ad.display_format || 'unknown',
+      text: ad.ad_snapshot_url || '',
+      imagePath: null,
+      impressionsText,
+      impressionsLower: ad.estimated_impressions_lower_bound || 0,
+      impressionsUpper: ad.estimated_impressions_upper_bound || 0,
+      startDate,
+      endDate,
+      daysActive: daysActive > 0 ? daysActive : 0,
+      status,
+      isVideoContent: ad.display_format && ad.display_format.includes('video'),
+      isCarouselContent: ad.display_format && ad.display_format.includes('carousel'),
+      startTime_text,
+      url: `https://www.facebook.com/ads/library/?ad_type=all&country=ALL&sort_data[direction]=desc&sort_data[mode]=relevancy_total&media_type=all&view_all_page_id=${ad.page_id}`,
+      adPreviewUrl: ad.ad_snapshot_url || null,
     }
   })
 }
 
-// Extract page ID from URL or raw ID
 function extractPageId(input) {
   const trimmed = input.trim()
   if (/^\d+$/.test(trimmed)) return trimmed
@@ -133,375 +125,84 @@ async function fetchFollowedBrands() {
       adCount: row.total_ads || row.ad_count || 0,
       country: row.country || 'GB',
       lastFetchedAt: row.last_fetched_at || null,
+      thumbnailUrl: row.thumbnail_url || null,
     }))
   } catch { return [] }
 }
 
 async function saveBrandToSupabase(brand) {
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/followed_brands`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/followed_brands`, {
       method: 'POST',
       headers: sbHeaders,
       body: JSON.stringify({
-        page_id: String(brand.pageId),
+        page_id: brand.pageId,
         page_name: brand.pageName,
-        platforms: brand.platforms || [],
+        platforms: brand.platforms || ['meta'],
         byline: brand.byline || '',
-        ad_count: brand.adCount || 0,
-        total_ads: brand.adCount || 0,
         country: brand.country || 'GB',
       }),
     })
-    return true
-  } catch { return false }
-}
-
-async function removeBrandFromSupabase(pageId) {
-  try {
-    // Delete cached ads too
-    await fetch(`${SUPABASE_URL}/rest/v1/competitor_ads?page_id=eq.${pageId}`, {
-      method: 'DELETE', headers: sbReadHeaders,
-    })
-    await fetch(`${SUPABASE_URL}/rest/v1/followed_brands?page_id=eq.${pageId}`, {
-      method: 'DELETE', headers: sbReadHeaders,
-    })
-    return true
-  } catch { return false }
-}
-
-// Cache ads to Supabase
-async function cacheAdsToSupabase(ads, pageId, country) {
-  const rows = ads.map(ad => ({
-    id: ad.id,
-    page_id: pageId,
-    page_name: ad.pageName,
-    snapshot_url: ad.snapshotUrl,
-    thumbnail_url: ad.thumbnailUrl || null,
-    start_date: ad.startDate,
-    end_date: ad.endDate,
-    days_active: ad.daysActive,
-    is_active: ad.isActive,
-    platforms: ad.platforms,
-    impressions_lower: ad.impressionsLower,
-    impressions_upper: ad.impressionsUpper,
-    creative_body: ad.creativeBody,
-    creative_title: ad.creativeTitle,
-    creative_caption: ad.creativeCaption,
-    creative_description: ad.creativeDescription,
-    country,
-  }))
-
-  // Upsert in batches of 200
-  for (let i = 0; i < rows.length; i += 200) {
-    const batch = rows.slice(i, i + 200)
-    await fetch(`${SUPABASE_URL}/rest/v1/competitor_ads`, {
-      method: 'POST',
-      headers: { ...sbHeaders, Prefer: 'resolution=merge-duplicates' },
-      body: JSON.stringify(batch),
-    })
+    return res.ok
+  } catch {
+    return false
   }
-
-  // Update brand's last_fetched_at and total_ads
-  await fetch(`${SUPABASE_URL}/rest/v1/followed_brands?page_id=eq.${pageId}`, {
-    method: 'PATCH',
-    headers: sbHeaders,
-    body: JSON.stringify({
-      last_fetched_at: new Date().toISOString(),
-      total_ads: ads.length,
-      ad_count: ads.length,
-    }),
-  })
 }
 
-// Load cached ads from Supabase
-async function loadCachedAds(pageId) {
+async function updateBrandInSupabase(pageId, updates) {
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/competitor_ads?page_id=eq.${pageId}&order=days_active.desc&limit=3000`,
-      { headers: sbReadHeaders }
+      `${SUPABASE_URL}/rest/v1/followed_brands?page_id=eq.${pageId}`,
+      {
+        method: 'PATCH',
+        headers: sbHeaders,
+        body: JSON.stringify(updates),
+      }
     )
-    if (!res.ok) return []
-    const data = await res.json()
-    return data.map(row => ({
-      id: row.id,
-      pageId: row.page_id,
-      pageName: row.page_name,
-      snapshotUrl: row.snapshot_url,
-      thumbnailUrl: row.thumbnail_url,
-      startDate: row.start_date,
-      endDate: row.end_date,
-      daysActive: row.days_active || 0,
-      isActive: row.is_active,
-      platforms: row.platforms || [],
-      impressionsLower: row.impressions_lower,
-      impressionsUpper: row.impressions_upper,
-      creativeBody: row.creative_body || '',
-      creativeTitle: row.creative_title || '',
-      creativeCaption: row.creative_caption || '',
-      creativeDescription: row.creative_description || '',
-    }))
-  } catch { return [] }
-}
-
-// Look up a page by ID using ads_archive
-async function lookupPageById(pageId, apiKey, country) {
-  const params = new URLSearchParams({
-    access_token: apiKey,
-    search_page_ids: pageId,
-    search_terms: ' ',
-    ad_reached_countries: country,
-    ad_type: 'ALL',
-    fields: 'page_id,page_name,publisher_platforms,bylines',
-    limit: 10,
-    ad_active_status: 'ALL',
-  })
-  const response = await fetch('https://graph.facebook.com/v19.0/ads_archive?' + params)
-  const data = await response.json()
-  if (data.error) throw new Error(data.error.message || 'Meta API error')
-  if (!response.ok) throw new Error('API error: ' + response.status)
-
-  if (!data.data || data.data.length === 0) {
-    // Try ALL countries
-    const params2 = new URLSearchParams({
-      access_token: apiKey, search_page_ids: pageId, search_terms: ' ',
-      ad_reached_countries: 'ALL', ad_type: 'ALL',
-      fields: 'page_id,page_name,publisher_platforms,bylines',
-      limit: 10, ad_active_status: 'ALL',
-    })
-    const r2 = await fetch('https://graph.facebook.com/v19.0/ads_archive?' + params2)
-    const d2 = await r2.json()
-    if (d2.error) throw new Error(d2.error.message)
-    if (!d2.data?.length) throw new Error('No ads found for this page ID.')
-    return extractBrandFromResults(d2.data, pageId, country)
-  }
-  return extractBrandFromResults(data.data, pageId, country)
-}
-
-function extractBrandFromResults(results, pageId, country) {
-  const ad = results[0]
-  const platforms = new Set()
-  results.forEach(a => { if (a.publisher_platforms) a.publisher_platforms.forEach(p => platforms.add(p)) })
-  return {
-    pageId: String(ad.page_id || pageId),
-    pageName: ad.page_name || 'Unknown',
-    platforms: Array.from(platforms),
-    byline: ad.bylines?.[0] || '',
-    adCount: results.length,
-    country,
+    return res.ok
+  } catch {
+    return false
   }
 }
 
-// ── Kick off thumbnail extraction for ads missing images ──
-async function requestThumbnailExtraction(ads) {
-  const needThumbnails = ads
-    .filter(ad => !ad.thumbnailUrl && ad.snapshotUrl)
-    .slice(0, 50) // First 50 at a time
-    .map(ad => ({ id: ad.id, url: ad.snapshotUrl }))
+async function deleteBrandFromSupabase(pageId) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/followed_brands?page_id=eq.${pageId}`,
+      { method: 'DELETE', headers: sbHeaders }
+    )
+    return res.ok
+  } catch {
+    return false
+  }
+}
 
-  if (needThumbnails.length === 0) return {}
+// ── Extract thumbnails from Meta Library ──
 
+async function extractThumbnailsForAds(ads) {
+  if (!ads.length) return
+
+  // Call edge function to extract and store thumbnails
   try {
     const res = await fetch(EDGE_FN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ snapshot_urls: needThumbnails }),
+      body: JSON.stringify({ ads }),
     })
-    if (!res.ok) return {}
-    const data = await res.json()
-    // Return a map of id -> thumbnail_url
-    const map = {}
-    if (data.results) {
-      data.results.forEach(r => { if (r.thumbnail_url) map[r.id] = r.thumbnail_url })
+    if (res.ok) {
+      const result = await res.json()
+      return result.thumbnails || {}
     }
-    return map
-  } catch { return {} }
-}
-
-// ── Components ──
-
-function AvatarWithFallback({ pageId, pageName, size = 32 }) {
-  const [failed, setFailed] = useState(false)
-  const letter = pageName?.charAt(0)?.toUpperCase() || '?'
-  if (failed || !pageId) {
-    return (
-      <div className="ca-avatar-letter" style={{ width: size, height: size, fontSize: size * 0.44 }}>
-        {letter}
-      </div>
-    )
+  } catch (err) {
+    console.error('Failed to extract thumbnails:', err)
   }
-  return (
-    <img src={getPagePictureUrl(pageId)} alt={pageName} className="ca-avatar-img"
-      style={{ width: size, height: size }} onError={() => setFailed(true)} referrerPolicy="no-referrer" />
-  )
+  return {}
 }
 
-function AdPreviewModal({ ad, onClose }) {
-  useEffect(() => {
-    const handleKey = (e) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', handleKey)
-    document.body.style.overflow = 'hidden'
-    return () => { document.removeEventListener('keydown', handleKey); document.body.style.overflow = '' }
-  }, [onClose])
-
-  const impText = fmtImpressions(ad.impressionsLower, ad.impressionsUpper)
-
-  return (
-    <div className="ca-modal-overlay" onClick={onClose}>
-      <div className="ca-modal" onClick={e => e.stopPropagation()}>
-        <button className="ca-modal-close" onClick={onClose}>&times;</button>
-
-        {/* Ad preview: iframe for full ad (including video playback) */}
-        {ad.snapshotUrl && (
-          <div className="ca-modal-image-wrap" style={{ position: 'relative', width: '100%', minHeight: 400, background: 'var(--bg-1)', borderRadius: 'var(--radius)' }}>
-            <iframe
-              src={ad.snapshotUrl}
-              title="Ad preview"
-              style={{ width: '100%', height: 400, border: 'none', borderRadius: 'var(--radius)' }}
-              sandbox="allow-scripts allow-same-origin allow-popups"
-              referrerPolicy="no-referrer"
-            />
-          </div>
-        )}
-
-        {/* Fallback: thumbnail if no snapshot URL */}
-        {!ad.snapshotUrl && ad.thumbnailUrl && (
-          <div className="ca-modal-image-wrap">
-            <img src={ad.thumbnailUrl} alt="Ad creative" className="ca-modal-image" referrerPolicy="no-referrer" />
-          </div>
-        )}
-
-        {/* Open on Meta link */}
-        {ad.snapshotUrl && (
-          <a href={ad.snapshotUrl} target="_blank" rel="noopener noreferrer" className="ca-modal-open-btn">
-            Open Full Ad on Meta &#x2197;
-          </a>
-        )}
-
-        <div className="ca-modal-content">
-          <div className="ca-modal-brand-row">
-            <AvatarWithFallback pageId={ad.pageId} pageName={ad.pageName} size={36} />
-            <div>
-              <div className="ca-modal-brand-name">{ad.pageName}</div>
-              <div className="ca-modal-brand-meta">
-                {ad.isActive ? 'Active since ' : 'Ran from '}{formatDate(ad.startDate)}
-                {ad.isActive && (' \u00b7 ' + ad.daysActive + 'd running')}
-                {!ad.isActive && ad.daysActive > 0 && (' \u2014 ' + ad.daysActive + ' days')}
-              </div>
-            </div>
-          </div>
-
-          {/* Creative text */}
-          <div className="ca-modal-creative">
-            {ad.creativeTitle && <div className="ca-modal-creative-title">{ad.creativeTitle}</div>}
-            {ad.creativeBody && <div className="ca-modal-creative-body">{ad.creativeBody}</div>}
-            {ad.creativeDescription && <div className="ca-modal-creative-desc">{ad.creativeDescription}</div>}
-            {ad.creativeCaption && <div className="ca-modal-creative-caption">{ad.creativeCaption}</div>}
-            {!ad.creativeTitle && !ad.creativeBody && (
-              <div className="ca-modal-creative-body" style={{ opacity: 0.5 }}>No text content available.</div>
-            )}
-          </div>
-
-          {/* Stats */}
-          <div className="ca-modal-details">
-            <div className="ca-modal-detail-row">
-              <span className="ca-modal-detail-label">Status</span>
-              <span className={`ca-modal-status ${ad.isActive ? 'active' : 'ended'}`}>
-                {ad.isActive ? 'Active' : 'Ended'}
-              </span>
-            </div>
-            <div className="ca-modal-detail-row">
-              <span className="ca-modal-detail-label">Days running</span>
-              <span>{ad.daysActive}</span>
-            </div>
-            {impText && (
-              <div className="ca-modal-detail-row">
-                <span className="ca-modal-detail-label">Impressions</span>
-                <span>{impText}</span>
-              </div>
-            )}
-            {ad.platforms.length > 0 && (
-              <div className="ca-modal-detail-row">
-                <span className="ca-modal-detail-label">Platforms</span>
-                <span>{ad.platforms.join(', ')}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function AdCard({ ad, isSaved, onToggleSave, onExpand }) {
-  const [imgFailed, setImgFailed] = useState(false)
-  const impText = fmtImpressions(ad.impressionsLower, ad.impressionsUpper)
-  const hasThumbnail = ad.thumbnailUrl && !imgFailed
-
-  return (
-    <div className="ca-card">
-      <div className="ca-card-preview" onClick={() => onExpand(ad)} title="Click to expand">
-        {hasThumbnail ? (
-          <img
-            src={ad.thumbnailUrl}
-            alt={ad.creativeTitle || 'Ad creative'}
-            className="ca-card-thumb"
-            onError={() => setImgFailed(true)}
-            referrerPolicy="no-referrer"
-            loading="lazy"
-          />
-        ) : (
-          <div className="ca-card-text-preview">
-            {ad.creativeTitle && <div className="ca-preview-title">{ad.creativeTitle}</div>}
-            <div className="ca-preview-body">
-              {ad.creativeBody
-                ? (ad.creativeBody.length > 140 ? ad.creativeBody.substring(0, 140) + '...' : ad.creativeBody)
-                : 'No text content'}
-            </div>
-            {ad.creativeCaption && <div className="ca-preview-caption">{ad.creativeCaption}</div>}
-          </div>
-        )}
-        <div className="ca-preview-expand-hint">click to preview</div>
-        <button
-          className={`ca-save-btn ${isSaved ? 'saved' : ''}`}
-          onClick={(e) => { e.stopPropagation(); onToggleSave(ad) }}
-          title={isSaved ? 'unsave' : 'save'}
-        >
-          <span className="ca-save-icon">{isSaved ? '\u2605' : '\u2606'}</span>
-        </button>
-      </div>
-      <div className="ca-card-body">
-        <div className="ca-card-brand">{ad.pageName}</div>
-        <div className="ca-card-meta">
-          {ad.isActive ? 'running since ' : 'ran from '}{formatDate(ad.startDate)}
-        </div>
-        <div className="ca-card-badges">
-          <span className="ca-badge">{ad.daysActive}d</span>
-          {impText && <span className="ca-badge ca-badge-imp">{impText} imp</span>}
-          {ad.isActive && <span className="ca-badge ca-badge-active">active</span>}
-        </div>
-        <div className="ca-card-footer">
-          <div className="ca-platforms">
-            {ad.platforms.includes('facebook') && <span className="ca-platform-icon">f</span>}
-            {ad.platforms.includes('instagram') && <span className="ca-platform-icon">ig</span>}
-          </div>
-          {ad.snapshotUrl && (
-            <a href={ad.snapshotUrl} target="_blank" rel="noopener noreferrer" className="ca-view-link">
-              view on meta &#x2197;
-            </a>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── Main Component ──
+// ── Render ──
 
 export default function CompetitorAds() {
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('metaAdLibraryToken') || '')
-  const [sortBy, setSortBy] = useState('longest')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [country, setCountry] = useState('GB')
+  const [apiKey, setApiKey] = useState(localStorage.getItem('metaAdLibraryToken') || '')
   const [results, setResults] = useState([])
   const [saved, setSaved] = useState(() => {
     try { return JSON.parse(localStorage.getItem('savedCompetitorAds') || '[]') } catch { return [] }
@@ -546,402 +247,413 @@ export default function CompetitorAds() {
     return hoursAgo < CACHE_MAX_AGE_HOURS
   }
 
-  // ── Load brand ads: from cache first, then Meta API if needed ──
-  const loadBrandAds = useCallback(async (brand, forceRefresh = false) => {
-    setActiveBrand(brand)
+  // ── Fetch ads for a brand (from Meta Library API) ──
+  async function fetchBrandAds(pageId, pageName) {
+    if (!apiKey || apiKey.length < 20) {
+      setError('Please enter a valid Meta Ad Library token')
+      return
+    }
+
     setIsLoading(true)
     setError(null)
     setResults([])
     setLoadingProgress(0)
+    setLoadingStatus('Connecting to Meta...')
     setIsCached(false)
 
     try {
-      // Step 1: Try cache first (unless force refresh)
-      if (!forceRefresh && isCacheFresh(brand)) {
-        setLoadingStatus('loading from cache...')
-        const cached = await loadCachedAds(brand.pageId)
-        if (cached.length > 0) {
-          setResults(sortAds(cached, sortBy))
-          setIsCached(true)
-          setIsLoading(false)
-          setLoadingStatus('')
+      const baseUrl = 'https://graph.instagram.com/ig_hashtag_search'
+      const fields = [
+        'ad_id',
+        'ad_name',
+        'page_id',
+        'page_name',
+        'ad_snapshot_url',
+        'ad_status',
+        'ad_delivery_start_time',
+        'ad_delivery_stop_time',
+        'display_format',
+        'estimated_impressions_lower_bound',
+        'estimated_impressions_upper_bound',
+      ]
 
-          // Kick off thumbnail extraction for any ads missing thumbnails (in background)
-          const needThumbs = cached.filter(a => !a.thumbnailUrl && a.snapshotUrl)
-          if (needThumbs.length > 0) {
-            requestThumbnailExtraction(cached).then(thumbMap => {
-              if (Object.keys(thumbMap).length > 0) {
-                setResults(prev => prev.map(ad =>
-                  thumbMap[ad.id] ? { ...ad, thumbnailUrl: thumbMap[ad.id] } : ad
-                ))
-              }
-            })
-          }
-          return
-        }
+      setLoadingStatus('Fetching from Meta Ad Library...')
+      setLoadingProgress(30)
+
+      const queryUrl = `https://graph.facebook.com/v20.0/ads_archive?access_token=${apiKey}&fields=${fields.join(',')}&ad_type=POLITICAL_AND_ISSUES&search_terms=&ad_reached_countries=ALL&media_type=all&limit=100&page_ids=${pageId}`
+
+      const response = await fetch(queryUrl)
+      if (!response.ok) {
+        const err = await response.text()
+        throw new Error(`Meta API error: ${err}`)
       }
 
-      // Step 2: Fetch from Meta API
-      if (!apiKey) { setError('Enter your Meta API token first.'); setIsLoading(false); return }
+      setLoadingProgress(60)
+      setLoadingStatus('Processing results...')
 
-      setLoadingStatus('fetching from Meta...')
-      let allRaw = []
-      let nextUrl = null
-
-      const params = new URLSearchParams({
-        access_token: apiKey,
-        search_page_ids: brand.pageId,
-        search_terms: ' ',
-        ad_reached_countries: country,
-        ad_type: 'ALL',
-        fields: 'id,ad_creation_time,ad_creative_bodies,ad_creative_link_captions,ad_creative_link_titles,ad_creative_link_descriptions,ad_delivery_start_time,ad_delivery_stop_time,ad_snapshot_url,bylines,impressions,page_id,page_name,publisher_platforms,estimated_audience_size',
-        limit: 250,
-        ad_active_status: 'ALL',
-      })
-
-      const response = await fetch('https://graph.facebook.com/v19.0/ads_archive?' + params)
       const data = await response.json()
-      if (data.error) throw new Error(data.error.message)
-      if (!response.ok) throw new Error('API Error: ' + response.status)
+      const rawResults = data.data || []
 
-      if (data.data) {
-        allRaw = [...data.data]
-        const firstBatch = processResults(allRaw)
-        setResults(sortAds(firstBatch, sortBy))
-        setLoadingProgress(allRaw.length)
-      }
-      nextUrl = data.paging?.next || null
+      // Sort by most recent and get top 50
+      const processed = processResults(rawResults).sort((a, b) => new Date(b.startDate) - new Date(a.startDate)).slice(0, 50)
 
-      // Paginate up to 2000
-      while (nextUrl && allRaw.length < 2000) {
-        setLoadingStatus(`fetching... ${allRaw.length} ads so far`)
-        const pageRes = await fetch(nextUrl)
-        const pageData = await pageRes.json()
-        if (pageData.error) break
-        if (pageData.data) {
-          allRaw = [...allRaw, ...pageData.data]
-          const processed = processResults(allRaw)
-          setResults(sortAds(processed, sortBy))
-          setLoadingProgress(allRaw.length)
-        }
-        nextUrl = pageData.paging?.next || null
-      }
+      setLoadingProgress(80)
+      setLoadingStatus('Extracting thumbnails...')
 
-      const finalAds = processResults(allRaw)
-      setResults(sortAds(finalAds, sortBy))
+      // Extract thumbnails
+      await extractThumbnailsForAds(processed)
 
-      // Step 3: Cache everything to Supabase
-      setLoadingStatus('caching to database...')
-      await cacheAdsToSupabase(finalAds, brand.pageId, country)
+      setLoadingProgress(100)
+      setResults(processed)
+      setLoadingStatus('Done')
+      setError(null)
 
-      // Update brand card
-      setFollowedBrands(prev => prev.map(b =>
-        b.pageId === brand.pageId
-          ? { ...b, adCount: allRaw.length, lastFetchedAt: new Date().toISOString() }
-          : b
-      ))
-
-      // Step 4: Extract thumbnails in background
-      setLoadingStatus('extracting thumbnails...')
-      const thumbMap = await requestThumbnailExtraction(finalAds)
-      if (Object.keys(thumbMap).length > 0) {
-        setResults(prev => prev.map(ad =>
-          thumbMap[ad.id] ? { ...ad, thumbnailUrl: thumbMap[ad.id] } : ad
-        ))
-      }
-
-      if (allRaw.length === 0) setResults([])
+      // Update brand as just fetched
+      await updateBrandInSupabase(pageId, {
+        last_fetched_at: new Date().toISOString(),
+        total_ads: processed.length,
+      })
     } catch (err) {
-      setError(err.message)
+      console.error('Fetch error:', err)
+      setError(err.message || 'Failed to fetch ads. Check your token and try again.')
       setResults([])
     } finally {
       setIsLoading(false)
       setLoadingProgress(0)
-      setLoadingStatus('')
     }
-  }, [apiKey, country, sortBy, sortAds])
+  }
 
-  // Re-sort when sort changes
-  useEffect(() => {
-    if (results.length > 0) setResults(prev => sortAds(prev, sortBy))
-  }, [sortBy, sortAds])
+  // ── Add brand to followed list ──
+  async function handleAddBrand() {
+    if (!addInput.trim()) return
 
-  // ── Add brand ──
-  const handleAddBrand = useCallback(async () => {
-    if (!addInput.trim() || !apiKey) return
     setAddLoading(true)
     setAddError(null)
-    const pageId = extractPageId(addInput)
-    if (!pageId) {
-      setAddError('Could not find a page ID in that URL. Try a Facebook Ad Library link or numeric page ID.')
-      setAddLoading(false)
-      return
-    }
-    if (followedBrands.some(b => b.pageId === pageId)) {
-      setAddError('Already in your list.')
-      setAddLoading(false)
-      return
-    }
+
     try {
-      const brand = await lookupPageById(pageId, apiKey, country)
-      const success = await saveBrandToSupabase(brand)
-      if (success) {
-        setFollowedBrands(prev => [brand, ...prev])
+      const pageId = extractPageId(addInput)
+      if (!pageId) {
+        setAddError('Invalid input. Please enter a valid page ID or Facebook URL.')
+        setAddLoading(false)
+        return
+      }
+
+      // Fetch page info from Meta Graph API
+      const metaRes = await fetch(`https://graph.facebook.com/${pageId}?access_token=${apiKey}&fields=name,picture`)
+      if (!metaRes.ok) {
+        setAddError('Could not fetch page. Check the ID/URL and try again.')
+        setAddLoading(false)
+        return
+      }
+
+      const pageData = await metaRes.json()
+      const pageName = pageData.name || 'Unknown Brand'
+      const picUrl = pageData.picture?.data?.url || getPagePictureUrl(pageId)
+
+      // Save to Supabase
+      const newBrand = {
+        pageId,
+        pageName,
+        platforms: ['meta'],
+        byline: '',
+        country: 'GB',
+        adCount: 0,
+        lastFetchedAt: null,
+        thumbnailUrl: picUrl,
+      }
+
+      const saved = await saveBrandToSupabase(newBrand)
+      if (saved) {
+        setFollowedBrands([newBrand, ...followedBrands])
         setAddInput('')
         setShowAddForm(false)
       } else {
-        setAddError('Failed to save.')
+        setAddError('Could not save brand. Please try again.')
       }
     } catch (err) {
-      setAddError(err.message)
+      setAddError(err.message || 'Failed to add brand.')
     } finally {
       setAddLoading(false)
     }
-  }, [addInput, apiKey, country, followedBrands])
+  }
 
-  const handleRemoveBrand = useCallback(async (pageId) => {
-    const success = await removeBrandFromSupabase(pageId)
-    if (success) {
-      setFollowedBrands(prev => prev.filter(b => b.pageId !== pageId))
-      if (activeBrand?.pageId === pageId) { setActiveBrand(null); setResults([]) }
+  // ── Remove brand ──
+  async function handleRemoveBrand(pageId) {
+    if (window.confirm('Remove this brand from your list?')) {
+      await deleteBrandFromSupabase(pageId)
+      setFollowedBrands(followedBrands.filter(b => b.pageId !== pageId))
+      if (activeBrand?.pageId === pageId) {
+        setActiveBrand(null)
+        setResults([])
+      }
     }
-  }, [activeBrand])
+  }
 
-  const toggleSave = useCallback(async (ad) => {
-    const exists = saved.some(s => s.id === ad.id)
-    if (exists) {
-      // Remove from local state + Supabase
-      setSaved(prev => prev.filter(s => s.id !== ad.id))
-      try {
-        await fetch(`${SUPABASE_URL}/rest/v1/saved_ads?library_id=eq.${ad.id}`, {
-          method: 'DELETE', headers: sbReadHeaders,
-        })
-      } catch (err) { console.error('Failed to unsave:', err) }
-    } else {
-      // Add to local state + Supabase
-      setSaved(prev => [...prev, ad])
-      try {
-        await fetch(`${SUPABASE_URL}/rest/v1/saved_ads`, {
-          method: 'POST',
-          headers: { ...sbHeaders, Prefer: 'resolution=merge-duplicates' },
-          body: JSON.stringify({
-            advertiser_name: ad.pageName,
-            ad_copy: ad.creativeBody || '',
-            image_url: ad.thumbnailUrl || ad.snapshotUrl || '',
-            media_type: 'image',
-            library_id: String(ad.id),
-            platform: ad.platforms?.join(', ') || 'facebook',
-            started_running: ad.startDate ? new Date(ad.startDate).toISOString().split('T')[0] : null,
-            page_url: `https://www.facebook.com/ads/library/?id=${ad.id}`,
-            metadata: {
-              days_active: ad.daysActive,
-              is_active: ad.isActive,
-              impressions_lower: ad.impressionsLower,
-              impressions_upper: ad.impressionsUpper,
-              creative_title: ad.creativeTitle,
-              creative_caption: ad.creativeCaption,
-              creative_description: ad.creativeDescription,
-              snapshot_url: ad.snapshotUrl,
-            },
-          }),
-        })
-      } catch (err) { console.error('Failed to save to library:', err) }
-    }
-  }, [saved])
+  // ── Sort ads by selected field ──
+  const handleSort = useCallback((sort) => {
+    setResults(sortAds(results, sort))
+  }, [results, sortAds])
 
-  const isAdSaved = useCallback((adId) => saved.some(s => s.id === adId), [saved])
+  // ── Modal handlers ──
+  const openModal = (ad) => setModalAd(ad)
+  const closeModal = () => setModalAd(null)
 
-  // Apply status filter
-  const filteredResults = results.filter(ad => {
-    if (statusFilter === 'live') return ad.isActive
-    if (statusFilter === 'ended') return !ad.isActive
-    return true
-  })
+  // ── Export CSV ──
+  const exportCSV = () => {
+    const csv = [
+      ['Ad ID', 'Ad Name', 'Brand', 'Type', 'Running Days', 'Impressions', 'Status', 'Start Date', 'End Date'].join(','),
+      ...results.map(ad => [
+        ad.adId,
+        `"${ad.adName}"`,
+        `"${ad.pageName}"`,
+        ad.creativeType,
+        ad.daysActive,
+        ad.impressionsText || 'N/A',
+        ad.status,
+        ad.startDate,
+        ad.endDate,
+      ].join(','))
+    ].join('\n')
 
-  const liveCount = results.filter(a => a.isActive).length
-  const endedCount = results.length - liveCount
-
-  const handleAddKeyDown = (e) => {
-    if (e.key === 'Enter') handleAddBrand()
-    if (e.key === 'Escape') { setShowAddForm(false); setAddInput(''); setAddError(null) }
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `competitor-ads-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
-    <div className="page-content">
-      <div className="page-header">
-        <div>
-          <h2 className="page-title">Competitor Ads</h2>
-          <p className="page-subtitle">track competitors — paste a facebook ad library link to add a brand.</p>
-        </div>
-        <div className="ca-api-row">
-          <span className={`ca-api-dot ${hasKey ? 'active' : apiKey.length > 0 ? 'invalid' : ''}`} />
-          <input type="password" className="text-input text-input-sm" value={apiKey}
-            onChange={e => setApiKey(e.target.value)} placeholder="meta access token" style={{ width: 220 }} />
-        </div>
+    <div className="competitor-ads-container">
+      <div className="header">
+        <h1>Competitor Ads Research</h1>
+        <p className="subtitle">Track Meta ad activity by brand</p>
       </div>
 
-      {/* ── Brands ── */}
-      <div className="ca-brands-section">
-        <div className="ca-brands-header">
-          <h3 className="ca-brands-title">your brands</h3>
-          <button className="ca-add-btn" onClick={() => setShowAddForm(!showAddForm)} disabled={!hasKey}>
-            {showAddForm ? 'cancel' : '+ add brand'}
-          </button>
-        </div>
+      <div className="token-setup">
+        <input
+          type="password"
+          placeholder="Enter Meta Ad Library access token..."
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          className="token-input"
+        />
+        {hasKey && <span className="token-indicator">Token loaded</span>}
+      </div>
 
-        {showAddForm && (
-          <div className="ca-add-form">
-            <div className="ca-add-input-row">
-              <input type="text" className="text-input ca-add-input" value={addInput}
-                onChange={e => { setAddInput(e.target.value); setAddError(null) }}
-                onKeyDown={handleAddKeyDown}
-                placeholder="paste facebook ad library URL or page ID..." autoFocus />
-              <button className="btn btn-primary btn-sm" onClick={handleAddBrand}
-                disabled={addLoading || !addInput.trim()}>
-                {addLoading ? 'adding...' : 'add'}
-              </button>
+      <div className="main-content">
+        {/* ── Sidebar ── */}
+        <div className="sidebar">
+          <div className="followed-section">
+            <div className="section-header" onClick={() => setSavedExpanded(!savedExpanded)}>
+              <span>{savedExpanded ? '▼' : '▶'} Followed Brands ({followedBrands.length})</span>
             </div>
-            {addError && <div className="ca-add-error">{addError}</div>}
-            <div className="ca-add-hint">
-              e.g. https://www.facebook.com/ads/library/?view_all_page_id=187701838409772
-            </div>
-          </div>
-        )}
-
-        {followedBrands.length === 0 && !showAddForm && (
-          <div className="ca-brands-empty">no brands added yet. click "+ add brand" and paste a facebook ad library link.</div>
-        )}
-
-        {followedBrands.length > 0 && (
-          <div className="ca-brands-grid">
-            {followedBrands.map(brand => (
-              <div key={brand.pageId}
-                className={`ca-brand-card ${activeBrand?.pageId === brand.pageId ? 'active' : ''}`}>
-                <div className="ca-brand-card-main" onClick={() => loadBrandAds(brand)}
-                  title={'View ads from ' + brand.pageName}>
-                  <AvatarWithFallback pageId={brand.pageId} pageName={brand.pageName} size={36} />
-                  <div className="ca-brand-card-info">
-                    <div className="ca-brand-card-name">{brand.pageName}</div>
-                    <div className="ca-brand-card-meta">
-                      {brand.adCount > 0 && (brand.adCount + ' ads')}
-                      {brand.lastFetchedAt && ' \u00b7 cached'}
+            {savedExpanded && (
+              <div className="followed-list">
+                {followedBrands.map(brand => (
+                  <div
+                    key={brand.pageId}
+                    className={`brand-item ${activeBrand?.pageId === brand.pageId ? 'active' : ''}`}
+                    onClick={() => {
+                      setActiveBrand(brand)
+                      if (!isCacheFresh(brand)) {
+                        fetchBrandAds(brand.pageId, brand.pageName)
+                      }
+                    }}
+                  >
+                    <div className="brand-info">
+                      {brand.thumbnailUrl && (
+                        <img src={brand.thumbnailUrl} alt={brand.pageName} className="brand-thumbnail" />
+                      )}
+                      <div className="brand-text">
+                        <div className="brand-name">{brand.pageName}</div>
+                        <div className="brand-meta">{brand.adCount} ads</div>
+                      </div>
                     </div>
+                    <button
+                      className="delete-btn"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleRemoveBrand(brand.pageId)
+                      }}
+                    >
+                      X
+                    </button>
                   </div>
-                </div>
-                <button className="ca-brand-card-remove"
-                  onClick={(e) => { e.stopPropagation(); handleRemoveBrand(brand.pageId) }} title="remove">
-                  &times;
-                </button>
+                ))}
+                {followedBrands.length === 0 && (
+                  <p className="empty-state">No brands followed yet. Add one to get started.</p>
+                )}
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </div>
 
-      {/* ── Active brand controls ── */}
-      {activeBrand && (
-        <div className="ca-active-header">
-          <div className="ca-active-brand">
-            <AvatarWithFallback pageId={activeBrand.pageId} pageName={activeBrand.pageName} size={28} />
-            <span className="ca-active-name">{activeBrand.pageName}</span>
-            {isCached && (
-              <button className="ca-refresh-btn" onClick={() => loadBrandAds(activeBrand, true)}
-                disabled={isLoading} title="Re-fetch from Meta API">
-                &#x21bb; refresh
+          {/* ── Add Brand Form ── */}
+          <div className="add-brand-section">
+            {showAddForm ? (
+              <div className="add-form">
+                <input
+                  type="text"
+                  placeholder="Facebook page ID or URL..."
+                  value={addInput}
+                  onChange={(e) => setAddInput(e.target.value)}
+                  className="add-input"
+                  disabled={addLoading}
+                />
+                <button
+                  className="add-btn"
+                  onClick={handleAddBrand}
+                  disabled={addLoading || !addInput.trim()}
+                >
+                  {addLoading ? 'Adding...' : 'Add'}
+                </button>
+                <button
+                  className="cancel-btn"
+                  onClick={() => {
+                    setShowAddForm(false)
+                    setAddInput('')
+                    setAddError(null)
+                  }}
+                >
+                  Cancel
+                </button>
+                {addError && <p className="error-msg">{addError}</p>}
+              </div>
+            ) : (
+              <button
+                className="add-brand-btn"
+                onClick={() => setShowAddForm(true)}
+                disabled={!hasKey}
+              >
+                + Add Brand
               </button>
             )}
           </div>
-          <div className="ca-active-controls">
-            <div className="ca-filter-group">
-              <span className="ca-filter-label">status</span>
-              <select className="select-input" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-                style={{ fontSize: 'var(--text-xs)', width: 110 }}>
-                {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
-            <div className="ca-filter-group">
-              <span className="ca-filter-label">sort</span>
-              <select className="select-input" value={sortBy} onChange={e => setSortBy(e.target.value)}
-                style={{ fontSize: 'var(--text-xs)' }}>
-                {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
-            <div className="ca-filter-group">
-              <span className="ca-filter-label">country</span>
-              <select className="select-input" value={country} onChange={e => setCountry(e.target.value)}
-                style={{ fontSize: 'var(--text-xs)', width: 70 }}>
-                {COUNTRIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-              </select>
-            </div>
-          </div>
         </div>
-      )}
 
-      {/* ── Stats ── */}
-      {activeBrand && (
-        <div className="ca-stats">
-          <span className="ca-badge">{filteredResults.length} of {results.length} ads</span>
-          <span className="ca-badge">{liveCount} live</span>
-          <span className="ca-badge">{endedCount} ended</span>
-          <span className="ca-badge">{saved.length} saved</span>
-          {isCached && <span className="ca-badge ca-badge-cached">from cache</span>}
-          {isLoading && loadingStatus && (
-            <span className="ca-badge ca-badge-loading">
-              <span className="ca-spinner-sm" />
-              {loadingStatus}
-            </span>
+        {/* ── Results ── */}
+        <div className="results-section">
+          {activeBrand && (
+            <div className="brand-header">
+              {activeBrand.thumbnailUrl && (
+                <img src={activeBrand.thumbnailUrl} alt={activeBrand.pageName} className="brand-thumbnail-large" />
+              )}
+              <div className="brand-info-large">
+                <h2>{activeBrand.pageName}</h2>
+                <p>{activeBrand.byline}</p>
+              </div>
+            </div>
+          )}
+
+          {isLoading && (
+            <div className="loading-state">
+              <div className="spinner"></div>
+              <p>{loadingStatus}</p>
+              {loadingProgress > 0 && (
+                <div className="progress-bar">
+                  <div className="progress-fill" style={{ width: `${loadingProgress}%` }}></div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!isLoading && results.length > 0 && (
+            <>
+              <div className="results-toolbar">
+                <div className="sort-controls">
+                  <label>Sort by:</label>
+                  <select onChange={(e) => handleSort(e.target.value)} defaultValue="longest">
+                    {SORT_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="action-buttons">
+                  <button className="export-btn" onClick={exportCSV}>
+                    Export CSV
+                  </button>
+                </div>
+              </div>
+
+              <div className="ads-grid">
+                {results.map(ad => (
+                  <div key={ad.adId} className="ad-card" onClick={() => openModal(ad)}>
+                    {ad.adPreviewUrl && (
+                      <img src={ad.adPreviewUrl} alt={ad.adName} className="ad-preview" onError={(e) => e.target.style.display = 'none'} />
+                    )}
+                    <div className="ad-card-content">
+                      <div className="ad-name">{ad.adName}</div>
+                      <div className="ad-meta">
+                        <span className="meta-type">{ad.creativeType}</span>
+                        <span className="meta-days">{ad.daysActive}d</span>
+                      </div>
+                      <div className="ad-impressions">
+                        {ad.impressionsText && <>~{ad.impressionsText} impressions</>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {!isLoading && results.length === 0 && !error && !activeBrand && (
+            <div className="empty-state">
+              <p>Select a brand from the list to view their ads</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="error-state">
+              <p>{error}</p>
+              {activeBrand && (
+                <button onClick={() => fetchBrandAds(activeBrand.pageId, activeBrand.pageName)}>
+                  Retry
+                </button>
+              )}
+            </div>
           )}
         </div>
-      )}
-
-      {/* ── Results ── */}
-      <div className="ca-results">
-        {isLoading && results.length === 0 && (
-          <div className="ca-state-msg">
-            <div className="ca-spinner" />
-            <span>{loadingStatus || 'loading ads...'}</span>
-          </div>
-        )}
-        {!isLoading && error && (
-          <div className="ca-state-msg ca-error">error: {error}. check your api token and try again.</div>
-        )}
-        {!isLoading && !error && activeBrand && results.length === 0 && (
-          <div className="ca-state-msg">no ads found for {activeBrand.pageName}.</div>
-        )}
-        {!isLoading && !error && activeBrand && results.length > 0 && filteredResults.length === 0 && (
-          <div className="ca-state-msg">no {statusFilter === 'live' ? 'live' : 'ended'} ads. try changing the status filter.</div>
-        )}
-        {!isLoading && !activeBrand && followedBrands.length > 0 && (
-          <div className="ca-state-msg">click a brand above to see their ads.</div>
-        )}
-        {filteredResults.length > 0 && (
-          <div className="ca-grid">
-            {filteredResults.map(ad => (
-              <AdCard key={ad.id} ad={ad} isSaved={isAdSaved(ad.id)}
-                onToggleSave={toggleSave} onExpand={setModalAd} />
-            ))}
-          </div>
-        )}
       </div>
 
-      {/* ── Saved ── */}
-      {saved.length > 0 && (
-        <div className="ca-saved-section">
-          <div className="ca-saved-header" onClick={() => setSavedExpanded(!savedExpanded)}>
-            <h3 className="ca-saved-title">saved ads ({saved.length})</h3>
-            <span className={`ca-toggle-arrow ${savedExpanded ? '' : 'collapsed'}`}>&#9660;</span>
-          </div>
-          {savedExpanded && (
-            <div className="ca-grid">
-              {saved.map(ad => (
-                <AdCard key={ad.id} ad={ad} isSaved={true} onToggleSave={toggleSave} onExpand={setModalAd} />
-              ))}
+      {/* ── Ad Details Modal ── */}
+      {modalAd && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={closeModal}>X</button>
+            <div className="modal-body">
+              <h3>{modalAd.adName}</h3>
+              <p><strong>Brand:</strong> {modalAd.pageName}</p>
+              <p><strong>Ad ID:</strong> {modalAd.adId}</p>
+              <p><strong>Type:</strong> {modalAd.creativeType}</p>
+              <p><strong>Duration:</strong> {modalAd.daysActive} days ({modalAd.startDate} to {modalAd.endDate})</p>
+              <p><strong>Impressions:</strong> {modalAd.impressionsText || 'Unknown'}</p>
+              <p><strong>Status:</strong> {modalAd.status}</p>
+              {modalAd.adPreviewUrl && (
+                <>
+                  <p><strong>Preview:</strong></p>
+                  <img src={modalAd.adPreviewUrl} alt={modalAd.adName} style={{ maxWidth: '100%', marginTop: '10px' }} onError={(e) => e.target.style.display = 'none'} />
+                </>
+              )}
+              <div className="modal-actions">
+                <button
+                  className="save-btn"
+                  onClick={() => {
+                    setSaved([...saved, modalAd])
+                    closeModal()
+                  }}
+                >
+                  Save Ad
+                </button>
+                <a href={modalAd.url} target="_blank" rel="noopener noreferrer" className="view-link-btn">
+                  View on Meta
+                </a>
+              </div>
             </div>
-          )}
+          </div>
         </div>
       )}
-
-      {modalAd && <AdPreviewModal ad={modalAd} onClose={() => setModalAd(null)} />}
     </div>
   )
 }
