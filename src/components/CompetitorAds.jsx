@@ -212,7 +212,7 @@ export default function CompetitorAds() {
     })
   }, [])
 
-  // Debounced advertiser lookup — fires as user types
+  // Debounced advertiser lookup \u2014 fires as user types
   // Two strategies: (1) Facebook Pages Search API for direct page name matching,
   // (2) Fallback to ads_archive with high limit + client-side name filtering
   const lookupAdvertisers = useCallback(async (query) => {
@@ -229,19 +229,37 @@ export default function CompetitorAds() {
     try {
       let advertisers = []
 
-      // Strategy 1: Facebook Pages Search API — searches page NAMES directly
-      // This is what Meta's own Ad Library autocomplete uses internally
-      try {
-        const pageParams = new URLSearchParams({
-          access_token: apiKey,
-          q: query.trim(),
-          fields: 'id,name,category,fan_count,picture,verification_status',
-          limit: 25,
-        })
-        const pageResp = await fetch('https://graph.facebook.com/v19.0/pages/search?' + pageParams)
-        if (pageResp.ok) {
+      // Strategy 1: Facebook Pages Search API \u2014 searches page NAMES directly
+      // Requires pages_read_engagement permission on the token
+      const pageSearchEndpoints = [
+        'https://graph.facebook.com/v19.0/pages/search',
+        'https://graph.facebook.com/v19.0/search',
+      ]
+
+      for (const endpoint of pageSearchEndpoints) {
+        if (advertisers.length > 0) break
+        try {
+          const pageParams = new URLSearchParams({
+            access_token: apiKey,
+            q: query.trim(),
+            fields: 'id,name,category,fan_count,picture',
+            limit: 25,
+          })
+          // The /search endpoint needs type=page
+          if (endpoint.endsWith('/search')) {
+            pageParams.append('type', 'page')
+          }
+          const pageResp = await fetch(endpoint + '?' + pageParams)
           const pageData = await pageResp.json()
+
+          // Log for debugging \u2014 visible in browser console
+          if (pageData.error) {
+            console.warn('[Pages Search] ' + endpoint + ' \u2192', pageData.error.message)
+            continue
+          }
+
           if (pageData.data && pageData.data.length > 0) {
+            console.info('[Pages Search] ' + endpoint + ' \u2192 found ' + pageData.data.length + ' pages')
             advertisers = pageData.data.map(page => ({
               pageId: page.id,
               pageName: page.name,
@@ -254,12 +272,12 @@ export default function CompetitorAds() {
               source: 'pages_search',
             }))
           }
+        } catch (e) {
+          console.warn('[Pages Search] ' + endpoint + ' failed:', e.message)
         }
-      } catch (e) {
-        // Pages Search not available with this token — fall through
       }
 
-      // Strategy 2: Fallback — ads_archive with high limit + smart name filtering
+      // Strategy 2: Fallback \u2014 ads_archive with high limit + smart name filtering
       if (advertisers.length === 0) {
         const params = new URLSearchParams({
           access_token: apiKey,
@@ -343,7 +361,7 @@ export default function CompetitorAds() {
     setHasSearched(false)
   }
 
-  // Full ad search — uses page_id if advertiser selected, otherwise text search
+  // Full ad search \u2014 uses page_id if advertiser selected, otherwise text search
   const performSearch = useCallback(async () => {
     if (!apiKey) return
     if (!selectedAdvertiser && !searchQuery.trim()) return
@@ -431,7 +449,7 @@ export default function CompetitorAds() {
       <div className="page-header">
         <div>
           <h2 className="page-title">Competitor Ads</h2>
-          <p className="page-subtitle">search meta ad library — find what's working, save what matters.</p>
+          <p className="page-subtitle">search meta ad library \u2014 find what's working, save what matters.</p>
         </div>
         <div className="ca-api-row">
           <span className={`ca-api-dot ${hasKey ? 'active' : apiKey.length > 0 ? 'invalid' : ''}`} />
@@ -455,14 +473,14 @@ export default function CompetitorAds() {
                 <span className="ca-chip-name">{selectedAdvertiser.pageName}</span>
                 <span className="ca-chip-meta">
                   {selectedAdvertiser.followers > 0 && (formatNumber(selectedAdvertiser.followers) + ' followers')}
-                  {selectedAdvertiser.followers > 0 && selectedAdvertiser.category && ' · '}
+                  {selectedAdvertiser.followers > 0 && selectedAdvertiser.category && ' \u00b7 '}
                   {selectedAdvertiser.category && selectedAdvertiser.category}
                   {!selectedAdvertiser.followers && !selectedAdvertiser.category && (
                     <>
                       {selectedAdvertiser.platforms.includes('facebook') && 'fb'}
-                      {selectedAdvertiser.platforms.includes('facebook') && selectedAdvertiser.platforms.includes('instagram') && ' · '}
+                      {selectedAdvertiser.platforms.includes('facebook') && selectedAdvertiser.platforms.includes('instagram') && ' \u00b7 '}
                       {selectedAdvertiser.platforms.includes('instagram') && 'ig'}
-                      {selectedAdvertiser.adCount > 0 && (' · ' + selectedAdvertiser.adCount + ' ads')}
+                      {selectedAdvertiser.adCount > 0 && (' \u00b7 ' + selectedAdvertiser.adCount + ' ads')}
                     </>
                   )}
                 </span>
@@ -530,19 +548,19 @@ export default function CompetitorAds() {
                           {adv.followers > 0 && (
                             <span>{formatNumber(adv.followers)} followers</span>
                           )}
-                          {adv.followers > 0 && (adv.category || adv.adCount > 0) && ' · '}
+                          {adv.followers > 0 && (adv.category || adv.adCount > 0) && ' \u00b7 '}
                           {adv.category && <span>{adv.category}</span>}
                           {!adv.category && adv.adCount > 0 && (
                             <span>{adv.adCount} ad{adv.adCount !== 1 ? 's' : ''} found</span>
                           )}
                           {adv.category && adv.adCount > 0 && (
-                            <span> · {adv.adCount} ad{adv.adCount !== 1 ? 's' : ''}</span>
+                            <span> \u00b7 {adv.adCount} ad{adv.adCount !== 1 ? 's' : ''}</span>
                           )}
                           {!adv.followers && !adv.category && adv.adCount === 0 && (
                             <>
                               {adv.platforms.includes('facebook') && <span>fb</span>}
                               {adv.platforms.includes('instagram') && (
-                                <span>{adv.platforms.includes('facebook') ? ' · ' : ''}ig</span>
+                                <span>{adv.platforms.includes('facebook') ? ' \u00b7 ' : ''}ig</span>
                               )}
                             </>
                           )}
