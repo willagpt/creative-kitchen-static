@@ -1655,19 +1655,22 @@ img { max-width: 100%; height: auto; }
   border-color: var(--accent);
 }
 
-/* Table container */
+/* Table container: break out of .container max-width for full-width spreadsheet */
 .launch-table-wrap {
   overflow-x: auto;
   border: 1px solid var(--bg-3);
   border-radius: var(--radius-lg);
   background: var(--bg-1);
+  margin-left: calc(-1 * var(--space-xl));
+  margin-right: calc(-1 * var(--space-xl));
+  padding: 0 2px;
 }
 
 .launch-table {
   width: 100%;
-  min-width: 1200px;
   border-collapse: collapse;
   font-size: var(--text-xs);
+  table-layout: fixed;
 }
 
 /* Header cells */
@@ -1691,6 +1694,23 @@ img { max-width: 100%; height: auto; }
 .launch-th-check {
   width: 40px;
   text-align: center;
+}
+
+/* Resize handle on column headers */
+.launch-resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 3;
+  background: transparent;
+  transition: background 0.15s;
+}
+.launch-resize-handle:hover,
+.launch-resize-handle:active {
+  background: var(--accent);
 }
 
 /* Data cells */

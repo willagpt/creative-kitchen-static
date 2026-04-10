@@ -1,7 +1,37 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
 const V3_FN_URL = 'https://ajpxzifhoohjkyoyktsi.supabase.co/functions/v1/static-launcher'
+
+/* ── Column config ──────────────────────────────────── */
+const COLUMNS = [
+  { key: 'checkbox', label: '', defaultWidth: 40 },
+  { key: 'status', label: 'Status', defaultWidth: 80 },
+  { key: 'image', label: 'Image', defaultWidth: 64 },
+  { key: 'account', label: 'Account', defaultWidth: 130 },
+  { key: 'ad_name', label: 'Ad Name', defaultWidth: 160 },
+  { key: 'headline', label: 'Headline', defaultWidth: 220 },
+  { key: 'primary_text', label: 'Primary Text', defaultWidth: 300 },
+  { key: 'cta_type', label: 'CTA', defaultWidth: 100 },
+  { key: 'destination_url', label: 'URL', defaultWidth: 180 },
+  { key: 'campaign', label: 'Campaign', defaultWidth: 160 },
+  { key: 'adset', label: 'Ad Set', defaultWidth: 160 },
+  { key: 'budget', label: 'Budget', defaultWidth: 80 },
+  { key: 'actions', label: 'Actions', defaultWidth: 110 },
+]
+
+function getDefaultColWidths() {
+  const widths = {}
+  COLUMNS.forEach(c => { widths[c.key] = c.defaultWidth })
+  return widths
+}
+
+function loadColWidths() {
+  try {
+    const saved = localStorage.getItem('static-launch-col-widths')
+    return saved ? { ...getDefaultColWidths(), ...JSON.parse(saved) } : getDefaultColWidths()
+  } catch { return getDefaultColWidths() }
+}
 
 async function callLauncher(action, body = {}) {
   const res = await fetch(V3_FN_URL, {
@@ -140,6 +170,44 @@ export default function Launcher({ brands, activeBrandId }) {
 
   // Selected rows
   const [selectedIds, setSelectedIds] = useState(new Set())
+
+  // Resizable columns
+  const [colWidths, setColWidths] = useState(loadColWidths)
+  const resizingRef = useRef(null)
+
+  const onResizeStart = useCallback((colKey, e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    resizingRef.current = { col: colKey, startX: e.clientX, startW: colWidths[colKey] }
+
+    const onMove = (ev) => {
+      if (!resizingRef.current) return
+      const diff = ev.clientX - resizingRef.current.startX
+      const newW = Math.max(50, resizingRef.current.startW + diff)
+      setColWidths(prev => ({ ...prev, [resizingRef.current.col]: newW }))
+    }
+
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      setColWidths(prev => {
+        try { localStorage.setItem('static-launch-col-widths', JSON.stringify(prev)) } catch {}
+        return prev
+      })
+      resizingRef.current = null
+    }
+
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }, [colWidths])
+
+  const tableMinWidth = useMemo(() =>
+    Object.values(colWidths).reduce((a, b) => a + b, 0),
+  [colWidths])
 
   // Load launches
   async function loadLaunches() {
@@ -396,6 +464,7 @@ export default function Launcher({ brands, activeBrandId }) {
         </div>
         <div className="launch-header-actions">
           <button className="btn btn-ghost btn-sm" onClick={loadLaunches}>refresh</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => { setColWidths(getDefaultColWidths()); localStorage.removeItem('static-launch-col-widths') }} title="Reset column widths">reset cols</button>
           <button className="btn btn-ghost btn-sm" onClick={() => { loadWinners(); setShowWinnerPicker(true) }}>
             + from winners
           </button>
@@ -468,24 +537,28 @@ export default function Launcher({ brands, activeBrandId }) {
         </div>
       ) : (
         <div className="launch-table-wrap">
-          <table className="launch-table">
+          <table className="launch-table" style={{ minWidth: tableMinWidth }}>
             <thead>
               <tr>
-                <th className="launch-th launch-th-check">
-                  <input type="checkbox" checked={selectedIds.size === filtered.length && filtered.length > 0} onChange={selectAll} />
-                </th>
-                <th className="launch-th" style={{ width: 80 }}>Status</th>
-                <th className="launch-th" style={{ width: 68 }}>Image</th>
-                <th className="launch-th" style={{ width: 130 }}>Account</th>
-                <th className="launch-th" style={{ width: 150 }}>Ad Name</th>
-                <th className="launch-th" style={{ width: 210 }}>Headline</th>
-                <th className="launch-th" style={{ width: 280 }}>Primary Text</th>
-                <th className="launch-th" style={{ width: 100 }}>CTA</th>
-                <th className="launch-th" style={{ width: 150 }}>URL</th>
-                <th className="launch-th" style={{ width: 150 }}>Campaign</th>
-                <th className="launch-th" style={{ width: 150 }}>Ad Set</th>
-                <th className="launch-th" style={{ width: 80 }}>Budget</th>
-                <th className="launch-th" style={{ width: 100 }}>Actions</th>
+                {COLUMNS.map(col => (
+                  <th
+                    key={col.key}
+                    className={`launch-th ${col.key === 'checkbox' ? 'launch-th-check' : ''}`}
+                    style={{ width: colWidths[col.key], position: 'relative' }}
+                  >
+                    {col.key === 'checkbox' ? (
+                      <input type="checkbox" checked={selectedIds.size === filtered.length && filtered.length > 0} onChange={selectAll} />
+                    ) : (
+                      col.label
+                    )}
+                    {col.key !== 'checkbox' && col.key !== 'actions' && (
+                      <div
+                        className="launch-resize-handle"
+                        onMouseDown={e => onResizeStart(col.key, e)}
+                      />
+                    )}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
