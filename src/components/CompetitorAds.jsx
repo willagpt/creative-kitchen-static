@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import './CompetitorAds.css'
 
 // ── Supabase config ──
@@ -16,18 +16,6 @@ const sbReadHeaders = {
   apikey: SUPABASE_ANON_KEY,
   Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
 }
-
-// ── Constants ──
-const SORT_OPTIONS = [
-  { value: 'longest', label: 'longest running' },
-  { value: 'shortest', label: 'shortest running' },
-  { value: 'newest', label: 'newest first' },
-  { value: 'oldest', label: 'oldest first' },
-  { value: 'impressions', label: 'most impressions' },
-]
-
-// How old cached data can be before we re-fetch (in hours)
-const CACHE_MAX_AGE_HOURS = 12
 
 // ── Helpers ──
 function formatDate(date) {
@@ -49,40 +37,33 @@ function fmtImpressions(lower, upper) {
   return formatNumber(upper || lower)
 }
 
-// ── Helper: detect if a URL points to a video ──
 function isVideoUrl(url) {
   if (!url) return false
   const lower = url.toLowerCase()
-  return lower.includes('.mp4') || lower.includes('.mov') || lower.includes('.webm') || lower.includes('/video')
+  return lower.includes('.mp4') || lower.includes('.mov') || lower.includes('.webm')
 }
 
-// ── Map a competitor_ads DB row to the frontend ad object ──
-function mapDbAdToFrontend(ad, pageId, pageName) {
+function mapDbAd(ad, pageId, pageName) {
   const mediaUrl = ad.thumbnail_url || null
   const isVideo = isVideoUrl(mediaUrl)
-  const impressionsText = fmtImpressions(ad.impressions_lower, ad.impressions_upper)
-
   return {
     adId: ad.id,
-    adName: ad.creative_title || ad.creative_caption || 'Untitled Ad',
+    adName: ad.creative_title || 'Untitled Ad',
     adBody: ad.creative_body || '',
     adCaption: ad.creative_caption || '',
     adDescription: ad.creative_description || '',
     pageId: ad.page_id || pageId,
     pageName: ad.page_name || pageName,
-    platform: 'Meta',
     creativeType: isVideo ? 'video' : 'image',
     mediaUrl,
     isVideo,
-    adPreviewUrl: mediaUrl,
-    impressionsText,
+    impressionsText: fmtImpressions(ad.impressions_lower, ad.impressions_upper),
     impressionsLower: ad.impressions_lower || 0,
     impressionsUpper: ad.impressions_upper || 0,
     startDate: formatDate(ad.start_date),
     endDate: formatDate(ad.end_date),
     daysActive: ad.days_active || 0,
     status: ad.is_active ? 'active' : 'ended',
-    isVideoContent: isVideo,
     platforms: ad.platforms || [],
     url: `https://www.facebook.com/ads/library/?ad_type=all&view_all_page_id=${ad.page_id || pageId}`,
   }
@@ -91,102 +72,54 @@ function mapDbAdToFrontend(ad, pageId, pageName) {
 function extractPageId(input) {
   const trimmed = input.trim()
   if (/^\d+$/.test(trimmed)) return trimmed
-  const urlMatch = trimmed.match(/view_all_page_id=(\d+)/)
-  if (urlMatch) return urlMatch[1]
-  const idMatch = trimmed.match(/[?&]id=(\d+)/)
-  if (idMatch) return idMatch[1]
-  const pageIdFromPath = trimmed.match(/facebook\.com\/pages\/[^/]+\/(\d+)/)
-  if (pageIdFromPath) return pageIdFromPath[1]
-  const profileMatch = trimmed.match(/profile\.php\?id=(\d+)/)
-  if (profileMatch) return profileMatch[1]
-  return null
-}
-
-function getPagePictureUrl(pageId) {
-  return `https://graph.facebook.com/${pageId}/picture?type=small`
+  const m = trimmed.match(/view_all_page_id=(\d+)/) || trimmed.match(/[?&]id=(\d+)/) || trimmed.match(/facebook\.com\/pages\/[^/]+\/(\d+)/) || trimmed.match(/profile\.php\?id=(\d+)/)
+  return m ? m[1] : null
 }
 
 // ── Supabase CRUD ──
-
 async function fetchFollowedBrands() {
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/followed_brands?order=created_at.desc`,
-      { headers: sbReadHeaders }
-    )
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/followed_brands?order=created_at.desc`, { headers: sbReadHeaders })
     if (!res.ok) return []
     const data = await res.json()
     return data.map(row => ({
-      pageId: row.page_id,
-      pageName: row.page_name,
-      platforms: row.platforms || [],
-      byline: row.byline || '',
-      adCount: row.total_ads || row.ad_count || 0,
-      country: row.country || 'GB',
-      lastFetchedAt: row.last_fetched_at || null,
-      thumbnailUrl: row.thumbnail_url || null,
+      pageId: row.page_id, pageName: row.page_name, platforms: row.platforms || [],
+      byline: row.byline || '', adCount: row.total_ads || 0, country: row.country || 'GB',
+      lastFetchedAt: row.last_fetched_at || null, thumbnailUrl: row.thumbnail_url || null,
     }))
   } catch { return [] }
 }
 
-async function saveBrandToSupabase(brand) {
+async function saveBrand(brand) {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/followed_brands`, {
-      method: 'POST',
-      headers: sbHeaders,
-      body: JSON.stringify({
-        page_id: brand.pageId,
-        page_name: brand.pageName,
-        platforms: brand.platforms || ['meta'],
-        byline: brand.byline || '',
-        country: brand.country || 'GB',
-      }),
+      method: 'POST', headers: sbHeaders,
+      body: JSON.stringify({ page_id: brand.pageId, page_name: brand.pageName, platforms: brand.platforms || ['meta'], byline: '', country: 'GB' }),
     })
     return res.ok
-  } catch {
-    return false
-  }
+  } catch { return false }
 }
 
-async function updateBrandInSupabase(pageId, updates) {
+async function updateBrand(pageId, updates) {
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/followed_brands?page_id=eq.${pageId}`,
-      {
-        method: 'PATCH',
-        headers: sbHeaders,
-        body: JSON.stringify(updates),
-      }
-    )
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/followed_brands?page_id=eq.${pageId}`, { method: 'PATCH', headers: sbHeaders, body: JSON.stringify(updates) })
     return res.ok
-  } catch {
-    return false
-  }
+  } catch { return false }
 }
 
-async function deleteBrandFromSupabase(pageId) {
+async function deleteBrand(pageId) {
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/followed_brands?page_id=eq.${pageId}`,
-      { method: 'DELETE', headers: sbHeaders }
-    )
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/followed_brands?page_id=eq.${pageId}`, { method: 'DELETE', headers: sbHeaders })
     return res.ok
-  } catch {
-    return false
-  }
+  } catch { return false }
 }
 
-// ── Render ──
-
+// ── Component ──
 export default function CompetitorAds() {
   const [apiKey, setApiKey] = useState(localStorage.getItem('metaAdLibraryToken') || '')
-  const [results, setResults] = useState([])
-  const [saved, setSaved] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('savedCompetitorAds') || '[]') } catch { return [] }
-  })
+  const [allAds, setAllAds] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [savedExpanded, setSavedExpanded] = useState(true)
   const [followedBrands, setFollowedBrands] = useState([])
   const [activeBrand, setActiveBrand] = useState(null)
   const [addInput, setAddInput] = useState('')
@@ -194,474 +127,275 @@ export default function CompetitorAds() {
   const [addError, setAddError] = useState(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [modalAd, setModalAd] = useState(null)
-  const [loadingProgress, setLoadingProgress] = useState(0)
   const [loadingStatus, setLoadingStatus] = useState('')
-  const [isCached, setIsCached] = useState(false)
-  const [totalCount, setTotalCount] = useState(0)
+
+  // Filters
+  const [typeFilter, setTypeFilter] = useState('all') // all, video, image
+  const [statusFilter, setStatusFilter] = useState('all') // all, active, ended
+  const [sortBy, setSortBy] = useState('newest')
+  const [searchText, setSearchText] = useState('')
 
   const hasKey = apiKey.length > 20
 
   useEffect(() => { fetchFollowedBrands().then(setFollowedBrands) }, [])
   useEffect(() => { if (apiKey.length > 20) localStorage.setItem('metaAdLibraryToken', apiKey) }, [apiKey])
-  useEffect(() => { localStorage.setItem('savedCompetitorAds', JSON.stringify(saved)) }, [saved])
 
-  const sortAds = useCallback((ads, sort) => {
-    return [...ads].sort((a, b) => {
-      switch (sort) {
+  // Apply filters + sort
+  const filteredAds = (() => {
+    let ads = [...allAds]
+    if (typeFilter === 'video') ads = ads.filter(a => a.isVideo)
+    if (typeFilter === 'image') ads = ads.filter(a => !a.isVideo)
+    if (statusFilter === 'active') ads = ads.filter(a => a.status === 'active')
+    if (statusFilter === 'ended') ads = ads.filter(a => a.status === 'ended')
+    if (searchText.trim()) {
+      const q = searchText.toLowerCase()
+      ads = ads.filter(a => (a.adName || '').toLowerCase().includes(q) || (a.adBody || '').toLowerCase().includes(q))
+    }
+    ads.sort((a, b) => {
+      switch (sortBy) {
         case 'longest': return b.daysActive - a.daysActive
         case 'shortest': return a.daysActive - b.daysActive
-        case 'newest': return new Date(b.startDate) - new Date(a.startDate)
-        case 'oldest': return new Date(a.startDate) - new Date(b.startDate)
-        case 'impressions': return (b.impressionsUpper || 0) - (a.impressionsUpper || 0)
+        case 'newest': return new Date(b.startDate?.split('/').reverse().join('-') || 0) - new Date(a.startDate?.split('/').reverse().join('-') || 0)
+        case 'oldest': return new Date(a.startDate?.split('/').reverse().join('-') || 0) - new Date(b.startDate?.split('/').reverse().join('-') || 0)
         default: return 0
       }
     })
-  }, [])
+    return ads
+  })()
 
-  // ── Check if brand cache is fresh enough ──
-  function isCacheFresh(brand) {
-    if (!brand.lastFetchedAt) return false
-    const hoursAgo = (Date.now() - new Date(brand.lastFetchedAt).getTime()) / (1000 * 60 * 60)
-    return hoursAgo < CACHE_MAX_AGE_HOURS
-  }
+  const videoCount = allAds.filter(a => a.isVideo).length
+  const imageCount = allAds.filter(a => !a.isVideo).length
+  const activeCount = allAds.filter(a => a.status === 'active').length
 
-  // ── Fetch ads for a brand from Supabase competitor_ads table ──
+  // ── Fetch ads ──
   async function fetchBrandAds(pageId, pageName) {
     setIsLoading(true)
     setError(null)
-    setResults([])
-    setLoadingProgress(0)
+    setAllAds([])
     setLoadingStatus('Loading ads...')
-    setIsCached(false)
 
     try {
-      setLoadingProgress(20)
-
-      // Load ads from Supabase competitor_ads table
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/competitor_ads?page_id=eq.${pageId}&order=days_active.desc&limit=200`,
+        `${SUPABASE_URL}/rest/v1/competitor_ads?page_id=eq.${pageId}&limit=500`,
         { headers: sbReadHeaders }
       )
-
-      if (!res.ok) {
-        throw new Error(`Failed to load ads (${res.status})`)
-      }
-
-      setLoadingProgress(60)
-      setLoadingStatus('Processing...')
+      if (!res.ok) throw new Error(`Failed to load (${res.status})`)
 
       const rows = await res.json()
-
       if (rows.length > 0) {
-        const processed = rows.map(ad => mapDbAdToFrontend(ad, pageId, pageName))
-
-        setLoadingProgress(100)
-        setResults(processed)
-        setTotalCount(processed.length)
-        setLoadingStatus('Done')
-        setIsCached(true)
-
-        await updateBrandInSupabase(pageId, {
-          last_fetched_at: new Date().toISOString(),
-          total_ads: rows.length,
-        })
+        setAllAds(rows.map(ad => mapDbAd(ad, pageId, pageName)))
+        setLoadingStatus('')
+        await updateBrand(pageId, { last_fetched_at: new Date().toISOString(), total_ads: rows.length })
       } else {
-        // No cached data, try the Foreplay edge function
-        setLoadingStatus('No cached ads. Fetching from Foreplay...')
-        setLoadingProgress(40)
-
-        const response = await fetch(FOREPLAY_FN_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        setLoadingStatus('Fetching from Foreplay...')
+        await fetch(FOREPLAY_FN_URL, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ page_id: pageId, limit: 50 }),
         })
-
-        if (!response.ok) {
-          const errText = await response.text()
-          throw new Error(`Foreplay fetch failed (${response.status}): ${errText}`)
-        }
-
-        setLoadingProgress(70)
-        const data = await response.json()
-
-        // After edge function upserts, re-read from Supabase
-        setLoadingStatus('Reading fetched ads...')
-        setLoadingProgress(85)
-
-        const reRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/competitor_ads?page_id=eq.${pageId}&order=days_active.desc&limit=200`,
-          { headers: sbReadHeaders }
-        )
-
+        const reRes = await fetch(`${SUPABASE_URL}/rest/v1/competitor_ads?page_id=eq.${pageId}&limit=500`, { headers: sbReadHeaders })
         if (reRes.ok) {
           const reRows = await reRes.json()
-          const processed = reRows.map(ad => mapDbAdToFrontend(ad, pageId, pageName))
-          setResults(processed)
-          setTotalCount(processed.length)
+          setAllAds(reRows.map(ad => mapDbAd(ad, pageId, pageName)))
         }
-
-        setLoadingProgress(100)
-        setLoadingStatus('Done')
+        setLoadingStatus('')
       }
     } catch (err) {
-      console.error('Fetch error:', err)
-      setError(err.message || 'Failed to fetch ads.')
-      setResults([])
+      setError(err.message)
+      setAllAds([])
     } finally {
       setIsLoading(false)
-      setLoadingProgress(0)
+      setLoadingStatus('')
     }
   }
 
-  // ── Add brand to followed list ──
   async function handleAddBrand() {
     if (!addInput.trim()) return
-
     setAddLoading(true)
     setAddError(null)
-
     try {
       const pageId = extractPageId(addInput)
-      if (!pageId) {
-        setAddError('Invalid input. Please enter a valid page ID or Facebook URL.')
-        setAddLoading(false)
-        return
-      }
-
+      if (!pageId) { setAddError('Invalid page ID or URL.'); setAddLoading(false); return }
       let pageName = 'Brand ' + pageId
-      let picUrl = getPagePictureUrl(pageId)
-
-      if (apiKey && apiKey.length > 20) {
+      if (hasKey) {
         try {
-          const metaRes = await fetch(`https://graph.facebook.com/${pageId}?access_token=${apiKey}&fields=name,picture`)
-          if (metaRes.ok) {
-            const pageData = await metaRes.json()
-            pageName = pageData.name || pageName
-            picUrl = pageData.picture?.data?.url || picUrl
-          }
+          const r = await fetch(`https://graph.facebook.com/${pageId}?access_token=${apiKey}&fields=name`)
+          if (r.ok) { const d = await r.json(); pageName = d.name || pageName }
         } catch {}
       }
-
-      const newBrand = {
-        pageId,
-        pageName,
-        platforms: ['meta'],
-        byline: '',
-        country: 'GB',
-        adCount: 0,
-        lastFetchedAt: null,
-        thumbnailUrl: picUrl,
-      }
-
-      const ok = await saveBrandToSupabase(newBrand)
-      if (ok) {
-        setFollowedBrands([newBrand, ...followedBrands])
-        setAddInput('')
-        setShowAddForm(false)
-      } else {
-        setAddError('Could not save brand. Please try again.')
-      }
-    } catch (err) {
-      setAddError(err.message || 'Failed to add brand.')
-    } finally {
-      setAddLoading(false)
-    }
+      const nb = { pageId, pageName, platforms: ['meta'], adCount: 0, lastFetchedAt: null, thumbnailUrl: null }
+      if (await saveBrand(nb)) { setFollowedBrands([nb, ...followedBrands]); setAddInput(''); setShowAddForm(false) }
+      else setAddError('Could not save brand.')
+    } catch (err) { setAddError(err.message) }
+    finally { setAddLoading(false) }
   }
 
-  // ── Remove brand ──
   async function handleRemoveBrand(pageId) {
-    if (window.confirm('Remove this brand from your list?')) {
-      await deleteBrandFromSupabase(pageId)
-      setFollowedBrands(followedBrands.filter(b => b.pageId !== pageId))
-      if (activeBrand?.pageId === pageId) {
-        setActiveBrand(null)
-        setResults([])
-      }
-    }
-  }
-
-  const handleSort = useCallback((sort) => {
-    setResults(prev => sortAds(prev, sort))
-  }, [sortAds])
-
-  const openModal = (ad) => setModalAd(ad)
-  const closeModal = () => setModalAd(null)
-
-  const exportCSV = () => {
-    const csv = [
-      ['Ad ID', 'Ad Name', 'Brand', 'Type', 'Running Days', 'Impressions', 'Status', 'Start Date', 'End Date'].join(','),
-      ...results.map(ad => [
-        ad.adId,
-        `"${(ad.adName || '').replace(/"/g, '""')}"`,
-        `"${(ad.pageName || '').replace(/"/g, '""')}"`,
-        ad.creativeType,
-        ad.daysActive,
-        ad.impressionsText || 'N/A',
-        ad.status,
-        ad.startDate,
-        ad.endDate,
-      ].join(','))
-    ].join('\n')
-
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `competitor-ads-${new Date().toISOString().split('T')[0]}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+    if (!window.confirm('Remove this brand?')) return
+    await deleteBrand(pageId)
+    setFollowedBrands(followedBrands.filter(b => b.pageId !== pageId))
+    if (activeBrand?.pageId === pageId) { setActiveBrand(null); setAllAds([]) }
   }
 
   return (
-    <div className="competitor-ads-container">
-      <div className="header">
-        <h1>Competitor Ads Research</h1>
-        <p className="subtitle">Track Meta ad activity by brand</p>
+    <div className="ca-container">
+      {/* ── Header ── */}
+      <div className="ca-header">
+        <h1>Competitor Ads</h1>
+        <div className="ca-token-row">
+          <input type="password" placeholder="Meta token (optional)..." value={apiKey} onChange={e => setApiKey(e.target.value)} className="ca-token-input" />
+          {hasKey && <span className="ca-token-ok">Connected</span>}
+        </div>
       </div>
 
-      <div className="token-setup">
-        <input
-          type="password"
-          placeholder="Meta token (optional, for adding brands)..."
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          className="token-input"
-        />
-        {hasKey && <span className="token-indicator">Token loaded</span>}
-      </div>
-
-      <div className="main-content">
+      <div className="ca-layout">
         {/* ── Sidebar ── */}
-        <div className="sidebar">
-          <div className="followed-section">
-            <div className="section-header" onClick={() => setSavedExpanded(!savedExpanded)}>
-              <span>{savedExpanded ? '▼' : '▶'} Followed Brands ({followedBrands.length})</span>
+        <aside className="ca-sidebar">
+          <div className="ca-sidebar-title">Brands ({followedBrands.length})</div>
+          <div className="ca-brand-list">
+            {followedBrands.map(b => (
+              <div key={b.pageId} className={`ca-brand-row ${activeBrand?.pageId === b.pageId ? 'active' : ''}`}
+                onClick={() => { setActiveBrand(b); fetchBrandAds(b.pageId, b.pageName) }}>
+                <div className="ca-brand-row-info">
+                  <span className="ca-brand-row-name">{b.pageName}</span>
+                  <span className="ca-brand-row-count">{b.adCount} ads</span>
+                </div>
+                <button className="ca-brand-row-x" onClick={e => { e.stopPropagation(); handleRemoveBrand(b.pageId) }}>x</button>
+              </div>
+            ))}
+          </div>
+          {showAddForm ? (
+            <div className="ca-add-form">
+              <input type="text" placeholder="Page ID or URL..." value={addInput} onChange={e => setAddInput(e.target.value)} className="ca-add-input" disabled={addLoading} />
+              <div className="ca-add-btns">
+                <button onClick={handleAddBrand} disabled={addLoading || !addInput.trim()} className="ca-btn-primary">{addLoading ? '...' : 'Add'}</button>
+                <button onClick={() => { setShowAddForm(false); setAddInput(''); setAddError(null) }} className="ca-btn-ghost">Cancel</button>
+              </div>
+              {addError && <p className="ca-add-err">{addError}</p>}
             </div>
-            {savedExpanded && (
-              <div className="followed-list">
-                {followedBrands.map(brand => (
-                  <div
-                    key={brand.pageId}
-                    className={`brand-item ${activeBrand?.pageId === brand.pageId ? 'active' : ''}`}
-                    onClick={() => {
-                      setActiveBrand(brand)
-                      fetchBrandAds(brand.pageId, brand.pageName)
-                    }}
-                  >
-                    <div className="brand-info">
-                      {brand.thumbnailUrl && (
-                        <img src={brand.thumbnailUrl} alt={brand.pageName} className="brand-thumbnail" />
-                      )}
-                      <div className="brand-text">
-                        <div className="brand-name">{brand.pageName}</div>
-                        <div className="brand-meta">{brand.adCount} ads</div>
-                      </div>
-                    </div>
-                    <button
-                      className="delete-btn"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleRemoveBrand(brand.pageId)
-                      }}
-                    >
-                      X
-                    </button>
-                  </div>
+          ) : (
+            <button className="ca-btn-add" onClick={() => setShowAddForm(true)}>+ Add Brand</button>
+          )}
+        </aside>
+
+        {/* ── Main ── */}
+        <main className="ca-main">
+          {activeBrand && (
+            <div className="ca-brand-bar">
+              <div>
+                <h2 className="ca-brand-bar-name">{activeBrand.pageName}</h2>
+                <span className="ca-brand-bar-stats">{allAds.length} total, {videoCount} videos, {imageCount} images, {activeCount} active</span>
+              </div>
+            </div>
+          )}
+
+          {/* Filters */}
+          {allAds.length > 0 && (
+            <div className="ca-filters">
+              <div className="ca-filter-pills">
+                {[['all', 'All'], ['video', `Video (${videoCount})`], ['image', `Image (${imageCount})`]].map(([val, label]) => (
+                  <button key={val} className={`ca-pill ${typeFilter === val ? 'active' : ''}`} onClick={() => setTypeFilter(val)}>{label}</button>
                 ))}
-                {followedBrands.length === 0 && (
-                  <p className="empty-state">No brands followed yet. Add one to get started.</p>
+                <span className="ca-filter-sep">|</span>
+                {[['all', 'All status'], ['active', `Active (${activeCount})`], ['ended', `Ended`]].map(([val, label]) => (
+                  <button key={val} className={`ca-pill ${statusFilter === val ? 'active' : ''}`} onClick={() => setStatusFilter(val)}>{label}</button>
+                ))}
+              </div>
+              <div className="ca-filter-right">
+                <input type="text" placeholder="Search copy..." value={searchText} onChange={e => setSearchText(e.target.value)} className="ca-search" />
+                <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="ca-sort-select">
+                  <option value="newest">Newest</option>
+                  <option value="oldest">Oldest</option>
+                  <option value="longest">Longest running</option>
+                  <option value="shortest">Shortest running</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Loading */}
+          {isLoading && <div className="ca-loading"><div className="ca-spin"></div><span>{loadingStatus}</span></div>}
+
+          {/* Error */}
+          {error && <div className="ca-error-msg">{error} <button onClick={() => fetchBrandAds(activeBrand.pageId, activeBrand.pageName)}>Retry</button></div>}
+
+          {/* Grid */}
+          {!isLoading && filteredAds.length > 0 && (
+            <div className="ca-grid">
+              {filteredAds.map(ad => (
+                <div key={ad.adId} className="ca-card" onClick={() => setModalAd(ad)}>
+                  <div className="ca-card-media">
+                    {ad.isVideo && ad.mediaUrl ? (
+                      <video src={ad.mediaUrl} className="ca-card-thumb" muted playsInline preload="metadata"
+                        onMouseOver={e => { try { e.target.play() } catch {} }}
+                        onMouseOut={e => { try { e.target.pause(); e.target.currentTime = 0 } catch {} }}
+                        onError={e => { e.target.parentElement.classList.add('no-media') }} />
+                    ) : ad.mediaUrl ? (
+                      <img src={ad.mediaUrl} alt="" className="ca-card-thumb"
+                        onError={e => { e.target.parentElement.classList.add('no-media') }} />
+                    ) : <div className="ca-card-no-thumb">No preview</div>}
+                    {ad.isVideo && <div className="ca-card-play">▶</div>}
+                    <div className="ca-card-overlay">
+                      <span className="ca-card-expand">Click to expand</span>
+                    </div>
+                  </div>
+                  <div className="ca-card-body">
+                    <div className="ca-card-title">{ad.adName}</div>
+                    <div className="ca-card-tags">
+                      <span className={`ca-tag ${ad.isVideo ? 'video' : 'image'}`}>{ad.isVideo ? '▶ video' : 'image'}</span>
+                      <span className="ca-tag days">{ad.daysActive}d</span>
+                      <span className={`ca-tag status-${ad.status}`}>{ad.status}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!isLoading && filteredAds.length === 0 && allAds.length > 0 && (
+            <div className="ca-empty">No ads match your filters</div>
+          )}
+          {!isLoading && allAds.length === 0 && !error && !activeBrand && (
+            <div className="ca-empty">Select a brand to view their ads</div>
+          )}
+          {!isLoading && allAds.length === 0 && !error && activeBrand && !isLoading && (
+            <div className="ca-empty">No ads found for {activeBrand.pageName}</div>
+          )}
+        </main>
+      </div>
+
+      {/* ── Modal ── */}
+      {modalAd && (
+        <div className="ca-modal-bg" onClick={() => setModalAd(null)}>
+          <div className="ca-modal" onClick={e => e.stopPropagation()}>
+            <button className="ca-modal-x" onClick={() => setModalAd(null)}>x</button>
+
+            <div className="ca-modal-media">
+              {modalAd.isVideo && modalAd.mediaUrl ? (
+                <video src={modalAd.mediaUrl} controls playsInline autoPlay className="ca-modal-video" />
+              ) : modalAd.mediaUrl ? (
+                <img src={modalAd.mediaUrl} alt="" className="ca-modal-img" />
+              ) : null}
+            </div>
+
+            <div className="ca-modal-detail">
+              <h3 className="ca-modal-title">{modalAd.adName}</h3>
+              {modalAd.adBody && <div className="ca-modal-body">{modalAd.adBody}</div>}
+              {modalAd.adCaption && <div className="ca-modal-caption">{modalAd.adCaption}</div>}
+
+              <div className="ca-modal-meta-grid">
+                <div className="ca-modal-meta-item"><span className="ca-modal-label">Brand</span><span>{modalAd.pageName}</span></div>
+                <div className="ca-modal-meta-item"><span className="ca-modal-label">Ad ID</span><span>{modalAd.adId}</span></div>
+                <div className="ca-modal-meta-item"><span className="ca-modal-label">Type</span><span>{modalAd.creativeType}</span></div>
+                <div className="ca-modal-meta-item"><span className="ca-modal-label">Running</span><span>{modalAd.daysActive} days</span></div>
+                <div className="ca-modal-meta-item"><span className="ca-modal-label">Dates</span><span>{modalAd.startDate} to {modalAd.endDate || 'now'}</span></div>
+                <div className="ca-modal-meta-item"><span className="ca-modal-label">Status</span><span className={`ca-status-dot ${modalAd.status}`}>{modalAd.status}</span></div>
+                {modalAd.platforms.length > 0 && (
+                  <div className="ca-modal-meta-item"><span className="ca-modal-label">Platforms</span><span>{modalAd.platforms.join(', ')}</span></div>
                 )}
               </div>
-            )}
-          </div>
 
-          <div className="add-brand-section">
-            {showAddForm ? (
-              <div className="add-form">
-                <input
-                  type="text"
-                  placeholder="Facebook page ID or URL..."
-                  value={addInput}
-                  onChange={(e) => setAddInput(e.target.value)}
-                  className="add-input"
-                  disabled={addLoading}
-                />
-                <button
-                  className="add-btn"
-                  onClick={handleAddBrand}
-                  disabled={addLoading || !addInput.trim()}
-                >
-                  {addLoading ? 'Adding...' : 'Add'}
-                </button>
-                <button
-                  className="cancel-btn"
-                  onClick={() => {
-                    setShowAddForm(false)
-                    setAddInput('')
-                    setAddError(null)
-                  }}
-                >
-                  Cancel
-                </button>
-                {addError && <p className="error-msg">{addError}</p>}
-              </div>
-            ) : (
-              <button
-                className="add-brand-btn"
-                onClick={() => setShowAddForm(true)}
-              >
-                + Add Brand
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* ── Results ── */}
-        <div className="results-section">
-          {activeBrand && (
-            <div className="brand-header">
-              {activeBrand.thumbnailUrl && (
-                <img src={activeBrand.thumbnailUrl} alt={activeBrand.pageName} className="brand-thumbnail-large" />
-              )}
-              <div className="brand-info-large">
-                <h2>{activeBrand.pageName}</h2>
-                <p>{activeBrand.byline}</p>
-              </div>
-            </div>
-          )}
-
-          {isLoading && (
-            <div className="loading-state">
-              <div className="spinner"></div>
-              <p>{loadingStatus}</p>
-              {loadingProgress > 0 && (
-                <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: `${loadingProgress}%` }}></div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {!isLoading && results.length > 0 && (
-            <>
-              <div className="results-toolbar">
-                <div className="sort-controls">
-                  <label>Sort by:</label>
-                  <select onChange={(e) => handleSort(e.target.value)} defaultValue="longest">
-                    {SORT_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="action-buttons">
-                  <span className="results-count">{totalCount} ads</span>
-                  {isCached && <span className="cache-badge">Cached</span>}
-                  <button className="export-btn" onClick={exportCSV}>
-                    Export CSV
-                  </button>
-                </div>
-              </div>
-
-              <div className="ads-grid">
-                {results.map(ad => (
-                  <div key={ad.adId} className="ad-card" onClick={() => openModal(ad)}>
-                    {ad.isVideo && ad.mediaUrl ? (
-                      <video
-                        src={ad.mediaUrl}
-                        className="ad-preview ad-preview-video"
-                        muted
-                        playsInline
-                        preload="metadata"
-                        onMouseOver={(e) => { try { e.target.play() } catch {} }}
-                        onMouseOut={(e) => { try { e.target.pause(); e.target.currentTime = 0 } catch {} }}
-                        onError={(e) => e.target.style.display = 'none'}
-                      />
-                    ) : ad.mediaUrl && !ad.isVideo ? (
-                      <img src={ad.mediaUrl} alt={ad.adName} className="ad-preview" onError={(e) => e.target.style.display = 'none'} />
-                    ) : null}
-                    <div className="ad-card-content">
-                      <div className="ad-name">{ad.adName}</div>
-                      <div className="ad-meta">
-                        <span className="meta-type">{ad.isVideo ? '▶ video' : 'image'}</span>
-                        <span className="meta-days">{ad.daysActive}d</span>
-                        <span className={`meta-status ${ad.status}`}>{ad.status}</span>
-                      </div>
-                      {ad.impressionsText && (
-                        <div className="ad-impressions">~{ad.impressionsText} impressions</div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {!isLoading && results.length === 0 && !error && !activeBrand && (
-            <div className="empty-state">
-              <p>Select a brand from the list to view their ads</p>
-            </div>
-          )}
-
-          {!isLoading && results.length === 0 && !error && activeBrand && (
-            <div className="empty-state">
-              <p>No ads found for {activeBrand.pageName}</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="error-state">
-              <p>{error}</p>
-              {activeBrand && (
-                <button onClick={() => fetchBrandAds(activeBrand.pageId, activeBrand.pageName)}>
-                  Retry
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Ad Details Modal ── */}
-      {modalAd && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={closeModal}>X</button>
-            <div className="modal-body">
-              <h3>{modalAd.adName}</h3>
-              {modalAd.adBody && <p className="modal-ad-body">{modalAd.adBody}</p>}
-              <p><strong>Brand:</strong> {modalAd.pageName}</p>
-              <p><strong>Ad ID:</strong> {modalAd.adId}</p>
-              <p><strong>Type:</strong> {modalAd.creativeType}</p>
-              <p><strong>Duration:</strong> {modalAd.daysActive} days ({modalAd.startDate} to {modalAd.endDate})</p>
-              {modalAd.impressionsText && <p><strong>Impressions:</strong> ~{modalAd.impressionsText}</p>}
-              <p><strong>Status:</strong> {modalAd.status}</p>
-              {modalAd.platforms && modalAd.platforms.length > 0 && (
-                <p><strong>Platforms:</strong> {modalAd.platforms.join(', ')}</p>
-              )}
-              {modalAd.isVideo && modalAd.mediaUrl ? (
-                <video
-                  src={modalAd.mediaUrl}
-                  controls
-                  playsInline
-                  style={{ maxWidth: '100%', marginTop: '12px', borderRadius: '8px' }}
-                  onError={(e) => e.target.style.display = 'none'}
-                />
-              ) : modalAd.mediaUrl ? (
-                <img src={modalAd.mediaUrl} alt={modalAd.adName} style={{ maxWidth: '100%', marginTop: '12px', borderRadius: '8px' }} onError={(e) => e.target.style.display = 'none'} />
-              ) : null}
-              <div className="modal-actions">
-                <button
-                  className="save-btn"
-                  onClick={() => {
-                    setSaved([...saved, modalAd])
-                    closeModal()
-                  }}
-                >
-                  Save Ad
-                </button>
-                <a href={modalAd.url} target="_blank" rel="noopener noreferrer" className="view-link-btn">
-                  View on Meta
-                </a>
+              <div className="ca-modal-actions">
+                <a href={modalAd.url} target="_blank" rel="noopener noreferrer" className="ca-btn-primary">View on Meta</a>
               </div>
             </div>
           </div>
