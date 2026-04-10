@@ -272,30 +272,83 @@ function AdPreviewModal({ ad, onClose }) {
     <div className="ca-modal-overlay" onClick={onClose}>
       <div className="ca-modal" onClick={e => e.stopPropagation()}>
         <button className="ca-modal-close" onClick={onClose}>&times;</button>
+
+        {/* Primary CTA — open the actual ad on Meta in a new tab */}
+        {ad.snapshotUrl && (
+          <a
+            href={ad.snapshotUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ca-modal-open-btn"
+          >
+            View Full Ad on Meta &#x2197;
+          </a>
+        )}
+
         <div className="ca-modal-content">
-          {ad.snapshotUrl ? (
-            <iframe
-              src={ad.snapshotUrl}
-              className="ca-modal-iframe"
-              sandbox="allow-scripts allow-same-origin"
-              title="ad preview"
-            />
-          ) : (
-            <div className="ca-modal-text-preview">
-              {ad.creativeBody || 'No preview available.'}
+          {/* Brand header */}
+          <div className="ca-modal-brand-row">
+            <AvatarWithFallback pageId={ad.pageId} pageName={ad.pageName} size={40} />
+            <div>
+              <div className="ca-modal-brand-name">{ad.pageName}</div>
+              <div className="ca-modal-brand-meta">
+                {ad.isActive ? 'Active since ' : 'Ran from '}{formatDate(ad.startDate)}
+                {!ad.isActive && ad.daysActive > 0 && (' \u2014 ' + ad.daysActive + ' days')}
+                {ad.isActive && (' \u00b7 ' + ad.daysActive + 'd running')}
+              </div>
             </div>
-          )}
-        </div>
-        <div className="ca-modal-footer">
-          <div className="ca-modal-info">
-            <strong>{ad.pageName}</strong>
-            <span>{ad.isActive ? 'running since ' : 'ran from '}{formatDate(ad.startDate)} &middot; {ad.daysActive}d active</span>
           </div>
-          {ad.snapshotUrl && (
-            <a href={ad.snapshotUrl} target="_blank" rel="noopener noreferrer" className="ca-modal-link">
-              open on meta &#x2197;
-            </a>
-          )}
+
+          {/* Ad creative text */}
+          <div className="ca-modal-creative">
+            {ad.creativeTitle && (
+              <div className="ca-modal-creative-title">{ad.creativeTitle}</div>
+            )}
+            {ad.creativeBody && (
+              <div className="ca-modal-creative-body">{ad.creativeBody}</div>
+            )}
+            {ad.creativeDescription && (
+              <div className="ca-modal-creative-desc">{ad.creativeDescription}</div>
+            )}
+            {ad.creativeCaption && (
+              <div className="ca-modal-creative-caption">{ad.creativeCaption}</div>
+            )}
+            {!ad.creativeTitle && !ad.creativeBody && !ad.creativeDescription && (
+              <div className="ca-modal-creative-body" style={{ opacity: 0.5 }}>
+                No text content available for this ad.
+              </div>
+            )}
+          </div>
+
+          {/* Stats & details */}
+          <div className="ca-modal-details">
+            <div className="ca-modal-detail-row">
+              <span className="ca-modal-detail-label">Status</span>
+              <span className={`ca-modal-status ${ad.isActive ? 'active' : 'ended'}`}>
+                {ad.isActive ? 'Active' : 'Ended'}
+              </span>
+            </div>
+            <div className="ca-modal-detail-row">
+              <span className="ca-modal-detail-label">Days running</span>
+              <span>{ad.daysActive}</span>
+            </div>
+            {ad.impressions && (
+              <div className="ca-modal-detail-row">
+                <span className="ca-modal-detail-label">Impressions</span>
+                <span>{formatImpressions(ad.impressions)}</span>
+              </div>
+            )}
+            {ad.platforms.length > 0 && (
+              <div className="ca-modal-detail-row">
+                <span className="ca-modal-detail-label">Platforms</span>
+                <span>{ad.platforms.join(', ')}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="ca-modal-hint">
+            Meta doesn't allow ad previews to be embedded — click the button above to see the full creative (images, video, CTA) on Meta's site.
+          </div>
         </div>
       </div>
     </div>
