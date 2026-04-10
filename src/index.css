@@ -1352,6 +1352,32 @@ img { max-width: 100%; height: auto; }
    PROMPT TESTER
    ============================ */
 
+/* Preset buttons (used in Prompt Tester for presets, load prompt, clear all) */
+.preset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--bg-3);
+  border: 1px solid var(--bg-4);
+  border-radius: var(--radius);
+  color: var(--text-1);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.preset-btn:hover {
+  background: var(--bg-4);
+  color: var(--text-0);
+  border-color: var(--text-2);
+}
+.preset-btn:active {
+  transform: translateY(1px);
+}
+
 .pt-api-row {
   display: flex;
   gap: var(--space-sm);
@@ -1387,41 +1413,58 @@ img { max-width: 100%; height: auto; }
 }
 
 .pt-panel-title {
-  font-size: var(--text-xs);
-  font-weight: var(--weight-semibold);
+  font-size: 10px;
+  font-weight: var(--weight-bold);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.08em;
   color: var(--text-2);
   margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--bg-3);
 }
 
 .pt-presets {
   display: flex;
-  gap: 6px;
-  margin-bottom: var(--space-sm);
+  gap: 5px;
+  margin-bottom: var(--space-md);
   flex-wrap: wrap;
 }
 
 .pt-controls {
   display: flex;
-  gap: var(--space-sm);
+  gap: 6px;
   margin-bottom: var(--space-md);
   flex-wrap: wrap;
   align-items: center;
+}
+.pt-controls .select-input {
+  padding: 5px 8px;
+  font-size: 11px;
+  background: var(--bg-2);
+  border: 1px solid var(--bg-4);
+}
+.pt-controls .btn {
+  font-size: 11px;
+  padding: 5px 12px;
 }
 
 .pt-prompt-input {
   flex: 1;
   min-height: 200px;
   resize: none;
+  max-width: none;
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 .pt-meta {
   display: flex;
   justify-content: space-between;
-  margin-top: var(--space-sm);
-  font-size: var(--text-xs);
+  margin-top: var(--space-xs);
+  padding: 2px 4px;
+  font-size: 10px;
   color: var(--text-2);
+  font-variant-numeric: tabular-nums;
 }
 
 .pt-result-area {
@@ -1446,7 +1489,9 @@ img { max-width: 100%; height: auto; }
 .pt-placeholder {
   text-align: center;
   color: var(--text-2);
-  font-size: var(--text-sm);
+  font-size: 13px;
+  line-height: 1.5;
+  padding: var(--space-xl);
 }
 
 .pt-status-bar {
@@ -1454,8 +1499,13 @@ img { max-width: 100%; height: auto; }
   justify-content: space-between;
   align-items: center;
   margin-top: var(--space-sm);
-  font-size: var(--text-xs);
+  padding: 4px 8px;
+  background: var(--bg-2);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-family: var(--font-body);
   color: var(--text-2);
+  font-variant-numeric: tabular-nums;
 }
 
 @keyframes pt-pulse {
@@ -1510,8 +1560,10 @@ img { max-width: 100%; height: auto; }
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: var(--space-md);
-  font-size: var(--text-xs);
+  margin-top: var(--space-lg);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--bg-3);
+  font-size: 11px;
   color: var(--text-2);
 }
 
@@ -1542,8 +1594,11 @@ img { max-width: 100%; height: auto; }
 .pt-refine-bar {
   display: flex;
   gap: var(--space-sm);
-  margin-top: var(--space-sm);
+  margin-top: var(--space-md);
   align-items: center;
+}
+.pt-refine-bar .text-input {
+  font-size: 11px;
 }
 
 .pt-refine-input {
@@ -1555,6 +1610,7 @@ img { max-width: 100%; height: auto; }
   gap: var(--space-sm);
   margin-top: var(--space-sm);
   justify-content: flex-end;
+  align-items: center;
 }
 
 /* Prompt Tester responsive */

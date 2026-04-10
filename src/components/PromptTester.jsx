@@ -474,9 +474,8 @@ export default function PromptTester() {
               <img src={resultImage} alt="Generated" />
             ) : (
               <div className="pt-placeholder">
-                <div style={{ fontSize: 32, opacity: 0.3, marginBottom: 8 }}>&#x1f3a8;</div>
-                <div>paste a prompt and hit generate</div>
-                <div style={{ fontSize: 'var(--text-xs)', marginTop: 4, color: 'var(--text-2)' }}>
+                <div style={{ fontSize: 13 }}>paste a prompt and hit generate</div>
+                <div style={{ fontSize: 11, marginTop: 6, color: 'var(--text-2)' }}>
                   tip: start at 512px to iterate fast, then upscale winners
                 </div>
               </div>
