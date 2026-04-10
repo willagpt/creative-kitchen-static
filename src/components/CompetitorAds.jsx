@@ -88,7 +88,7 @@ function extractPageId(input) {
   if (idMatch) return idMatch[1]
 
   // facebook.com/pagename or facebook.com/pages/name/123
-  const pageIdFromPath = trimmed.match(/facebook\.com\/pages\/[^\/]+\/(\d+)/)
+  const pageIdFromPath = trimmed.match(/facebook\.com\/pages\/[^/]+\/(\d+)/)
   if (pageIdFromPath) return pageIdFromPath[1]
 
   // facebook.com/profile.php?id=123
@@ -161,9 +161,11 @@ async function removeBrandFromSupabase(pageId) {
 
 // Look up a page by ID using ads_archive — get its name and platforms
 async function lookupPageById(pageId, apiKey, country) {
+  // Meta requires search_terms even when using search_page_ids
   const params = new URLSearchParams({
     access_token: apiKey,
     search_page_ids: pageId,
+    search_terms: ' ',
     ad_reached_countries: country,
     ad_type: 'ALL',
     fields: 'page_id,page_name,publisher_platforms,bylines',
@@ -172,24 +174,56 @@ async function lookupPageById(pageId, apiKey, country) {
   })
 
   const response = await fetch('https://graph.facebook.com/v19.0/ads_archive?' + params)
-  if (!response.ok) throw new Error('API error: ' + response.status)
   const data = await response.json()
 
-  if (data.error) throw new Error(data.error.message)
-  if (!data.data || data.data.length === 0) throw new Error('No ads found for this page')
+  // Show Meta's actual error if there is one
+  if (data.error) {
+    console.error('Meta API error:', data.error)
+    throw new Error(data.error.message || 'Meta API error')
+  }
 
-  const ad = data.data[0]
+  if (!response.ok) throw new Error('API error: ' + response.status)
+
+  if (!data.data || data.data.length === 0) {
+    // Try without country filter — the page might not have ads in this country
+    const params2 = new URLSearchParams({
+      access_token: apiKey,
+      search_page_ids: pageId,
+      search_terms: ' ',
+      ad_reached_countries: 'ALL',
+      ad_type: 'ALL',
+      fields: 'page_id,page_name,publisher_platforms,bylines',
+      limit: 10,
+      ad_active_status: 'ALL',
+    })
+
+    const response2 = await fetch('https://graph.facebook.com/v19.0/ads_archive?' + params2)
+    const data2 = await response2.json()
+
+    if (data2.error) throw new Error(data2.error.message)
+    if (!data2.data || data2.data.length === 0) {
+      throw new Error('No ads found for this page ID. Check the URL is correct.')
+    }
+
+    return extractBrandFromResults(data2.data, pageId, country)
+  }
+
+  return extractBrandFromResults(data.data, pageId, country)
+}
+
+function extractBrandFromResults(results, pageId, country) {
+  const ad = results[0]
   const platforms = new Set()
-  data.data.forEach(a => {
+  results.forEach(a => {
     if (a.publisher_platforms) a.publisher_platforms.forEach(p => platforms.add(p))
   })
 
   return {
-    pageId: String(ad.page_id),
+    pageId: String(ad.page_id || pageId),
     pageName: ad.page_name || 'Unknown',
     platforms: Array.from(platforms),
     byline: ad.bylines?.[0] || '',
-    adCount: data.data.length,
+    adCount: results.length,
     country,
   }
 }
@@ -393,6 +427,7 @@ export default function CompetitorAds() {
       const params = new URLSearchParams({
         access_token: apiKey,
         search_page_ids: brand.pageId,
+        search_terms: ' ',
         ad_reached_countries: country,
         ad_type: 'ALL',
         fields: 'id,ad_creation_time,ad_creative_bodies,ad_creative_link_captions,ad_creative_link_titles,ad_delivery_start_time,ad_delivery_stop_time,ad_snapshot_url,bylines,impressions,page_id,page_name,publisher_platforms,estimated_audience_size',
@@ -401,9 +436,9 @@ export default function CompetitorAds() {
       })
 
       const response = await fetch('https://graph.facebook.com/v19.0/ads_archive?' + params)
-      if (!response.ok) throw new Error('API Error: ' + response.status)
       const data = await response.json()
       if (data.error) throw new Error(data.error.message)
+      if (!response.ok) throw new Error('API Error: ' + response.status)
 
       if (data.data && data.data.length > 0) {
         const processed = processResults(data.data)
