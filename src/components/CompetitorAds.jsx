@@ -5,6 +5,7 @@ import './CompetitorAds.css'
 const SUPABASE_URL = 'https://ifrxylvoufncdxyltgqt.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA'
 const EDGE_FN_URL = `${SUPABASE_URL}/functions/v1/extract-ad-thumbnails`
+const FOREPLAY_FN_URL = `${SUPABASE_URL}/functions/v1/fetch-competitor-ads`
 
 const sbHeaders = {
   apikey: SUPABASE_ANON_KEY,
@@ -107,6 +108,13 @@ function getPagePictureUrl(pageId) {
   return `https://graph.facebook.com/${pageId}/picture?type=small`
 }
 
+// ── Helper: detect if a URL points to a video ──
+function isVideoUrl(url) {
+  if (!url) return false
+  const lower = url.toLowerCase()
+  return lower.includes('.mp4') || lower.includes('.mov') || lower.includes('.webm') || lower.includes('/video')
+}
+
 // ── Supabase CRUD ──
 
 async function fetchFollowedBrands() {
@@ -177,28 +185,6 @@ async function deleteBrandFromSupabase(pageId) {
   }
 }
 
-// ── Extract thumbnails from Meta Library ──
-
-async function extractThumbnailsForAds(ads) {
-  if (!ads.length) return
-
-  // Call edge function to extract and store thumbnails
-  try {
-    const res = await fetch(EDGE_FN_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ads }),
-    })
-    if (res.ok) {
-      const result = await res.json()
-      return result.thumbnails || {}
-    }
-  } catch (err) {
-    console.error('Failed to extract thumbnails:', err)
-  }
-  return {}
-}
-
 // ── Render ──
 
 export default function CompetitorAds() {
@@ -247,61 +233,121 @@ export default function CompetitorAds() {
     return hoursAgo < CACHE_MAX_AGE_HOURS
   }
 
-  // ── Fetch ads for a brand (from Meta Library API) ──
+  // ── Fetch ads for a brand (via Foreplay edge function) ──
   async function fetchBrandAds(pageId, pageName) {
-    if (!apiKey || apiKey.length < 20) {
-      setError('Please enter a valid Meta Ad Library token')
-      return
-    }
-
     setIsLoading(true)
     setError(null)
     setResults([])
     setLoadingProgress(0)
-    setLoadingStatus('Connecting to Meta...')
+    setLoadingStatus('Connecting to Foreplay...')
     setIsCached(false)
 
     try {
-      const baseUrl = 'https://graph.instagram.com/ig_hashtag_search'
-      const fields = [
-        'ad_id',
-        'ad_name',
-        'page_id',
-        'page_name',
-        'ad_snapshot_url',
-        'ad_status',
-        'ad_delivery_start_time',
-        'ad_delivery_stop_time',
-        'display_format',
-        'estimated_impressions_lower_bound',
-        'estimated_impressions_upper_bound',
-      ]
+      // Step 1: Try loading cached ads from Supabase first
+      setLoadingStatus('Checking for cached ads...')
+      setLoadingProgress(10)
 
-      setLoadingStatus('Fetching from Meta Ad Library...')
+      const cachedRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/competitor_ads?page_id=eq.${pageId}&order=days_active.desc&limit=100`,
+        { headers: sbReadHeaders }
+      )
+
+      if (cachedRes.ok) {
+        const cachedAds = await cachedRes.json()
+        if (cachedAds.length > 0) {
+          const processed = cachedAds.map(ad => ({
+            adId: ad.ad_id || ad.foreplay_id || ad.id,
+            adName: ad.headline || ad.ad_name || 'Untitled Ad',
+            pageId: ad.page_id || pageId,
+            pageName: ad.page_name || pageName,
+            platform: 'Meta',
+            creativeType: ad.display_format || 'video',
+            mediaUrl: ad.media_url || ad.thumbnail_url || null,
+            isVideo: isVideoUrl(ad.media_url) || isVideoUrl(ad.thumbnail_url),
+            adPreviewUrl: ad.thumbnail_url || ad.media_url || null,
+            impressionsText: null,
+            impressionsLower: 0,
+            impressionsUpper: 0,
+            startDate: ad.first_seen ? formatDate(new Date(ad.first_seen)) : '',
+            endDate: ad.last_seen ? formatDate(new Date(ad.last_seen)) : '',
+            daysActive: ad.days_active || 0,
+            status: ad.status || 'active',
+            isVideoContent: isVideoUrl(ad.media_url) || isVideoUrl(ad.thumbnail_url),
+            url: `https://www.facebook.com/ads/library/?ad_type=all&view_all_page_id=${pageId}`,
+          }))
+
+          setLoadingProgress(100)
+          setResults(processed)
+          setLoadingStatus('Loaded from cache')
+          setIsCached(true)
+
+          await updateBrandInSupabase(pageId, {
+            last_fetched_at: new Date().toISOString(),
+            total_ads: processed.length,
+          })
+
+          setIsLoading(false)
+          setLoadingProgress(0)
+          return
+        }
+      }
+
+      // Step 2: No cached data, call Foreplay edge function
+      setLoadingStatus('Fetching ads from Foreplay...')
       setLoadingProgress(30)
 
-      const queryUrl = `https://graph.facebook.com/v20.0/ads_archive?access_token=${apiKey}&fields=${fields.join(',')}&ad_type=POLITICAL_AND_ISSUES&search_terms=&ad_reached_countries=ALL&media_type=all&limit=100&page_ids=${pageId}`
+      const response = await fetch(FOREPLAY_FN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page_id: pageId, limit: 50 }),
+      })
 
-      const response = await fetch(queryUrl)
       if (!response.ok) {
-        const err = await response.text()
-        throw new Error(`Meta API error: ${err}`)
+        const errText = await response.text()
+        throw new Error(`Edge function error (${response.status}): ${errText}`)
       }
 
       setLoadingProgress(60)
       setLoadingStatus('Processing results...')
 
       const data = await response.json()
-      const rawResults = data.data || []
+      // Edge function may return ads under different keys
+      const ads = data.ads || data.results || data.data || []
 
-      // Sort by most recent and get top 50
-      const processed = processResults(rawResults).sort((a, b) => new Date(b.startDate) - new Date(a.startDate)).slice(0, 50)
+      if (ads.length === 0) {
+        // Try GET (test mode) as fallback
+        setLoadingStatus('Trying test mode...')
+        const testRes = await fetch(`${FOREPLAY_FN_URL}?page_id=${pageId}&limit=50`)
+        if (testRes.ok) {
+          const testData = await testRes.json()
+          const testAds = testData.ads || testData.results || testData.data || []
+          if (testAds.length > 0) {
+            ads.push(...testAds)
+          }
+        }
+      }
 
-      setLoadingProgress(80)
-      setLoadingStatus('Extracting thumbnails...')
-
-      // Extract thumbnails
-      await extractThumbnailsForAds(processed)
+      // Map edge function response to frontend field names
+      const processed = ads.map((ad, idx) => ({
+        adId: ad.ad_id || ad.foreplay_id || ad.id || `fp-${idx}`,
+        adName: ad.headline || ad.ad_name || ad.title || 'Untitled Ad',
+        pageId: ad.page_id || pageId,
+        pageName: ad.page_name || pageName,
+        platform: 'Meta',
+        creativeType: ad.display_format || (isVideoUrl(ad.media_url || ad.thumbnail_url) ? 'video' : 'image'),
+        mediaUrl: ad.media_url || ad.thumbnail_url || null,
+        isVideo: isVideoUrl(ad.media_url) || isVideoUrl(ad.thumbnail_url),
+        adPreviewUrl: ad.thumbnail_url || ad.media_url || null,
+        impressionsText: null,
+        impressionsLower: 0,
+        impressionsUpper: 0,
+        startDate: ad.first_seen ? formatDate(new Date(ad.first_seen)) : '',
+        endDate: ad.last_seen ? formatDate(new Date(ad.last_seen)) : '',
+        daysActive: ad.days_active || 0,
+        status: ad.status || 'active',
+        isVideoContent: isVideoUrl(ad.media_url) || isVideoUrl(ad.thumbnail_url),
+        url: `https://www.facebook.com/ads/library/?ad_type=all&view_all_page_id=${pageId}`,
+      }))
 
       setLoadingProgress(100)
       setResults(processed)
@@ -315,7 +361,7 @@ export default function CompetitorAds() {
       })
     } catch (err) {
       console.error('Fetch error:', err)
-      setError(err.message || 'Failed to fetch ads. Check your token and try again.')
+      setError(err.message || 'Failed to fetch ads. Try again later.')
       setResults([])
     } finally {
       setIsLoading(false)
@@ -338,17 +384,22 @@ export default function CompetitorAds() {
         return
       }
 
-      // Fetch page info from Meta Graph API
-      const metaRes = await fetch(`https://graph.facebook.com/${pageId}?access_token=${apiKey}&fields=name,picture`)
-      if (!metaRes.ok) {
-        setAddError('Could not fetch page. Check the ID/URL and try again.')
-        setAddLoading(false)
-        return
-      }
+      // Try to fetch page info from Meta Graph API if we have a token
+      let pageName = 'Brand ' + pageId
+      let picUrl = getPagePictureUrl(pageId)
 
-      const pageData = await metaRes.json()
-      const pageName = pageData.name || 'Unknown Brand'
-      const picUrl = pageData.picture?.data?.url || getPagePictureUrl(pageId)
+      if (apiKey && apiKey.length > 20) {
+        try {
+          const metaRes = await fetch(`https://graph.facebook.com/${pageId}?access_token=${apiKey}&fields=name,picture`)
+          if (metaRes.ok) {
+            const pageData = await metaRes.json()
+            pageName = pageData.name || pageName
+            picUrl = pageData.picture?.data?.url || picUrl
+          }
+        } catch {
+          // Meta lookup failed, use defaults
+        }
+      }
 
       // Save to Supabase
       const newBrand = {
@@ -434,7 +485,7 @@ export default function CompetitorAds() {
       <div className="token-setup">
         <input
           type="password"
-          placeholder="Enter Meta Ad Library access token..."
+          placeholder="Enter Meta Ad Library access token (optional, for adding brands)..."
           value={apiKey}
           onChange={(e) => setApiKey(e.target.value)}
           className="token-input"
@@ -524,7 +575,6 @@ export default function CompetitorAds() {
               <button
                 className="add-brand-btn"
                 onClick={() => setShowAddForm(true)}
-                disabled={!hasKey}
               >
                 + Add Brand
               </button>
@@ -570,6 +620,7 @@ export default function CompetitorAds() {
                   </select>
                 </div>
                 <div className="action-buttons">
+                  {isCached && <span className="cache-badge">Cached</span>}
                   <button className="export-btn" onClick={exportCSV}>
                     Export CSV
                   </button>
@@ -579,13 +630,35 @@ export default function CompetitorAds() {
               <div className="ads-grid">
                 {results.map(ad => (
                   <div key={ad.adId} className="ad-card" onClick={() => openModal(ad)}>
-                    {ad.adPreviewUrl && (
+                    {ad.isVideo && ad.mediaUrl ? (
+                      <video
+                        src={ad.mediaUrl}
+                        className="ad-preview ad-preview-video"
+                        muted
+                        playsInline
+                        preload="metadata"
+                        onMouseOver={(e) => { try { e.target.play() } catch {} }}
+                        onMouseOut={(e) => { try { e.target.pause(); e.target.currentTime = 0 } catch {} }}
+                        onError={(e) => e.target.style.display = 'none'}
+                      />
+                    ) : ad.adPreviewUrl && !isVideoUrl(ad.adPreviewUrl) ? (
                       <img src={ad.adPreviewUrl} alt={ad.adName} className="ad-preview" onError={(e) => e.target.style.display = 'none'} />
-                    )}
+                    ) : ad.adPreviewUrl && isVideoUrl(ad.adPreviewUrl) ? (
+                      <video
+                        src={ad.adPreviewUrl}
+                        className="ad-preview ad-preview-video"
+                        muted
+                        playsInline
+                        preload="metadata"
+                        onMouseOver={(e) => { try { e.target.play() } catch {} }}
+                        onMouseOut={(e) => { try { e.target.pause(); e.target.currentTime = 0 } catch {} }}
+                        onError={(e) => e.target.style.display = 'none'}
+                      />
+                    ) : null}
                     <div className="ad-card-content">
                       <div className="ad-name">{ad.adName}</div>
                       <div className="ad-meta">
-                        <span className="meta-type">{ad.creativeType}</span>
+                        <span className="meta-type">{ad.isVideo ? '▶ video' : ad.creativeType}</span>
                         <span className="meta-days">{ad.daysActive}d</span>
                       </div>
                       <div className="ad-impressions">
@@ -630,12 +703,34 @@ export default function CompetitorAds() {
               <p><strong>Duration:</strong> {modalAd.daysActive} days ({modalAd.startDate} to {modalAd.endDate})</p>
               <p><strong>Impressions:</strong> {modalAd.impressionsText || 'Unknown'}</p>
               <p><strong>Status:</strong> {modalAd.status}</p>
-              {modalAd.adPreviewUrl && (
+              {modalAd.isVideo && modalAd.mediaUrl ? (
+                <>
+                  <p><strong>Preview:</strong></p>
+                  <video
+                    src={modalAd.mediaUrl}
+                    controls
+                    playsInline
+                    style={{ maxWidth: '100%', marginTop: '10px', borderRadius: '8px' }}
+                    onError={(e) => e.target.style.display = 'none'}
+                  />
+                </>
+              ) : modalAd.adPreviewUrl && isVideoUrl(modalAd.adPreviewUrl) ? (
+                <>
+                  <p><strong>Preview:</strong></p>
+                  <video
+                    src={modalAd.adPreviewUrl}
+                    controls
+                    playsInline
+                    style={{ maxWidth: '100%', marginTop: '10px', borderRadius: '8px' }}
+                    onError={(e) => e.target.style.display = 'none'}
+                  />
+                </>
+              ) : modalAd.adPreviewUrl ? (
                 <>
                   <p><strong>Preview:</strong></p>
                   <img src={modalAd.adPreviewUrl} alt={modalAd.adName} style={{ maxWidth: '100%', marginTop: '10px' }} onError={(e) => e.target.style.display = 'none'} />
                 </>
-              )}
+              ) : null}
               <div className="modal-actions">
                 <button
                   className="save-btn"
