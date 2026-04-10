@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { supabase } from '../lib/supabase'
 
 const MODELS = [
   { value: 'fal-ai/nano-banana-2', label: 'nano banana 2 (default)' },
@@ -117,6 +118,9 @@ export default function PromptTester() {
   const [history, setHistory] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [showDetail, setShowDetail] = useState(null)
+  const [refineText, setRefineText] = useState('')
+  const [promoting, setPromoting] = useState(false)
+  const [promoted, setPromoted] = useState(false)
 
   const timerRef = useRef(null)
 
@@ -291,6 +295,52 @@ export default function PromptTester() {
     setStatus('history cleared')
   }
 
+  // Download current result image
+  const handleDownload = () => {
+    if (!resultImage) return
+    const a = document.createElement('a')
+    a.href = resultImage
+    a.download = `chefly-${model.split('/').pop()}-${ratio.replace(':', 'x')}-${Date.now()}.png`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }
+
+  // Promote current result to Launcher (save as winner in gen_images)
+  const handlePromote = async () => {
+    if (!showDetail) return
+    setPromoting(true)
+    setPromoted(false)
+
+    try {
+      const { error } = await supabase.from('gen_images').insert({
+        image_url: showDetail.url || showDetail.dataUrl,
+        is_winner: true,
+        status: 'completed',
+        aspect_ratio: showDetail.ratio,
+        prompt_used: showDetail.prompt,
+        variables_used: { SOURCE: 'prompt-tester', MODEL: showDetail.model },
+        rating: 'great',
+      })
+      if (error) throw error
+      setPromoted(true)
+      setStatus('promoted to launcher')
+      setTimeout(() => setPromoted(false), 3000)
+    } catch (err) {
+      setStatus('promote failed: ' + err.message)
+    }
+    setPromoting(false)
+  }
+
+  // Refine: append refinement text and re-generate
+  const handleRefine = () => {
+    if (!refineText.trim()) return
+    setPrompt(prev => prev.trim() + '\n\nREFINEMENT: ' + refineText.trim())
+    setRefineText('')
+    // Auto-generate after a tick (so prompt state updates)
+    setTimeout(() => generate(), 50)
+  }
+
   // Keyboard shortcut: Ctrl/Cmd + Enter to generate
   useEffect(() => {
     const handleKey = (e) => {
@@ -397,6 +447,41 @@ export default function PromptTester() {
             <span className={generating ? 'pt-generating' : ''}>{status}</span>
             <span style={{ fontVariantNumeric: 'tabular-nums' }}>{elapsed}</span>
           </div>
+
+          {/* Actions: Refine, Download, Promote */}
+          {resultImage && (
+            <>
+              <div className="pt-refine-bar">
+                <input
+                  type="text"
+                  className="text-input text-input-sm pt-refine-input"
+                  value={refineText}
+                  onChange={e => setRefineText(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && refineText.trim()) handleRefine() }}
+                  placeholder="Refine: e.g. 'use our actual meal names' or 'make text bigger'"
+                />
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={handleRefine}
+                  disabled={!refineText.trim() || generating}
+                >
+                  refine
+                </button>
+              </div>
+              <div className="pt-actions">
+                <button className="btn btn-ghost btn-sm" onClick={handleDownload}>
+                  &#x2B07; download
+                </button>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={handlePromote}
+                  disabled={promoting || promoted}
+                >
+                  {promoted ? '&#10003; promoted' : promoting ? 'promoting...' : '&#x1F680; send to launcher'}
+                </button>
+              </div>
+            </>
+          )}
 
           {/* Selected history detail */}
           {showDetail && (
