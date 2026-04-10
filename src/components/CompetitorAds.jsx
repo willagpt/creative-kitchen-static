@@ -209,45 +209,8 @@ export default function CompetitorAds() {
     })
   }, [])
 
-  // Resolve a page by username/URL \u2014 works with any valid token, no special permissions
-  const resolvePageDirect = async (input) => {
-    let slug = input.trim()
-    // Handle URLs like facebook.com/SimmerEats or fb.com/SimmerEats
-    const urlMatch = slug.match(/(?:facebook\.com|fb\.com)\/(?:pg\/)?([^/?&#]+)/i)
-    if (urlMatch) slug = urlMatch[1]
-    // Remove @ prefix
-    slug = slug.replace(/^@/, '')
-    // Skip if it has spaces (not a valid page username)
-    if (/\s/.test(slug) || slug.length < 2) return null
-
-    try {
-      const params = new URLSearchParams({
-        access_token: apiKey,
-        fields: 'id,name,category,fan_count,picture',
-      })
-      const resp = await fetch('https://graph.facebook.com/v19.0/' + encodeURIComponent(slug) + '?' + params)
-      const data = await resp.json()
-      if (data.error || !data.id) return null
-      return {
-        pageId: data.id,
-        pageName: data.name || slug,
-        category: data.category || '',
-        followers: data.fan_count || 0,
-        platforms: ['facebook'],
-        adCount: 0,
-        byline: data.category || '',
-        pictureUrl: data.picture?.data?.url || null,
-        source: 'direct_lookup',
-      }
-    } catch {
-      return null
-    }
-  }
-
-  // Debounced advertiser lookup \u2014 fires as user types
-  // Strategy: (1) Try direct page lookup by username/URL,
-  // (2) Ads archive with high limit + name filtering,
-  // (3) Try common username variants (e.g. "simmer" \u2192 "simmer.eats")
+  // Advertiser lookup using ads_archive — the only Meta API endpoint that works
+  // with Ad Library tokens. Shows ALL unique pages, name matches sorted to top.
   const lookupAdvertisers = useCallback(async (query) => {
     if (!query.trim() || query.trim().length < 2 || !apiKey) {
       setSuggestions([])
@@ -260,16 +223,6 @@ export default function CompetitorAds() {
     const trimmed = query.trim().toLowerCase()
 
     try {
-      let advertisers = []
-
-      // Strategy 1: Direct page lookup \u2014 try the query as a page username
-      // This works instantly if someone types a handle like "Simmer.Eats"
-      const directPage = await resolvePageDirect(query.trim())
-      if (directPage) {
-        advertisers.push(directPage)
-      }
-
-      // Strategy 2: Ads archive \u2014 search ad content, extract unique pages
       const params = new URLSearchParams({
         access_token: apiKey,
         search_terms: query.trim(),
@@ -281,64 +234,34 @@ export default function CompetitorAds() {
       })
 
       const response = await fetch('https://graph.facebook.com/v19.0/ads_archive?' + params)
-      if (response.ok) {
-        const data = await response.json()
-        if (data.data && data.data.length > 0) {
-          const allPages = extractAdvertisers(data.data)
+      if (!response.ok) throw new Error('API Error')
+      const data = await response.json()
 
-          // Filter to pages whose name matches the query
-          const nameMatches = allPages.filter(adv =>
-            adv.pageName.toLowerCase().includes(trimmed)
-          )
+      if (data.data && data.data.length > 0) {
+        const allPages = extractAdvertisers(data.data)
 
-          // Sort: exact \u2192 starts-with \u2192 contains \u2192 by ad count
-          nameMatches.sort((a, b) => {
-            const aName = a.pageName.toLowerCase()
-            const bName = b.pageName.toLowerCase()
+        // Sort: name matches first (exact > starts-with > contains), then by ad count
+        allPages.sort((a, b) => {
+          const aName = a.pageName.toLowerCase()
+          const bName = b.pageName.toLowerCase()
+          const aMatch = aName.includes(trimmed)
+          const bMatch = bName.includes(trimmed)
+          if (aMatch !== bMatch) return aMatch ? -1 : 1
+          if (aMatch && bMatch) {
             const aExact = aName === trimmed
             const bExact = bName === trimmed
             if (aExact !== bExact) return aExact ? -1 : 1
             const aStarts = aName.startsWith(trimmed)
             const bStarts = bName.startsWith(trimmed)
             if (aStarts !== bStarts) return aStarts ? -1 : 1
-            return b.adCount - a.adCount
-          })
-
-          const adResults = nameMatches.length > 0 ? nameMatches : allPages
-
-          // Merge with direct lookup, avoiding duplicates
-          const seenIds = new Set(advertisers.map(a => a.pageId))
-          for (const adv of adResults) {
-            if (!seenIds.has(adv.pageId)) {
-              advertisers.push(adv)
-              seenIds.add(adv.pageId)
-            }
           }
-        }
-      }
+          return b.adCount - a.adCount
+        })
 
-      // Strategy 3: Try common username patterns if we don't have many results
-      // e.g. for "simmer" try "simmer.eats", "simmerfood", etc.
-      if (advertisers.length < 3 && !query.includes('.') && !query.includes('/')) {
-        const variants = [
-          query.trim().replace(/\s+/g, ''),
-          query.trim().replace(/\s+/g, '.'),
-          query.trim().replace(/\s+/g, '') + '.eats',
-          query.trim().replace(/\s+/g, '') + 'uk',
-          query.trim().replace(/\s+/g, '') + 'food',
-        ]
-        const seenIds = new Set(advertisers.map(a => a.pageId))
-        const variantPromises = variants.map(v => resolvePageDirect(v))
-        const variantResults = await Promise.allSettled(variantPromises)
-        for (const result of variantResults) {
-          if (result.status === 'fulfilled' && result.value && !seenIds.has(result.value.pageId)) {
-            advertisers.push(result.value)
-            seenIds.add(result.value.pageId)
-          }
-        }
+        setSuggestions(allPages)
+      } else {
+        setSuggestions([])
       }
-
-      setSuggestions(advertisers)
     } catch (err) {
       console.error('Lookup error:', err)
       setSuggestions([])
@@ -380,7 +303,7 @@ export default function CompetitorAds() {
     setHasSearched(false)
   }
 
-  // Full ad search \u2014 uses page_id if advertiser selected, otherwise text search
+  // Full ad search — uses page_id if advertiser selected, otherwise text search
   const performSearch = useCallback(async () => {
     if (!apiKey) return
     if (!selectedAdvertiser && !searchQuery.trim()) return
@@ -400,7 +323,6 @@ export default function CompetitorAds() {
         ad_active_status: 'ALL',
       })
 
-      // If we have a selected advertiser, search by page_id for precision
       if (selectedAdvertiser) {
         params.append('search_page_ids', selectedAdvertiser.pageId)
       } else {
@@ -468,7 +390,7 @@ export default function CompetitorAds() {
       <div className="page-header">
         <div>
           <h2 className="page-title">Competitor Ads</h2>
-          <p className="page-subtitle">search meta ad library \u2014 find what's working, save what matters.</p>
+          <p className="page-subtitle">search meta ad library &mdash; find what's working, save what matters.</p>
         </div>
         <div className="ca-api-row">
           <span className={`ca-api-dot ${hasKey ? 'active' : apiKey.length > 0 ? 'invalid' : ''}`} />
@@ -491,17 +413,11 @@ export default function CompetitorAds() {
               <div className="ca-chip-info">
                 <span className="ca-chip-name">{selectedAdvertiser.pageName}</span>
                 <span className="ca-chip-meta">
-                  {selectedAdvertiser.followers > 0 && (formatNumber(selectedAdvertiser.followers) + ' followers')}
-                  {selectedAdvertiser.followers > 0 && selectedAdvertiser.category && ' \u00b7 '}
-                  {selectedAdvertiser.category && selectedAdvertiser.category}
-                  {!selectedAdvertiser.followers && !selectedAdvertiser.category && (
-                    <>
-                      {selectedAdvertiser.platforms.includes('facebook') && 'fb'}
-                      {selectedAdvertiser.platforms.includes('facebook') && selectedAdvertiser.platforms.includes('instagram') && ' \u00b7 '}
-                      {selectedAdvertiser.platforms.includes('instagram') && 'ig'}
-                      {selectedAdvertiser.adCount > 0 && (' \u00b7 ' + selectedAdvertiser.adCount + ' ads')}
-                    </>
-                  )}
+                  {selectedAdvertiser.adCount > 0 && (selectedAdvertiser.adCount + ' ads')}
+                  {selectedAdvertiser.adCount > 0 && selectedAdvertiser.platforms.length > 0 && ' \u00b7 '}
+                  {selectedAdvertiser.platforms.includes('facebook') && 'fb'}
+                  {selectedAdvertiser.platforms.includes('facebook') && selectedAdvertiser.platforms.includes('instagram') && ' \u00b7 '}
+                  {selectedAdvertiser.platforms.includes('instagram') && 'ig'}
                 </span>
               </div>
               <button className="ca-chip-clear" onClick={clearAdvertiser} title="clear">&times;</button>
@@ -514,7 +430,7 @@ export default function CompetitorAds() {
               onChange={handleSearchInput}
               onKeyDown={handleKeyDown}
               onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true) }}
-              placeholder="search brand name, @handle, or paste page URL..."
+              placeholder="search by brand name or keyword..."
               disabled={!hasKey}
             />
           )}
@@ -537,7 +453,7 @@ export default function CompetitorAds() {
                 <div className="ca-suggestion-item ca-suggestion-text-search" onClick={() => { setShowSuggestions(false); performSearch() }}>
                   <span className="ca-suggestion-search-icon">&#128269;</span>
                   <div>
-                    <div className="ca-suggestion-name">"{searchQuery}"</div>
+                    <div className="ca-suggestion-name">&ldquo;{searchQuery}&rdquo;</div>
                     <div className="ca-suggestion-sub">search this exact phrase</div>
                   </div>
                 </div>
@@ -554,35 +470,17 @@ export default function CompetitorAds() {
                       className="ca-suggestion-item"
                       onClick={() => selectAdvertiser(adv)}
                     >
-                      {adv.pictureUrl ? (
-                        <img src={adv.pictureUrl} alt="" className="ca-suggestion-avatar-img" />
-                      ) : (
-                        <div className="ca-suggestion-avatar">
-                          {adv.pageName.charAt(0).toUpperCase()}
-                        </div>
-                      )}
+                      <div className="ca-suggestion-avatar">
+                        {adv.pageName.charAt(0).toUpperCase()}
+                      </div>
                       <div className="ca-suggestion-details">
                         <div className="ca-suggestion-name">{adv.pageName}</div>
                         <div className="ca-suggestion-sub">
-                          {adv.followers > 0 && (
-                            <span>{formatNumber(adv.followers)} followers</span>
-                          )}
-                          {adv.followers > 0 && (adv.category || adv.adCount > 0) && ' \u00b7 '}
-                          {adv.category && <span>{adv.category}</span>}
-                          {!adv.category && adv.adCount > 0 && (
-                            <span>{adv.adCount} ad{adv.adCount !== 1 ? 's' : ''} found</span>
-                          )}
-                          {adv.category && adv.adCount > 0 && (
-                            <span> \u00b7 {adv.adCount} ad{adv.adCount !== 1 ? 's' : ''}</span>
-                          )}
-                          {!adv.followers && !adv.category && adv.adCount === 0 && (
-                            <>
-                              {adv.platforms.includes('facebook') && <span>fb</span>}
-                              {adv.platforms.includes('instagram') && (
-                                <span>{adv.platforms.includes('facebook') ? ' \u00b7 ' : ''}ig</span>
-                              )}
-                            </>
-                          )}
+                          {adv.adCount} ad{adv.adCount !== 1 ? 's' : ''} found
+                          {adv.platforms.length > 0 && ' \u00b7 '}
+                          {adv.platforms.includes('facebook') && 'fb'}
+                          {adv.platforms.includes('facebook') && adv.platforms.includes('instagram') && ' \u00b7 '}
+                          {adv.platforms.includes('instagram') && 'ig'}
                         </div>
                       </div>
                     </div>
