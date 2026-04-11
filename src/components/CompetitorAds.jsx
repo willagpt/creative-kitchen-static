@@ -355,8 +355,30 @@ export default function CompetitorAds() {
   const [analysisTab, setAnalysisTab] = useState('overview') // overview | prompts | ads
   const [analysisStep, setAnalysisStep] = useState(0) // 0=idle, 1=vision, 2=prompts
   const [variantIndex, setVariantIndex] = useState(0) // cycling through DCO variants in modal
+  const [copiedPromptIdx, setCopiedPromptIdx] = useState(null) // flash "Copied!" on prompt card
 
   const hasKey = apiKey.length > 20
+
+  // Copy full prompt to clipboard
+  const copyPrompt = (text, idx) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedPromptIdx(idx)
+      setTimeout(() => setCopiedPromptIdx(null), 2000)
+    })
+  }
+
+  // Scope Ctrl+A inside prompt text areas
+  const handlePromptKeyDown = (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+      e.preventDefault()
+      e.stopPropagation()
+      const sel = window.getSelection()
+      const range = document.createRange()
+      range.selectNodeContents(e.currentTarget)
+      sel.removeAllRanges()
+      sel.addRange(range)
+    }
+  }
 
   const brandColorMap = {}
   followedBrands.forEach((b, i) => {
@@ -1179,13 +1201,20 @@ export default function CompetitorAds() {
                                 <h5>{pr.promptName}</h5>
                                 <span className="ca-prompt-basis">{pr.basedOn}</span>
                                 {pr.aspectRatio && <span className="ca-prompt-ratio">{pr.aspectRatio}</span>}
+                                <button
+                                  className={`ca-copy-btn ${copiedPromptIdx === i ? 'copied' : ''}`}
+                                  onClick={() => copyPrompt(pr.full_prompt || pr.imagePrompt || '', i)}
+                                  title="Copy full prompt"
+                                >
+                                  {copiedPromptIdx === i ? '✓ Copied' : 'Copy'}
+                                </button>
                               </div>
                               <div className="ca-prompt-body">
                                 {/* Full prompt — the complete brief */}
                                 {pr.full_prompt && (
                                   <div className="ca-prompt-field">
                                     <label>Full Creative Brief</label>
-                                    <div className="ca-prompt-text ca-prompt-full">{pr.full_prompt}</div>
+                                    <div className="ca-prompt-text ca-prompt-full" tabIndex={0} onKeyDown={handlePromptKeyDown}>{pr.full_prompt}</div>
                                   </div>
                                 )}
 
