@@ -635,48 +635,114 @@ export default function CompetitorAds() {
     }
   }
 
-  // Stop polling on unmount
-  useEffect(() => { return () => { if (pollRef.current) clearInterval(pollRef.current) } }, [])
+  // Stop processing on unmount
+  useEffect(() => { return () => { pollRef.current = false } }, [])
 
-  // Poll batch job status
-  function startPolling(jobId) {
-    if (pollRef.current) clearInterval(pollRef.current)
-    pollRef.current = setInterval(async () => {
+  // Drive processing loop: call process_next repeatedly until job is done
+  async function driveProcessing(jobId) {
+    pollRef.current = true // flag to allow cancellation
+    let consecutiveErrors = 0
+
+    while (pollRef.current) {
       try {
+        // Call process_next to do one unit of work
         const res = await fetch(BATCH_FN_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'status', job_id: jobId }),
+          body: JSON.stringify({ action: 'process_next', job_id: jobId }),
         })
-        if (!res.ok) return
-        const data = await res.json()
-        setBatchStatus(data.job)
-        setBatchImages(data.images || [])
-        setBatchSummary(data.summary)
 
-        const status = data.job?.status
-        // Update analysis step for the loading UI
-        if (status === 'step1_running') setAnalysisStep(1)
-        else if (status === 'step1_done' || status === 'step2_running') {
-          setAnalysisStep(2)
-          setPromptProgress({ current: data.summary?.step2_completed || 0, total: data.summary?.total || 0 })
+        if (!res.ok) {
+          consecutiveErrors++
+          if (consecutiveErrors >= 3) {
+            setAnalysisError('Processing failed after multiple retries')
+            setAnalysisLoading(false)
+            setAnalysisStep(0)
+            return
+          }
+          await new Promise(r => setTimeout(r, 2000))
+          continue
         }
-        else if (status === 'saving') setAnalysisStep(3)
 
-        // Job finished — stop polling and load results
-        if (status === 'completed' || status === 'failed') {
-          clearInterval(pollRef.current)
-          pollRef.current = null
-          if (status === 'completed') {
+        const data = await res.json()
+        if (data.error) {
+          consecutiveErrors++
+          if (consecutiveErrors >= 3) {
+            setAnalysisError(data.error)
+            setAnalysisLoading(false)
+            setAnalysisStep(0)
+            return
+          }
+          await new Promise(r => setTimeout(r, 2000))
+          continue
+        }
+
+        consecutiveErrors = 0 // reset on success
+
+        // Update UI based on current phase
+        if (data.phase === 'step1_running') {
+          setAnalysisStep(1)
+        } else if (data.phase === 'step1_done' || data.phase === 'step2_running') {
+          setAnalysisStep(2)
+        } else if (data.phase === 'saving') {
+          setAnalysisStep(3)
+        }
+
+        // Poll status for progress numbers
+        try {
+          const statusRes = await fetch(BATCH_FN_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'status', job_id: jobId }),
+          })
+          if (statusRes.ok) {
+            const statusData = await statusRes.json()
+            setBatchStatus(statusData.job)
+            setBatchImages(statusData.images || [])
+            setBatchSummary(statusData.summary)
+            const s = statusData.summary || {}
+            if (statusData.job?.status === 'step2_running' || statusData.job?.status === 'saving' || statusData.job?.status === 'completed') {
+              setPromptProgress({ current: s.step2_completed || 0, total: s.step1_completed || s.total || 0 })
+            }
+          }
+        } catch { /* status poll failed, not critical */ }
+
+        // Job finished
+        if (data.phase === 'completed') {
+          await loadBatchResults(jobId)
+          return
+        }
+
+        if (data.phase === 'failed') {
+          setAnalysisError('Batch job failed')
+          setAnalysisLoading(false)
+          setAnalysisStep(0)
+          return
+        }
+
+        // No work to do (already completed)
+        if (data.message === 'No work to do') {
+          if (data.phase === 'completed') {
             await loadBatchResults(jobId)
           } else {
-            setAnalysisError(data.job?.error_message || 'Batch job failed')
+            setAnalysisError(`Job in unexpected state: ${data.phase}`)
             setAnalysisLoading(false)
             setAnalysisStep(0)
           }
+          return
         }
-      } catch { /* polling error, will retry next interval */ }
-    }, 4000)
+
+      } catch (err) {
+        consecutiveErrors++
+        if (consecutiveErrors >= 3) {
+          setAnalysisError('Network error during processing. You can retry.')
+          setAnalysisLoading(false)
+          setAnalysisStep(0)
+          return
+        }
+        await new Promise(r => setTimeout(r, 3000))
+      }
+    }
   }
 
   // Load completed batch results into the existing analysis UI format
@@ -787,8 +853,8 @@ export default function CompetitorAds() {
       setBatchJobId(data.job_id)
       setBatchSummary({ total: data.total_images, step1_completed: 0, step2_completed: 0 })
 
-      // Start polling for progress
-      startPolling(data.job_id)
+      // Drive processing loop (frontend calls process_next repeatedly)
+      driveProcessing(data.job_id)
 
     } catch (err) {
       const msg = err.message === 'Failed to fetch'
