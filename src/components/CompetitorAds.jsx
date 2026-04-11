@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import './CompetitorAds.css'
 
 // ── Supabase config ──
@@ -78,13 +78,12 @@ function extractPageId(input) {
   return m ? m[1] : null
 }
 
-// ── Paginated Supabase fetch (gets ALL rows, not just 1000) ──
+// ── Paginated Supabase fetch ──
 async function fetchAllAds(pageId) {
   const PAGE_SIZE = 1000
   let allRows = []
   let offset = 0
   let hasMore = true
-
   while (hasMore) {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/competitor_ads?page_id=eq.${pageId}&order=start_date.desc&offset=${offset}&limit=${PAGE_SIZE}`,
@@ -93,11 +92,8 @@ async function fetchAllAds(pageId) {
     if (!res.ok) throw new Error(`Failed to load (${res.status})`)
     const rows = await res.json()
     allRows = allRows.concat(rows)
-    if (rows.length < PAGE_SIZE) {
-      hasMore = false
-    } else {
-      offset += PAGE_SIZE
-    }
+    hasMore = rows.length === PAGE_SIZE
+    offset += PAGE_SIZE
   }
   return allRows
 }
@@ -140,47 +136,6 @@ async function deleteBrand(pageId) {
   } catch { return false }
 }
 
-// ── Lazy video thumbnail component ──
-// Only loads video when card scrolls into view, prevents 1000+ simultaneous requests
-function LazyVideoCard({ src, onError }) {
-  const ref = useRef(null)
-  const [isVisible, setIsVisible] = useState(false)
-  const [hasFrame, setHasFrame] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setIsVisible(true); observer.disconnect() } },
-      { rootMargin: '200px' }
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
-  return (
-    <div ref={ref} className="ca-card-thumb-wrap">
-      {isVisible ? (
-        <video
-          src={src + '#t=0.5'}
-          className={`ca-card-thumb ${hasFrame ? 'loaded' : ''}`}
-          muted
-          playsInline
-          preload="auto"
-          onLoadedData={() => setHasFrame(true)}
-          onMouseOver={e => { try { e.target.play() } catch {} }}
-          onMouseOut={e => { try { e.target.pause(); e.target.currentTime = 0 } catch {} }}
-          onError={onError}
-        />
-      ) : (
-        <div className="ca-card-thumb-placeholder">
-          <span className="ca-card-play-static">▶</span>
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── Component ──
 export default function CompetitorAds() {
   const [apiKey, setApiKey] = useState(localStorage.getItem('metaAdLibraryToken') || '')
@@ -196,7 +151,6 @@ export default function CompetitorAds() {
   const [modalAd, setModalAd] = useState(null)
   const [loadingStatus, setLoadingStatus] = useState('')
 
-  // Filters
   const [typeFilter, setTypeFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
@@ -209,7 +163,6 @@ export default function CompetitorAds() {
   useEffect(() => { fetchFollowedBrands().then(setFollowedBrands) }, [])
   useEffect(() => { if (apiKey.length > 20) localStorage.setItem('metaAdLibraryToken', apiKey) }, [apiKey])
 
-  // Apply filters + sort
   const filteredAds = (() => {
     let ads = [...allAds]
     if (typeFilter === 'video') ads = ads.filter(a => a.isVideo)
@@ -250,10 +203,8 @@ export default function CompetitorAds() {
     setError(null)
     setAllAds([])
     setLoadingStatus('Loading ads...')
-
     try {
       const rows = await fetchAllAds(pageId)
-
       if (rows.length > 0) {
         setLoadingStatus(`Processing ${rows.length} ads...`)
         setAllAds(rows.map(ad => mapDbAd(ad, pageId, pageName)))
@@ -306,11 +257,6 @@ export default function CompetitorAds() {
     if (activeBrand?.pageId === pageId) { setActiveBrand(null); setAllAds([]) }
   }
 
-  function clearDateRange() {
-    setDateFrom('')
-    setDateTo('')
-  }
-
   return (
     <div className="ca-container">
       <div className="ca-header">
@@ -353,10 +299,8 @@ export default function CompetitorAds() {
         <main className="ca-main">
           {activeBrand && (
             <div className="ca-brand-bar">
-              <div>
-                <h2 className="ca-brand-bar-name">{activeBrand.pageName}</h2>
-                <span className="ca-brand-bar-stats">{allAds.length} total, {videoCount} videos, {imageCount} images, {activeCount} active</span>
-              </div>
+              <h2 className="ca-brand-bar-name">{activeBrand.pageName}</h2>
+              <span className="ca-brand-bar-stats">{allAds.length} total, {videoCount} videos, {imageCount} images, {activeCount} active</span>
             </div>
           )}
 
@@ -367,7 +311,7 @@ export default function CompetitorAds() {
                   <button key={val} className={`ca-pill ${typeFilter === val ? 'active' : ''}`} onClick={() => setTypeFilter(val)}>{label}</button>
                 ))}
                 <span className="ca-filter-sep">|</span>
-                {[['all', 'All status'], ['active', `Active (${activeCount})`], ['ended', `Ended`]].map(([val, label]) => (
+                {[['all', 'All status'], ['active', `Active (${activeCount})`], ['ended', 'Ended']].map(([val, label]) => (
                   <button key={val} className={`ca-pill ${statusFilter === val ? 'active' : ''}`} onClick={() => setStatusFilter(val)}>{label}</button>
                 ))}
               </div>
@@ -389,17 +333,12 @@ export default function CompetitorAds() {
               <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="ca-date-input" />
               <span className="ca-date-to">to</span>
               <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="ca-date-input" />
-              {(dateFrom || dateTo) && (
-                <button className="ca-date-clear" onClick={clearDateRange}>Clear</button>
-              )}
-              {(dateFrom || dateTo) && (
-                <span className="ca-date-count">{filteredAds.length} ads in range</span>
-              )}
+              {(dateFrom || dateTo) && <button className="ca-date-clear" onClick={() => { setDateFrom(''); setDateTo('') }}>Clear</button>}
+              {(dateFrom || dateTo) && <span className="ca-date-count">{filteredAds.length} ads in range</span>}
             </div>
           )}
 
           {isLoading && <div className="ca-loading"><div className="ca-spin"></div><span>{loadingStatus}</span></div>}
-
           {error && <div className="ca-error-msg">{error} <button onClick={() => fetchBrandAds(activeBrand.pageId, activeBrand.pageName)}>Retry</button></div>}
 
           {!isLoading && filteredAds.length > 0 && (
@@ -407,18 +346,26 @@ export default function CompetitorAds() {
               {filteredAds.map(ad => (
                 <div key={ad.adId} className="ca-card" onClick={() => setModalAd(ad)}>
                   <div className="ca-card-media">
-                    {ad.isVideo && ad.mediaUrl ? (
-                      <LazyVideoCard
-                        src={ad.mediaUrl}
-                        onError={e => { e.target.parentElement.parentElement.classList.add('no-media') }}
-                      />
+                    {ad.isVideo ? (
+                      /* Video cards: styled placeholder, plays in modal */
+                      <div className="ca-video-placeholder">
+                        <div className="ca-video-play-btn">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
+                        </div>
+                        <div className="ca-video-label">VIDEO</div>
+                        <div className="ca-video-title">{ad.adName}</div>
+                        {ad.adBody && <div className="ca-video-body">{ad.adBody.slice(0, 80)}{ad.adBody.length > 80 ? '...' : ''}</div>}
+                      </div>
                     ) : ad.mediaUrl ? (
                       <img src={ad.mediaUrl} alt="" className="ca-card-thumb" loading="lazy"
-                        onError={e => { e.target.parentElement.classList.add('no-media') }} />
-                    ) : <div className="ca-card-no-thumb">No preview</div>}
-                    {ad.isVideo && <div className="ca-card-play">▶</div>}
+                        onError={e => { e.target.style.display = 'none'; e.target.parentElement.classList.add('no-media') }} />
+                    ) : (
+                      <div className="ca-no-preview">
+                        <span>No preview</span>
+                      </div>
+                    )}
                     <div className="ca-card-overlay">
-                      <span className="ca-card-expand">Click to expand</span>
+                      <span className="ca-card-expand">{ad.isVideo ? 'Click to play' : 'Click to expand'}</span>
                     </div>
                   </div>
                   <div className="ca-card-body">
@@ -434,15 +381,9 @@ export default function CompetitorAds() {
             </div>
           )}
 
-          {!isLoading && filteredAds.length === 0 && allAds.length > 0 && (
-            <div className="ca-empty">No ads match your filters</div>
-          )}
-          {!isLoading && allAds.length === 0 && !error && !activeBrand && (
-            <div className="ca-empty">Select a brand to view their ads</div>
-          )}
-          {!isLoading && allAds.length === 0 && !error && activeBrand && !isLoading && (
-            <div className="ca-empty">No ads found for {activeBrand.pageName}</div>
-          )}
+          {!isLoading && filteredAds.length === 0 && allAds.length > 0 && <div className="ca-empty">No ads match your filters</div>}
+          {!isLoading && allAds.length === 0 && !error && !activeBrand && <div className="ca-empty">Select a brand to view their ads</div>}
+          {!isLoading && allAds.length === 0 && !error && activeBrand && <div className="ca-empty">No ads found for {activeBrand.pageName}</div>}
         </main>
       </div>
 
@@ -450,7 +391,6 @@ export default function CompetitorAds() {
         <div className="ca-modal-bg" onClick={() => setModalAd(null)}>
           <div className="ca-modal" onClick={e => e.stopPropagation()}>
             <button className="ca-modal-x" onClick={() => setModalAd(null)}>x</button>
-
             <div className="ca-modal-media">
               {modalAd.isVideo && modalAd.mediaUrl ? (
                 <video src={modalAd.mediaUrl} controls playsInline autoPlay className="ca-modal-video" />
@@ -458,12 +398,10 @@ export default function CompetitorAds() {
                 <img src={modalAd.mediaUrl} alt="" className="ca-modal-img" />
               ) : null}
             </div>
-
             <div className="ca-modal-detail">
               <h3 className="ca-modal-title">{modalAd.adName}</h3>
               {modalAd.adBody && <div className="ca-modal-body">{modalAd.adBody}</div>}
               {modalAd.adCaption && <div className="ca-modal-caption">{modalAd.adCaption}</div>}
-
               <div className="ca-modal-meta-grid">
                 <div className="ca-modal-meta-item"><span className="ca-modal-label">Brand</span><span>{modalAd.pageName}</span></div>
                 <div className="ca-modal-meta-item"><span className="ca-modal-label">Ad ID</span><span>{modalAd.adId}</span></div>
@@ -475,7 +413,6 @@ export default function CompetitorAds() {
                   <div className="ca-modal-meta-item"><span className="ca-modal-label">Platforms</span><span>{modalAd.platforms.join(', ')}</span></div>
                 )}
               </div>
-
               <div className="ca-modal-actions">
                 <a href={modalAd.url} target="_blank" rel="noopener noreferrer" className="ca-btn-primary">View on Meta</a>
               </div>
