@@ -397,12 +397,45 @@ export default function CompetitorAds() {
   const imageCount = allAds.filter(a => !a.isVideo && a.hasMedia).length
   const activeCount = allAds.filter(a => a.status === 'active').length
 
+  // ── Deduplication: group by creative fingerprint ──
+  function deduplicateAds(ads) {
+    const groups = {}
+    for (const ad of ads) {
+      // Step 1: strip card index to get parent ad ID
+      const parentId = ad.adId.includes('_card') ? ad.adId.split('_card')[0] : ad.adId
+      // Step 2: build creative fingerprint from copy + brand
+      const copyKey = ((ad.adName || '') + '||' + (ad.adBody || '').slice(0, 100) + '||' + ad.pageId).toLowerCase().trim()
+      const groupKey = copyKey || parentId
+
+      if (!groups[groupKey]) {
+        groups[groupKey] = { hero: ad, variants: [ad], parentIds: new Set([parentId]) }
+      } else {
+        groups[groupKey].variants.push(ad)
+        groups[groupKey].parentIds.add(parentId)
+        // Keep the variant with the longest run as the hero
+        if (ad.daysActive > groups[groupKey].hero.daysActive) {
+          groups[groupKey].hero = ad
+        } else if (ad.daysActive === groups[groupKey].hero.daysActive && ad.hasMedia && !groups[groupKey].hero.hasMedia) {
+          groups[groupKey].hero = ad
+        }
+      }
+    }
+    return Object.values(groups).map(g => ({
+      ...g.hero,
+      variantCount: g.variants.length,
+      uniqueAdIds: g.parentIds.size,
+      variants: g.variants,
+    }))
+  }
+
   // ── Top Performers: filtered + ranked ──
   const topFiltered = (() => {
     let ads = [...topAds]
     if (topTypeFilter === 'video') ads = ads.filter(a => a.isVideo)
     if (topTypeFilter === 'image') ads = ads.filter(a => !a.isVideo && a.hasMedia)
     ads = ads.filter(a => a.daysActive >= 1)
+    // Deduplicate before ranking
+    ads = deduplicateAds(ads)
     ads.sort((a, b) => {
       switch (topSortBy) {
         case 'velocity': return b.velocity - a.velocity
@@ -421,6 +454,13 @@ export default function CompetitorAds() {
   const topVideoCount = topAds.filter(a => a.isVideo).length
   const topImageCount = topAds.filter(a => !a.isVideo && a.hasMedia).length
   const topHasImpressions = topAds.some(a => a.impressionsMid > 0)
+  // Count unique creatives after dedup for the stats bar
+  const topDedupedTotal = (() => {
+    let ads = [...topAds].filter(a => a.daysActive >= 1)
+    if (topTypeFilter === 'video') ads = ads.filter(a => a.isVideo)
+    if (topTypeFilter === 'image') ads = ads.filter(a => !a.isVideo && a.hasMedia)
+    return deduplicateAds(ads).length
+  })()
 
   function toggleTopBrand(pageId) {
     setSelectedTopBrands(prev => {
@@ -614,6 +654,11 @@ export default function CompetitorAds() {
             {showBrandTag && brandColor && (
               <span className="ca-tag ca-tag-brand" style={{ background: brandColor.bg, color: brandColor.text, borderLeft: `3px solid ${brandColor.border}` }}>
                 {ad.pageName}
+              </span>
+            )}
+            {ad.variantCount > 1 && (
+              <span className="ca-tag ca-tag-variants" title={`${ad.variantCount} variants across ${ad.uniqueAdIds} ad${ad.uniqueAdIds !== 1 ? 's' : ''}`}>
+                {ad.variantCount} variants
               </span>
             )}
             <span className={`ca-tag ${ad.isVideo ? 'video' : 'image'}`}>
@@ -831,7 +876,7 @@ export default function CompetitorAds() {
                 <h2 className="ca-brand-bar-name">Top Performers</h2>
                 <span className="ca-brand-bar-stats">
                   {topAds.length > 0
-                    ? `${topFiltered.length} top ${topPercentile}% from ${topAds.length} total ads across ${selectedTopBrands.size} brand${selectedTopBrands.size !== 1 ? 's' : ''}`
+                    ? `${topFiltered.length} top ${topPercentile}% from ${topDedupedTotal} unique creatives (${topAds.length} total ads deduplicated) across ${selectedTopBrands.size} brand${selectedTopBrands.size !== 1 ? 's' : ''}`
                     : `Select brands and click Analyse to find top performing ads`
                   }
                 </span>

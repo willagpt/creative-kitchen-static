@@ -255,6 +255,14 @@
   padding-left: 8px;
 }
 
+/* ── Top Performers: variant count badge ── */
+.ca-tag-variants {
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
 /* ── Top Performers: empty state ── */
 .ca-empty-top {
   display: flex;
