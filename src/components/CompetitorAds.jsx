@@ -50,7 +50,6 @@ function mapDbAd(ad, pageId, pageName) {
   const videoUrl = ad.video_url || null
   const displayFormat = (ad.display_format || '').toUpperCase()
 
-  // Use display_format from DB if available, otherwise infer from URL
   let isVideo = false
   let creativeType = 'unknown'
   if (displayFormat === 'VIDEO') {
@@ -60,7 +59,6 @@ function mapDbAd(ad, pageId, pageName) {
     isVideo = false
     creativeType = 'image'
   } else if (displayFormat === 'DCO') {
-    // DCO cards can be video or image — check the media URLs
     isVideo = isVideoUrl(mediaUrl) || !!videoUrl
     creativeType = isVideo ? 'video' : 'image'
   } else {
@@ -127,7 +125,6 @@ function mostCommonPageName(rows) {
 // ── Resolve brand name from existing ads or Graph API ──
 async function resolvePageName(pageId, metaToken) {
   // 1. Check existing ads — sample 200 rows to find the most common page_name
-  //    (brands often run ads under influencer/partner names too)
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/competitor_ads?page_id=eq.${pageId}&page_name=not.is.null&select=page_name&limit=200`,
@@ -148,7 +145,7 @@ async function resolvePageName(pageId, metaToken) {
     } catch {}
   }
 
-  // 3. Try Graph API without token (some public pages return name)
+  // 3. Try Graph API without token
   try {
     const r = await fetch(`https://graph.facebook.com/${pageId}?fields=name`)
     if (r.ok) { const d = await r.json(); if (d.name) return d.name }
@@ -179,7 +176,6 @@ async function fetchAllAds(pageId) {
 }
 
 // ── Inline Video Card ──
-// Plays video directly in the grid card. Click to play/pause.
 function InlineVideoCard({ src, onClick }) {
   const wrapRef = useRef(null)
   const vidRef = useRef(null)
@@ -273,13 +269,11 @@ async function fetchFollowedBrands() {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/followed_brands?order=created_at.desc`, { headers: sbReadHeaders })
     if (!res.ok) return []
     const data = await res.json()
-    return data.map(row => (
-      {
-        pageId: row.page_id, pageName: row.page_name, platforms: row.platforms || [],
-        byline: row.byline || '', adCount: row.total_ads || 0, country: row.country || 'GB',
-        lastFetchedAt: row.last_fetched_at || null, thumbnailUrl: row.thumbnail_url || null,
-      }
-    ))
+    return data.map(row => ({
+      pageId: row.page_id, pageName: row.page_name, platforms: row.platforms || [],
+      byline: row.byline || '', adCount: row.total_ads || 0, country: row.country || 'GB',
+      lastFetchedAt: row.last_fetched_at || null, thumbnailUrl: row.thumbnail_url || null,
+    }))
   } catch { return [] }
 }
 
@@ -464,7 +458,10 @@ export default function CompetitorAds() {
   }
 
   async function handleRemoveBrand(pageId) {
-    if (!window.confirm('Remove this brand?')) return
+    const brand = followedBrands.find(b => b.pageId === pageId)
+    const brandName = brand?.pageName || pageId
+    if (!window.confirm(`Remove "${brandName}" from your competitor list?`)) return
+    if (!window.confirm(`Are you sure? This will remove "${brandName}" and all its tracked data from your view. This cannot be undone.`)) return
     await deleteBrand(pageId)
     setFollowedBrands(followedBrands.filter(b => b.pageId !== pageId))
     if (activeBrand?.pageId === pageId) { setActiveBrand(null); setAllAds([]) }
@@ -500,7 +497,7 @@ export default function CompetitorAds() {
 
       {/* Add competitor modal */}
       {showAddForm && (
-        <div className="ca-add-modal-bg" onClick={() => { setShowAddForm(false); setAddInput(''); setAddError(null) }}>
+        <div className="ca-add-modal-bg" onMouseDown={e => { if (e.target === e.currentTarget) { setShowAddForm(false); setAddInput(''); setAddError(null) } }}>
           <div className="ca-add-modal" onClick={e => e.stopPropagation()}>
             <h3>Add Competitor</h3>
             <p className="ca-add-modal-desc">Enter a Facebook Page ID or Ad Library URL</p>
@@ -614,7 +611,6 @@ export default function CompetitorAds() {
                           <span>No preview available</span>
                         </div>
                       )}
-                      {/* Detail overlay for non-video cards */}
                       {!ad.isVideo && (
                         <div className="ca-card-overlay" onClick={() => setModalAd(ad)}>
                           <span className="ca-card-expand">Click to expand</span>
@@ -650,7 +646,7 @@ export default function CompetitorAds() {
 
       {/* Detail modal */}
       {modalAd && (
-        <div className="ca-modal-bg" onClick={() => setModalAd(null)}>
+        <div className="ca-modal-bg" onMouseDown={e => { if (e.target === e.currentTarget) setModalAd(null) }}>
           <div className="ca-modal" onClick={e => e.stopPropagation()}>
             <button className="ca-modal-x" onClick={() => setModalAd(null)}>x</button>
             <div className="ca-modal-media">
