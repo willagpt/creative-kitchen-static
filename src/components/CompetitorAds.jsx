@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import './CompetitorAds.css'
 
 // ── Supabase config ──
@@ -134,6 +134,63 @@ async function deleteBrand(pageId) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/followed_brands?page_id=eq.${pageId}`, { method: 'DELETE', headers: sbHeaders })
     return res.ok
   } catch { return false }
+}
+
+// ── Video thumbnail card with hover-to-play ──
+function VideoCard({ ad }) {
+  const videoRef = useRef(null)
+  const [failed, setFailed] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+
+  const handleMouseOver = useCallback(() => {
+    const v = videoRef.current
+    if (!v) return
+    try { v.play() } catch {}
+  }, [])
+
+  const handleMouseOut = useCallback(() => {
+    const v = videoRef.current
+    if (!v) return
+    try { v.pause(); v.currentTime = 0 } catch {}
+  }, [])
+
+  if (failed || !ad.mediaUrl) {
+    return (
+      <div className="ca-video-placeholder">
+        <div className="ca-video-play-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
+        </div>
+        <div className="ca-video-label">VIDEO</div>
+        <div className="ca-video-title">{ad.adName}</div>
+        {ad.adBody && <div className="ca-video-body">{ad.adBody.slice(0, 80)}{ad.adBody.length > 80 ? '...' : ''}</div>}
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <video
+        ref={videoRef}
+        src={ad.mediaUrl}
+        className="ca-card-video"
+        muted
+        playsInline
+        loop
+        preload="metadata"
+        onLoadedData={() => setLoaded(true)}
+        onError={() => setFailed(true)}
+        onMouseOver={handleMouseOver}
+        onMouseOut={handleMouseOut}
+      />
+      {!loaded && (
+        <div className="ca-video-loading">
+          <div className="ca-video-play-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
+          </div>
+        </div>
+      )}
+    </>
+  )
 }
 
 // ── Component ──
@@ -347,15 +404,7 @@ export default function CompetitorAds() {
                 <div key={ad.adId} className="ca-card" onClick={() => setModalAd(ad)}>
                   <div className="ca-card-media">
                     {ad.isVideo ? (
-                      /* Video cards: styled placeholder, plays in modal */
-                      <div className="ca-video-placeholder">
-                        <div className="ca-video-play-btn">
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
-                        </div>
-                        <div className="ca-video-label">VIDEO</div>
-                        <div className="ca-video-title">{ad.adName}</div>
-                        {ad.adBody && <div className="ca-video-body">{ad.adBody.slice(0, 80)}{ad.adBody.length > 80 ? '...' : ''}</div>}
-                      </div>
+                      <VideoCard ad={ad} />
                     ) : ad.mediaUrl ? (
                       <img src={ad.mediaUrl} alt="" className="ca-card-thumb" loading="lazy"
                         onError={e => { e.target.style.display = 'none'; e.target.parentElement.classList.add('no-media') }} />
@@ -364,6 +413,7 @@ export default function CompetitorAds() {
                         <span>No preview</span>
                       </div>
                     )}
+                    {ad.isVideo && <div className="ca-card-play-badge">&#9654;</div>}
                     <div className="ca-card-overlay">
                       <span className="ca-card-expand">{ad.isVideo ? 'Click to play' : 'Click to expand'}</span>
                     </div>
@@ -371,7 +421,7 @@ export default function CompetitorAds() {
                   <div className="ca-card-body">
                     <div className="ca-card-title">{ad.adName}</div>
                     <div className="ca-card-tags">
-                      <span className={`ca-tag ${ad.isVideo ? 'video' : 'image'}`}>{ad.isVideo ? '▶ video' : 'image'}</span>
+                      <span className={`ca-tag ${ad.isVideo ? 'video' : 'image'}`}>{ad.isVideo ? '\u25B6 video' : 'image'}</span>
                       <span className="ca-tag days">{ad.daysActive}d</span>
                       <span className={`ca-tag status-${ad.status}`}>{ad.status}</span>
                     </div>
