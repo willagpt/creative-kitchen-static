@@ -702,7 +702,7 @@ export default function CompetitorAds() {
             setBatchSummary(statusData.summary)
             const s = statusData.summary || {}
             if (statusData.job?.status === 'step2_running' || statusData.job?.status === 'saving' || statusData.job?.status === 'completed') {
-              setPromptProgress({ current: s.step2_completed || 0, total: s.step1_completed || s.total || 0 })
+              setPromptProgress({ current: s.step2_completed || 0, total: s.total || 0 })
             }
           }
         } catch { /* status poll failed, not critical */ }
@@ -851,7 +851,15 @@ export default function CompetitorAds() {
       if (data.error) throw new Error(data.error)
 
       setBatchJobId(data.job_id)
-      setBatchSummary({ total: data.total_images, step1_completed: 0, step2_completed: 0 })
+      const reusedS1 = data.reused_step1 || 0
+      const reusedS2 = data.reused_step2 || 0
+      setBatchSummary({
+        total: data.total_images,
+        step1_completed: reusedS1,
+        step2_completed: reusedS2,
+        reused_step1: reusedS1,
+        reused_step2: reusedS2,
+      })
 
       // Drive processing loop (frontend calls process_next repeatedly)
       driveProcessing(data.job_id)
@@ -1355,6 +1363,9 @@ export default function CompetitorAds() {
                       {analysisStep === 1 ? (
                         <>
                           <p>Step 1 — Vision analysis: {batchSummary?.step1_completed || 0} / {batchSummary?.total || '?'} images</p>
+                          {(batchSummary?.reused_step1 > 0) && (
+                            <p className="ca-analysis-loading-sub" style={{ color: '#4ade80' }}>Reused {batchSummary.reused_step1} cached {batchSummary.reused_step1 === 1 ? 'analysis' : 'analyses'} from previous runs{batchSummary?.reused_step2 > 0 ? ` (${batchSummary.reused_step2} prompts also cached)` : ''}</p>
+                          )}
                           <p className="ca-analysis-loading-sub">Sonnet is performing forensic visual analysis on each image in batches of 10. Extracting layout grids, typography specs, colour palettes with hex codes, camera angles, and lighting setups.</p>
                           {batchSummary?.total > 15 && (
                             <p className="ca-analysis-loading-sub" style={{ opacity: 0.6 }}>Processing {batchSummary.total} images in {Math.ceil(batchSummary.total / 10)} batches. This may take a few minutes. You can close this tab and come back.</p>
