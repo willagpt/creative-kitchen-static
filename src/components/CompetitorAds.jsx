@@ -390,7 +390,7 @@ export default function CompetitorAds() {
     setHistoryLoading(true)
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/competitive_analyses?select=id,created_at,brands_analysed,percentile,type_filter,ads_sent,model_used,status&order=created_at.desc&limit=20`, {
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+        headers: sbReadHeaders
       })
       if (res.ok) setPastAnalyses(await res.json())
     } catch (e) { console.error('Failed to fetch analysis history', e) }
@@ -403,7 +403,7 @@ export default function CompetitorAds() {
     setAnalysisError(null)
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/competitive_analyses?id=eq.${id}&select=*`, {
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+        headers: sbReadHeaders
       })
       if (!res.ok) throw new Error('Failed to load analysis')
       const rows = await res.json()
