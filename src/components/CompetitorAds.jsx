@@ -559,7 +559,7 @@ export default function CompetitorAds() {
     setAnalysisTab('overview')
 
     try {
-      const payload = adsToAnalyse.slice(0, 12).map(ad => ({
+      const payload = adsToAnalyse.map(ad => ({
         imageUrl: ad.mediaUrl || ad.thumbnailUrl || '',
         title: ad.adName || '',
         body: ad.adBody || '',
@@ -1011,9 +1011,9 @@ export default function CompetitorAds() {
                     disabled={analysisLoading || topFiltered.filter(a => !a.isVideo && a.hasMedia).length === 0}
                   >
                     {analysisLoading ? (
-                      <><span className="ca-spin-sm"></span> Analysing {topFiltered.filter(a => !a.isVideo && a.hasMedia).slice(0, 12).length} ads with Claude Vision...</>
+                      <><span className="ca-spin-sm"></span> Analysing {topFiltered.filter(a => !a.isVideo && a.hasMedia).length} ads with Claude Vision...</>
                     ) : (
-                      <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Analyse top creatives with AI ({Math.min(12, topFiltered.filter(a => !a.isVideo && a.hasMedia).length)} images)</>
+                      <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Analyse top creatives with AI ({topFiltered.filter(a => !a.isVideo && a.hasMedia).length} images)</>
                     )}
                   </button>
                   {analysisResult && !showAnalysis && (
@@ -1035,7 +1035,7 @@ export default function CompetitorAds() {
                   {analysisLoading && (
                     <div className="ca-analysis-loading">
                       <div className="ca-spin"></div>
-                      <p>Claude is analysing {Math.min(12, topFiltered.filter(a => !a.isVideo && a.hasMedia).length)} top-performing competitor ads...</p>
+                      <p>Claude is analysing {topFiltered.filter(a => !a.isVideo && a.hasMedia).length} top-performing competitor ads...</p>
                       <p className="ca-analysis-loading-sub">Step 1: Sonnet analyses the images for patterns and themes. Step 2: Opus writes detailed Chefly creative briefs. This takes 60–90 seconds.</p>
                     </div>
                   )}
