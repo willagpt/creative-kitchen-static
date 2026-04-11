@@ -43,8 +43,15 @@ function isVideoUrl(url) {
   return lower.includes('.mp4') || lower.includes('.mov') || lower.includes('.webm')
 }
 
+function isSnapshotUrl(url) {
+  if (!url) return false
+  return url.includes('facebook.com/ads/archive/render_ad')
+}
+
 function mapDbAd(ad, pageId, pageName) {
-  const mediaUrl = ad.thumbnail_url || null
+  const thumbnailUrl = ad.thumbnail_url || null
+  const snapshotUrl = ad.snapshot_url || null
+  const mediaUrl = thumbnailUrl || null
   const isVideo = isVideoUrl(mediaUrl)
   return {
     adId: ad.id,
@@ -56,7 +63,9 @@ function mapDbAd(ad, pageId, pageName) {
     pageName: ad.page_name || pageName,
     creativeType: isVideo ? 'video' : 'image',
     mediaUrl,
+    snapshotUrl,
     isVideo,
+    hasIframeFallback: !thumbnailUrl && !!snapshotUrl && isSnapshotUrl(snapshotUrl),
     impressionsText: fmtImpressions(ad.impressions_lower, ad.impressions_upper),
     impressionsLower: ad.impressions_lower || 0,
     impressionsUpper: ad.impressions_upper || 0,
@@ -136,27 +145,36 @@ async function deleteBrand(pageId) {
   } catch { return false }
 }
 
-// ── Video thumbnail card with hover-to-play ──
-function VideoCard({ ad }) {
+// ── Video card with inline playback ──
+function VideoCard({ ad, onExpand }) {
   const videoRef = useRef(null)
   const [failed, setFailed] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const [playing, setPlaying] = useState(false)
 
-  const handleMouseOver = useCallback(() => {
+  const togglePlay = useCallback((e) => {
+    e.stopPropagation()
     const v = videoRef.current
     if (!v) return
-    try { v.play() } catch {}
+    if (v.paused) {
+      v.play().then(() => setPlaying(true)).catch(() => {})
+    } else {
+      v.pause()
+      setPlaying(false)
+    }
   }, [])
 
   const handleMouseOut = useCallback(() => {
-    const v = videoRef.current
-    if (!v) return
-    try { v.pause(); v.currentTime = 0 } catch {}
-  }, [])
+    // Only auto-pause on mouse out if not actively playing via click
+    if (!playing) {
+      const v = videoRef.current
+      if (v) { try { v.pause(); v.currentTime = 0 } catch {} }
+    }
+  }, [playing])
 
   if (failed || !ad.mediaUrl) {
     return (
-      <div className="ca-video-placeholder">
+      <div className="ca-video-placeholder" onClick={onExpand}>
         <div className="ca-video-play-btn">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
         </div>
@@ -172,24 +190,61 @@ function VideoCard({ ad }) {
       <video
         ref={videoRef}
         src={ad.mediaUrl}
-        className="ca-card-video"
-        muted
+        className={`ca-card-video ${playing ? 'is-playing' : ''}`}
+        muted={!playing}
         playsInline
         loop
         preload="metadata"
         onLoadedData={() => setLoaded(true)}
         onError={() => setFailed(true)}
-        onMouseOver={handleMouseOver}
         onMouseOut={handleMouseOut}
+        onEnded={() => setPlaying(false)}
+        onClick={togglePlay}
       />
       {!loaded && (
-        <div className="ca-video-loading">
+        <div className="ca-video-loading" onClick={togglePlay}>
           <div className="ca-video-play-btn">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
           </div>
         </div>
       )}
+      {loaded && !playing && (
+        <div className="ca-video-play-overlay" onClick={togglePlay}>
+          <div className="ca-video-play-btn large">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
+          </div>
+        </div>
+      )}
+      {playing && (
+        <button className="ca-video-expand-btn" onClick={(e) => { e.stopPropagation(); onExpand(e) }} title="Expand">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" /></svg>
+        </button>
+      )}
     </>
+  )
+}
+
+// ── Iframe fallback card for snapshot URLs ──
+function IframeCard({ ad }) {
+  const [loadFailed, setLoadFailed] = useState(false)
+
+  if (loadFailed) {
+    return (
+      <div className="ca-no-preview">
+        <span>Preview unavailable</span>
+      </div>
+    )
+  }
+
+  return (
+    <iframe
+      src={ad.snapshotUrl}
+      className="ca-card-iframe"
+      sandbox="allow-scripts allow-same-origin"
+      loading="lazy"
+      title="Ad preview"
+      onError={() => setLoadFailed(true)}
+    />
   )
 }
 
@@ -314,6 +369,12 @@ export default function CompetitorAds() {
     if (activeBrand?.pageId === pageId) { setActiveBrand(null); setAllAds([]) }
   }
 
+  function handleCardClick(ad, e) {
+    // For video cards, don't open modal — video plays inline via VideoCard
+    if (ad.isVideo) return
+    setModalAd(ad)
+  }
+
   return (
     <div className="ca-container">
       <div className="ca-header">
@@ -401,22 +462,26 @@ export default function CompetitorAds() {
           {!isLoading && filteredAds.length > 0 && (
             <div className="ca-grid">
               {filteredAds.map(ad => (
-                <div key={ad.adId} className="ca-card" onClick={() => setModalAd(ad)}>
+                <div key={ad.adId} className="ca-card" onClick={(e) => handleCardClick(ad, e)}>
                   <div className="ca-card-media">
                     {ad.isVideo ? (
-                      <VideoCard ad={ad} />
+                      <VideoCard ad={ad} onExpand={(e) => { e.stopPropagation(); setModalAd(ad) }} />
                     ) : ad.mediaUrl ? (
-                      <img src={ad.mediaUrl} alt="" className="ca-card-thumb" loading="lazy"
-                        onError={e => { e.target.style.display = 'none'; e.target.parentElement.classList.add('no-media') }} />
+                      <>
+                        <img src={ad.mediaUrl} alt="" className="ca-card-thumb" loading="lazy"
+                          onError={e => { e.target.style.display = 'none'; e.target.parentElement.classList.add('no-media') }} />
+                        <div className="ca-card-overlay">
+                          <span className="ca-card-expand">Click to expand</span>
+                        </div>
+                      </>
+                    ) : ad.hasIframeFallback ? (
+                      <IframeCard ad={ad} />
                     ) : (
                       <div className="ca-no-preview">
                         <span>No preview</span>
                       </div>
                     )}
                     {ad.isVideo && <div className="ca-card-play-badge">&#9654;</div>}
-                    <div className="ca-card-overlay">
-                      <span className="ca-card-expand">{ad.isVideo ? 'Click to play' : 'Click to expand'}</span>
-                    </div>
                   </div>
                   <div className="ca-card-body">
                     <div className="ca-card-title">{ad.adName}</div>
@@ -446,6 +511,8 @@ export default function CompetitorAds() {
                 <video src={modalAd.mediaUrl} controls playsInline autoPlay className="ca-modal-video" />
               ) : modalAd.mediaUrl ? (
                 <img src={modalAd.mediaUrl} alt="" className="ca-modal-img" />
+              ) : modalAd.hasIframeFallback ? (
+                <iframe src={modalAd.snapshotUrl} className="ca-modal-iframe" sandbox="allow-scripts allow-same-origin" title="Ad preview" />
               ) : null}
             </div>
             <div className="ca-modal-detail">
