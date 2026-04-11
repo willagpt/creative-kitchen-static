@@ -48,6 +48,8 @@ function isVideoUrl(url) {
 function mapDbAd(ad, pageId, pageName) {
   const mediaUrl = ad.thumbnail_url || null
   const isVideo = isVideoUrl(mediaUrl)
+  const hasMedia = !!mediaUrl
+  const creativeType = !hasMedia ? 'unknown' : isVideo ? 'video' : 'image'
   return {
     adId: ad.id,
     adName: ad.creative_title || 'Untitled Ad',
@@ -56,9 +58,10 @@ function mapDbAd(ad, pageId, pageName) {
     adDescription: ad.creative_description || '',
     pageId: ad.page_id || pageId,
     pageName: ad.page_name || pageName,
-    creativeType: isVideo ? 'video' : 'image',
+    creativeType,
     mediaUrl,
     isVideo,
+    hasMedia,
     impressionsText: fmtImpressions(ad.impressions_lower, ad.impressions_upper),
     impressionsLower: ad.impressions_lower || 0,
     impressionsUpper: ad.impressions_upper || 0,
@@ -230,7 +233,7 @@ export default function CompetitorAds() {
   const filteredAds = (() => {
     let ads = [...allAds]
     if (typeFilter === 'video') ads = ads.filter(a => a.isVideo)
-    if (typeFilter === 'image') ads = ads.filter(a => !a.isVideo)
+    if (typeFilter === 'image') ads = ads.filter(a => !a.isVideo && a.hasMedia)
     if (statusFilter === 'active') ads = ads.filter(a => a.status === 'active')
     if (statusFilter === 'ended') ads = ads.filter(a => a.status === 'ended')
     if (searchText.trim()) {
@@ -262,7 +265,7 @@ export default function CompetitorAds() {
   const remaining = filteredAds.length - showCount
 
   const videoCount = allAds.filter(a => a.isVideo).length
-  const imageCount = allAds.filter(a => !a.isVideo).length
+  const imageCount = allAds.filter(a => !a.isVideo && a.hasMedia).length
   const activeCount = allAds.filter(a => a.status === 'active').length
 
   async function fetchBrandAds(pageId, pageName) {
