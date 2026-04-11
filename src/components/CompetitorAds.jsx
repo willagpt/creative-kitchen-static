@@ -353,6 +353,7 @@ export default function CompetitorAds() {
   const [analysisError, setAnalysisError] = useState(null)
   const [showAnalysis, setShowAnalysis] = useState(false)
   const [analysisTab, setAnalysisTab] = useState('overview') // overview | prompts | ads
+  const [analysisStep, setAnalysisStep] = useState(0) // 0=idle, 1=vision, 2=prompts
 
   const hasKey = apiKey.length > 20
 
@@ -557,6 +558,7 @@ export default function CompetitorAds() {
     setAnalysisResult(null)
     setShowAnalysis(true)
     setAnalysisTab('overview')
+    setAnalysisStep(1)
 
     try {
       const payload = adsToAnalyse.map(ad => ({
@@ -569,14 +571,33 @@ export default function CompetitorAds() {
         isVideo: false,
       }))
 
-      // Send metadata for database tracking
       const selectedBrandNames = followedBrands.filter(b => selectedTopBrands.has(b.pageId)).map(b => b.pageName)
       const selectedPageIds = [...selectedTopBrands]
 
-      const res = await fetch(ANALYSE_FN_URL, {
+      // ── STEP 1: Sonnet vision analysis ──
+      const res1 = await fetch(ANALYSE_FN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ads: payload, step: 1 }),
+      })
+
+      if (!res1.ok) {
+        const errBody = await res1.json().catch(() => ({}))
+        throw new Error(errBody.error || `Step 1 failed (${res1.status})`)
+      }
+
+      const data1 = await res1.json()
+      if (data1.error) throw new Error(data1.error)
+
+      // ── STEP 2: Opus prompt writing ──
+      setAnalysisStep(2)
+
+      const res2 = await fetch(ANALYSE_FN_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          step: 2,
+          step1_result: data1.analysis,
           ads: payload,
           brands_analysed: selectedBrandNames,
           page_ids: selectedPageIds,
@@ -585,20 +606,20 @@ export default function CompetitorAds() {
         }),
       })
 
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}))
-        throw new Error(errBody.error || `Analysis failed (${res.status})`)
+      if (!res2.ok) {
+        const errBody = await res2.json().catch(() => ({}))
+        throw new Error(errBody.error || `Step 2 failed (${res2.status})`)
       }
 
-      const data = await res.json()
-      if (data.error) throw new Error(data.error)
-      if (data.analysis?.error) throw new Error(data.analysis.error)
+      const data2 = await res2.json()
+      if (data2.error) throw new Error(data2.error)
 
-      setAnalysisResult({ ...data.analysis, analysis_id: data.analysis_id, models: data.models })
+      setAnalysisResult({ ...data2.analysis, analysis_id: data2.analysis_id, models: data2.models })
     } catch (err) {
       setAnalysisError(err.message)
     } finally {
       setAnalysisLoading(false)
+      setAnalysisStep(0)
     }
   }
 
@@ -1011,7 +1032,7 @@ export default function CompetitorAds() {
                     disabled={analysisLoading || topFiltered.filter(a => !a.isVideo && a.hasMedia).length === 0}
                   >
                     {analysisLoading ? (
-                      <><span className="ca-spin-sm"></span> Analysing {topFiltered.filter(a => !a.isVideo && a.hasMedia).length} ads with Claude Vision...</>
+                      <><span className="ca-spin-sm"></span> {analysisStep === 1 ? 'Step 1/2: Sonnet analysing images...' : 'Step 2/2: Opus writing prompts...'}</>
                     ) : (
                       <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Analyse top creatives with AI ({topFiltered.filter(a => !a.isVideo && a.hasMedia).length} images)</>
                     )}
@@ -1035,8 +1056,17 @@ export default function CompetitorAds() {
                   {analysisLoading && (
                     <div className="ca-analysis-loading">
                       <div className="ca-spin"></div>
-                      <p>Claude is analysing {topFiltered.filter(a => !a.isVideo && a.hasMedia).length} top-performing competitor ads...</p>
-                      <p className="ca-analysis-loading-sub">Step 1: Sonnet analyses the images for patterns and themes. Step 2: Opus writes detailed Chefly creative briefs. This takes 60–90 seconds.</p>
+                      {analysisStep === 1 ? (
+                        <>
+                          <p>Step 1 of 2 — Sonnet is analysing {topFiltered.filter(a => !a.isVideo && a.hasMedia).length} competitor images...</p>
+                          <p className="ca-analysis-loading-sub">Extracting visual patterns, themes, personas, and creative pillars. Usually 60–90 seconds.</p>
+                        </>
+                      ) : (
+                        <>
+                          <p>Step 2 of 2 — Opus is writing detailed Chefly creative briefs...</p>
+                          <p className="ca-analysis-loading-sub">Translating competitor insights into 5–7 production-ready image prompts. Usually 60–90 seconds.</p>
+                        </>
+                      )}
                     </div>
                   )}
 
