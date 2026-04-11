@@ -340,7 +340,7 @@ export default function CompetitorAds() {
   const [topAds, setTopAds] = useState([])
   const [topLoading, setTopLoading] = useState(false)
   const [topError, setTopError] = useState(null)
-  const [topPercentile, setTopPercentile] = useState(10)
+  const [topPercentile, setTopPercentile] = useState(2.5)
   const [topTypeFilter, setTopTypeFilter] = useState('all')
   const [topSortBy, setTopSortBy] = useState('days')
   const [topShowCount, setTopShowCount] = useState(GRID_PAGE)
@@ -844,7 +844,7 @@ export default function CompetitorAds() {
                       <button key={val} className={`ca-pill ${topTypeFilter === val ? 'active' : ''}`} onClick={() => setTopTypeFilter(val)}>{label}</button>
                     ))}
                     <span className="ca-filter-sep">|</span>
-                    {[5, 10, 20].map(pct => (
+                    {[1, 2.5, 5, 10, 20].map(pct => (
                       <button key={pct} className={`ca-pill ${topPercentile === pct ? 'active' : ''}`} onClick={() => setTopPercentile(pct)}>Top {pct}%</button>
                     ))}
                   </div>
