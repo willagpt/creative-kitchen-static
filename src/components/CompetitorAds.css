@@ -135,6 +135,11 @@
 .ca-date-clear:hover { border-color: #ef4444; color: #f87171; }
 .ca-date-count { font-size: 12px; color: #6366f1; font-weight: 500; }
 
+/* ── Showing counter ── */
+.ca-showing {
+  font-size: 12px; color: #52525b; margin-bottom: 12px; font-weight: 500;
+}
+
 /* ── Grid ── */
 .ca-grid {
   display: grid;
@@ -155,130 +160,25 @@
 /* Image thumbnails: natural aspect ratio */
 .ca-card-thumb { width: 100%; height: auto; display: block; }
 
-/* Video thumbnails: show first frame, natural aspect ratio */
-.ca-card-video {
+/* Image fallback (shown when img fails to load) */
+.ca-img-fallback {
   width: 100%;
-  height: auto;
-  display: block;
-  min-height: 160px;
-  object-fit: contain;
-  background: #0a0a10;
-  cursor: pointer;
-}
-
-.ca-card-video.is-playing {
-  cursor: pointer;
-}
-
-/* Video play badge (top-left corner) */
-.ca-card-play-badge {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: rgba(0, 0, 0, 0.7);
-  color: #fff;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: flex;
+  min-height: 180px;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
-  backdrop-filter: blur(4px);
-  pointer-events: none;
-  z-index: 2;
+  gap: 8px;
+  background: linear-gradient(135deg, #14141a 0%, #1a1a24 100%);
+  text-align: center;
+  padding: 20px;
+  box-sizing: border-box;
 }
-
-/* Video play overlay (centered play button when paused) */
-.ca-video-play-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.3);
-  cursor: pointer;
-  z-index: 3;
-  transition: background 0.15s;
-}
-
-.ca-video-play-overlay:hover {
-  background: rgba(0, 0, 0, 0.45);
-}
-
-.ca-video-play-btn.large {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: rgba(99, 102, 241, 0.3);
-  border: 2px solid rgba(99, 102, 241, 0.5);
-  color: #a5b4fc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.ca-video-play-overlay:hover .ca-video-play-btn.large {
-  background: rgba(99, 102, 241, 0.5);
-  border-color: #818cf8;
-  transform: scale(1.08);
-}
-
-/* Video expand button (appears while playing) */
-.ca-video-expand-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #e4e4e7;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 5;
-  transition: all 0.15s;
-  backdrop-filter: blur(4px);
-}
-
-.ca-video-expand-btn:hover {
-  background: rgba(99, 102, 241, 0.6);
-  border-color: #818cf8;
-}
-
-/* Video loading overlay (while metadata loads) */
-.ca-video-loading {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(145deg, #1a1a2e 0%, #16162a 40%, #121228 100%);
-  min-height: 200px;
-  cursor: pointer;
-}
-
-/* Iframe fallback card (for snapshot URLs) */
-.ca-card-iframe {
-  width: 100%;
-  min-height: 300px;
-  border: none;
-  display: block;
-  background: #0e0e14;
-  pointer-events: none;
-}
-
-/* Modal iframe */
-.ca-modal-iframe {
-  width: 100%;
-  min-height: 400px;
-  border: none;
-  display: block;
-  background: #0a0a0f;
+.ca-fallback-text {
+  font-size: 13px;
+  color: #52525b;
+  line-height: 1.4;
+  max-height: 40px;
+  overflow: hidden;
 }
 
 /* No preview fallback */
@@ -288,7 +188,7 @@
 }
 .ca-card-media.no-media { min-height: 180px; display: flex; align-items: center; justify-content: center; }
 
-/* ── Video placeholder fallback (when video fails to load) ── */
+/* ── Video placeholder (styled card for video ads) ── */
 .ca-video-placeholder {
   width: 100%;
   min-height: 260px;
@@ -343,7 +243,7 @@
   overflow: hidden;
 }
 
-/* Hover overlay (image cards only now) */
+/* Hover overlay */
 .ca-card-overlay {
   position: absolute; inset: 0; background: rgba(0, 0, 0, 0.5);
   display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; z-index: 1;
@@ -364,6 +264,28 @@
 .ca-tag.days { background: rgba(251, 191, 36, 0.12); color: #fbbf24; }
 .ca-tag.status-active { background: rgba(34, 197, 94, 0.12); color: #4ade80; }
 .ca-tag.status-ended { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+
+/* ── Load More ── */
+.ca-load-more {
+  display: block;
+  width: 100%;
+  margin: 24px 0;
+  padding: 14px;
+  background: #1a1a22;
+  border: 1px solid #2a2a34;
+  border-radius: 10px;
+  color: #a0a0b0;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.ca-load-more:hover {
+  background: #22222e;
+  border-color: #6366f1;
+  color: #e4e4e7;
+}
 
 /* ── Modal ── */
 .ca-modal-bg {
