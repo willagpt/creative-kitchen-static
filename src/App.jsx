@@ -135,7 +135,7 @@ export default function App() {
 
       <main className="container">
         {tab === 'competitors' && (
-          <CompetitorAds />
+          <CompetitorAds onNavigate={setTab} onAdLibraryRefresh={loadAds} />
         )}
 
         {tab === 'gallery' && (

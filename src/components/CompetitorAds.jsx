@@ -314,7 +314,7 @@ async function deleteBrand(pageId) {
 }
 
 // ── Component ──
-export default function CompetitorAds() {
+export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
   const [apiKey, setApiKey] = useState(localStorage.getItem('metaAdLibraryToken') || '')
   const [allAds, setAllAds] = useState([])
   const [isLoading, setIsLoading] = useState(false)
@@ -640,110 +640,124 @@ export default function CompetitorAds() {
   // Stop processing on unmount
   useEffect(() => { return () => { pollRef.current = false } }, [])
 
+  // Background status poller: runs every 5s independently of process_next
+  function startStatusPoller(jobId) {
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(BATCH_FN_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'status', job_id: jobId }),
+        })
+        if (res.ok) {
+          const d = await res.json()
+          setBatchStatus(d.job)
+          setBatchImages(d.images || [])
+          setBatchSummary(d.summary)
+          const s = d.summary || {}
+          if (d.job?.status === 'step2_running' || d.job?.status === 'saving' || d.job?.status === 'completed') {
+            setPromptProgress({ current: s.step2_completed || 0, total: s.total || 0 })
+          }
+        }
+      } catch { /* swallow */ }
+    }, 5000)
+    return interval
+  }
+
   // Drive processing loop: call process_next repeatedly until job is done
   async function driveProcessing(jobId) {
     pollRef.current = true // flag to allow cancellation
     let consecutiveErrors = 0
 
-    while (pollRef.current) {
-      try {
-        // Call process_next to do one unit of work
-        const res = await fetch(BATCH_FN_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'process_next', job_id: jobId }),
-        })
+    // Start background status poller so progress updates every 5s,
+    // even while process_next is blocking on a long Claude API call
+    const statusInterval = startStatusPoller(jobId)
 
-        if (!res.ok) {
-          consecutiveErrors++
-          if (consecutiveErrors >= 3) {
-            setAnalysisError('Processing failed after multiple retries')
-            setAnalysisLoading(false)
-            setAnalysisStep(0)
-            return
-          }
-          await new Promise(r => setTimeout(r, 2000))
-          continue
-        }
-
-        const data = await res.json()
-        if (data.error) {
-          consecutiveErrors++
-          if (consecutiveErrors >= 3) {
-            setAnalysisError(data.error)
-            setAnalysisLoading(false)
-            setAnalysisStep(0)
-            return
-          }
-          await new Promise(r => setTimeout(r, 2000))
-          continue
-        }
-
-        consecutiveErrors = 0 // reset on success
-
-        // Update UI based on current phase
-        if (data.phase === 'step1_running') {
-          setAnalysisStep(1)
-        } else if (data.phase === 'step1_done' || data.phase === 'step2_running') {
-          setAnalysisStep(2)
-        } else if (data.phase === 'saving') {
-          setAnalysisStep(3)
-        }
-
-        // Poll status for progress numbers
+    try {
+      while (pollRef.current) {
         try {
-          const statusRes = await fetch(BATCH_FN_URL, {
+          // Call process_next to do one unit of work
+          const res = await fetch(BATCH_FN_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'status', job_id: jobId }),
+            body: JSON.stringify({ action: 'process_next', job_id: jobId }),
           })
-          if (statusRes.ok) {
-            const statusData = await statusRes.json()
-            setBatchStatus(statusData.job)
-            setBatchImages(statusData.images || [])
-            setBatchSummary(statusData.summary)
-            const s = statusData.summary || {}
-            if (statusData.job?.status === 'step2_running' || statusData.job?.status === 'saving' || statusData.job?.status === 'completed') {
-              setPromptProgress({ current: s.step2_completed || 0, total: s.total || 0 })
+
+          if (!res.ok) {
+            consecutiveErrors++
+            if (consecutiveErrors >= 3) {
+              setAnalysisError('Processing failed after multiple retries')
+              setAnalysisLoading(false)
+              setAnalysisStep(0)
+              return
             }
+            await new Promise(r => setTimeout(r, 2000))
+            continue
           }
-        } catch { /* status poll failed, not critical */ }
 
-        // Job finished
-        if (data.phase === 'completed') {
-          await loadBatchResults(jobId)
-          return
-        }
+          const data = await res.json()
+          if (data.error) {
+            consecutiveErrors++
+            if (consecutiveErrors >= 3) {
+              setAnalysisError(data.error)
+              setAnalysisLoading(false)
+              setAnalysisStep(0)
+              return
+            }
+            await new Promise(r => setTimeout(r, 2000))
+            continue
+          }
 
-        if (data.phase === 'failed') {
-          setAnalysisError(data.error || 'Batch job failed. Check edge function logs for details.')
-          setAnalysisLoading(false)
-          setAnalysisStep(0)
-          return
-        }
+          consecutiveErrors = 0 // reset on success
 
-        // No work to do (already completed)
-        if (data.message === 'No work to do') {
+          // Update UI based on current phase
+          if (data.phase === 'step1_running') {
+            setAnalysisStep(1)
+          } else if (data.phase === 'step1_done' || data.phase === 'step2_running') {
+            setAnalysisStep(2)
+          } else if (data.phase === 'saving') {
+            setAnalysisStep(3)
+          }
+
+          // Job finished
           if (data.phase === 'completed') {
             await loadBatchResults(jobId)
-          } else {
-            setAnalysisError(`Job in unexpected state: ${data.phase}`)
+            return
+          }
+
+          if (data.phase === 'failed') {
+            setAnalysisError(data.error || 'Batch job failed. Check edge function logs for details.')
             setAnalysisLoading(false)
             setAnalysisStep(0)
+            return
           }
-          return
-        }
 
-      } catch (err) {
-        consecutiveErrors++
-        if (consecutiveErrors >= 3) {
-          setAnalysisError('Network error during processing. You can retry.')
-          setAnalysisLoading(false)
-          setAnalysisStep(0)
-          return
+          // No work to do (already completed)
+          if (data.message === 'No work to do') {
+            if (data.phase === 'completed') {
+              await loadBatchResults(jobId)
+            } else {
+              setAnalysisError(`Job in unexpected state: ${data.phase}`)
+              setAnalysisLoading(false)
+              setAnalysisStep(0)
+            }
+            return
+          }
+
+        } catch (err) {
+          consecutiveErrors++
+          if (consecutiveErrors >= 3) {
+            setAnalysisError('Network error during processing. You can retry.')
+            setAnalysisLoading(false)
+            setAnalysisStep(0)
+            return
+          }
+          await new Promise(r => setTimeout(r, 3000))
         }
-        await new Promise(r => setTimeout(r, 3000))
       }
+    } finally {
+      // Always clean up the background poller
+      clearInterval(statusInterval)
     }
   }
 
@@ -983,6 +997,40 @@ export default function CompetitorAds() {
     { setModalAd(ad); setVariantIndex(0) }
   }
 
+  // Save an ad to the saved_ads table (Ad Library page)
+  async function saveToAdLibrary(variant) {
+    try {
+      const body = {
+        advertiser_name: variant.pageName || '',
+        ad_copy: [variant.adName, variant.adBody].filter(Boolean).join('\n'),
+        image_url: variant.mediaUrl || '',
+        video_url: variant.videoUrl || null,
+        media_type: variant.isVideo ? 'video' : 'image',
+        library_id: variant.adId || `foreplay_${Date.now()}`,
+        platform: 'facebook',
+        started_running: variant.rawStartDate || null,
+        page_url: variant.url || '',
+        metadata: {
+          source: 'competitor_ads',
+          days_active: variant.daysActive,
+          display_format: variant.displayFormat,
+          card_index: variant.cardIndex,
+          status: variant.status,
+          capturedAt: new Date().toISOString(),
+        },
+      }
+      await fetch(`${SUPABASE_URL}/rest/v1/saved_ads`, {
+        method: 'POST',
+        headers: sbHeaders,
+        body: JSON.stringify(body),
+      })
+      // Refresh Ad Library data so it's ready when they switch tabs
+      if (onAdLibraryRefresh) onAdLibraryRefresh()
+    } catch (err) {
+      console.error('Failed to save to Ad Library:', err)
+    }
+  }
+
   function addToLibraryQueue(ad) {
     const variants = ad.variants || [ad]
     const seen = new Set()
@@ -996,6 +1044,8 @@ export default function CompetitorAds() {
       const existingIds = new Set(prev.map(a => a.adId + (a.cardIndex || '')))
       const newAds = unique.filter(v => !existingIds.has(v.adId + (v.cardIndex || '')))
       if (newAds.length === 0) return prev
+      // Also save each new ad to the Ad Library (saved_ads table)
+      newAds.forEach(v => saveToAdLibrary(v))
       return [...prev, ...newAds]
     })
   }
@@ -1004,6 +1054,8 @@ export default function CompetitorAds() {
     setLibraryQueue(prev => {
       const key = variant.adId + (variant.cardIndex || '')
       if (prev.some(a => (a.adId + (a.cardIndex || '')) === key)) return prev
+      // Also save to the Ad Library (saved_ads table)
+      saveToAdLibrary(variant)
       return [...prev, variant]
     })
   }
@@ -1257,54 +1309,6 @@ export default function CompetitorAds() {
         <main className="ca-main">
           {viewMode === 'library' && (
             <>
-              {/* Curated picks from Top Performers */}
-              {libraryQueue.length > 0 && (
-                <div className="ca-curated-section">
-                  <div className="ca-curated-header">
-                    <h3>Curated picks ({libraryQueue.length})</h3>
-                    <p className="ca-curated-sub">Selected from Top Performers. Run analysis on these or browse below.</p>
-                    <div className="ca-curated-actions">
-                      <button className="ca-btn-analyse ca-btn-analyse-sm" onClick={() => {
-                        // Run analysis on just the curated queue
-                        setViewMode('top')
-                        // For now, show them they can analyse from top performers
-                      }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                        Analyse these
-                      </button>
-                      <button className="ca-btn-queue-clear" onClick={() => setLibraryQueue([])}>Clear all</button>
-                    </div>
-                  </div>
-                  <div className="ca-grid">
-                    {libraryQueue.map(ad => (
-                      <div key={ad.adId + '-' + (ad.cardIndex || '') + '-q'} className="ca-card ca-card-curated">
-                        <div className="ca-card-media">
-                          {ad.mediaUrl && (
-                            <div onClick={() => { setModalAd(ad); setVariantIndex(0) }}>
-                              <img src={ad.mediaUrl} alt="" className="ca-card-thumb" loading="lazy" onError={handleImgError} />
-                            </div>
-                          )}
-                          <button
-                            className="ca-card-remove-lib"
-                            onClick={(e) => { e.stopPropagation(); setLibraryQueue(prev => prev.filter(a => (a.adId + (a.cardIndex || '')) !== (ad.adId + (ad.cardIndex || '')))) }}
-                            title="Remove from curated"
-                          >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                          </button>
-                        </div>
-                        <div className="ca-card-body" onClick={() => { setModalAd(ad); setVariantIndex(0) }}>
-                          <div className="ca-card-title">{ad.adName}</div>
-                          <div className="ca-card-tags">
-                            <span className="ca-tag ca-tag-brand">{ad.pageName}</span>
-                            <span className="ca-tag days">{ad.daysActive}d</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {activeBrand && (
                 <div className="ca-brand-bar">
                   <h2 className="ca-brand-bar-name">{activeBrand.pageName}</h2>
@@ -1440,6 +1444,14 @@ export default function CompetitorAds() {
                   )}
                   <button
                     className="ca-btn-history"
+                    onClick={() => { if (onNavigate) onNavigate('gallery') }}
+                    title="View saved ads in the Ad Library"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                    Ad Library
+                  </button>
+                  <button
+                    className="ca-btn-history"
                     onClick={() => { setShowHistory(!showHistory); if (!showHistory && !pastAnalyses.length) fetchAnalysisHistory() }}
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -1484,8 +1496,8 @@ export default function CompetitorAds() {
                     <span>{libraryQueue.length} {libraryQueue.length === 1 ? 'ad' : 'ads'} selected for Ad Library</span>
                   </div>
                   <div className="ca-library-queue-actions">
-                    <button className="ca-btn-queue-view" onClick={() => { setViewMode('library'); setSelectedBrand(null) }}>
-                      View in Library
+                    <button className="ca-btn-queue-view" onClick={() => { if (onNavigate) onNavigate('gallery') }}>
+                      Open Ad Library
                     </button>
                     <button className="ca-btn-queue-clear" onClick={() => setLibraryQueue([])}>
                       Clear
