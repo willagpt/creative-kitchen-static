@@ -354,6 +354,7 @@ export default function CompetitorAds() {
   const [showAnalysis, setShowAnalysis] = useState(false)
   const [analysisTab, setAnalysisTab] = useState('overview') // overview | prompts | ads
   const [analysisStep, setAnalysisStep] = useState(0) // 0=idle, 1=vision, 2=prompts
+  const [variantIndex, setVariantIndex] = useState(0) // cycling through DCO variants in modal
 
   const hasKey = apiKey.length > 20
 
@@ -727,7 +728,7 @@ export default function CompetitorAds() {
 
   function openModal(ad, e) {
     if (e) e.stopPropagation()
-    setModalAd(ad)
+    { setModalAd(ad); setVariantIndex(0) }
   }
 
   function renderAdCard(ad, showBrandTag = false) {
@@ -738,31 +739,31 @@ export default function CompetitorAds() {
           {ad.isVideo && ad.mediaUrl ? (
             <InlineVideoCard src={ad.videoUrl || ad.mediaUrl} onClick={(e) => openModal(ad, e)} />
           ) : ad.isVideo ? (
-            <div className="ca-video-placeholder-mini" onClick={() => setModalAd(ad)}>
+            <div className="ca-video-placeholder-mini" onClick={() => { setModalAd(ad); setVariantIndex(0) }}>
               <div className="ca-video-play-btn">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
               </div>
               <div className="ca-video-label">VIDEO</div>
             </div>
           ) : ad.mediaUrl ? (
-            <div onClick={() => setModalAd(ad)}>
+            <div onClick={() => { setModalAd(ad); setVariantIndex(0) }}>
               <img src={ad.mediaUrl} alt="" className="ca-card-thumb" loading="lazy" onError={handleImgError} />
               <div className="ca-img-fallback" style={{display:'none'}}>
                 <span className="ca-fallback-text">{ad.adName || 'Image unavailable'}</span>
               </div>
             </div>
           ) : (
-            <div className="ca-no-preview" onClick={() => setModalAd(ad)}>
+            <div className="ca-no-preview" onClick={() => { setModalAd(ad); setVariantIndex(0) }}>
               <span>No preview available</span>
             </div>
           )}
           {!ad.isVideo && (
-            <div className="ca-card-overlay" onClick={() => setModalAd(ad)}>
+            <div className="ca-card-overlay" onClick={() => { setModalAd(ad); setVariantIndex(0) }}>
               <span className="ca-card-expand">Click to expand</span>
             </div>
           )}
         </div>
-        <div className="ca-card-body" onClick={() => setModalAd(ad)}>
+        <div className="ca-card-body" onClick={() => { setModalAd(ad); setVariantIndex(0) }}>
           <div className="ca-card-title">{ad.adName}</div>
           <div className="ca-card-tags">
             {showBrandTag && brandColor && (
@@ -1317,14 +1318,33 @@ export default function CompetitorAds() {
         </main>
       </div>
 
-      {modalAd && (
+      {modalAd && (() => {
+        const variants = modalAd.variants || [modalAd]
+        // Deduplicate by unique image URL so we only cycle distinct creatives
+        const seen = new Set()
+        const uniqueVariants = variants.filter(v => {
+          const key = v.mediaUrl || v.adId
+          if (seen.has(key)) return false
+          seen.add(key)
+          return true
+        })
+        const hasMultiple = uniqueVariants.length > 1
+        const current = uniqueVariants[variantIndex % uniqueVariants.length] || modalAd
+        const goNext = () => setVariantIndex(i => (i + 1) % uniqueVariants.length)
+        const goPrev = () => setVariantIndex(i => (i - 1 + uniqueVariants.length) % uniqueVariants.length)
+
+        return (
         <div className="ca-modal-bg" onMouseDown={e => { if (e.target === e.currentTarget) setModalAd(null) }}>
           <div className="ca-modal" onClick={e => e.stopPropagation()}>
             <button className="ca-modal-x" onClick={() => setModalAd(null)}>x</button>
             <div className="ca-modal-media">
-              {modalAd.isVideo && (modalAd.videoUrl || modalAd.mediaUrl) ? (
+              {hasMultiple && (
+                <button className="ca-variant-arrow ca-variant-prev" onClick={goPrev} title="Previous variant">&lsaquo;</button>
+              )}
+              {current.isVideo && (current.videoUrl || current.mediaUrl) ? (
                 <video
-                  src={modalAd.videoUrl || modalAd.mediaUrl}
+                  key={current.adId}
+                  src={current.videoUrl || current.mediaUrl}
                   controls
                   playsInline
                   webkit-playsinline="true"
@@ -1333,17 +1353,35 @@ export default function CompetitorAds() {
                   muted
                   className="ca-modal-video"
                 />
-              ) : modalAd.mediaUrl ? (
-                <img src={modalAd.mediaUrl} alt="" className="ca-modal-img" />
+              ) : current.mediaUrl ? (
+                <img key={current.adId} src={current.mediaUrl} alt="" className="ca-modal-img" />
               ) : null}
+              {hasMultiple && (
+                <button className="ca-variant-arrow ca-variant-next" onClick={goNext} title="Next variant">&rsaquo;</button>
+              )}
+              {hasMultiple && (
+                <div className="ca-variant-counter">{(variantIndex % uniqueVariants.length) + 1} / {uniqueVariants.length} variants</div>
+              )}
             </div>
             <div className="ca-modal-detail">
-              <h3 className="ca-modal-title">{modalAd.adName}</h3>
-              {modalAd.adBody && <div className="ca-modal-body">{modalAd.adBody}</div>}
-              {modalAd.adCaption && <div className="ca-modal-caption">{modalAd.adCaption}</div>}
+              <h3 className="ca-modal-title">{current.adName}</h3>
+              {current.adBody && <div className="ca-modal-body">{current.adBody}</div>}
+              {current.adCaption && <div className="ca-modal-caption">{current.adCaption}</div>}
+              {hasMultiple && (
+                <div className="ca-variant-dots">
+                  {uniqueVariants.map((v, i) => (
+                    <button
+                      key={v.adId}
+                      className={`ca-variant-dot ${i === variantIndex % uniqueVariants.length ? 'active' : ''}`}
+                      onClick={() => setVariantIndex(i)}
+                      title={`Variant ${i + 1}: ${v.adName}`}
+                    />
+                  ))}
+                </div>
+              )}
               <div className="ca-modal-meta-grid">
                 <div className="ca-modal-meta-item"><span className="ca-modal-label">Brand</span><span>{modalAd.pageName}</span></div>
-                <div className="ca-modal-meta-item"><span className="ca-modal-label">Ad ID</span><span>{modalAd.adId}</span></div>
+                <div className="ca-modal-meta-item"><span className="ca-modal-label">Ad ID</span><span>{current.adId}</span></div>
                 <div className="ca-modal-meta-item"><span className="ca-modal-label">Type</span><span>{modalAd.displayFormat || modalAd.creativeType}</span></div>
                 <div className="ca-modal-meta-item"><span className="ca-modal-label">Running</span><span>{modalAd.daysActive} days</span></div>
                 <div className="ca-modal-meta-item"><span className="ca-modal-label">Dates</span><span>{modalAd.startDate} to {modalAd.endDate || 'now'}</span></div>
@@ -1370,7 +1408,8 @@ export default function CompetitorAds() {
             </div>
           </div>
         </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
