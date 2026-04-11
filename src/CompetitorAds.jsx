@@ -436,45 +436,62 @@ export default function CompetitorAds() {
     }))
   }
 
-  // ── Top Performers: percentile on raw ads, then dedup for display ──
+  // ── Top Performers: percentile PER BRAND, then combine and dedup ──
+  const sortFn = (a, b) => {
+    switch (topSortBy) {
+      case 'velocity': return b.velocity - a.velocity
+      case 'impressions': return b.impressionsMid - a.impressionsMid
+      case 'days': return b.daysActive - a.daysActive
+      default: return b.daysActive - a.daysActive
+    }
+  }
+
   const topFiltered = (() => {
-    let ads = [...topAds]
-    if (topTypeFilter === 'video') ads = ads.filter(a => a.isVideo)
-    if (topTypeFilter === 'image') ads = ads.filter(a => !a.isVideo && a.hasMedia)
-    ads = ads.filter(a => a.daysActive >= 1)
-    // Sort raw ads by metric
-    ads.sort((a, b) => {
-      switch (topSortBy) {
-        case 'velocity': return b.velocity - a.velocity
-        case 'impressions': return b.impressionsMid - a.impressionsMid
-        case 'days': return b.daysActive - a.daysActive
-        default: return b.daysActive - a.daysActive
-      }
-    })
-    // Take top percentile from RAW ads first
-    const rawCutoff = Math.max(1, Math.ceil(ads.length * (topPercentile / 100)))
-    ads = ads.slice(0, rawCutoff)
+    // Group ads by brand
+    const byBrand = {}
+    for (const ad of topAds) {
+      if (ad.daysActive < 1) continue
+      if (topTypeFilter === 'video' && !ad.isVideo) continue
+      if (topTypeFilter === 'image' && (ad.isVideo || !ad.hasMedia)) continue
+      const key = ad.pageId
+      if (!byBrand[key]) byBrand[key] = []
+      byBrand[key].push(ad)
+    }
+
+    // Take top percentile from EACH brand independently
+    let combined = []
+    for (const pageId of Object.keys(byBrand)) {
+      const brandAds = byBrand[pageId]
+      brandAds.sort(sortFn)
+      const cutoff = Math.max(1, Math.ceil(brandAds.length * (topPercentile / 100)))
+      combined = combined.concat(brandAds.slice(0, cutoff))
+    }
+
     // Then dedup for clean display
-    ads = deduplicateAds(ads)
-    ads.sort((a, b) => {
-      switch (topSortBy) {
-        case 'velocity': return b.velocity - a.velocity
-        case 'impressions': return b.impressionsMid - a.impressionsMid
-        case 'days': return b.daysActive - a.daysActive
-        default: return b.daysActive - a.daysActive
-      }
-    })
-    return ads
+    combined = deduplicateAds(combined)
+    combined.sort(sortFn)
+    return combined
   })()
 
-  // Count raw eligible ads for the stats bar
+  // Count raw eligible ads for the stats bar (per-brand totals)
   const topRawEligible = (() => {
     let ads = [...topAds].filter(a => a.daysActive >= 1)
     if (topTypeFilter === 'video') ads = ads.filter(a => a.isVideo)
     if (topTypeFilter === 'image') ads = ads.filter(a => !a.isVideo && a.hasMedia)
     return ads.length
   })()
-  const topRawCutoff = Math.max(1, Math.ceil(topRawEligible * (topPercentile / 100)))
+  const topRawCutoff = (() => {
+    // Sum of per-brand cutoffs
+    const byBrand = {}
+    for (const ad of topAds) {
+      if (ad.daysActive < 1) continue
+      if (topTypeFilter === 'video' && !ad.isVideo) continue
+      if (topTypeFilter === 'image' && (ad.isVideo || !ad.hasMedia)) continue
+      if (!byBrand[ad.pageId]) byBrand[ad.pageId] = 0
+      byBrand[ad.pageId]++
+    }
+    return Object.values(byBrand).reduce((sum, count) => sum + Math.max(1, Math.ceil(count * (topPercentile / 100))), 0)
+  })()
 
   const topPageAds = topFiltered.slice(0, topShowCount)
   const topRemaining = topFiltered.length - topShowCount
@@ -942,7 +959,7 @@ export default function CompetitorAds() {
                 <h2 className="ca-brand-bar-name">Top Performers</h2>
                 <span className="ca-brand-bar-stats">
                   {topAds.length > 0
-                    ? `${topFiltered.length} unique creatives from top ${topPercentile}% (${topRawCutoff} of ${topRawEligible} ads) across ${selectedTopBrands.size} brand${selectedTopBrands.size !== 1 ? 's' : ''}`
+                    ? `${topFiltered.length} unique creatives from top ${topPercentile}% per brand (${topRawCutoff} of ${topRawEligible} ads) across ${selectedTopBrands.size} brand${selectedTopBrands.size !== 1 ? 's' : ''}`
                     : `Select brands and click Analyse to find top performing ads`
                   }
                 </span>
