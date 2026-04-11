@@ -152,8 +152,48 @@
 
 .ca-card-media { position: relative; width: 100%; background: #0e0e14; overflow: hidden; }
 
-/* Image thumbnails */
+/* Image thumbnails: natural aspect ratio */
 .ca-card-thumb { width: 100%; height: auto; display: block; }
+
+/* Video thumbnails: show first frame, natural aspect ratio */
+.ca-card-video {
+  width: 100%;
+  height: auto;
+  display: block;
+  min-height: 160px;
+  object-fit: contain;
+  background: #0a0a10;
+}
+
+/* Video play badge (top-left corner) */
+.ca-card-play-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Video loading overlay (while metadata loads) */
+.ca-video-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #1a1a2e 0%, #16162a 40%, #121228 100%);
+  min-height: 200px;
+}
 
 /* No preview fallback */
 .ca-no-preview {
@@ -162,7 +202,7 @@
 }
 .ca-card-media.no-media { min-height: 180px; display: flex; align-items: center; justify-content: center; }
 
-/* ── Video placeholder card ── */
+/* ── Video placeholder fallback (when video fails to load) ── */
 .ca-video-placeholder {
   width: 100%;
   min-height: 260px;
