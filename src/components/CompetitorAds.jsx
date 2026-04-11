@@ -353,7 +353,8 @@ export default function CompetitorAds() {
   const [analysisError, setAnalysisError] = useState(null)
   const [showAnalysis, setShowAnalysis] = useState(false)
   const [analysisTab, setAnalysisTab] = useState('overview') // overview | prompts | ads
-  const [analysisStep, setAnalysisStep] = useState(0) // 0=idle, 1=vision, 2=prompts
+  const [analysisStep, setAnalysisStep] = useState(0) // 0=idle, 1=vision, 2=prompts, 3=saving
+  const [promptProgress, setPromptProgress] = useState({ current: 0, total: 0 })
   const [variantIndex, setVariantIndex] = useState(0) // cycling through DCO variants in modal
   const [copiedPromptIdx, setCopiedPromptIdx] = useState(null) // flash "Copied!" on prompt card
 
@@ -676,15 +677,45 @@ export default function CompetitorAds() {
       const data1 = await res1.json()
       if (data1.error) throw new Error(data1.error)
 
-      // ── STEP 2: Opus prompt writing ──
+      // ── STEP 2: Per-prompt generation (one prompt per cluster per call) ──
       setAnalysisStep(2)
 
-      const res2 = await fetch(ANALYSE_FN_URL, {
+      const clusters = data1.analysis.visualClusters || data1.analysis.creativePillars || []
+      const promptClusters = clusters.slice(0, 4) // max 4 prompts
+      const totalPrompts = promptClusters.length || 1
+      const collectedPrompts = []
+
+      for (let i = 0; i < promptClusters.length; i++) {
+        setPromptProgress({ current: i + 1, total: totalPrompts })
+        const res2 = await fetch(ANALYSE_FN_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            step: 2,
+            step1_result: data1.analysis,
+            cluster: promptClusters[i],
+            prompt_index: i,
+            total_prompts: totalPrompts,
+          }),
+        })
+        if (!res2.ok) {
+          const errBody = await res2.json().catch(() => ({}))
+          throw new Error(errBody.error || `Prompt ${i + 1} failed (${res2.status})`)
+        }
+        const d2 = await res2.json()
+        if (d2.error) throw new Error(d2.error)
+        collectedPrompts.push(d2.prompt)
+      }
+
+      // ── STEP 3: Save assembled analysis ──
+      setAnalysisStep(3)
+      const res3 = await fetch(ANALYSE_FN_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          step: 2,
+          step: 3,
           step1_result: data1.analysis,
+          chefly_prompts: collectedPrompts,
           ads: payload,
           brands_analysed: selectedBrandNames,
           page_ids: selectedPageIds,
@@ -692,16 +723,14 @@ export default function CompetitorAds() {
           type_filter: topTypeFilter,
         }),
       })
-
-      if (!res2.ok) {
-        const errBody = await res2.json().catch(() => ({}))
-        throw new Error(errBody.error || `Step 2 failed (${res2.status})`)
+      if (!res3.ok) {
+        const errBody = await res3.json().catch(() => ({}))
+        throw new Error(errBody.error || `Save failed (${res3.status})`)
       }
+      const data3 = await res3.json()
+      if (data3.error) throw new Error(data3.error)
 
-      const data2 = await res2.json()
-      if (data2.error) throw new Error(data2.error)
-
-      setAnalysisResult({ ...data2.analysis, analysis_id: data2.analysis_id, models: data2.models })
+      setAnalysisResult({ ...data3.analysis, analysis_id: data3.analysis_id, models: data3.models })
     } catch (err) {
       setAnalysisError(err.message)
     } finally {
@@ -1119,7 +1148,8 @@ export default function CompetitorAds() {
                     disabled={analysisLoading || topFiltered.filter(a => !a.isVideo && a.hasMedia).length === 0}
                   >
                     {analysisLoading ? (
-                      <><span className="ca-spin-sm"></span> {analysisStep === 1 ? 'Step 1/2: Analysing images...' : 'Step 2/2: Writing Chefly prompts...'}</>
+                      <><span className="ca-spin-sm"></span> {analysisStep === 1 ? 'Step 1: Analysing images...' : analysisStep === 2 ? `Writing prompt ${promptProgress.current}/${promptProgress.total}...` : 'Saving analysis...'}</>
+
                     ) : (
                       <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Analyse top creatives with AI ({(() => {
                         const seen = new Set()
@@ -1197,13 +1227,18 @@ export default function CompetitorAds() {
                       <div className="ca-spin"></div>
                       {analysisStep === 1 ? (
                         <>
-                          <p>Step 1 of 2 — Analysing all variant images from your top performers...</p>
+                          <p>Step 1 — Analysing all variant images from your top performers...</p>
                           <p className="ca-analysis-loading-sub">Sonnet is examining every unique image across all DCO variants — extracting visual patterns, themes, personas, and creative pillars. Usually 60–90 seconds.</p>
+                        </>
+                      ) : analysisStep === 2 ? (
+                        <>
+                          <p>Writing Chefly prompt {promptProgress.current} of {promptProgress.total}...</p>
+                          <p className="ca-analysis-loading-sub">Each prompt is generated individually with the full Chefly brand DNA, packaging specs, and typography rules. ~30 seconds per prompt.</p>
                         </>
                       ) : (
                         <>
-                          <p>Step 2 of 2 — Writing Chefly creative briefs...</p>
-                          <p className="ca-analysis-loading-sub">Clustering visual approaches and writing one detailed prompt per distinct concept. Usually 30–60 seconds.</p>
+                          <p>Saving analysis...</p>
+                          <p className="ca-analysis-loading-sub">Storing results to your analysis history so you can recall them later without re-running.</p>
                         </>
                       )}
                     </div>
