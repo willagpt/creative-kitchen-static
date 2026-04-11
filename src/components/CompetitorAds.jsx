@@ -569,10 +569,20 @@ export default function CompetitorAds() {
         isVideo: false,
       }))
 
+      // Send metadata for database tracking
+      const selectedBrandNames = followedBrands.filter(b => selectedTopBrands.has(b.pageId)).map(b => b.pageName)
+      const selectedPageIds = [...selectedTopBrands]
+
       const res = await fetch(ANALYSE_FN_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ads: payload }),
+        body: JSON.stringify({
+          ads: payload,
+          brands_analysed: selectedBrandNames,
+          page_ids: selectedPageIds,
+          percentile: topPercentile,
+          type_filter: topTypeFilter,
+        }),
       })
 
       if (!res.ok) {
@@ -584,7 +594,7 @@ export default function CompetitorAds() {
       if (data.error) throw new Error(data.error)
       if (data.analysis?.error) throw new Error(data.analysis.error)
 
-      setAnalysisResult(data.analysis)
+      setAnalysisResult({ ...data.analysis, analysis_id: data.analysis_id, models: data.models })
     } catch (err) {
       setAnalysisError(err.message)
     } finally {
@@ -1026,7 +1036,7 @@ export default function CompetitorAds() {
                     <div className="ca-analysis-loading">
                       <div className="ca-spin"></div>
                       <p>Claude is analysing {Math.min(12, topFiltered.filter(a => !a.isVideo && a.hasMedia).length)} top-performing competitor ads...</p>
-                      <p className="ca-analysis-loading-sub">Extracting visual patterns, themes, personas, and generating Chefly-specific creative prompts. This takes 30–60 seconds.</p>
+                      <p className="ca-analysis-loading-sub">Step 1: Sonnet analyses the images for patterns and themes. Step 2: Opus writes detailed Chefly creative briefs. This takes 60–90 seconds.</p>
                     </div>
                   )}
 
@@ -1103,28 +1113,72 @@ export default function CompetitorAds() {
 
                       {analysisTab === 'prompts' && (
                         <div className="ca-analysis-prompts">
+                          {analysisResult.models && (
+                            <div className="ca-models-badge">
+                              Vision: {analysisResult.models.vision} · Prompts: {analysisResult.models.prompts}
+                              {analysisResult.analysis_id && <span className="ca-saved-badge">Saved</span>}
+                            </div>
+                          )}
                           {analysisResult.chefly_prompts?.map((pr, i) => (
                             <div key={i} className="ca-prompt-card">
                               <div className="ca-prompt-header">
-                                <span className="ca-prompt-num">#{i + 1}</span>
+                                <span className="ca-prompt-num">#{pr.promptNumber || i + 1}</span>
                                 <h5>{pr.promptName}</h5>
                                 <span className="ca-prompt-basis">{pr.basedOn}</span>
+                                {pr.aspectRatio && <span className="ca-prompt-ratio">{pr.aspectRatio}</span>}
                               </div>
                               <div className="ca-prompt-body">
-                                <div className="ca-prompt-field">
-                                  <label>Image Prompt</label>
-                                  <div className="ca-prompt-text">{pr.imagePrompt}</div>
-                                </div>
-                                <div className="ca-prompt-row">
+                                {/* Full prompt — the complete brief */}
+                                {pr.full_prompt && (
                                   <div className="ca-prompt-field">
-                                    <label>Headline</label>
-                                    <div className="ca-prompt-text">{pr.suggestedHeadline}</div>
+                                    <label>Full Creative Brief</label>
+                                    <div className="ca-prompt-text ca-prompt-full">{pr.full_prompt}</div>
                                   </div>
-                                  <div className="ca-prompt-field">
-                                    <label>Body Copy</label>
-                                    <div className="ca-prompt-text">{pr.suggestedBody}</div>
+                                )}
+
+                                {/* Structured sections (collapsible) */}
+                                <details className="ca-prompt-sections">
+                                  <summary>View sections breakdown</summary>
+                                  {pr.concept_and_hook && (
+                                    <div className="ca-prompt-field"><label>Concept & Hook</label><div className="ca-prompt-text">{pr.concept_and_hook}</div></div>
+                                  )}
+                                  {pr.setting_and_surface && (
+                                    <div className="ca-prompt-field"><label>Setting & Surface</label><div className="ca-prompt-text">{pr.setting_and_surface}</div></div>
+                                  )}
+                                  {pr.hero_element && (
+                                    <div className="ca-prompt-field"><label>Hero Element</label><div className="ca-prompt-text">{pr.hero_element}</div></div>
+                                  )}
+                                  {pr.copy_and_text && (
+                                    <div className="ca-prompt-field"><label>Copy & Text</label><div className="ca-prompt-text">{pr.copy_and_text}</div></div>
+                                  )}
+                                  {pr.lighting && (
+                                    <div className="ca-prompt-field"><label>Lighting</label><div className="ca-prompt-text">{pr.lighting}</div></div>
+                                  )}
+                                  {pr.camera_and_lens && (
+                                    <div className="ca-prompt-field"><label>Camera & Lens</label><div className="ca-prompt-text">{pr.camera_and_lens}</div></div>
+                                  )}
+                                  {pr.colour_grading && (
+                                    <div className="ca-prompt-field"><label>Colour Grading</label><div className="ca-prompt-text">{pr.colour_grading}</div></div>
+                                  )}
+                                  {pr.exclusions && (
+                                    <div className="ca-prompt-field"><label>Exclusions</label><div className="ca-prompt-text">{pr.exclusions}</div></div>
+                                  )}
+                                  {pr.composition_summary && (
+                                    <div className="ca-prompt-field"><label>Composition Summary</label><div className="ca-prompt-text">{pr.composition_summary}</div></div>
+                                  )}
+                                </details>
+
+                                {/* Fallback for old-format prompts */}
+                                {!pr.full_prompt && pr.imagePrompt && (
+                                  <div className="ca-prompt-field"><label>Image Prompt</label><div className="ca-prompt-text">{pr.imagePrompt}</div></div>
+                                )}
+                                {pr.suggestedHeadline && (
+                                  <div className="ca-prompt-row">
+                                    <div className="ca-prompt-field"><label>Headline</label><div className="ca-prompt-text">{pr.suggestedHeadline}</div></div>
+                                    {pr.suggestedBody && <div className="ca-prompt-field"><label>Body Copy</label><div className="ca-prompt-text">{pr.suggestedBody}</div></div>}
                                   </div>
-                                </div>
+                                )}
+
                                 <div className="ca-prompt-rationale">
                                   <strong>Rationale:</strong> {pr.rationale}
                                 </div>

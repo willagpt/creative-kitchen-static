@@ -834,3 +834,36 @@
 .ca-color-swatch {
   width: 24px; height: 24px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
 }
+
+/* Models badge & saved indicator */
+.ca-models-badge {
+  font-size: 11px; color: #52525b; padding: 8px 14px; margin-bottom: 16px;
+  background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid #1e1e24;
+}
+.ca-saved-badge {
+  display: inline-block; margin-left: 12px; padding: 2px 8px; border-radius: 4px;
+  background: rgba(34, 197, 94, 0.12); color: #4ade80; font-weight: 600;
+}
+.ca-prompt-ratio {
+  font-size: 11px; padding: 2px 8px; border-radius: 4px;
+  background: rgba(99, 102, 241, 0.1); color: #818cf8; font-weight: 600; white-space: nowrap;
+}
+
+/* Full creative brief — taller, scrollable */
+.ca-prompt-full {
+  max-height: 400px; overflow-y: auto; white-space: pre-wrap; line-height: 1.7;
+}
+
+/* Sections breakdown (collapsible) */
+.ca-prompt-sections {
+  border: 1px solid #1e1e24; border-radius: 8px; overflow: hidden;
+}
+.ca-prompt-sections summary {
+  padding: 10px 14px; cursor: pointer; font-size: 12px; font-weight: 600;
+  color: #71717a; background: rgba(0,0,0,0.2); user-select: none;
+  transition: all 0.15s;
+}
+.ca-prompt-sections summary:hover { color: #a0a0b0; }
+.ca-prompt-sections[open] summary { border-bottom: 1px solid #1e1e24; color: #a5b4fc; }
+.ca-prompt-sections > .ca-prompt-field { padding: 12px 14px; border-bottom: 1px solid #1a1a22; }
+.ca-prompt-sections > .ca-prompt-field:last-child { border-bottom: none; }
