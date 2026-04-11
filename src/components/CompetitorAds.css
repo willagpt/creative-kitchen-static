@@ -1082,15 +1082,16 @@
 /* ── Add to Library button on card ── */
 .ca-card-add-lib {
   position: absolute; top: 8px; right: 8px; z-index: 5;
-  width: 30px; height: 30px; border-radius: 50%; border: none;
-  background: rgba(0,0,0,0.65); color: white; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; transition: opacity 0.2s, background 0.15s;
+  height: 26px; border-radius: 13px; border: none;
+  background: rgba(79,70,229,0.85); color: white; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  padding: 0 10px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.02em;
+  transition: background 0.15s, transform 0.1s;
   backdrop-filter: blur(4px);
 }
-.ca-card:hover .ca-card-add-lib { opacity: 1; }
-.ca-card-add-lib:hover { background: #4f46e5; }
-.ca-card-add-lib.added { background: #16a34a; opacity: 1; }
+.ca-card-add-lib:hover { background: #4f46e5; transform: scale(1.05); }
+.ca-card-add-lib.added { background: rgba(22,163,74,0.85); }
 .ca-card-add-lib.added:hover { background: #15803d; }
 
 /* Remove button in curated queue */
