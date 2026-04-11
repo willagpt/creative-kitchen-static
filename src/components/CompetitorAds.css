@@ -38,6 +38,44 @@
 .ca-token-input:focus { border-color: #6366f1; }
 .ca-token-ok { font-size: 12px; color: #34d399; font-weight: 500; }
 
+/* ── View Mode Tabs ── */
+.ca-view-tabs {
+  display: flex;
+  background: #1a1a22;
+  border: 1px solid #2a2a34;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.ca-view-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #71717a;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.ca-view-tab:hover {
+  color: #a0a0b0;
+  background: rgba(255, 255, 255, 0.03);
+}
+.ca-view-tab.active {
+  color: #fff;
+  background: #6366f1;
+}
+.ca-view-tab + .ca-view-tab {
+  border-left: 1px solid #2a2a34;
+}
+.ca-view-tab.active + .ca-view-tab,
+.ca-view-tab + .ca-view-tab.active {
+  border-left-color: transparent;
+}
+
 /* ── Add Competitor Modal ── */
 .ca-add-modal-bg {
   position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
@@ -87,6 +125,158 @@
 }
 .ca-brand-row:hover .ca-brand-row-x { opacity: 1; }
 .ca-brand-row-x:hover { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+
+/* ── Top Performers: multi-select sidebar ── */
+.ca-top-brand-actions {
+  display: flex;
+  gap: 8px;
+  padding: 4px 16px 8px;
+}
+.ca-top-select-btn {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6366f1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 0;
+  transition: color 0.15s;
+}
+.ca-top-select-btn:hover {
+  color: #818cf8;
+}
+.ca-brand-check-row {
+  gap: 10px;
+  justify-content: flex-start;
+}
+.ca-brand-check-row.selected {
+  background: rgba(99, 102, 241, 0.06);
+}
+.ca-brand-check {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  border-radius: 4px;
+  border: 2px solid #3a3a4a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.ca-brand-check-row:hover .ca-brand-check {
+  border-color: #6366f1;
+}
+.ca-btn-load-top {
+  margin: 8px 12px;
+  background: #6366f1;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 11px 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.ca-btn-load-top:hover:not(:disabled) {
+  background: #4f46e5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+.ca-btn-load-top:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ── Top Performers: explainer bar ── */
+.ca-top-explainer {
+  font-size: 12px;
+  color: #52525b;
+  padding: 8px 0 12px;
+  line-height: 1.5;
+  border-bottom: 1px solid #1e1e24;
+  margin-bottom: 12px;
+}
+
+/* ── Top Performers: brand legend ── */
+.ca-top-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+.ca-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.ca-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* ── Top Performers: velocity on cards ── */
+.ca-card-velocity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #1e1e28;
+}
+.ca-velocity-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #52525b;
+}
+.ca-velocity-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: #fbbf24;
+}
+.ca-velocity-sep {
+  color: #2a2a34;
+  font-size: 10px;
+}
+.ca-velocity-imp {
+  font-size: 11px;
+  color: #71717a;
+}
+
+/* ── Top Performers: brand tag on cards ── */
+.ca-tag-brand {
+  padding-left: 8px;
+}
+
+/* ── Top Performers: empty state ── */
+.ca-empty-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.ca-empty-icon {
+  margin-bottom: 4px;
+}
+.ca-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #71717a;
+}
+.ca-empty-desc {
+  font-size: 13px;
+  color: #52525b;
+  text-align: center;
+  max-width: 360px;
+  line-height: 1.5;
+}
 
 /* Add brand (sidebar) */
 .ca-add-form { padding: 12px; border-top: 1px solid #1e1e24; }
@@ -453,4 +643,6 @@
   .ca-header { flex-direction: column; gap: 12px; align-items: flex-start; }
   .ca-header-actions { width: 100%; flex-wrap: wrap; }
   .ca-btn-add-competitor { width: 100%; justify-content: center; }
+  .ca-view-tabs { width: 100%; }
+  .ca-view-tab { flex: 1; justify-content: center; }
 }
