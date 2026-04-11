@@ -188,7 +188,56 @@
 }
 .ca-card-media.no-media { min-height: 180px; display: flex; align-items: center; justify-content: center; }
 
-/* ── Video placeholder (styled card for video ads) ── */
+/* ── Lazy video (real thumbnail from <video preload=metadata>) ── */
+.ca-lazy-video-wrap {
+  width: 100%;
+  min-height: 180px;
+  position: relative;
+  background: #0e0e14;
+}
+.ca-lazy-video {
+  width: 100%;
+  height: auto;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.3s;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.ca-lazy-video.loaded {
+  opacity: 1;
+  position: relative;
+}
+
+/* Mini placeholder (shown while video frame loads, or for no-url videos) */
+.ca-video-placeholder-mini {
+  width: 100%;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(145deg, #1a1a2e 0%, #16162a 40%, #121228 100%);
+  cursor: pointer;
+}
+
+/* Loading dot animation */
+.ca-video-loading-dot span {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6366f1;
+  animation: ca-pulse 1s ease-in-out infinite;
+}
+@keyframes ca-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Legacy full placeholder (keeping for backwards compat) */
 .ca-video-placeholder {
   width: 100%;
   min-height: 260px;

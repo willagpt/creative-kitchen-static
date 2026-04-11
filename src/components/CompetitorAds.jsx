@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './CompetitorAds.css'
 
 // ── Supabase config ──
@@ -98,6 +98,66 @@ async function fetchAllAds(pageId) {
     offset += PAGE_SIZE
   }
   return allRows
+}
+
+// ── Lazy Video Card ──
+// Uses IntersectionObserver: only mounts <video preload="metadata"> when card
+// scrolls into view (plus 200px margin). Removes src when scrolled away to
+// free memory. With pagination at 50 cards, only ~9-12 videos load at once.
+function LazyVideo({ src }) {
+  const wrapRef = useRef(null)
+  const vidRef = useRef(null)
+  const [visible, setVisible] = useState(false)
+  const [hasFrame, setHasFrame] = useState(false)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      ([e]) => setVisible(e.isIntersecting),
+      { rootMargin: '200px 0px', threshold: 0 }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const v = vidRef.current
+    if (!v) return
+    if (visible && src && !failed) {
+      if (!v.src || v.src !== src) { v.src = src; v.load() }
+    } else if (!visible && v.src) {
+      v.pause(); v.removeAttribute('src'); v.load()
+    }
+  }, [visible, src, failed])
+
+  return (
+    <div ref={wrapRef} className="ca-lazy-video-wrap">
+      {!failed && (
+        <video
+          ref={vidRef}
+          muted
+          playsInline
+          preload="metadata"
+          className={'ca-lazy-video' + (hasFrame ? ' loaded' : '')}
+          onLoadedData={() => setHasFrame(true)}
+          onError={() => setFailed(true)}
+        />
+      )}
+      {(!hasFrame || failed) && (
+        <div className="ca-video-placeholder-mini">
+          <div className="ca-video-play-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
+          </div>
+          {failed && <div className="ca-video-label">VIDEO</div>}
+          {!failed && !hasFrame && visible && (
+            <div className="ca-video-loading-dot"><span></span></div>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ── Supabase CRUD ──
@@ -363,14 +423,14 @@ export default function CompetitorAds() {
                 {pageAds.map(ad => (
                   <div key={ad.adId} className="ca-card" onClick={() => setModalAd(ad)}>
                     <div className="ca-card-media">
-                      {ad.isVideo ? (
-                        <div className="ca-video-placeholder">
+                      {ad.isVideo && ad.mediaUrl ? (
+                        <LazyVideo src={ad.mediaUrl} />
+                      ) : ad.isVideo ? (
+                        <div className="ca-video-placeholder-mini">
                           <div className="ca-video-play-btn">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
                           </div>
                           <div className="ca-video-label">VIDEO</div>
-                          <div className="ca-video-title">{ad.adName}</div>
-                          {ad.adBody && <div className="ca-video-body">{ad.adBody.slice(0, 80)}{ad.adBody.length > 80 ? '...' : ''}</div>}
                         </div>
                       ) : ad.mediaUrl ? (
                         <>
