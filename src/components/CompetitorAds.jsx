@@ -109,23 +109,38 @@ function extractPageId(input) {
   return m ? m[1] : null
 }
 
+// ── Find most common page_name from a set of ad rows ──
+function mostCommonPageName(rows) {
+  const counts = {}
+  for (const row of rows) {
+    const name = (row.page_name || '').trim()
+    if (!name || /^\d+$/.test(name)) continue
+    counts[name] = (counts[name] || 0) + 1
+  }
+  let best = null, bestCount = 0
+  for (const [name, count] of Object.entries(counts)) {
+    if (count > bestCount) { best = name; bestCount = count }
+  }
+  return best
+}
+
 // ── Resolve brand name from existing ads or Graph API ──
 async function resolvePageName(pageId, metaToken) {
-  // 1. Check if we already have ads with a page_name for this page_id
+  // 1. Check existing ads — sample 200 rows to find the most common page_name
+  //    (brands often run ads under influencer/partner names too)
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/competitor_ads?page_id=eq.${pageId}&page_name=not.is.null&select=page_name&limit=1`,
+      `${SUPABASE_URL}/rest/v1/competitor_ads?page_id=eq.${pageId}&page_name=not.is.null&select=page_name&limit=200`,
       { headers: sbReadHeaders }
     )
     if (res.ok) {
       const rows = await res.json()
-      if (rows.length > 0 && rows[0].page_name && rows[0].page_name.trim()) {
-        return rows[0].page_name.trim()
-      }
+      const name = mostCommonPageName(rows)
+      if (name) return name
     }
   } catch {}
 
-  // 2. Try Facebook Graph API (works with or without token for public pages)
+  // 2. Try Facebook Graph API with token
   if (metaToken) {
     try {
       const r = await fetch(`https://graph.facebook.com/${pageId}?access_token=${metaToken}&fields=name`)
@@ -374,15 +389,15 @@ export default function CompetitorAds() {
         setLoadingStatus('')
         await updateBrand(pageId, { last_fetched_at: new Date().toISOString(), total_ads: rows.length })
 
-        // If brand name looks like a raw page ID, try to resolve it from ads
+        // If brand name looks like a raw page ID, resolve from most common ad page_name
         if (pageName && /^Brand \d+$/.test(pageName)) {
-          const realName = rows[0]?.page_name
-          if (realName && realName.trim() && !/^\d+$/.test(realName.trim())) {
-            await updateBrand(pageId, { page_name: realName.trim() })
+          const realName = mostCommonPageName(rows)
+          if (realName) {
+            await updateBrand(pageId, { page_name: realName })
             setFollowedBrands(prev => prev.map(b =>
-              b.pageId === pageId ? { ...b, pageName: realName.trim(), adCount: rows.length } : b
+              b.pageId === pageId ? { ...b, pageName: realName, adCount: rows.length } : b
             ))
-            setActiveBrand(prev => prev?.pageId === pageId ? { ...prev, pageName: realName.trim() } : prev)
+            setActiveBrand(prev => prev?.pageId === pageId ? { ...prev, pageName: realName } : prev)
           }
         }
       } else {
@@ -396,15 +411,15 @@ export default function CompetitorAds() {
         setAllAds(mappedAds)
         setLoadingStatus('')
 
-        // After fetching new ads, try to resolve brand name from the returned ads
+        // After fetching new ads, resolve brand name from the most common page_name
         if (reRows.length > 0) {
-          const realName = reRows[0]?.page_name
-          if (realName && realName.trim() && realName.trim() !== pageName) {
-            await updateBrand(pageId, { page_name: realName.trim(), total_ads: reRows.length })
+          const realName = mostCommonPageName(reRows)
+          if (realName && realName !== pageName) {
+            await updateBrand(pageId, { page_name: realName, total_ads: reRows.length })
             setFollowedBrands(prev => prev.map(b =>
-              b.pageId === pageId ? { ...b, pageName: realName.trim(), adCount: reRows.length } : b
+              b.pageId === pageId ? { ...b, pageName: realName, adCount: reRows.length } : b
             ))
-            setActiveBrand(prev => prev?.pageId === pageId ? { ...prev, pageName: realName.trim() } : prev)
+            setActiveBrand(prev => prev?.pageId === pageId ? { ...prev, pageName: realName } : prev)
           }
         }
       }
