@@ -5,6 +5,7 @@ import './CompetitorAds.css'
 const SUPABASE_URL = 'https://ifrxylvoufncdxyltgqt.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA'
 const FOREPLAY_FN_URL = `${SUPABASE_URL}/functions/v1/fetch-competitor-ads`
+const ANALYSE_FN_URL = `${SUPABASE_URL}/functions/v1/analyse-competitor-creatives`
 
 const sbHeaders = {
   apikey: SUPABASE_ANON_KEY,
@@ -346,6 +347,13 @@ export default function CompetitorAds() {
   const [topShowCount, setTopShowCount] = useState(GRID_PAGE)
   const [topLoadingStatus, setTopLoadingStatus] = useState('')
 
+  // ── AI Analysis state ──
+  const [analysisResult, setAnalysisResult] = useState(null)
+  const [analysisLoading, setAnalysisLoading] = useState(false)
+  const [analysisError, setAnalysisError] = useState(null)
+  const [showAnalysis, setShowAnalysis] = useState(false)
+  const [analysisTab, setAnalysisTab] = useState('overview') // overview | prompts | ads
+
   const hasKey = apiKey.length > 20
 
   const brandColorMap = {}
@@ -428,45 +436,62 @@ export default function CompetitorAds() {
     }))
   }
 
-  // ── Top Performers: percentile on raw ads, then dedup for display ──
+  // ── Top Performers: percentile PER BRAND, then combine and dedup ──
+  const sortFn = (a, b) => {
+    switch (topSortBy) {
+      case 'velocity': return b.velocity - a.velocity
+      case 'impressions': return b.impressionsMid - a.impressionsMid
+      case 'days': return b.daysActive - a.daysActive
+      default: return b.daysActive - a.daysActive
+    }
+  }
+
   const topFiltered = (() => {
-    let ads = [...topAds]
-    if (topTypeFilter === 'video') ads = ads.filter(a => a.isVideo)
-    if (topTypeFilter === 'image') ads = ads.filter(a => !a.isVideo && a.hasMedia)
-    ads = ads.filter(a => a.daysActive >= 1)
-    // Sort raw ads by metric
-    ads.sort((a, b) => {
-      switch (topSortBy) {
-        case 'velocity': return b.velocity - a.velocity
-        case 'impressions': return b.impressionsMid - a.impressionsMid
-        case 'days': return b.daysActive - a.daysActive
-        default: return b.daysActive - a.daysActive
-      }
-    })
-    // Take top percentile from RAW ads first
-    const rawCutoff = Math.max(1, Math.ceil(ads.length * (topPercentile / 100)))
-    ads = ads.slice(0, rawCutoff)
+    // Group ads by brand
+    const byBrand = {}
+    for (const ad of topAds) {
+      if (ad.daysActive < 1) continue
+      if (topTypeFilter === 'video' && !ad.isVideo) continue
+      if (topTypeFilter === 'image' && (ad.isVideo || !ad.hasMedia)) continue
+      const key = ad.pageId
+      if (!byBrand[key]) byBrand[key] = []
+      byBrand[key].push(ad)
+    }
+
+    // Take top percentile from EACH brand independently
+    let combined = []
+    for (const pageId of Object.keys(byBrand)) {
+      const brandAds = byBrand[pageId]
+      brandAds.sort(sortFn)
+      const cutoff = Math.max(1, Math.ceil(brandAds.length * (topPercentile / 100)))
+      combined = combined.concat(brandAds.slice(0, cutoff))
+    }
+
     // Then dedup for clean display
-    ads = deduplicateAds(ads)
-    ads.sort((a, b) => {
-      switch (topSortBy) {
-        case 'velocity': return b.velocity - a.velocity
-        case 'impressions': return b.impressionsMid - a.impressionsMid
-        case 'days': return b.daysActive - a.daysActive
-        default: return b.daysActive - a.daysActive
-      }
-    })
-    return ads
+    combined = deduplicateAds(combined)
+    combined.sort(sortFn)
+    return combined
   })()
 
-  // Count raw eligible ads for the stats bar
+  // Count raw eligible ads for the stats bar (per-brand totals)
   const topRawEligible = (() => {
     let ads = [...topAds].filter(a => a.daysActive >= 1)
     if (topTypeFilter === 'video') ads = ads.filter(a => a.isVideo)
     if (topTypeFilter === 'image') ads = ads.filter(a => !a.isVideo && a.hasMedia)
     return ads.length
   })()
-  const topRawCutoff = Math.max(1, Math.ceil(topRawEligible * (topPercentile / 100)))
+  const topRawCutoff = (() => {
+    // Sum of per-brand cutoffs
+    const byBrand = {}
+    for (const ad of topAds) {
+      if (ad.daysActive < 1) continue
+      if (topTypeFilter === 'video' && !ad.isVideo) continue
+      if (topTypeFilter === 'image' && (ad.isVideo || !ad.hasMedia)) continue
+      if (!byBrand[ad.pageId]) byBrand[ad.pageId] = 0
+      byBrand[ad.pageId]++
+    }
+    return Object.values(byBrand).reduce((sum, count) => sum + Math.max(1, Math.ceil(count * (topPercentile / 100))), 0)
+  })()
 
   const topPageAds = topFiltered.slice(0, topShowCount)
   const topRemaining = topFiltered.length - topShowCount
@@ -518,6 +543,52 @@ export default function CompetitorAds() {
     } finally {
       setTopLoading(false)
       setTopLoadingStatus('')
+    }
+  }
+
+  async function runCreativeAnalysis() {
+    const adsToAnalyse = topFiltered.filter(a => !a.isVideo && a.hasMedia)
+    if (adsToAnalyse.length === 0) {
+      setAnalysisError('No static image ads to analyse. Change the type filter to include images.')
+      return
+    }
+    setAnalysisLoading(true)
+    setAnalysisError(null)
+    setAnalysisResult(null)
+    setShowAnalysis(true)
+    setAnalysisTab('overview')
+
+    try {
+      const payload = adsToAnalyse.slice(0, 12).map(ad => ({
+        imageUrl: ad.mediaUrl || ad.thumbnailUrl || '',
+        title: ad.adName || '',
+        body: ad.adBody || '',
+        daysActive: ad.daysActive,
+        displayFormat: ad.displayFormat || 'IMAGE',
+        pageName: ad.pageName || '',
+        isVideo: false,
+      }))
+
+      const res = await fetch(ANALYSE_FN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ads: payload }),
+      })
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody.error || `Analysis failed (${res.status})`)
+      }
+
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      if (data.analysis?.error) throw new Error(data.analysis.error)
+
+      setAnalysisResult(data.analysis)
+    } catch (err) {
+      setAnalysisError(err.message)
+    } finally {
+      setAnalysisLoading(false)
     }
   }
 
@@ -888,7 +959,7 @@ export default function CompetitorAds() {
                 <h2 className="ca-brand-bar-name">Top Performers</h2>
                 <span className="ca-brand-bar-stats">
                   {topAds.length > 0
-                    ? `${topFiltered.length} unique creatives from top ${topPercentile}% (${topRawCutoff} of ${topRawEligible} ads) across ${selectedTopBrands.size} brand${selectedTopBrands.size !== 1 ? 's' : ''}`
+                    ? `${topFiltered.length} unique creatives from top ${topPercentile}% per brand (${topRawCutoff} of ${topRawEligible} ads) across ${selectedTopBrands.size} brand${selectedTopBrands.size !== 1 ? 's' : ''}`
                     : `Select brands and click Analyse to find top performing ads`
                   }
                 </span>
@@ -921,6 +992,187 @@ export default function CompetitorAds() {
                 </div>
               )}
 
+              {/* AI Analysis button — pinned above grid for visibility */}
+              {!topLoading && topFiltered.length > 0 && (
+                <div className="ca-analysis-trigger">
+                  <button
+                    className="ca-btn-analyse"
+                    onClick={runCreativeAnalysis}
+                    disabled={analysisLoading || topFiltered.filter(a => !a.isVideo && a.hasMedia).length === 0}
+                  >
+                    {analysisLoading ? (
+                      <><span className="ca-spin-sm"></span> Analysing {topFiltered.filter(a => !a.isVideo && a.hasMedia).slice(0, 12).length} ads with Claude Vision...</>
+                    ) : (
+                      <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Analyse top creatives with AI ({Math.min(12, topFiltered.filter(a => !a.isVideo && a.hasMedia).length)} images)</>
+                    )}
+                  </button>
+                  {analysisResult && !showAnalysis && (
+                    <button className="ca-btn-show-analysis" onClick={() => setShowAnalysis(true)}>
+                      Show previous analysis
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Analysis Results Panel */}
+              {showAnalysis && (
+                <div className="ca-analysis-panel">
+                  <div className="ca-analysis-header">
+                    <h3>Creative Intelligence Report</h3>
+                    <button className="ca-analysis-close" onClick={() => setShowAnalysis(false)}>×</button>
+                  </div>
+
+                  {analysisLoading && (
+                    <div className="ca-analysis-loading">
+                      <div className="ca-spin"></div>
+                      <p>Claude is analysing {Math.min(12, topFiltered.filter(a => !a.isVideo && a.hasMedia).length)} top-performing competitor ads...</p>
+                      <p className="ca-analysis-loading-sub">Extracting visual patterns, themes, personas, and generating Chefly-specific creative prompts. This takes 30–60 seconds.</p>
+                    </div>
+                  )}
+
+                  {analysisError && (
+                    <div className="ca-analysis-error">
+                      <strong>Analysis failed:</strong> {analysisError}
+                      <button className="ca-btn-retry" onClick={runCreativeAnalysis}>Retry</button>
+                    </div>
+                  )}
+
+                  {analysisResult && !analysisLoading && (
+                    <>
+                      <div className="ca-analysis-tabs">
+                        <button className={`ca-analysis-tab ${analysisTab === 'overview' ? 'active' : ''}`} onClick={() => setAnalysisTab('overview')}>Themes & Pillars</button>
+                        <button className={`ca-analysis-tab ${analysisTab === 'prompts' ? 'active' : ''}`} onClick={() => setAnalysisTab('prompts')}>Chefly Prompts ({analysisResult.chefly_prompts?.length || 0})</button>
+                        <button className={`ca-analysis-tab ${analysisTab === 'ads' ? 'active' : ''}`} onClick={() => setAnalysisTab('ads')}>Per-Ad Breakdown ({analysisResult.adAnalyses?.length || 0})</button>
+                      </div>
+
+                      {analysisTab === 'overview' && (
+                        <div className="ca-analysis-overview">
+                          {analysisResult.themes?.length > 0 && (
+                            <div className="ca-analysis-section">
+                              <h4>Themes</h4>
+                              <div className="ca-analysis-cards">
+                                {analysisResult.themes.map((t, i) => (
+                                  <div key={i} className="ca-analysis-card ca-card-theme">
+                                    <div className="ca-card-label">Theme</div>
+                                    <h5>{t.name}</h5>
+                                    <p>{t.description}</p>
+                                    <span className="ca-card-freq">{t.frequency}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {analysisResult.personas?.length > 0 && (
+                            <div className="ca-analysis-section">
+                              <h4>Target Personas</h4>
+                              <div className="ca-analysis-cards">
+                                {analysisResult.personas.map((p, i) => (
+                                  <div key={i} className="ca-analysis-card ca-card-persona">
+                                    <div className="ca-card-label">Persona</div>
+                                    <h5>{p.name}</h5>
+                                    <p>{p.description}</p>
+                                    {p.painPoints?.length > 0 && (
+                                      <div className="ca-card-pills">
+                                        {p.painPoints.map((pp, j) => <span key={j} className="ca-pill-pain">{pp}</span>)}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {analysisResult.creativePillars?.length > 0 && (
+                            <div className="ca-analysis-section">
+                              <h4>Creative Pillars</h4>
+                              <div className="ca-analysis-cards">
+                                {analysisResult.creativePillars.map((cp, i) => (
+                                  <div key={i} className="ca-analysis-card ca-card-pillar">
+                                    <div className="ca-card-label">Pillar</div>
+                                    <h5>{cp.name}</h5>
+                                    <p>{cp.description}</p>
+                                    <p className="ca-card-why"><strong>Why it works:</strong> {cp.whyItWorks}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {analysisTab === 'prompts' && (
+                        <div className="ca-analysis-prompts">
+                          {analysisResult.chefly_prompts?.map((pr, i) => (
+                            <div key={i} className="ca-prompt-card">
+                              <div className="ca-prompt-header">
+                                <span className="ca-prompt-num">#{i + 1}</span>
+                                <h5>{pr.promptName}</h5>
+                                <span className="ca-prompt-basis">{pr.basedOn}</span>
+                              </div>
+                              <div className="ca-prompt-body">
+                                <div className="ca-prompt-field">
+                                  <label>Image Prompt</label>
+                                  <div className="ca-prompt-text">{pr.imagePrompt}</div>
+                                </div>
+                                <div className="ca-prompt-row">
+                                  <div className="ca-prompt-field">
+                                    <label>Headline</label>
+                                    <div className="ca-prompt-text">{pr.suggestedHeadline}</div>
+                                  </div>
+                                  <div className="ca-prompt-field">
+                                    <label>Body Copy</label>
+                                    <div className="ca-prompt-text">{pr.suggestedBody}</div>
+                                  </div>
+                                </div>
+                                <div className="ca-prompt-rationale">
+                                  <strong>Rationale:</strong> {pr.rationale}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {analysisTab === 'ads' && (
+                        <div className="ca-analysis-ads">
+                          {analysisResult.adAnalyses?.map((ad, i) => (
+                            <div key={i} className="ca-ad-analysis-card">
+                              <div className="ca-ad-analysis-header">
+                                <span className="ca-ad-index">Ad {ad.adIndex}</span>
+                                <span className="ca-ad-brand">{ad.brand}</span>
+                                <span className="ca-ad-score" style={{ background: ad.strengthScore >= 7 ? 'rgba(34,197,94,0.15)' : ad.strengthScore >= 5 ? 'rgba(234,179,8,0.15)' : 'rgba(239,68,68,0.15)', color: ad.strengthScore >= 7 ? '#22c55e' : ad.strengthScore >= 5 ? '#eab308' : '#ef4444' }}>
+                                  {ad.strengthScore}/10
+                                </span>
+                              </div>
+                              <div className="ca-ad-analysis-body">
+                                <div className="ca-ad-meta-row">
+                                  <span><strong>Layout:</strong> {ad.visualLayout}</span>
+                                  <span><strong>Format:</strong> {ad.format}</span>
+                                  <span><strong>Days:</strong> {ad.daysRunning}</span>
+                                </div>
+                                <p><strong>Hero element:</strong> {ad.heroElement}</p>
+                                <p><strong>Emotional hook:</strong> {ad.emotionalHook}</p>
+                                <p><strong>Offer/CTA:</strong> {ad.offerStructure}</p>
+                                <p><strong>Typography:</strong> {ad.typography}</p>
+                                <p className="ca-ad-why">{ad.whyItWorks}</p>
+                                {ad.dominantColors?.length > 0 && (
+                                  <div className="ca-ad-colors">
+                                    {ad.dominantColors.map((c, j) => (
+                                      <span key={j} className="ca-color-swatch" style={{ background: c }} title={c}></span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
               {topLoading && <div className="ca-loading"><div className="ca-spin"></div><span>{topLoadingStatus}</span></div>}
               {topError && <div className="ca-error-msg">{topError}</div>}
 
@@ -949,6 +1201,7 @@ export default function CompetitorAds() {
                       Load more ({topRemaining} remaining)
                     </button>
                   )}
+
                 </>
               )}
 
