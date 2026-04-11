@@ -992,6 +992,187 @@ export default function CompetitorAds() {
                 </div>
               )}
 
+              {/* AI Analysis button — pinned above grid for visibility */}
+              {!topLoading && topFiltered.length > 0 && (
+                <div className="ca-analysis-trigger">
+                  <button
+                    className="ca-btn-analyse"
+                    onClick={runCreativeAnalysis}
+                    disabled={analysisLoading || topFiltered.filter(a => !a.isVideo && a.hasMedia).length === 0}
+                  >
+                    {analysisLoading ? (
+                      <><span className="ca-spin-sm"></span> Analysing {topFiltered.filter(a => !a.isVideo && a.hasMedia).slice(0, 12).length} ads with Claude Vision...</>
+                    ) : (
+                      <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Analyse top creatives with AI ({Math.min(12, topFiltered.filter(a => !a.isVideo && a.hasMedia).length)} images)</>
+                    )}
+                  </button>
+                  {analysisResult && !showAnalysis && (
+                    <button className="ca-btn-show-analysis" onClick={() => setShowAnalysis(true)}>
+                      Show previous analysis
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Analysis Results Panel */}
+              {showAnalysis && (
+                <div className="ca-analysis-panel">
+                  <div className="ca-analysis-header">
+                    <h3>Creative Intelligence Report</h3>
+                    <button className="ca-analysis-close" onClick={() => setShowAnalysis(false)}>×</button>
+                  </div>
+
+                  {analysisLoading && (
+                    <div className="ca-analysis-loading">
+                      <div className="ca-spin"></div>
+                      <p>Claude is analysing {Math.min(12, topFiltered.filter(a => !a.isVideo && a.hasMedia).length)} top-performing competitor ads...</p>
+                      <p className="ca-analysis-loading-sub">Extracting visual patterns, themes, personas, and generating Chefly-specific creative prompts. This takes 30–60 seconds.</p>
+                    </div>
+                  )}
+
+                  {analysisError && (
+                    <div className="ca-analysis-error">
+                      <strong>Analysis failed:</strong> {analysisError}
+                      <button className="ca-btn-retry" onClick={runCreativeAnalysis}>Retry</button>
+                    </div>
+                  )}
+
+                  {analysisResult && !analysisLoading && (
+                    <>
+                      <div className="ca-analysis-tabs">
+                        <button className={`ca-analysis-tab ${analysisTab === 'overview' ? 'active' : ''}`} onClick={() => setAnalysisTab('overview')}>Themes & Pillars</button>
+                        <button className={`ca-analysis-tab ${analysisTab === 'prompts' ? 'active' : ''}`} onClick={() => setAnalysisTab('prompts')}>Chefly Prompts ({analysisResult.chefly_prompts?.length || 0})</button>
+                        <button className={`ca-analysis-tab ${analysisTab === 'ads' ? 'active' : ''}`} onClick={() => setAnalysisTab('ads')}>Per-Ad Breakdown ({analysisResult.adAnalyses?.length || 0})</button>
+                      </div>
+
+                      {analysisTab === 'overview' && (
+                        <div className="ca-analysis-overview">
+                          {analysisResult.themes?.length > 0 && (
+                            <div className="ca-analysis-section">
+                              <h4>Themes</h4>
+                              <div className="ca-analysis-cards">
+                                {analysisResult.themes.map((t, i) => (
+                                  <div key={i} className="ca-analysis-card ca-card-theme">
+                                    <div className="ca-card-label">Theme</div>
+                                    <h5>{t.name}</h5>
+                                    <p>{t.description}</p>
+                                    <span className="ca-card-freq">{t.frequency}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {analysisResult.personas?.length > 0 && (
+                            <div className="ca-analysis-section">
+                              <h4>Target Personas</h4>
+                              <div className="ca-analysis-cards">
+                                {analysisResult.personas.map((p, i) => (
+                                  <div key={i} className="ca-analysis-card ca-card-persona">
+                                    <div className="ca-card-label">Persona</div>
+                                    <h5>{p.name}</h5>
+                                    <p>{p.description}</p>
+                                    {p.painPoints?.length > 0 && (
+                                      <div className="ca-card-pills">
+                                        {p.painPoints.map((pp, j) => <span key={j} className="ca-pill-pain">{pp}</span>)}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {analysisResult.creativePillars?.length > 0 && (
+                            <div className="ca-analysis-section">
+                              <h4>Creative Pillars</h4>
+                              <div className="ca-analysis-cards">
+                                {analysisResult.creativePillars.map((cp, i) => (
+                                  <div key={i} className="ca-analysis-card ca-card-pillar">
+                                    <div className="ca-card-label">Pillar</div>
+                                    <h5>{cp.name}</h5>
+                                    <p>{cp.description}</p>
+                                    <p className="ca-card-why"><strong>Why it works:</strong> {cp.whyItWorks}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {analysisTab === 'prompts' && (
+                        <div className="ca-analysis-prompts">
+                          {analysisResult.chefly_prompts?.map((pr, i) => (
+                            <div key={i} className="ca-prompt-card">
+                              <div className="ca-prompt-header">
+                                <span className="ca-prompt-num">#{i + 1}</span>
+                                <h5>{pr.promptName}</h5>
+                                <span className="ca-prompt-basis">{pr.basedOn}</span>
+                              </div>
+                              <div className="ca-prompt-body">
+                                <div className="ca-prompt-field">
+                                  <label>Image Prompt</label>
+                                  <div className="ca-prompt-text">{pr.imagePrompt}</div>
+                                </div>
+                                <div className="ca-prompt-row">
+                                  <div className="ca-prompt-field">
+                                    <label>Headline</label>
+                                    <div className="ca-prompt-text">{pr.suggestedHeadline}</div>
+                                  </div>
+                                  <div className="ca-prompt-field">
+                                    <label>Body Copy</label>
+                                    <div className="ca-prompt-text">{pr.suggestedBody}</div>
+                                  </div>
+                                </div>
+                                <div className="ca-prompt-rationale">
+                                  <strong>Rationale:</strong> {pr.rationale}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {analysisTab === 'ads' && (
+                        <div className="ca-analysis-ads">
+                          {analysisResult.adAnalyses?.map((ad, i) => (
+                            <div key={i} className="ca-ad-analysis-card">
+                              <div className="ca-ad-analysis-header">
+                                <span className="ca-ad-index">Ad {ad.adIndex}</span>
+                                <span className="ca-ad-brand">{ad.brand}</span>
+                                <span className="ca-ad-score" style={{ background: ad.strengthScore >= 7 ? 'rgba(34,197,94,0.15)' : ad.strengthScore >= 5 ? 'rgba(234,179,8,0.15)' : 'rgba(239,68,68,0.15)', color: ad.strengthScore >= 7 ? '#22c55e' : ad.strengthScore >= 5 ? '#eab308' : '#ef4444' }}>
+                                  {ad.strengthScore}/10
+                                </span>
+                              </div>
+                              <div className="ca-ad-analysis-body">
+                                <div className="ca-ad-meta-row">
+                                  <span><strong>Layout:</strong> {ad.visualLayout}</span>
+                                  <span><strong>Format:</strong> {ad.format}</span>
+                                  <span><strong>Days:</strong> {ad.daysRunning}</span>
+                                </div>
+                                <p><strong>Hero element:</strong> {ad.heroElement}</p>
+                                <p><strong>Emotional hook:</strong> {ad.emotionalHook}</p>
+                                <p><strong>Offer/CTA:</strong> {ad.offerStructure}</p>
+                                <p><strong>Typography:</strong> {ad.typography}</p>
+                                <p className="ca-ad-why">{ad.whyItWorks}</p>
+                                {ad.dominantColors?.length > 0 && (
+                                  <div className="ca-ad-colors">
+                                    {ad.dominantColors.map((c, j) => (
+                                      <span key={j} className="ca-color-swatch" style={{ background: c }} title={c}></span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
               {topLoading && <div className="ca-loading"><div className="ca-spin"></div><span>{topLoadingStatus}</span></div>}
               {topError && <div className="ca-error-msg">{topError}</div>}
 
@@ -1021,184 +1202,6 @@ export default function CompetitorAds() {
                     </button>
                   )}
 
-                  {/* AI Analysis button */}
-                  <div className="ca-analysis-trigger">
-                    <button
-                      className="ca-btn-analyse"
-                      onClick={runCreativeAnalysis}
-                      disabled={analysisLoading || topFiltered.filter(a => !a.isVideo && a.hasMedia).length === 0}
-                    >
-                      {analysisLoading ? (
-                        <><span className="ca-spin-sm"></span> Analysing {topFiltered.filter(a => !a.isVideo && a.hasMedia).slice(0, 12).length} ads with Claude Vision...</>
-                      ) : (
-                        <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Analyse top creatives with AI ({Math.min(12, topFiltered.filter(a => !a.isVideo && a.hasMedia).length)} images)</>
-                      )}
-                    </button>
-                    {analysisResult && !showAnalysis && (
-                      <button className="ca-btn-show-analysis" onClick={() => setShowAnalysis(true)}>
-                        Show previous analysis
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Analysis Results Panel */}
-                  {showAnalysis && (
-                    <div className="ca-analysis-panel">
-                      <div className="ca-analysis-header">
-                        <h3>Creative Intelligence Report</h3>
-                        <button className="ca-analysis-close" onClick={() => setShowAnalysis(false)}>×</button>
-                      </div>
-
-                      {analysisLoading && (
-                        <div className="ca-analysis-loading">
-                          <div className="ca-spin"></div>
-                          <p>Claude is analysing {Math.min(12, topFiltered.filter(a => !a.isVideo && a.hasMedia).length)} top-performing competitor ads...</p>
-                          <p className="ca-analysis-loading-sub">Extracting visual patterns, themes, personas, and generating Chefly-specific creative prompts. This takes 30–60 seconds.</p>
-                        </div>
-                      )}
-
-                      {analysisError && (
-                        <div className="ca-analysis-error">
-                          <strong>Analysis failed:</strong> {analysisError}
-                          <button className="ca-btn-retry" onClick={runCreativeAnalysis}>Retry</button>
-                        </div>
-                      )}
-
-                      {analysisResult && !analysisLoading && (
-                        <>
-                          <div className="ca-analysis-tabs">
-                            <button className={`ca-analysis-tab ${analysisTab === 'overview' ? 'active' : ''}`} onClick={() => setAnalysisTab('overview')}>Themes & Pillars</button>
-                            <button className={`ca-analysis-tab ${analysisTab === 'prompts' ? 'active' : ''}`} onClick={() => setAnalysisTab('prompts')}>Chefly Prompts ({analysisResult.chefly_prompts?.length || 0})</button>
-                            <button className={`ca-analysis-tab ${analysisTab === 'ads' ? 'active' : ''}`} onClick={() => setAnalysisTab('ads')}>Per-Ad Breakdown ({analysisResult.adAnalyses?.length || 0})</button>
-                          </div>
-
-                          {analysisTab === 'overview' && (
-                            <div className="ca-analysis-overview">
-                              {analysisResult.themes?.length > 0 && (
-                                <div className="ca-analysis-section">
-                                  <h4>Themes</h4>
-                                  <div className="ca-analysis-cards">
-                                    {analysisResult.themes.map((t, i) => (
-                                      <div key={i} className="ca-analysis-card ca-card-theme">
-                                        <div className="ca-card-label">Theme</div>
-                                        <h5>{t.name}</h5>
-                                        <p>{t.description}</p>
-                                        <span className="ca-card-freq">{t.frequency}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {analysisResult.personas?.length > 0 && (
-                                <div className="ca-analysis-section">
-                                  <h4>Target Personas</h4>
-                                  <div className="ca-analysis-cards">
-                                    {analysisResult.personas.map((p, i) => (
-                                      <div key={i} className="ca-analysis-card ca-card-persona">
-                                        <div className="ca-card-label">Persona</div>
-                                        <h5>{p.name}</h5>
-                                        <p>{p.description}</p>
-                                        {p.painPoints?.length > 0 && (
-                                          <div className="ca-card-pills">
-                                            {p.painPoints.map((pp, j) => <span key={j} className="ca-pill">{pp}</span>)}
-                                          </div>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {analysisResult.creativePillars?.length > 0 && (
-                                <div className="ca-analysis-section">
-                                  <h4>Creative Pillars</h4>
-                                  <div className="ca-analysis-cards">
-                                    {analysisResult.creativePillars.map((cp, i) => (
-                                      <div key={i} className="ca-analysis-card ca-card-pillar">
-                                        <div className="ca-card-label">Pillar</div>
-                                        <h5>{cp.name}</h5>
-                                        <p>{cp.description}</p>
-                                        <p className="ca-card-why"><strong>Why it works:</strong> {cp.whyItWorks}</p>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {analysisTab === 'prompts' && (
-                            <div className="ca-analysis-prompts">
-                              {analysisResult.chefly_prompts?.map((pr, i) => (
-                                <div key={i} className="ca-prompt-card">
-                                  <div className="ca-prompt-header">
-                                    <span className="ca-prompt-num">#{i + 1}</span>
-                                    <h5>{pr.promptName}</h5>
-                                    <span className="ca-prompt-basis">{pr.basedOn}</span>
-                                  </div>
-                                  <div className="ca-prompt-body">
-                                    <div className="ca-prompt-field">
-                                      <label>Image Prompt</label>
-                                      <div className="ca-prompt-text">{pr.imagePrompt}</div>
-                                    </div>
-                                    <div className="ca-prompt-row">
-                                      <div className="ca-prompt-field">
-                                        <label>Headline</label>
-                                        <div className="ca-prompt-text">{pr.suggestedHeadline}</div>
-                                      </div>
-                                      <div className="ca-prompt-field">
-                                        <label>Body Copy</label>
-                                        <div className="ca-prompt-text">{pr.suggestedBody}</div>
-                                      </div>
-                                    </div>
-                                    <div className="ca-prompt-rationale">
-                                      <strong>Rationale:</strong> {pr.rationale}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {analysisTab === 'ads' && (
-                            <div className="ca-analysis-ads">
-                              {analysisResult.adAnalyses?.map((ad, i) => (
-                                <div key={i} className="ca-ad-analysis-card">
-                                  <div className="ca-ad-analysis-header">
-                                    <span className="ca-ad-index">Ad {ad.adIndex}</span>
-                                    <span className="ca-ad-brand">{ad.brand}</span>
-                                    <span className="ca-ad-score" style={{ background: ad.strengthScore >= 7 ? 'rgba(34,197,94,0.15)' : ad.strengthScore >= 5 ? 'rgba(234,179,8,0.15)' : 'rgba(239,68,68,0.15)', color: ad.strengthScore >= 7 ? '#22c55e' : ad.strengthScore >= 5 ? '#eab308' : '#ef4444' }}>
-                                      {ad.strengthScore}/10
-                                    </span>
-                                  </div>
-                                  <div className="ca-ad-analysis-body">
-                                    <div className="ca-ad-meta-row">
-                                      <span><strong>Layout:</strong> {ad.visualLayout}</span>
-                                      <span><strong>Format:</strong> {ad.format}</span>
-                                      <span><strong>Days:</strong> {ad.daysRunning}</span>
-                                    </div>
-                                    <p><strong>Hero element:</strong> {ad.heroElement}</p>
-                                    <p><strong>Emotional hook:</strong> {ad.emotionalHook}</p>
-                                    <p><strong>Offer/CTA:</strong> {ad.offerStructure}</p>
-                                    <p><strong>Typography:</strong> {ad.typography}</p>
-                                    <p className="ca-ad-why">{ad.whyItWorks}</p>
-                                    {ad.dominantColors?.length > 0 && (
-                                      <div className="ca-ad-colors">
-                                        {ad.dominantColors.map((c, j) => (
-                                          <span key={j} className="ca-color-swatch" style={{ background: c }} title={c}></span>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
                 </>
               )}
 
