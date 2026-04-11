@@ -358,6 +358,8 @@ export default function CompetitorAds() {
   const [promptProgress, setPromptProgress] = useState({ current: 0, total: 0 })
   const [variantIndex, setVariantIndex] = useState(0) // cycling through DCO variants in modal
   const [copiedPromptIdx, setCopiedPromptIdx] = useState(null) // flash "Copied!" on prompt card
+  const [cardVariantIdx, setCardVariantIdx] = useState({}) // { [adId]: index } for inline carousel
+  const [libraryQueue, setLibraryQueue] = useState([]) // ads queued to add to library tab
 
   // ── Batch Job state ──
   const [batchJobId, setBatchJobId] = useState(null)
@@ -981,8 +983,58 @@ export default function CompetitorAds() {
     { setModalAd(ad); setVariantIndex(0) }
   }
 
+  function addToLibraryQueue(ad) {
+    const variants = ad.variants || [ad]
+    const seen = new Set()
+    const unique = variants.filter(v => {
+      const key = v.mediaUrl || v.adId
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+    setLibraryQueue(prev => {
+      const existingIds = new Set(prev.map(a => a.adId + (a.cardIndex || '')))
+      const newAds = unique.filter(v => !existingIds.has(v.adId + (v.cardIndex || '')))
+      if (newAds.length === 0) return prev
+      return [...prev, ...newAds]
+    })
+  }
+
+  function addSingleToLibraryQueue(variant) {
+    setLibraryQueue(prev => {
+      const key = variant.adId + (variant.cardIndex || '')
+      if (prev.some(a => (a.adId + (a.cardIndex || '')) === key)) return prev
+      return [...prev, variant]
+    })
+  }
+
   function renderAdCard(ad, showBrandTag = false) {
     const brandColor = brandColorMap[ad.pageId]
+    // Inline carousel: get unique image variants
+    const allVariants = ad.variants || [ad]
+    const seenMedia = new Set()
+    const uniqueVars = allVariants.filter(v => {
+      const key = v.mediaUrl || v.adId
+      if (!v.mediaUrl || seenMedia.has(key)) return false
+      seenMedia.add(key)
+      return true
+    })
+    const hasCarousel = uniqueVars.length > 1 && !ad.isVideo
+    const currentIdx = cardVariantIdx[ad.adId] || 0
+    const safeIdx = currentIdx % uniqueVars.length
+    const displayVariant = hasCarousel ? uniqueVars[safeIdx] : ad
+    const displayUrl = displayVariant.mediaUrl || ad.mediaUrl
+    const isInQueue = libraryQueue.some(a => (a.adId + (a.cardIndex || '')) === (displayVariant.adId + (displayVariant.cardIndex || '')))
+
+    const goCardPrev = (e) => {
+      e.stopPropagation()
+      setCardVariantIdx(prev => ({ ...prev, [ad.adId]: (safeIdx - 1 + uniqueVars.length) % uniqueVars.length }))
+    }
+    const goCardNext = (e) => {
+      e.stopPropagation()
+      setCardVariantIdx(prev => ({ ...prev, [ad.adId]: (safeIdx + 1) % uniqueVars.length }))
+    }
+
     return (
       <div key={ad.adId + '-' + (ad.cardIndex || '')} className="ca-card">
         <div className="ca-card-media">
@@ -995,9 +1047,9 @@ export default function CompetitorAds() {
               </div>
               <div className="ca-video-label">VIDEO</div>
             </div>
-          ) : ad.mediaUrl ? (
-            <div onClick={() => { setModalAd(ad); setVariantIndex(0) }}>
-              <img src={ad.mediaUrl} alt="" className="ca-card-thumb" loading="lazy" onError={handleImgError} />
+          ) : displayUrl ? (
+            <div onClick={() => { setModalAd(ad); setVariantIndex(safeIdx) }}>
+              <img src={displayUrl} alt="" className="ca-card-thumb" loading="lazy" onError={handleImgError} />
               <div className="ca-img-fallback" style={{display:'none'}}>
                 <span className="ca-fallback-text">{ad.adName || 'Image unavailable'}</span>
               </div>
@@ -1007,13 +1059,47 @@ export default function CompetitorAds() {
               <span>No preview available</span>
             </div>
           )}
+          {/* Inline carousel arrows */}
+          {hasCarousel && (
+            <>
+              <button className="ca-card-arrow ca-card-arrow-left" onClick={goCardPrev} title="Previous variant">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <button className="ca-card-arrow ca-card-arrow-right" onClick={goCardNext} title="Next variant">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 6 15 12 9 18"/></svg>
+              </button>
+              <div className="ca-card-dots">
+                {uniqueVars.map((_, i) => (
+                  <span key={i} className={`ca-card-dot ${i === safeIdx ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); setCardVariantIdx(prev => ({ ...prev, [ad.adId]: i })) }} />
+                ))}
+              </div>
+            </>
+          )}
+          {/* Add to library button */}
+          {!ad.isVideo && displayUrl && (
+            <button
+              className={`ca-card-add-lib ${isInQueue ? 'added' : ''}`}
+              onClick={(e) => { e.stopPropagation(); hasCarousel ? addSingleToLibraryQueue(displayVariant) : addToLibraryQueue(ad) }}
+              title={isInQueue ? 'Added to library' : (hasCarousel ? 'Add this variant to Ad Library' : `Add ${uniqueVars.length > 1 ? 'all ' + uniqueVars.length + ' variants' : ''} to Ad Library`)}
+            >
+              {isInQueue ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              )}
+            </button>
+          )}
           {!ad.isVideo && (
-            <div className="ca-card-overlay" onClick={() => { setModalAd(ad); setVariantIndex(0) }}>
+            <div className="ca-card-overlay" onClick={() => { setModalAd(ad); setVariantIndex(hasCarousel ? safeIdx : 0) }}>
               <span className="ca-card-expand">Click to expand</span>
             </div>
           )}
+          {/* Variant counter badge */}
+          {hasCarousel && (
+            <div className="ca-card-variant-counter">{safeIdx + 1} / {uniqueVars.length}</div>
+          )}
         </div>
-        <div className="ca-card-body" onClick={() => { setModalAd(ad); setVariantIndex(0) }}>
+        <div className="ca-card-body" onClick={() => { setModalAd(ad); setVariantIndex(hasCarousel ? safeIdx : 0) }}>
           <div className="ca-card-title">{ad.adName}</div>
           <div className="ca-card-tags">
             {showBrandTag && brandColor && (
@@ -1171,6 +1257,54 @@ export default function CompetitorAds() {
         <main className="ca-main">
           {viewMode === 'library' && (
             <>
+              {/* Curated picks from Top Performers */}
+              {libraryQueue.length > 0 && (
+                <div className="ca-curated-section">
+                  <div className="ca-curated-header">
+                    <h3>Curated picks ({libraryQueue.length})</h3>
+                    <p className="ca-curated-sub">Selected from Top Performers. Run analysis on these or browse below.</p>
+                    <div className="ca-curated-actions">
+                      <button className="ca-btn-analyse ca-btn-analyse-sm" onClick={() => {
+                        // Run analysis on just the curated queue
+                        setViewMode('top')
+                        // For now, show them they can analyse from top performers
+                      }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                        Analyse these
+                      </button>
+                      <button className="ca-btn-queue-clear" onClick={() => setLibraryQueue([])}>Clear all</button>
+                    </div>
+                  </div>
+                  <div className="ca-grid">
+                    {libraryQueue.map(ad => (
+                      <div key={ad.adId + '-' + (ad.cardIndex || '') + '-q'} className="ca-card ca-card-curated">
+                        <div className="ca-card-media">
+                          {ad.mediaUrl && (
+                            <div onClick={() => { setModalAd(ad); setVariantIndex(0) }}>
+                              <img src={ad.mediaUrl} alt="" className="ca-card-thumb" loading="lazy" onError={handleImgError} />
+                            </div>
+                          )}
+                          <button
+                            className="ca-card-remove-lib"
+                            onClick={(e) => { e.stopPropagation(); setLibraryQueue(prev => prev.filter(a => (a.adId + (a.cardIndex || '')) !== (ad.adId + (ad.cardIndex || '')))) }}
+                            title="Remove from curated"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                          </button>
+                        </div>
+                        <div className="ca-card-body" onClick={() => { setModalAd(ad); setVariantIndex(0) }}>
+                          <div className="ca-card-title">{ad.adName}</div>
+                          <div className="ca-card-tags">
+                            <span className="ca-tag ca-tag-brand">{ad.pageName}</span>
+                            <span className="ca-tag days">{ad.daysActive}d</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {activeBrand && (
                 <div className="ca-brand-bar">
                   <h2 className="ca-brand-bar-name">{activeBrand.pageName}</h2>
@@ -1339,6 +1473,24 @@ export default function CompetitorAds() {
                       ))}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Library Queue Banner */}
+              {libraryQueue.length > 0 && (
+                <div className="ca-library-queue-banner">
+                  <div className="ca-library-queue-info">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                    <span>{libraryQueue.length} {libraryQueue.length === 1 ? 'ad' : 'ads'} selected for Ad Library</span>
+                  </div>
+                  <div className="ca-library-queue-actions">
+                    <button className="ca-btn-queue-view" onClick={() => { setViewMode('library'); setSelectedBrand(null) }}>
+                      View in Library
+                    </button>
+                    <button className="ca-btn-queue-clear" onClick={() => setLibraryQueue([])}>
+                      Clear
+                    </button>
+                  </div>
                 </div>
               )}
 
