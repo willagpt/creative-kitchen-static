@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import './CompetitorAds.css'
 
 // ── Supabase config ──
@@ -16,6 +16,8 @@ const sbReadHeaders = {
   apikey: SUPABASE_ANON_KEY,
   Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
 }
+
+const GRID_PAGE = 50
 
 // ── Helpers ──
 function formatDate(date) {
@@ -43,15 +45,8 @@ function isVideoUrl(url) {
   return lower.includes('.mp4') || lower.includes('.mov') || lower.includes('.webm')
 }
 
-function isSnapshotUrl(url) {
-  if (!url) return false
-  return url.includes('facebook.com/ads/archive/render_ad')
-}
-
 function mapDbAd(ad, pageId, pageName) {
-  const thumbnailUrl = ad.thumbnail_url || null
-  const snapshotUrl = ad.snapshot_url || null
-  const mediaUrl = thumbnailUrl || null
+  const mediaUrl = ad.thumbnail_url || null
   const isVideo = isVideoUrl(mediaUrl)
   return {
     adId: ad.id,
@@ -63,9 +58,7 @@ function mapDbAd(ad, pageId, pageName) {
     pageName: ad.page_name || pageName,
     creativeType: isVideo ? 'video' : 'image',
     mediaUrl,
-    snapshotUrl,
     isVideo,
-    hasIframeFallback: !thumbnailUrl && !!snapshotUrl && isSnapshotUrl(snapshotUrl),
     impressionsText: fmtImpressions(ad.impressions_lower, ad.impressions_upper),
     impressionsLower: ad.impressions_lower || 0,
     impressionsUpper: ad.impressions_upper || 0,
@@ -145,109 +138,6 @@ async function deleteBrand(pageId) {
   } catch { return false }
 }
 
-// ── Video card with inline playback ──
-function VideoCard({ ad, onExpand }) {
-  const videoRef = useRef(null)
-  const [failed, setFailed] = useState(false)
-  const [loaded, setLoaded] = useState(false)
-  const [playing, setPlaying] = useState(false)
-
-  const togglePlay = useCallback((e) => {
-    e.stopPropagation()
-    const v = videoRef.current
-    if (!v) return
-    if (v.paused) {
-      v.play().then(() => setPlaying(true)).catch(() => {})
-    } else {
-      v.pause()
-      setPlaying(false)
-    }
-  }, [])
-
-  const handleMouseOut = useCallback(() => {
-    // Only auto-pause on mouse out if not actively playing via click
-    if (!playing) {
-      const v = videoRef.current
-      if (v) { try { v.pause(); v.currentTime = 0 } catch {} }
-    }
-  }, [playing])
-
-  if (failed || !ad.mediaUrl) {
-    return (
-      <div className="ca-video-placeholder" onClick={onExpand}>
-        <div className="ca-video-play-btn">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
-        </div>
-        <div className="ca-video-label">VIDEO</div>
-        <div className="ca-video-title">{ad.adName}</div>
-        {ad.adBody && <div className="ca-video-body">{ad.adBody.slice(0, 80)}{ad.adBody.length > 80 ? '...' : ''}</div>}
-      </div>
-    )
-  }
-
-  return (
-    <>
-      <video
-        ref={videoRef}
-        src={ad.mediaUrl}
-        className={`ca-card-video ${playing ? 'is-playing' : ''}`}
-        muted={!playing}
-        playsInline
-        loop
-        preload="metadata"
-        onLoadedData={() => setLoaded(true)}
-        onError={() => setFailed(true)}
-        onMouseOut={handleMouseOut}
-        onEnded={() => setPlaying(false)}
-        onClick={togglePlay}
-      />
-      {!loaded && (
-        <div className="ca-video-loading" onClick={togglePlay}>
-          <div className="ca-video-play-btn">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
-          </div>
-        </div>
-      )}
-      {loaded && !playing && (
-        <div className="ca-video-play-overlay" onClick={togglePlay}>
-          <div className="ca-video-play-btn large">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
-          </div>
-        </div>
-      )}
-      {playing && (
-        <button className="ca-video-expand-btn" onClick={(e) => { e.stopPropagation(); onExpand(e) }} title="Expand">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" /></svg>
-        </button>
-      )}
-    </>
-  )
-}
-
-// ── Iframe fallback card for snapshot URLs ──
-function IframeCard({ ad }) {
-  const [loadFailed, setLoadFailed] = useState(false)
-
-  if (loadFailed) {
-    return (
-      <div className="ca-no-preview">
-        <span>Preview unavailable</span>
-      </div>
-    )
-  }
-
-  return (
-    <iframe
-      src={ad.snapshotUrl}
-      className="ca-card-iframe"
-      sandbox="allow-scripts allow-same-origin"
-      loading="lazy"
-      title="Ad preview"
-      onError={() => setLoadFailed(true)}
-    />
-  )
-}
-
 // ── Component ──
 export default function CompetitorAds() {
   const [apiKey, setApiKey] = useState(localStorage.getItem('metaAdLibraryToken') || '')
@@ -262,6 +152,7 @@ export default function CompetitorAds() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [modalAd, setModalAd] = useState(null)
   const [loadingStatus, setLoadingStatus] = useState('')
+  const [showCount, setShowCount] = useState(GRID_PAGE)
 
   const [typeFilter, setTypeFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -274,6 +165,7 @@ export default function CompetitorAds() {
 
   useEffect(() => { fetchFollowedBrands().then(setFollowedBrands) }, [])
   useEffect(() => { if (apiKey.length > 20) localStorage.setItem('metaAdLibraryToken', apiKey) }, [apiKey])
+  useEffect(() => { setShowCount(GRID_PAGE) }, [typeFilter, statusFilter, sortBy, searchText, dateFrom, dateTo])
 
   const filteredAds = (() => {
     let ads = [...allAds]
@@ -306,6 +198,9 @@ export default function CompetitorAds() {
     return ads
   })()
 
+  const pageAds = filteredAds.slice(0, showCount)
+  const remaining = filteredAds.length - showCount
+
   const videoCount = allAds.filter(a => a.isVideo).length
   const imageCount = allAds.filter(a => !a.isVideo).length
   const activeCount = allAds.filter(a => a.status === 'active').length
@@ -314,6 +209,7 @@ export default function CompetitorAds() {
     setIsLoading(true)
     setError(null)
     setAllAds([])
+    setShowCount(GRID_PAGE)
     setLoadingStatus('Loading ads...')
     try {
       const rows = await fetchAllAds(pageId)
@@ -369,10 +265,11 @@ export default function CompetitorAds() {
     if (activeBrand?.pageId === pageId) { setActiveBrand(null); setAllAds([]) }
   }
 
-  function handleCardClick(ad, e) {
-    // For video cards, don't open modal — video plays inline via VideoCard
-    if (ad.isVideo) return
-    setModalAd(ad)
+  function handleImgError(e) {
+    const img = e.target
+    img.style.display = 'none'
+    const fallback = img.parentElement.querySelector('.ca-img-fallback')
+    if (fallback) fallback.style.display = 'flex'
   }
 
   return (
@@ -460,40 +357,54 @@ export default function CompetitorAds() {
           {error && <div className="ca-error-msg">{error} <button onClick={() => fetchBrandAds(activeBrand.pageId, activeBrand.pageName)}>Retry</button></div>}
 
           {!isLoading && filteredAds.length > 0 && (
-            <div className="ca-grid">
-              {filteredAds.map(ad => (
-                <div key={ad.adId} className="ca-card" onClick={(e) => handleCardClick(ad, e)}>
-                  <div className="ca-card-media">
-                    {ad.isVideo ? (
-                      <VideoCard ad={ad} onExpand={(e) => { e.stopPropagation(); setModalAd(ad) }} />
-                    ) : ad.mediaUrl ? (
-                      <>
-                        <img src={ad.mediaUrl} alt="" className="ca-card-thumb" loading="lazy"
-                          onError={e => { e.target.style.display = 'none'; e.target.parentElement.classList.add('no-media') }} />
-                        <div className="ca-card-overlay">
-                          <span className="ca-card-expand">Click to expand</span>
+            <>
+              <div className="ca-showing">Showing {Math.min(showCount, filteredAds.length)} of {filteredAds.length}</div>
+              <div className="ca-grid">
+                {pageAds.map(ad => (
+                  <div key={ad.adId} className="ca-card" onClick={() => setModalAd(ad)}>
+                    <div className="ca-card-media">
+                      {ad.isVideo ? (
+                        <div className="ca-video-placeholder">
+                          <div className="ca-video-play-btn">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
+                          </div>
+                          <div className="ca-video-label">VIDEO</div>
+                          <div className="ca-video-title">{ad.adName}</div>
+                          {ad.adBody && <div className="ca-video-body">{ad.adBody.slice(0, 80)}{ad.adBody.length > 80 ? '...' : ''}</div>}
                         </div>
-                      </>
-                    ) : ad.hasIframeFallback ? (
-                      <IframeCard ad={ad} />
-                    ) : (
-                      <div className="ca-no-preview">
-                        <span>No preview</span>
+                      ) : ad.mediaUrl ? (
+                        <>
+                          <img src={ad.mediaUrl} alt="" className="ca-card-thumb" loading="lazy" onError={handleImgError} />
+                          <div className="ca-img-fallback" style={{display:'none'}}>
+                            <span className="ca-fallback-text">{ad.adName || 'Image unavailable'}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="ca-no-preview">
+                          <span>No preview available</span>
+                        </div>
+                      )}
+                      <div className="ca-card-overlay">
+                        <span className="ca-card-expand">{ad.isVideo ? 'Click to play' : 'Click to expand'}</span>
                       </div>
-                    )}
-                    {ad.isVideo && <div className="ca-card-play-badge">&#9654;</div>}
-                  </div>
-                  <div className="ca-card-body">
-                    <div className="ca-card-title">{ad.adName}</div>
-                    <div className="ca-card-tags">
-                      <span className={`ca-tag ${ad.isVideo ? 'video' : 'image'}`}>{ad.isVideo ? '\u25B6 video' : 'image'}</span>
-                      <span className="ca-tag days">{ad.daysActive}d</span>
-                      <span className={`ca-tag status-${ad.status}`}>{ad.status}</span>
+                    </div>
+                    <div className="ca-card-body">
+                      <div className="ca-card-title">{ad.adName}</div>
+                      <div className="ca-card-tags">
+                        <span className={`ca-tag ${ad.isVideo ? 'video' : 'image'}`}>{ad.isVideo ? '\u25B6 video' : 'image'}</span>
+                        <span className="ca-tag days">{ad.daysActive}d</span>
+                        <span className={`ca-tag status-${ad.status}`}>{ad.status}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+              {remaining > 0 && (
+                <button className="ca-load-more" onClick={() => setShowCount(c => c + GRID_PAGE)}>
+                  Load more ({remaining > 0 ? remaining : 0} remaining)
+                </button>
+              )}
+            </>
           )}
 
           {!isLoading && filteredAds.length === 0 && allAds.length > 0 && <div className="ca-empty">No ads match your filters</div>}
@@ -511,8 +422,6 @@ export default function CompetitorAds() {
                 <video src={modalAd.mediaUrl} controls playsInline autoPlay className="ca-modal-video" />
               ) : modalAd.mediaUrl ? (
                 <img src={modalAd.mediaUrl} alt="" className="ca-modal-img" />
-              ) : modalAd.hasIframeFallback ? (
-                <iframe src={modalAd.snapshotUrl} className="ca-modal-iframe" sandbox="allow-scripts allow-same-origin" title="Ad preview" />
               ) : null}
             </div>
             <div className="ca-modal-detail">
