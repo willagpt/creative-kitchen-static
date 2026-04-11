@@ -62,6 +62,8 @@ function mapDbAd(ad, pageId, pageName) {
     impressionsUpper: ad.impressions_upper || 0,
     startDate: formatDate(ad.start_date),
     endDate: formatDate(ad.end_date),
+    rawStartDate: ad.start_date || null,
+    rawEndDate: ad.end_date || null,
     daysActive: ad.days_active || 0,
     status: ad.is_active ? 'active' : 'ended',
     platforms: ad.platforms || [],
@@ -74,6 +76,30 @@ function extractPageId(input) {
   if (/^\d+$/.test(trimmed)) return trimmed
   const m = trimmed.match(/view_all_page_id=(\d+)/) || trimmed.match(/[?&]id=(\d+)/) || trimmed.match(/facebook\.com\/pages\/[^/]+\/(\d+)/) || trimmed.match(/profile\.php\?id=(\d+)/)
   return m ? m[1] : null
+}
+
+// ── Paginated Supabase fetch (gets ALL rows, not just 1000) ──
+async function fetchAllAds(pageId) {
+  const PAGE_SIZE = 1000
+  let allRows = []
+  let offset = 0
+  let hasMore = true
+
+  while (hasMore) {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/competitor_ads?page_id=eq.${pageId}&order=start_date.desc&offset=${offset}&limit=${PAGE_SIZE}`,
+      { headers: sbReadHeaders }
+    )
+    if (!res.ok) throw new Error(`Failed to load (${res.status})`)
+    const rows = await res.json()
+    allRows = allRows.concat(rows)
+    if (rows.length < PAGE_SIZE) {
+      hasMore = false
+    } else {
+      offset += PAGE_SIZE
+    }
+  }
+  return allRows
 }
 
 // ── Supabase CRUD ──
@@ -130,10 +156,12 @@ export default function CompetitorAds() {
   const [loadingStatus, setLoadingStatus] = useState('')
 
   // Filters
-  const [typeFilter, setTypeFilter] = useState('all') // all, video, image
-  const [statusFilter, setStatusFilter] = useState('all') // all, active, ended
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
   const [searchText, setSearchText] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
 
   const hasKey = apiKey.length > 20
 
@@ -151,12 +179,22 @@ export default function CompetitorAds() {
       const q = searchText.toLowerCase()
       ads = ads.filter(a => (a.adName || '').toLowerCase().includes(q) || (a.adBody || '').toLowerCase().includes(q))
     }
+    // Date range filter
+    if (dateFrom) {
+      const from = new Date(dateFrom)
+      ads = ads.filter(a => a.rawStartDate && new Date(a.rawStartDate) >= from)
+    }
+    if (dateTo) {
+      const to = new Date(dateTo)
+      to.setHours(23, 59, 59, 999)
+      ads = ads.filter(a => a.rawStartDate && new Date(a.rawStartDate) <= to)
+    }
     ads.sort((a, b) => {
       switch (sortBy) {
         case 'longest': return b.daysActive - a.daysActive
         case 'shortest': return a.daysActive - b.daysActive
-        case 'newest': return new Date(b.startDate?.split('/').reverse().join('-') || 0) - new Date(a.startDate?.split('/').reverse().join('-') || 0)
-        case 'oldest': return new Date(a.startDate?.split('/').reverse().join('-') || 0) - new Date(b.startDate?.split('/').reverse().join('-') || 0)
+        case 'newest': return new Date(b.rawStartDate || 0) - new Date(a.rawStartDate || 0)
+        case 'oldest': return new Date(a.rawStartDate || 0) - new Date(b.rawStartDate || 0)
         default: return 0
       }
     })
@@ -167,7 +205,7 @@ export default function CompetitorAds() {
   const imageCount = allAds.filter(a => !a.isVideo).length
   const activeCount = allAds.filter(a => a.status === 'active').length
 
-  // ── Fetch ads ──
+  // ── Fetch ads (paginated, gets ALL) ──
   async function fetchBrandAds(pageId, pageName) {
     setIsLoading(true)
     setError(null)
@@ -175,14 +213,10 @@ export default function CompetitorAds() {
     setLoadingStatus('Loading ads...')
 
     try {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/competitor_ads?page_id=eq.${pageId}&limit=500`,
-        { headers: sbReadHeaders }
-      )
-      if (!res.ok) throw new Error(`Failed to load (${res.status})`)
+      const rows = await fetchAllAds(pageId)
 
-      const rows = await res.json()
       if (rows.length > 0) {
+        setLoadingStatus(`Processing ${rows.length} ads...`)
         setAllAds(rows.map(ad => mapDbAd(ad, pageId, pageName)))
         setLoadingStatus('')
         await updateBrand(pageId, { last_fetched_at: new Date().toISOString(), total_ads: rows.length })
@@ -192,11 +226,8 @@ export default function CompetitorAds() {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ page_id: pageId, limit: 50 }),
         })
-        const reRes = await fetch(`${SUPABASE_URL}/rest/v1/competitor_ads?page_id=eq.${pageId}&limit=500`, { headers: sbReadHeaders })
-        if (reRes.ok) {
-          const reRows = await reRes.json()
-          setAllAds(reRows.map(ad => mapDbAd(ad, pageId, pageName)))
-        }
+        const reRows = await fetchAllAds(pageId)
+        setAllAds(reRows.map(ad => mapDbAd(ad, pageId, pageName)))
         setLoadingStatus('')
       }
     } catch (err) {
@@ -234,6 +265,11 @@ export default function CompetitorAds() {
     await deleteBrand(pageId)
     setFollowedBrands(followedBrands.filter(b => b.pageId !== pageId))
     if (activeBrand?.pageId === pageId) { setActiveBrand(null); setAllAds([]) }
+  }
+
+  function clearDateRange() {
+    setDateFrom('')
+    setDateTo('')
   }
 
   return (
@@ -309,6 +345,22 @@ export default function CompetitorAds() {
                   <option value="shortest">Shortest running</option>
                 </select>
               </div>
+            </div>
+          )}
+
+          {/* Date range */}
+          {allAds.length > 0 && (
+            <div className="ca-date-range">
+              <span className="ca-date-label">Date range</span>
+              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="ca-date-input" />
+              <span className="ca-date-to">to</span>
+              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="ca-date-input" />
+              {(dateFrom || dateTo) && (
+                <button className="ca-date-clear" onClick={clearDateRange}>Clear</button>
+              )}
+              {(dateFrom || dateTo) && (
+                <span className="ca-date-count">{filteredAds.length} ads in range</span>
+              )}
             </div>
           )}
 
