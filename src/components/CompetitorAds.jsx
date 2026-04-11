@@ -47,9 +47,29 @@ function isVideoUrl(url) {
 
 function mapDbAd(ad, pageId, pageName) {
   const mediaUrl = ad.thumbnail_url || null
-  const isVideo = isVideoUrl(mediaUrl)
+  const videoUrl = ad.video_url || null
+  const displayFormat = (ad.display_format || '').toUpperCase()
+
+  // Use display_format from DB if available, otherwise infer from URL
+  let isVideo = false
+  let creativeType = 'unknown'
+  if (displayFormat === 'VIDEO') {
+    isVideo = true
+    creativeType = 'video'
+  } else if (displayFormat === 'IMAGE') {
+    isVideo = false
+    creativeType = 'image'
+  } else if (displayFormat === 'DCO') {
+    // DCO cards can be video or image — check the media URLs
+    isVideo = isVideoUrl(mediaUrl) || !!videoUrl
+    creativeType = isVideo ? 'video' : 'image'
+  } else {
+    isVideo = isVideoUrl(mediaUrl)
+    creativeType = !mediaUrl ? 'unknown' : isVideo ? 'video' : 'image'
+  }
+
   const hasMedia = !!mediaUrl
-  const creativeType = !hasMedia ? 'unknown' : isVideo ? 'video' : 'image'
+
   return {
     adId: ad.id,
     adName: ad.creative_title || 'Untitled Ad',
@@ -58,8 +78,10 @@ function mapDbAd(ad, pageId, pageName) {
     adDescription: ad.creative_description || '',
     pageId: ad.page_id || pageId,
     pageName: ad.page_name || pageName,
+    displayFormat,
     creativeType,
     mediaUrl,
+    videoUrl: videoUrl || (isVideo ? mediaUrl : null),
     isVideo,
     hasMedia,
     impressionsText: fmtImpressions(ad.impressions_lower, ad.impressions_upper),
@@ -72,6 +94,10 @@ function mapDbAd(ad, pageId, pageName) {
     daysActive: ad.days_active || 0,
     status: ad.is_active ? 'active' : 'ended',
     platforms: ad.platforms || [],
+    creativeTargeting: ad.creative_targeting || null,
+    emotionalDrivers: ad.emotional_drivers || null,
+    ctaType: ad.cta_type || null,
+    cardIndex: ad.card_index,
     url: `https://www.facebook.com/ads/library/?ad_type=all&view_all_page_id=${ad.page_id || pageId}`,
   }
 }
@@ -103,16 +129,15 @@ async function fetchAllAds(pageId) {
   return allRows
 }
 
-// ── Lazy Video Card ──
-// Uses IntersectionObserver: only mounts <video preload="metadata"> when card
-// scrolls into view (plus 200px margin). Removes src when scrolled away to
-// free memory. With pagination at 50 cards, only ~9-12 videos load at once.
-function LazyVideo({ src }) {
+// ── Inline Video Card ──
+// Plays video directly in the grid card. Click to play/pause.
+function InlineVideoCard({ src, onClick }) {
   const wrapRef = useRef(null)
   const vidRef = useRef(null)
   const [visible, setVisible] = useState(false)
   const [hasFrame, setHasFrame] = useState(false)
   const [failed, setFailed] = useState(false)
+  const [playing, setPlaying] = useState(false)
 
   useEffect(() => {
     const el = wrapRef.current
@@ -132,8 +157,23 @@ function LazyVideo({ src }) {
       if (!v.src || v.src !== src) { v.src = src; v.load() }
     } else if (!visible && v.src) {
       v.pause(); v.removeAttribute('src'); v.load()
+      setPlaying(false)
     }
   }, [visible, src, failed])
+
+  function handleVideoClick(e) {
+    e.stopPropagation()
+    const v = vidRef.current
+    if (!v || !v.src) return
+    if (v.paused) {
+      v.muted = false
+      v.play().catch(() => {})
+      setPlaying(true)
+    } else {
+      v.pause()
+      setPlaying(false)
+    }
+  }
 
   return (
     <div ref={wrapRef} className="ca-lazy-video-wrap">
@@ -142,14 +182,17 @@ function LazyVideo({ src }) {
           ref={vidRef}
           muted
           playsInline
+          webkit-playsinline="true"
           preload="metadata"
           className={'ca-lazy-video' + (hasFrame ? ' loaded' : '')}
           onLoadedData={() => setHasFrame(true)}
           onError={() => setFailed(true)}
+          onEnded={() => setPlaying(false)}
+          onClick={handleVideoClick}
         />
       )}
       {(!hasFrame || failed) && (
-        <div className="ca-video-placeholder-mini">
+        <div className="ca-video-placeholder-mini" onClick={handleVideoClick}>
           <div className="ca-video-play-btn">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
           </div>
@@ -158,6 +201,18 @@ function LazyVideo({ src }) {
             <div className="ca-video-loading-dot"><span></span></div>
           )}
         </div>
+      )}
+      {hasFrame && !playing && !failed && (
+        <div className="ca-video-play-overlay" onClick={handleVideoClick}>
+          <div className="ca-video-play-btn">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
+          </div>
+        </div>
+      )}
+      {hasFrame && (
+        <button className="ca-card-detail-btn" onClick={onClick} title="View details">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        </button>
       )}
     </div>
   )
@@ -169,11 +224,13 @@ async function fetchFollowedBrands() {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/followed_brands?order=created_at.desc`, { headers: sbReadHeaders })
     if (!res.ok) return []
     const data = await res.json()
-    return data.map(row => ({
-      pageId: row.page_id, pageName: row.page_name, platforms: row.platforms || [],
-      byline: row.byline || '', adCount: row.total_ads || 0, country: row.country || 'GB',
-      lastFetchedAt: row.last_fetched_at || null, thumbnailUrl: row.thumbnail_url || null,
-    }))
+    return data.map(row => (
+      {
+        pageId: row.page_id, pageName: row.page_name, platforms: row.platforms || [],
+        byline: row.byline || '', adCount: row.total_ads || 0, country: row.country || 'GB',
+        lastFetchedAt: row.last_fetched_at || null, thumbnailUrl: row.thumbnail_url || null,
+      }
+    ))
   } catch { return [] }
 }
 
@@ -335,15 +392,51 @@ export default function CompetitorAds() {
     if (fallback) fallback.style.display = 'flex'
   }
 
+  function openModal(ad, e) {
+    if (e) e.stopPropagation()
+    setModalAd(ad)
+  }
+
   return (
     <div className="ca-container">
       <div className="ca-header">
         <h1>Competitor Ads</h1>
-        <div className="ca-token-row">
-          <input type="password" placeholder="Meta token (optional)..." value={apiKey} onChange={e => setApiKey(e.target.value)} className="ca-token-input" />
-          {hasKey && <span className="ca-token-ok">Connected</span>}
+        <div className="ca-header-actions">
+          <button className="ca-btn-add-competitor" onClick={() => setShowAddForm(true)}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Competitor
+          </button>
+          <div className="ca-token-row">
+            <input type="password" placeholder="Meta token (optional)..." value={apiKey} onChange={e => setApiKey(e.target.value)} className="ca-token-input" />
+            {hasKey && <span className="ca-token-ok">Connected</span>}
+          </div>
         </div>
       </div>
+
+      {/* Add competitor modal */}
+      {showAddForm && (
+        <div className="ca-add-modal-bg" onClick={() => { setShowAddForm(false); setAddInput(''); setAddError(null) }}>
+          <div className="ca-add-modal" onClick={e => e.stopPropagation()}>
+            <h3>Add Competitor</h3>
+            <p className="ca-add-modal-desc">Enter a Facebook Page ID or Ad Library URL</p>
+            <input
+              type="text"
+              placeholder="e.g. 187701838409772 or facebook.com/ads/library/?view_all_page_id=..."
+              value={addInput}
+              onChange={e => setAddInput(e.target.value)}
+              className="ca-add-modal-input"
+              disabled={addLoading}
+              autoFocus
+              onKeyDown={e => e.key === 'Enter' && handleAddBrand()}
+            />
+            {addError && <p className="ca-add-err">{addError}</p>}
+            <div className="ca-add-modal-btns">
+              <button onClick={() => { setShowAddForm(false); setAddInput(''); setAddError(null) }} className="ca-btn-ghost">Cancel</button>
+              <button onClick={handleAddBrand} disabled={addLoading || !addInput.trim()} className="ca-btn-primary">{addLoading ? 'Adding...' : 'Add Competitor'}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="ca-layout">
         <aside className="ca-sidebar">
@@ -360,18 +453,7 @@ export default function CompetitorAds() {
               </div>
             ))}
           </div>
-          {showAddForm ? (
-            <div className="ca-add-form">
-              <input type="text" placeholder="Page ID or URL..." value={addInput} onChange={e => setAddInput(e.target.value)} className="ca-add-input" disabled={addLoading} />
-              <div className="ca-add-btns">
-                <button onClick={handleAddBrand} disabled={addLoading || !addInput.trim()} className="ca-btn-primary">{addLoading ? '...' : 'Add'}</button>
-                <button onClick={() => { setShowAddForm(false); setAddInput(''); setAddError(null) }} className="ca-btn-ghost">Cancel</button>
-              </div>
-              {addError && <p className="ca-add-err">{addError}</p>}
-            </div>
-          ) : (
-            <button className="ca-btn-add" onClick={() => setShowAddForm(true)}>+ Add Brand</button>
-          )}
+          <button className="ca-btn-add" onClick={() => setShowAddForm(true)}>+ Add Brand</button>
         </aside>
 
         <main className="ca-main">
@@ -424,37 +506,42 @@ export default function CompetitorAds() {
               <div className="ca-showing">Showing {Math.min(showCount, filteredAds.length)} of {filteredAds.length}</div>
               <div className="ca-grid">
                 {pageAds.map(ad => (
-                  <div key={ad.adId} className="ca-card" onClick={() => setModalAd(ad)}>
+                  <div key={ad.adId} className="ca-card">
                     <div className="ca-card-media">
                       {ad.isVideo && ad.mediaUrl ? (
-                        <LazyVideo src={ad.mediaUrl} />
+                        <InlineVideoCard src={ad.videoUrl || ad.mediaUrl} onClick={(e) => openModal(ad, e)} />
                       ) : ad.isVideo ? (
-                        <div className="ca-video-placeholder-mini">
+                        <div className="ca-video-placeholder-mini" onClick={() => setModalAd(ad)}>
                           <div className="ca-video-play-btn">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
                           </div>
                           <div className="ca-video-label">VIDEO</div>
                         </div>
                       ) : ad.mediaUrl ? (
-                        <>
+                        <div onClick={() => setModalAd(ad)}>
                           <img src={ad.mediaUrl} alt="" className="ca-card-thumb" loading="lazy" onError={handleImgError} />
                           <div className="ca-img-fallback" style={{display:'none'}}>
                             <span className="ca-fallback-text">{ad.adName || 'Image unavailable'}</span>
                           </div>
-                        </>
+                        </div>
                       ) : (
-                        <div className="ca-no-preview">
+                        <div className="ca-no-preview" onClick={() => setModalAd(ad)}>
                           <span>No preview available</span>
                         </div>
                       )}
-                      <div className="ca-card-overlay">
-                        <span className="ca-card-expand">{ad.isVideo ? 'Click to play' : 'Click to expand'}</span>
-                      </div>
+                      {/* Detail overlay for non-video cards */}
+                      {!ad.isVideo && (
+                        <div className="ca-card-overlay" onClick={() => setModalAd(ad)}>
+                          <span className="ca-card-expand">Click to expand</span>
+                        </div>
+                      )}
                     </div>
-                    <div className="ca-card-body">
+                    <div className="ca-card-body" onClick={() => setModalAd(ad)}>
                       <div className="ca-card-title">{ad.adName}</div>
                       <div className="ca-card-tags">
-                        <span className={`ca-tag ${ad.isVideo ? 'video' : 'image'}`}>{ad.isVideo ? '\u25B6 video' : 'image'}</span>
+                        <span className={`ca-tag ${ad.isVideo ? 'video' : 'image'}`}>
+                          {ad.displayFormat === 'DCO' ? (ad.isVideo ? '\u25B6 DCO' : 'DCO') : ad.isVideo ? '\u25B6 video' : 'image'}
+                        </span>
                         <span className="ca-tag days">{ad.daysActive}d</span>
                         <span className={`ca-tag status-${ad.status}`}>{ad.status}</span>
                       </div>
@@ -476,13 +563,23 @@ export default function CompetitorAds() {
         </main>
       </div>
 
+      {/* Detail modal */}
       {modalAd && (
         <div className="ca-modal-bg" onClick={() => setModalAd(null)}>
           <div className="ca-modal" onClick={e => e.stopPropagation()}>
             <button className="ca-modal-x" onClick={() => setModalAd(null)}>x</button>
             <div className="ca-modal-media">
-              {modalAd.isVideo && modalAd.mediaUrl ? (
-                <video src={modalAd.mediaUrl} controls playsInline autoPlay className="ca-modal-video" />
+              {modalAd.isVideo && (modalAd.videoUrl || modalAd.mediaUrl) ? (
+                <video
+                  src={modalAd.videoUrl || modalAd.mediaUrl}
+                  controls
+                  playsInline
+                  webkit-playsinline="true"
+                  x-webkit-airplay="allow"
+                  autoPlay
+                  muted
+                  className="ca-modal-video"
+                />
               ) : modalAd.mediaUrl ? (
                 <img src={modalAd.mediaUrl} alt="" className="ca-modal-img" />
               ) : null}
@@ -494,12 +591,18 @@ export default function CompetitorAds() {
               <div className="ca-modal-meta-grid">
                 <div className="ca-modal-meta-item"><span className="ca-modal-label">Brand</span><span>{modalAd.pageName}</span></div>
                 <div className="ca-modal-meta-item"><span className="ca-modal-label">Ad ID</span><span>{modalAd.adId}</span></div>
-                <div className="ca-modal-meta-item"><span className="ca-modal-label">Type</span><span>{modalAd.creativeType}</span></div>
+                <div className="ca-modal-meta-item"><span className="ca-modal-label">Type</span><span>{modalAd.displayFormat || modalAd.creativeType}</span></div>
                 <div className="ca-modal-meta-item"><span className="ca-modal-label">Running</span><span>{modalAd.daysActive} days</span></div>
                 <div className="ca-modal-meta-item"><span className="ca-modal-label">Dates</span><span>{modalAd.startDate} to {modalAd.endDate || 'now'}</span></div>
                 <div className="ca-modal-meta-item"><span className="ca-modal-label">Status</span><span className={`ca-status-dot ${modalAd.status}`}>{modalAd.status}</span></div>
                 {modalAd.platforms.length > 0 && (
                   <div className="ca-modal-meta-item"><span className="ca-modal-label">Platforms</span><span>{modalAd.platforms.join(', ')}</span></div>
+                )}
+                {modalAd.creativeTargeting && (
+                  <div className="ca-modal-meta-item"><span className="ca-modal-label">Targeting</span><span>{modalAd.creativeTargeting}</span></div>
+                )}
+                {modalAd.ctaType && (
+                  <div className="ca-modal-meta-item"><span className="ca-modal-label">CTA</span><span>{modalAd.ctaType}</span></div>
                 )}
               </div>
               <div className="ca-modal-actions">
