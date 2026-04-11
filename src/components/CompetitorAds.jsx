@@ -396,44 +396,105 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
     }
   }
 
-  // Fetch past analysis history (lightweight — no big JSONB columns)
+  // Fetch past analysis history from analysis_jobs (the reliable source)
+  // Falls back to competitive_analyses for older runs
   const fetchAnalysisHistory = async () => {
     setHistoryLoading(true)
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/competitive_analyses?select=id,created_at,brands_analysed,percentile,type_filter,ads_sent,model_used,status&order=created_at.desc&limit=20`, {
+      // Primary source: analysis_jobs (always written by the batch pipeline)
+      const jobsRes = await fetch(`${SUPABASE_URL}/rest/v1/analysis_jobs?select=id,created_at,brands_analysed,percentile,type_filter,total_images,status,error_message,competitive_analysis_id&order=created_at.desc&limit=20`, {
         headers: sbReadHeaders
       })
-      if (res.ok) setPastAnalyses(await res.json())
+      if (jobsRes.ok) {
+        const jobs = await jobsRes.json()
+        // Map to the shape the UI expects
+        const mapped = jobs.map(j => ({
+          id: j.id,
+          created_at: j.created_at,
+          brands_analysed: j.brands_analysed || [],
+          percentile: j.percentile,
+          type_filter: j.type_filter,
+          ads_sent: j.total_images,
+          status: j.status,
+          error_message: j.error_message,
+          _source: 'analysis_jobs',
+          _competitive_analysis_id: j.competitive_analysis_id,
+        }))
+        setPastAnalyses(mapped)
+      } else {
+        // Fallback: older competitive_analyses table
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/competitive_analyses?select=id,created_at,brands_analysed,percentile,type_filter,ads_sent,model_used,status&order=created_at.desc&limit=20`, {
+          headers: sbReadHeaders
+        })
+        if (res.ok) setPastAnalyses(await res.json())
+      }
     } catch (e) { console.error('Failed to fetch analysis history', e) }
     setHistoryLoading(false)
   }
 
-  // Load a full past analysis by ID
-  const loadPastAnalysis = async (id) => {
+  // Load a full past analysis by ID (handles both analysis_jobs and competitive_analyses)
+  const loadPastAnalysis = async (id, source) => {
     setAnalysisLoading(true)
     setAnalysisError(null)
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/competitive_analyses?id=eq.${id}&select=*`, {
-        headers: sbReadHeaders
-      })
-      if (!res.ok) throw new Error('Failed to load analysis')
-      const rows = await res.json()
-      if (!rows.length) throw new Error('Analysis not found')
-      const row = rows[0]
-      setAnalysisResult({
-        analysis_id: row.id,
-        themes: row.themes,
-        personas: row.personas,
-        creative_pillars: row.creative_pillars,
-        adAnalyses: row.ad_analyses,
-        chefly_prompts: row.chefly_prompts,
-        models: { vision: (row.model_used || '').split(' + ')[0] || '?', prompts: (row.model_used || '').split(' + ')[1] || '?' },
-        _loaded_from_history: true,
-        _loaded_at: row.created_at,
-        _brands: row.brands_analysed,
-        _percentile: row.percentile,
-        _ads_sent: row.ads_sent,
-      })
+      if (source === 'analysis_jobs') {
+        // Load from batch pipeline tables
+        const [jobRes, imgRes] = await Promise.all([
+          fetch(`${SUPABASE_URL}/rest/v1/analysis_jobs?id=eq.${id}&select=*`, { headers: sbReadHeaders }),
+          fetch(`${SUPABASE_URL}/rest/v1/analysis_job_images?job_id=eq.${id}&order=ad_index.asc`, { headers: sbReadHeaders }),
+        ])
+        if (!jobRes.ok) throw new Error('Failed to load analysis job')
+        const jobs = await jobRes.json()
+        if (!jobs.length) throw new Error('Analysis job not found')
+        const job = jobs[0]
+        const images = imgRes.ok ? await imgRes.json() : []
+
+        setAnalysisResult({
+          analysis_id: job.id,
+          themes: job.merged_themes || [],
+          personas: job.merged_personas || [],
+          creativePillars: job.merged_pillars || [],
+          visualClusters: job.merged_clusters || [],
+          adAnalyses: images.filter(img => img.step1_analysis).map(img => img.step1_analysis),
+          chefly_prompts: images.filter(img => img.step2_prompt).map(img => ({
+            ...img.step2_prompt,
+            _sourceImage: img.image_url,
+            _sourcePageName: img.page_name,
+            _sourceHeadline: img.headline,
+          })),
+          models: { vision: job.step1_model || '?', prompts: job.step2_model || '?' },
+          _loaded_from_history: true,
+          _loaded_at: job.created_at,
+          _brands: job.brands_analysed,
+          _percentile: job.percentile,
+          _ads_sent: job.total_images,
+          _batch_images: images,
+          _batch_job_id: job.id,
+        })
+      } else {
+        // Legacy: load from competitive_analyses
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/competitive_analyses?id=eq.${id}&select=*`, {
+          headers: sbReadHeaders
+        })
+        if (!res.ok) throw new Error('Failed to load analysis')
+        const rows = await res.json()
+        if (!rows.length) throw new Error('Analysis not found')
+        const row = rows[0]
+        setAnalysisResult({
+          analysis_id: row.id,
+          themes: row.themes,
+          personas: row.personas,
+          creative_pillars: row.creative_pillars,
+          adAnalyses: row.ad_analyses,
+          chefly_prompts: row.chefly_prompts,
+          models: { vision: (row.model_used || '').split(' + ')[0] || '?', prompts: (row.model_used || '').split(' + ')[1] || '?' },
+          _loaded_from_history: true,
+          _loaded_at: row.created_at,
+          _brands: row.brands_analysed,
+          _percentile: row.percentile,
+          _ads_sent: row.ads_sent,
+        })
+      }
       setShowAnalysis(true)
       setAnalysisTab('overview')
       setShowHistory(false)
@@ -1469,7 +1530,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
                         <button
                           key={a.id}
                           className={`ca-history-item ${analysisResult?.analysis_id === a.id ? 'active' : ''}`}
-                          onClick={() => loadPastAnalysis(a.id)}
+                          onClick={() => loadPastAnalysis(a.id, a._source || 'competitive_analyses')}
                         >
                           <div className="ca-history-item-top">
                             <span className="ca-history-date">{new Date(a.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
