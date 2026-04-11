@@ -342,7 +342,7 @@ export default function CompetitorAds() {
   const [topError, setTopError] = useState(null)
   const [topPercentile, setTopPercentile] = useState(10)
   const [topTypeFilter, setTopTypeFilter] = useState('all')
-  const [topSortBy, setTopSortBy] = useState('velocity')
+  const [topSortBy, setTopSortBy] = useState('days')
   const [topShowCount, setTopShowCount] = useState(GRID_PAGE)
   const [topLoadingStatus, setTopLoadingStatus] = useState('')
 
@@ -402,13 +402,13 @@ export default function CompetitorAds() {
     let ads = [...topAds]
     if (topTypeFilter === 'video') ads = ads.filter(a => a.isVideo)
     if (topTypeFilter === 'image') ads = ads.filter(a => !a.isVideo && a.hasMedia)
-    ads = ads.filter(a => a.daysActive >= 1 && a.impressionsMid > 0)
+    ads = ads.filter(a => a.daysActive >= 1)
     ads.sort((a, b) => {
       switch (topSortBy) {
         case 'velocity': return b.velocity - a.velocity
         case 'impressions': return b.impressionsMid - a.impressionsMid
         case 'days': return b.daysActive - a.daysActive
-        default: return b.velocity - a.velocity
+        default: return b.daysActive - a.daysActive
       }
     })
     const cutoff = Math.max(1, Math.ceil(ads.length * (topPercentile / 100)))
@@ -420,6 +420,7 @@ export default function CompetitorAds() {
   const topRemaining = topFiltered.length - topShowCount
   const topVideoCount = topAds.filter(a => a.isVideo).length
   const topImageCount = topAds.filter(a => !a.isVideo && a.hasMedia).length
+  const topHasImpressions = topAds.some(a => a.impressionsMid > 0)
 
   function toggleTopBrand(pageId) {
     setSelectedTopBrands(prev => {
@@ -623,12 +624,23 @@ export default function CompetitorAds() {
           </div>
           {showBrandTag && (
             <div className="ca-card-velocity">
-              <span className="ca-velocity-label">Velocity</span>
-              <span className="ca-velocity-value">{formatNumber(Math.round(ad.velocity))}/day</span>
-              {ad.impressionsText && (
+              {ad.velocity > 0 ? (
                 <>
+                  <span className="ca-velocity-label">Velocity</span>
+                  <span className="ca-velocity-value">{formatNumber(Math.round(ad.velocity))}/day</span>
+                  {ad.impressionsText && (
+                    <>
+                      <span className="ca-velocity-sep">&middot;</span>
+                      <span className="ca-velocity-imp">{ad.impressionsText} imp</span>
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  <span className="ca-velocity-label">Running</span>
+                  <span className="ca-velocity-value">{ad.daysActive} days</span>
                   <span className="ca-velocity-sep">&middot;</span>
-                  <span className="ca-velocity-imp">{ad.impressionsText} imp</span>
+                  <span className="ca-velocity-imp">{ad.status === 'active' ? 'Still active' : 'Ended'}</span>
                 </>
               )}
             </div>
@@ -838,9 +850,9 @@ export default function CompetitorAds() {
                   </div>
                   <div className="ca-filter-right">
                     <select value={topSortBy} onChange={e => setTopSortBy(e.target.value)} className="ca-sort-select">
-                      <option value="velocity">Impressions/day (velocity)</option>
-                      <option value="impressions">Total impressions</option>
-                      <option value="days">Days running</option>
+                      <option value="days">Days running (longevity)</option>
+                      {topHasImpressions && <option value="velocity">Impressions/day (velocity)</option>}
+                      {topHasImpressions && <option value="impressions">Total impressions</option>}
                     </select>
                   </div>
                 </div>
@@ -848,7 +860,7 @@ export default function CompetitorAds() {
 
               {topAds.length > 0 && (
                 <div className="ca-top-explainer">
-                  Ranked by {topSortBy === 'velocity' ? 'impressions per day (higher = more spend sustained over time)' : topSortBy === 'impressions' ? 'total estimated impressions' : 'total days running (longevity signal)'}. Showing top {topPercentile}% of {topTypeFilter === 'all' ? 'all formats' : topTypeFilter + ' ads'}.
+                  Ranked by {topSortBy === 'days' ? 'total days running — longer-running ads signal sustained performance' : topSortBy === 'velocity' ? 'impressions per day (higher = more spend sustained over time)' : 'total estimated impressions'}. Showing top {topPercentile}% of {topTypeFilter === 'all' ? 'all formats' : topTypeFilter + ' ads'}.{!topHasImpressions && ' Impression data not available — using longevity as the performance signal.'}
                 </div>
               )}
 
