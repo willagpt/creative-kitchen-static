@@ -524,9 +524,10 @@ export default function CompetitorAds() {
   }
 
   const topFiltered = (() => {
-    // Group ads by brand
+    // Group ads by brand — only include currently selected brands
     const byBrand = {}
     for (const ad of topAds) {
+      if (selectedTopBrands.size > 0 && !selectedTopBrands.has(ad.pageId)) continue
       if (ad.daysActive < 1) continue
       if (topTypeFilter === 'video' && !ad.isVideo) continue
       if (topTypeFilter === 'image' && (ad.isVideo || !ad.hasMedia)) continue
@@ -553,6 +554,7 @@ export default function CompetitorAds() {
   // Count raw eligible ads for the stats bar (per-brand totals)
   const topRawEligible = (() => {
     let ads = [...topAds].filter(a => a.daysActive >= 1)
+    if (selectedTopBrands.size > 0) ads = ads.filter(a => selectedTopBrands.has(a.pageId))
     if (topTypeFilter === 'video') ads = ads.filter(a => a.isVideo)
     if (topTypeFilter === 'image') ads = ads.filter(a => !a.isVideo && a.hasMedia)
     return ads.length
@@ -561,6 +563,7 @@ export default function CompetitorAds() {
     // Sum of per-brand cutoffs
     const byBrand = {}
     for (const ad of topAds) {
+      if (selectedTopBrands.size > 0 && !selectedTopBrands.has(ad.pageId)) continue
       if (ad.daysActive < 1) continue
       if (topTypeFilter === 'video' && !ad.isVideo) continue
       if (topTypeFilter === 'image' && (ad.isVideo || !ad.hasMedia)) continue
@@ -572,9 +575,10 @@ export default function CompetitorAds() {
 
   const topPageAds = topFiltered.slice(0, topShowCount)
   const topRemaining = topFiltered.length - topShowCount
-  const topVideoCount = topAds.filter(a => a.isVideo).length
-  const topImageCount = topAds.filter(a => !a.isVideo && a.hasMedia).length
-  const topHasImpressions = topAds.some(a => a.impressionsMid > 0)
+  const topBrandAds = selectedTopBrands.size > 0 ? topAds.filter(a => selectedTopBrands.has(a.pageId)) : topAds
+  const topVideoCount = topBrandAds.filter(a => a.isVideo).length
+  const topImageCount = topBrandAds.filter(a => !a.isVideo && a.hasMedia).length
+  const topHasImpressions = topBrandAds.some(a => a.impressionsMid > 0)
 
   function toggleTopBrand(pageId) {
     setSelectedTopBrands(prev => {
@@ -1115,7 +1119,7 @@ export default function CompetitorAds() {
               {topAds.length > 0 && (
                 <div className="ca-filters">
                   <div className="ca-filter-pills">
-                    {[['all', `All (${topAds.length})`], ['video', `Video (${topVideoCount})`], ['image', `Image (${topImageCount})`]].map(([val, label]) => (
+                    {[['all', `All (${topBrandAds.length})`], ['video', `Video (${topVideoCount})`], ['image', `Image (${topImageCount})`]].map(([val, label]) => (
                       <button key={val} className={`ca-pill ${topTypeFilter === val ? 'active' : ''}`} onClick={() => setTopTypeFilter(val)}>{label}</button>
                     ))}
                     <span className="ca-filter-sep">|</span>
