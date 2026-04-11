@@ -283,10 +283,11 @@ body::after {
 .panel-tag-original { background: var(--bg-3); color: var(--text-1); }
 .panel-tag-generated { background: var(--accent-bg); color: var(--accent); }
 .panel-image {
-  width: 100%; aspect-ratio: 4/5; border-radius: var(--radius);
+  width: 100%; border-radius: var(--radius);
   overflow: hidden; background: var(--bg-2);
+  min-height: 200px;
 }
-.panel-image img { width: 100%; height: 100%; object-fit: cover; }
+.panel-image img { width: 100%; height: auto; object-fit: contain; }
 .panel-placeholder {
   width: 100%; height: 100%;
   display: flex; flex-direction: column;

@@ -9,7 +9,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
   const [status, setStatus] = useState('')
   const [statusType, setStatusType] = useState('')
   const [activeVersion, setActiveVersion] = useState(0)
-  const [ratio, setRatio] = useState('4:5')
+  const [ratio, setRatio] = useState('both')
   const [generating, setGenerating] = useState(false)
   const [generatingPrompt, setGeneratingPrompt] = useState(false)
   const [autoPipeline, setAutoPipeline] = useState(false)
@@ -111,7 +111,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
       setStatus('Prompt written. Now generating your image...')
       onRefresh()
 
-      // Step 2: Generate image immediately
+      // Step 2: Generate images immediately (both ratios in parallel)
       const falKey = localStorage.getItem('ck_fal_api_key')
       if (!falKey) {
         setStatus('Prompt generated. Set your fal.ai key to auto-generate images.')
@@ -120,52 +120,26 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
         return
       }
       setGenerating(true)
-      const headers = { 'Authorization': `Key ${falKey}`, 'Content-Type': 'application/json' }
-      const payload = { prompt: data.prompt.trim(), num_images: 1, aspect_ratio: ratio, enable_safety_checker: false }
+      const ratios = ratio === 'both' ? ['4:5', '9:16'] : [ratio]
+      setStatus(`Generating ${ratios.length === 2 ? 'both 4:5 + 9:16' : ratios[0]}...`)
 
-      const submitRes = await fetch(`https://queue.fal.run/${FAL_MODEL}`, {
-        method: 'POST', headers, body: JSON.stringify(payload)
-      })
-      if (!submitRes.ok) throw new Error(`fal.ai submit failed (${submitRes.status})`)
-      const submitData = await submitRes.json()
-      if (!submitData.request_id) throw new Error('No request_id from fal.ai')
-
-      setStatus('Image generating...')
-      for (let i = 0; i < 60; i++) {
-        await new Promise(r => setTimeout(r, 1500))
-        const statusRes = await fetch(
-          `https://queue.fal.run/${FAL_MODEL}/requests/${submitData.request_id}/status`,
-          { headers }
-        )
-        const statusData = await statusRes.json()
-        if (statusData.status === 'COMPLETED') break
-        if (statusData.status === 'FAILED') throw new Error('fal.ai generation failed')
-        setStatus(`Image generating... (${Math.round(i * 1.5)}s)`)
-      }
-
-      const resultRes = await fetch(
-        `https://queue.fal.run/${FAL_MODEL}/requests/${submitData.request_id}`,
-        { headers }
+      const results = await Promise.allSettled(
+        ratios.map(r => generateSingleImage(falKey, r, data.prompt.trim()))
       )
-      const resultData = await resultRes.json()
-      const imageUrl = resultData?.images?.[0]?.url || resultData?.image?.url
-      if (!imageUrl) throw new Error('No image in fal.ai result')
-
-      await supabase.from('generated_versions').insert({
-        saved_ad_id: ad.id,
-        image_url: imageUrl,
-        prompt: data.prompt.trim(),
-        aspect_ratio: ratio
-      })
-      await supabase
-        .from('saved_ads')
-        .update({ generated_image_url: imageUrl, image_generated_at: new Date().toISOString() })
-        .eq('id', ad.id)
-
-      setStatus('Done. Your Chefly version is ready.')
-      setStatusType('success')
-      setActiveVersion(0)
-      onRefresh()
+      const succeeded = results.filter(r => r.status === 'fulfilled').map(r => r.value)
+      if (succeeded.length > 0) {
+        await supabase
+          .from('saved_ads')
+          .update({ generated_image_url: succeeded[0].imageUrl, image_generated_at: new Date().toISOString() })
+          .eq('id', ad.id)
+        const ratioList = succeeded.map(s => s.aspectRatio).join(' + ')
+        setStatus(`Done. Your Chefly version is ready (${ratioList}).`)
+        setStatusType('success')
+        setActiveVersion(0)
+        onRefresh()
+      } else {
+        throw results[0].reason || new Error('Image generation failed')
+      }
     } catch (err) {
       console.error('Auto-pipeline failed:', err)
       setStatus(`Pipeline failed: ${err.message}`)
@@ -218,7 +192,54 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
     }
   }
 
-  // Generate image via fal.ai
+  // Generate a single image for one aspect ratio via fal.ai
+  async function generateSingleImage(falKey, aspectRatio, promptText) {
+    const headers = { 'Authorization': `Key ${falKey}`, 'Content-Type': 'application/json' }
+    const payload = { prompt: promptText, num_images: 1, aspect_ratio: aspectRatio, enable_safety_checker: false }
+
+    const submitRes = await fetch(`https://queue.fal.run/${FAL_MODEL}`, {
+      method: 'POST', headers, body: JSON.stringify(payload)
+    })
+    if (!submitRes.ok) {
+      const errText = await submitRes.text()
+      throw new Error(`fal.ai submit failed for ${aspectRatio} (${submitRes.status}): ${errText.slice(0, 200)}`)
+    }
+    const submitData = await submitRes.json()
+    if (!submitData.request_id) throw new Error(`No request_id for ${aspectRatio}`)
+
+    // Poll for completion
+    for (let i = 0; i < 60; i++) {
+      await new Promise(r => setTimeout(r, 1500))
+      const statusRes = await fetch(
+        `https://queue.fal.run/${FAL_MODEL}/requests/${submitData.request_id}/status`,
+        { headers }
+      )
+      const statusData = await statusRes.json()
+      if (statusData.status === 'COMPLETED') break
+      if (statusData.status === 'FAILED') throw new Error(`fal.ai generation failed for ${aspectRatio}`)
+    }
+
+    const resultRes = await fetch(
+      `https://queue.fal.run/${FAL_MODEL}/requests/${submitData.request_id}`,
+      { headers }
+    )
+    const resultData = await resultRes.json()
+    const imageUrl = resultData?.images?.[0]?.url || resultData?.image?.url
+    if (!imageUrl) throw new Error(`No image in fal.ai result for ${aspectRatio}`)
+
+    // Save version to Supabase
+    await supabase.from('generated_versions').insert({
+      saved_ad_id: ad.id,
+      image_url: imageUrl,
+      prompt: promptText,
+      creative_direction: direction || null,
+      aspect_ratio: aspectRatio
+    })
+
+    return { imageUrl, aspectRatio }
+  }
+
+  // Generate image(s) via fal.ai - supports single or dual ratio
   async function generateImage() {
     if (!prompt.trim()) {
       setStatus('Write or generate a prompt first.')
@@ -227,11 +248,9 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
     }
 
     setGenerating(true)
-    setStatus('Submitting to fal.ai...')
     setStatusType('')
 
     try {
-      // Get fal API key from localStorage (user sets it once)
       const falKey = localStorage.getItem('ck_fal_api_key')
       if (!falKey) {
         setStatus('fal.ai API key not set. Click settings to add it.')
@@ -240,65 +259,36 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
         return
       }
 
-      const headers = { 'Authorization': `Key ${falKey}`, 'Content-Type': 'application/json' }
-      const payload = { prompt: prompt.trim(), num_images: 1, aspect_ratio: ratio, enable_safety_checker: false }
+      const ratios = ratio === 'both' ? ['4:5', '9:16'] : [ratio]
+      setStatus(`Generating ${ratios.length === 2 ? 'both 4:5 + 9:16' : ratios[0]}...`)
 
-      // Submit
-      const submitRes = await fetch(`https://queue.fal.run/${FAL_MODEL}`, {
-        method: 'POST', headers, body: JSON.stringify(payload)
-      })
-      if (!submitRes.ok) {
-        const errText = await submitRes.text()
-        throw new Error(`fal.ai submit failed (${submitRes.status}): ${errText.slice(0, 200)}`)
-      }
-      const submitData = await submitRes.json()
-      if (!submitData.request_id) throw new Error('No request_id from fal.ai')
-
-      setStatus('Generating image...')
-
-      // Poll for completion
-      for (let i = 0; i < 60; i++) {
-        await new Promise(r => setTimeout(r, 1500))
-        const statusRes = await fetch(
-          `https://queue.fal.run/${FAL_MODEL}/requests/${submitData.request_id}/status`,
-          { headers }
-        )
-        const statusData = await statusRes.json()
-
-        if (statusData.status === 'COMPLETED') break
-        if (statusData.status === 'FAILED') throw new Error('fal.ai generation failed')
-        setStatus(`Generating image... (${i * 1.5}s)`)
-      }
-
-      // Get result
-      const resultRes = await fetch(
-        `https://queue.fal.run/${FAL_MODEL}/requests/${submitData.request_id}`,
-        { headers }
+      const results = await Promise.allSettled(
+        ratios.map(r => generateSingleImage(falKey, r, prompt.trim()))
       )
-      const resultData = await resultRes.json()
-      const imageUrl = resultData?.images?.[0]?.url || resultData?.image?.url
 
-      if (!imageUrl) throw new Error('No image in fal.ai result')
+      const succeeded = results.filter(r => r.status === 'fulfilled').map(r => r.value)
+      const failed = results.filter(r => r.status === 'rejected').map(r => r.reason)
 
-      // Save version to Supabase
-      await supabase.from('generated_versions').insert({
-        saved_ad_id: ad.id,
-        image_url: imageUrl,
-        prompt: prompt.trim(),
-        creative_direction: direction || null,
-        aspect_ratio: ratio
-      })
+      if (succeeded.length > 0) {
+        // Update the ad's generated_image_url with the last successful one
+        await supabase
+          .from('saved_ads')
+          .update({ generated_image_url: succeeded[0].imageUrl, image_generated_at: new Date().toISOString() })
+          .eq('id', ad.id)
 
-      // Update the ad's generated_image_url
-      await supabase
-        .from('saved_ads')
-        .update({ generated_image_url: imageUrl, image_generated_at: new Date().toISOString() })
-        .eq('id', ad.id)
-
-      setStatus(`Image generated (${ratio}).`)
-      setStatusType('success')
-      setActiveVersion(0)
-      onRefresh()
+        const ratioList = succeeded.map(s => s.aspectRatio).join(' + ')
+        if (failed.length > 0) {
+          setStatus(`Generated ${ratioList}. One ratio failed: ${failed[0].message}`)
+          setStatusType('success')
+        } else {
+          setStatus(`Generated ${ratioList}.`)
+          setStatusType('success')
+        }
+        setActiveVersion(0)
+        onRefresh()
+      } else {
+        throw failed[0] || new Error('All generations failed')
+      }
     } catch (err) {
       console.error('Image generation failed:', err)
       setStatus(`Failed: ${err.message}`)
@@ -407,13 +397,13 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
             </button>
 
             <div className="aspect-pills">
-              {['4:5', '9:16'].map(r => (
+              {['4:5', '9:16', 'both'].map(r => (
                 <button
                   key={r}
                   className={`aspect-pill ${ratio === r ? 'active' : ''}`}
                   onClick={() => setRatio(r)}
                 >
-                  {r}
+                  {r === 'both' ? '4:5 + 9:16' : r}
                 </button>
               ))}
             </div>
@@ -423,7 +413,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
               onClick={generateImage}
               disabled={generating || !prompt.trim()}
             >
-              {generating ? <><span className="spinner spinner-inline" /> Generating...</> : '\u26a1 Generate Image'}
+              {generating ? <><span className="spinner spinner-inline" /> Generating...</> : `\u26a1 Generate ${ratio === 'both' ? 'Images' : 'Image'}`}
             </button>
 
             {currentImage && (
