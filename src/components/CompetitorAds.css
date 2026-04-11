@@ -972,3 +972,70 @@
 .ca-prompt-sections[open] summary { border-bottom: 1px solid #1e1e24; color: #a5b4fc; }
 .ca-prompt-sections > .ca-prompt-field { padding: 12px 14px; border-bottom: 1px solid #1a1a22; }
 .ca-prompt-sections > .ca-prompt-field:last-child { border-bottom: none; }
+
+/* ── Batch progress bar ── */
+.ca-batch-progress {
+  width: 100%; height: 6px; background: #1e1e24; border-radius: 3px; margin-top: 12px; overflow: hidden;
+}
+.ca-batch-bar {
+  height: 100%; background: linear-gradient(90deg, #6366f1, #818cf8); border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* ── 1:1 Source Ad in prompt card ── */
+.ca-prompt-source {
+  display: flex; gap: 14px; padding: 12px 16px; align-items: flex-start;
+  background: rgba(0,0,0,0.15); border-bottom: 1px solid #1e1e24;
+}
+.ca-prompt-source-img {
+  width: 100px; min-width: 100px; border-radius: 6px; overflow: hidden;
+  border: 1px solid #2a2a34; background: #0a0a0e;
+}
+.ca-prompt-source-img img { width: 100%; display: block; }
+.ca-prompt-source-meta {
+  display: flex; flex-direction: column; gap: 4px; padding-top: 2px;
+}
+.ca-prompt-source-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  color: #52525b;
+}
+.ca-prompt-source-brand { font-size: 13px; color: #a0a0b0; font-weight: 600; }
+.ca-prompt-source-headline { font-size: 12px; color: #71717a; line-height: 1.4; }
+
+/* ── Per-ad source thumbnail ── */
+.ca-ad-source-thumb {
+  width: 120px; margin: 12px 16px 0; border-radius: 6px; overflow: hidden;
+  border: 1px solid #2a2a34;
+}
+.ca-ad-source-thumb img { width: 100%; display: block; }
+
+/* ── Per-ad cluster tag ── */
+.ca-ad-cluster {
+  font-size: 11px; padding: 2px 8px; border-radius: 4px;
+  background: rgba(168, 85, 247, 0.12); color: #c084fc; font-weight: 600;
+}
+
+/* ── Nested detail sections (v15 forensics) ── */
+.ca-ad-detail-section {
+  border: 1px solid #1e1e24; border-radius: 6px; margin: 8px 0; overflow: hidden;
+}
+.ca-ad-detail-section summary {
+  padding: 8px 12px; cursor: pointer; font-size: 12px; font-weight: 600;
+  color: #71717a; background: rgba(0,0,0,0.15); user-select: none;
+}
+.ca-ad-detail-section summary:hover { color: #a0a0b0; }
+.ca-ad-detail-section[open] summary { border-bottom: 1px solid #1a1a22; color: #a5b4fc; }
+.ca-ad-detail-section p {
+  margin: 4px 12px; font-size: 12px; color: #a0a0b0; line-height: 1.5;
+}
+.ca-ad-detail-section p:first-of-type { margin-top: 10px; }
+.ca-ad-detail-section p:last-of-type { margin-bottom: 10px; }
+.ca-ad-long-text { font-style: italic; color: #818cf8 !important; }
+.ca-ad-adapt { color: #4ade80 !important; margin-top: 8px; }
+
+/* ── Colour swatch with label ── */
+.ca-color-swatch-label {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #71717a;
+  margin-right: 10px; margin-bottom: 4px;
+}
+.ca-color-swatch-label .ca-color-swatch { width: 16px; height: 16px; border-radius: 4px; }

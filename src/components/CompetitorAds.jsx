@@ -6,6 +6,7 @@ const SUPABASE_URL = 'https://ifrxylvoufncdxyltgqt.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA'
 const FOREPLAY_FN_URL = `${SUPABASE_URL}/functions/v1/fetch-competitor-ads`
 const ANALYSE_FN_URL = `${SUPABASE_URL}/functions/v1/analyse-competitor-creatives`
+const BATCH_FN_URL = `${SUPABASE_URL}/functions/v1/process-analysis-batch`
 
 const sbHeaders = {
   apikey: SUPABASE_ANON_KEY,
@@ -358,6 +359,13 @@ export default function CompetitorAds() {
   const [variantIndex, setVariantIndex] = useState(0) // cycling through DCO variants in modal
   const [copiedPromptIdx, setCopiedPromptIdx] = useState(null) // flash "Copied!" on prompt card
 
+  // ── Batch Job state ──
+  const [batchJobId, setBatchJobId] = useState(null)
+  const [batchStatus, setBatchStatus] = useState(null) // full job status object
+  const [batchImages, setBatchImages] = useState([]) // per-image status array
+  const [batchSummary, setBatchSummary] = useState(null) // { total, step1_completed, step2_completed, ... }
+  const pollRef = useRef(null) // polling interval ref
+
   // ── Analysis History state ──
   const [pastAnalyses, setPastAnalyses] = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
@@ -627,6 +635,93 @@ export default function CompetitorAds() {
     }
   }
 
+  // Stop polling on unmount
+  useEffect(() => { return () => { if (pollRef.current) clearInterval(pollRef.current) } }, [])
+
+  // Poll batch job status
+  function startPolling(jobId) {
+    if (pollRef.current) clearInterval(pollRef.current)
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(BATCH_FN_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'status', job_id: jobId }),
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        setBatchStatus(data.job)
+        setBatchImages(data.images || [])
+        setBatchSummary(data.summary)
+
+        const status = data.job?.status
+        // Update analysis step for the loading UI
+        if (status === 'step1_running') setAnalysisStep(1)
+        else if (status === 'step1_done' || status === 'step2_running') {
+          setAnalysisStep(2)
+          setPromptProgress({ current: data.summary?.step2_completed || 0, total: data.summary?.total || 0 })
+        }
+        else if (status === 'saving') setAnalysisStep(3)
+
+        // Job finished — stop polling and load results
+        if (status === 'completed' || status === 'failed') {
+          clearInterval(pollRef.current)
+          pollRef.current = null
+          if (status === 'completed') {
+            await loadBatchResults(jobId)
+          } else {
+            setAnalysisError(data.job?.error_message || 'Batch job failed')
+            setAnalysisLoading(false)
+            setAnalysisStep(0)
+          }
+        }
+      } catch { /* polling error, will retry next interval */ }
+    }, 4000)
+  }
+
+  // Load completed batch results into the existing analysis UI format
+  async function loadBatchResults(jobId) {
+    try {
+      const res = await fetch(BATCH_FN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'results', job_id: jobId }),
+      })
+      if (!res.ok) throw new Error('Failed to load results')
+      const data = await res.json()
+      const job = data.job || {}
+      const images = data.images || []
+
+      // Build analysisResult in the format the UI expects, plus 1:1 image-prompt pairs
+      const adAnalyses = images.filter(img => img.step1_analysis).map(img => img.step1_analysis)
+      const cheflyPrompts = images.filter(img => img.step2_prompt).map(img => ({
+        ...img.step2_prompt,
+        _sourceImage: img.image_url,
+        _sourcePageName: img.page_name,
+        _sourceHeadline: img.headline,
+      }))
+
+      setAnalysisResult({
+        adAnalyses,
+        chefly_prompts: cheflyPrompts,
+        themes: job.merged_themes || [],
+        personas: job.merged_personas || [],
+        creativePillars: job.merged_pillars || [],
+        visualClusters: job.merged_clusters || [],
+        analysis_id: job.competitive_analysis_id,
+        models: { vision: job.step1_model || 'claude-sonnet-4-20250514', prompts: job.step2_model || 'claude-sonnet-4-20250514' },
+        _batch_job_id: jobId,
+        _batch_images: images,
+      })
+      setAnalysisTab('prompts')
+    } catch (err) {
+      setAnalysisError(err.message)
+    } finally {
+      setAnalysisLoading(false)
+      setAnalysisStep(0)
+    }
+  }
+
   async function runCreativeAnalysis() {
     const adsToAnalyse = topFiltered.filter(a => !a.isVideo && a.hasMedia)
     if (adsToAnalyse.length === 0) {
@@ -641,7 +736,7 @@ export default function CompetitorAds() {
     setAnalysisStep(1)
 
     try {
-      // Expand all unique variant images — not just heroes — so AI sees the full creative spread
+      // Expand all unique variant images
       const seenUrls = new Set()
       const expandedAds = []
       for (const ad of adsToAnalyse) {
@@ -661,77 +756,18 @@ export default function CompetitorAds() {
         displayFormat: ad.displayFormat || 'IMAGE',
         pageName: ad.pageName || '',
         isVideo: false,
+        id: ad.adId || null,
       }))
 
       const selectedBrandNames = followedBrands.filter(b => selectedTopBrands.has(b.pageId)).map(b => b.pageName)
       const selectedPageIds = [...selectedTopBrands]
 
-      // ── STEP 1: Sonnet vision analysis ──
-      const res1 = await fetch(ANALYSE_FN_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ads: payload, step: 1 }),
-      })
-
-      if (!res1.ok) {
-        const errBody = await res1.json().catch(() => ({}))
-        throw new Error(errBody.error || `Step 1 failed (${res1.status})`)
-      }
-
-      const data1 = await res1.json()
-      if (data1.error) throw new Error(data1.error)
-
-      // ── STEP 2: Per-prompt generation (one prompt per cluster per call) ──
-      setAnalysisStep(2)
-
-      const clusters = data1.analysis.visualClusters || data1.analysis.creativePillars || []
-      const promptClusters = clusters.slice(0, 4) // max 4 prompts
-      const totalPrompts = promptClusters.length || 1
-      const collectedPrompts = []
-
-      for (let i = 0; i < promptClusters.length; i++) {
-        setPromptProgress({ current: i + 1, total: totalPrompts })
-        let lastErr = null
-        for (let attempt = 0; attempt < 2; attempt++) {
-          try {
-            if (attempt > 0) await new Promise(r => setTimeout(r, 2000))
-            const res2 = await fetch(ANALYSE_FN_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                step: 2,
-                step1_result: data1.analysis,
-                cluster: promptClusters[i],
-                prompt_index: i,
-                total_prompts: totalPrompts,
-              }),
-            })
-            if (!res2.ok) {
-              const errBody = await res2.json().catch(() => ({}))
-              throw new Error(errBody.error || `Step 2 prompt ${i + 1}/${totalPrompts} returned ${res2.status}`)
-            }
-            const d2 = await res2.json()
-            if (d2.error) throw new Error(d2.error)
-            collectedPrompts.push(d2.prompt)
-            lastErr = null
-            break
-          } catch (e) {
-            lastErr = e
-            if (attempt === 0) setPromptProgress({ current: i + 1, total: totalPrompts, retrying: true })
-          }
-        }
-        if (lastErr) throw lastErr
-      }
-
-      // ── STEP 3: Save assembled analysis ──
-      setAnalysisStep(3)
-      const res3 = await fetch(ANALYSE_FN_URL, {
+      // Create batch job via orchestrator
+      const res = await fetch(BATCH_FN_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          step: 3,
-          step1_result: data1.analysis,
-          chefly_prompts: collectedPrompts,
+          action: 'create',
           ads: payload,
           brands_analysed: selectedBrandNames,
           page_ids: selectedPageIds,
@@ -739,22 +775,26 @@ export default function CompetitorAds() {
           type_filter: topTypeFilter,
         }),
       })
-      if (!res3.ok) {
-        const errBody = await res3.json().catch(() => ({}))
-        throw new Error(errBody.error || `Save failed (${res3.status})`)
-      }
-      const data3 = await res3.json()
-      if (data3.error) throw new Error(data3.error)
 
-      setAnalysisResult({ ...data3.analysis, analysis_id: data3.analysis_id, models: data3.models })
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody.error || `Failed to create batch job (${res.status})`)
+      }
+
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+
+      setBatchJobId(data.job_id)
+      setBatchSummary({ total: data.total_images, step1_completed: 0, step2_completed: 0 })
+
+      // Start polling for progress
+      startPolling(data.job_id)
+
     } catch (err) {
-      const stepLabels = { 1: 'Vision analysis', 2: 'Prompt generation', 3: 'Saving results' }
-      const stepLabel = stepLabels[analysisStep] || `Step ${analysisStep}`
       const msg = err.message === 'Failed to fetch'
-        ? `${stepLabel} failed: network error (the server may be temporarily unavailable, try again)`
+        ? 'Failed to start analysis: network error (the server may be temporarily unavailable, try again)'
         : err.message
       setAnalysisError(msg)
-    } finally {
       setAnalysisLoading(false)
       setAnalysisStep(0)
     }
@@ -1169,7 +1209,7 @@ export default function CompetitorAds() {
                     disabled={analysisLoading || topFiltered.filter(a => !a.isVideo && a.hasMedia).length === 0}
                   >
                     {analysisLoading ? (
-                      <><span className="ca-spin-sm"></span> {analysisStep === 1 ? 'Step 1: Analysing images...' : analysisStep === 2 ? `Writing prompt ${promptProgress.current}/${promptProgress.total}${promptProgress.retrying ? ' (retrying...)' : '...'}` : 'Saving analysis...'}</>
+                      <><span className="ca-spin-sm"></span> {analysisStep === 1 ? `Step 1: Analysing images (${batchSummary?.step1_completed || 0}/${batchSummary?.total || '?'})...` : analysisStep === 2 ? `Writing prompt ${promptProgress.current}/${promptProgress.total}...` : 'Saving analysis...'}</>
 
                     ) : (
                       <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Analyse top creatives with AI ({(() => {
@@ -1248,18 +1288,26 @@ export default function CompetitorAds() {
                       <div className="ca-spin"></div>
                       {analysisStep === 1 ? (
                         <>
-                          <p>Step 1 — Analysing all variant images from your top performers...</p>
-                          <p className="ca-analysis-loading-sub">Sonnet is examining every unique image across all DCO variants — extracting visual patterns, themes, personas, and creative pillars. Usually 60–90 seconds.</p>
+                          <p>Step 1 — Vision analysis: {batchSummary?.step1_completed || 0} / {batchSummary?.total || '?'} images</p>
+                          <p className="ca-analysis-loading-sub">Sonnet is performing forensic visual analysis on each image in batches of 10. Extracting layout grids, typography specs, colour palettes with hex codes, camera angles, and lighting setups.</p>
+                          {batchSummary?.total > 15 && (
+                            <p className="ca-analysis-loading-sub" style={{ opacity: 0.6 }}>Processing {batchSummary.total} images in {Math.ceil(batchSummary.total / 10)} batches. This may take a few minutes. You can close this tab and come back.</p>
+                          )}
                         </>
                       ) : analysisStep === 2 ? (
                         <>
-                          <p>{promptProgress.retrying ? `Retrying prompt ${promptProgress.current} of ${promptProgress.total}...` : `Writing Chefly prompt ${promptProgress.current} of ${promptProgress.total}...`}</p>
-                          <p className="ca-analysis-loading-sub">Each prompt is generated individually with the full Chefly brand DNA, packaging specs, and typography rules. ~30 seconds per prompt.</p>
+                          <p>Step 2 — Writing prompt {promptProgress.current} of {promptProgress.total}...</p>
+                          <p className="ca-analysis-loading-sub">Generating a full production brief for each image. One Chefly prompt per competitor ad, with hex codes, font specs, and lens details. ~30s per prompt.</p>
+                          {batchSummary?.total > 15 && (
+                            <div className="ca-batch-progress">
+                              <div className="ca-batch-bar" style={{ width: `${Math.round((promptProgress.current / (promptProgress.total || 1)) * 100)}%` }}></div>
+                            </div>
+                          )}
                         </>
                       ) : (
                         <>
                           <p>Saving analysis...</p>
-                          <p className="ca-analysis-loading-sub">Storing results to your analysis history so you can recall them later without re-running.</p>
+                          <p className="ca-analysis-loading-sub">Storing {batchSummary?.total || ''} image analyses and prompts to your history.</p>
                         </>
                       )}
                     </div>
@@ -1342,6 +1390,7 @@ export default function CompetitorAds() {
                             <div className="ca-models-badge">
                               Vision: {analysisResult.models.vision} · Prompts: {analysisResult.models.prompts}
                               {analysisResult.analysis_id && <span className="ca-saved-badge">Saved</span>}
+                              {analysisResult._batch_job_id && <span className="ca-saved-badge" style={{ background: 'rgba(99,102,241,0.15)', color: '#818cf8' }}>1:1 Batch</span>}
                             </div>
                           )}
                           {analysisResult.chefly_prompts?.map((pr, i) => (
@@ -1359,8 +1408,23 @@ export default function CompetitorAds() {
                                   {copiedPromptIdx === i ? '✓ Copied' : 'Copy'}
                                 </button>
                               </div>
+
+                              {/* 1:1 Source Ad comparison */}
+                              {pr._sourceImage && (
+                                <div className="ca-prompt-source">
+                                  <div className="ca-prompt-source-img">
+                                    <img src={pr._sourceImage} alt="" loading="lazy" onError={handleImgError} />
+                                    <div className="ca-img-fallback" style={{ display: 'none' }}><span className="ca-fallback-text">Image unavailable</span></div>
+                                  </div>
+                                  <div className="ca-prompt-source-meta">
+                                    <span className="ca-prompt-source-label">Source ad</span>
+                                    {pr._sourcePageName && <span className="ca-prompt-source-brand">{pr._sourcePageName}</span>}
+                                    {pr._sourceHeadline && <span className="ca-prompt-source-headline">{pr._sourceHeadline}</span>}
+                                  </div>
+                                </div>
+                              )}
+
                               <div className="ca-prompt-body">
-                                {/* Full prompt — the complete brief */}
                                 {pr.full_prompt && (
                                   <div className="ca-prompt-field">
                                     <label>Full Creative Brief</label>
@@ -1368,7 +1432,6 @@ export default function CompetitorAds() {
                                   </div>
                                 )}
 
-                                {/* Structured sections (collapsible) */}
                                 <details className="ca-prompt-sections">
                                   <summary>View sections breakdown</summary>
                                   {pr.concept_and_hook && (
@@ -1400,7 +1463,6 @@ export default function CompetitorAds() {
                                   )}
                                 </details>
 
-                                {/* Fallback for old-format prompts */}
                                 {!pr.full_prompt && pr.imagePrompt && (
                                   <div className="ca-prompt-field"><label>Image Prompt</label><div className="ca-prompt-text">{pr.imagePrompt}</div></div>
                                 )}
@@ -1422,36 +1484,134 @@ export default function CompetitorAds() {
 
                       {analysisTab === 'ads' && (
                         <div className="ca-analysis-ads">
-                          {analysisResult.adAnalyses?.map((ad, i) => (
+                          {analysisResult.adAnalyses?.map((ad, i) => {
+                            // Find matching source image from batch data
+                            const batchImg = analysisResult._batch_images?.find(img => img.step1_analysis?.adIndex === ad.adIndex)
+                            return (
                             <div key={i} className="ca-ad-analysis-card">
                               <div className="ca-ad-analysis-header">
                                 <span className="ca-ad-index">Ad {ad.adIndex}</span>
                                 <span className="ca-ad-brand">{ad.brand}</span>
+                                {ad.visualCluster && <span className="ca-ad-cluster">{ad.visualCluster}</span>}
                                 <span className="ca-ad-score" style={{ background: ad.strengthScore >= 7 ? 'rgba(34,197,94,0.15)' : ad.strengthScore >= 5 ? 'rgba(234,179,8,0.15)' : 'rgba(239,68,68,0.15)', color: ad.strengthScore >= 7 ? '#22c55e' : ad.strengthScore >= 5 ? '#eab308' : '#ef4444' }}>
                                   {ad.strengthScore}/10
                                 </span>
                               </div>
+
+                              {/* Source image thumbnail */}
+                              {batchImg?.image_url && (
+                                <div className="ca-ad-source-thumb">
+                                  <img src={batchImg.image_url} alt="" loading="lazy" onError={handleImgError} />
+                                  <div className="ca-img-fallback" style={{ display: 'none' }}><span className="ca-fallback-text">Image unavailable</span></div>
+                                </div>
+                              )}
+
                               <div className="ca-ad-analysis-body">
                                 <div className="ca-ad-meta-row">
-                                  <span><strong>Layout:</strong> {ad.visualLayout}</span>
                                   <span><strong>Format:</strong> {ad.format}</span>
                                   <span><strong>Days:</strong> {ad.daysRunning}</span>
                                 </div>
-                                <p><strong>Hero element:</strong> {ad.heroElement}</p>
-                                <p><strong>Emotional hook:</strong> {ad.emotionalHook}</p>
-                                <p><strong>Offer/CTA:</strong> {ad.offerStructure}</p>
-                                <p><strong>Typography:</strong> {ad.typography}</p>
-                                <p className="ca-ad-why">{ad.whyItWorks}</p>
-                                {ad.dominantColors?.length > 0 && (
+
+                                {/* Layout (v15 nested or v14 flat) */}
+                                {ad.layout ? (
+                                  <details className="ca-ad-detail-section">
+                                    <summary>Layout & Composition</summary>
+                                    {ad.layout.grid && <p><strong>Grid:</strong> {ad.layout.grid}</p>}
+                                    {ad.layout.aspectRatio && <p><strong>Aspect ratio:</strong> {ad.layout.aspectRatio}</p>}
+                                    {ad.layout.visualHierarchy && <p><strong>Hierarchy:</strong> {ad.layout.visualHierarchy}</p>}
+                                    {ad.layout.whitespace && <p><strong>Whitespace:</strong> {ad.layout.whitespace}</p>}
+                                    {ad.layout.composition && <p className="ca-ad-long-text">{ad.layout.composition}</p>}
+                                  </details>
+                                ) : ad.visualLayout && (
+                                  <p><strong>Layout:</strong> {ad.visualLayout}</p>
+                                )}
+
+                                {/* Typography (v15 nested or v14 flat) */}
+                                {ad.typography && typeof ad.typography === 'object' ? (
+                                  <details className="ca-ad-detail-section">
+                                    <summary>Typography</summary>
+                                    {ad.typography.headlineFont && <p><strong>Headline:</strong> {ad.typography.headlineFont}</p>}
+                                    {ad.typography.subheadFont && ad.typography.subheadFont !== 'none' && <p><strong>Subhead:</strong> {ad.typography.subheadFont}</p>}
+                                    {ad.typography.bodyFont && ad.typography.bodyFont !== 'none' && <p><strong>Body/CTA:</strong> {ad.typography.bodyFont}</p>}
+                                    {ad.typography.textPlacement && <p><strong>Placement:</strong> {ad.typography.textPlacement}</p>}
+                                    {ad.typography.textEffects && <p><strong>Effects:</strong> {ad.typography.textEffects}</p>}
+                                  </details>
+                                ) : ad.typography && (
+                                  <p><strong>Typography:</strong> {ad.typography}</p>
+                                )}
+
+                                {/* Colour palette (v15 nested or v14 flat) */}
+                                {ad.colour ? (
+                                  <details className="ca-ad-detail-section">
+                                    <summary>Colour</summary>
+                                    {ad.colour.dominantColour && <p><strong>Dominant:</strong> {ad.colour.dominantColour}</p>}
+                                    {ad.colour.accentColour && <p><strong>Accent:</strong> {ad.colour.accentColour}</p>}
+                                    {ad.colour.colourTemperature && <p><strong>Temperature:</strong> {ad.colour.colourTemperature}</p>}
+                                    {ad.colour.contrast && <p><strong>Contrast:</strong> {ad.colour.contrast}</p>}
+                                    {ad.colour.palette?.length > 0 && (
+                                      <div className="ca-ad-colors">
+                                        {ad.colour.palette.map((c, j) => {
+                                          const hex = typeof c === 'string' ? c.match(/#[0-9a-fA-F]{3,6}/)?.[0] : null
+                                          return <span key={j} className="ca-color-swatch-label">{hex && <span className="ca-color-swatch" style={{ background: hex }}></span>}{typeof c === 'string' ? c : JSON.stringify(c)}</span>
+                                        })}
+                                      </div>
+                                    )}
+                                  </details>
+                                ) : ad.dominantColors?.length > 0 && (
                                   <div className="ca-ad-colors">
                                     {ad.dominantColors.map((c, j) => (
                                       <span key={j} className="ca-color-swatch" style={{ background: c }} title={c}></span>
                                     ))}
                                   </div>
                                 )}
+
+                                {/* Photography (v15 only) */}
+                                {ad.photography && (
+                                  <details className="ca-ad-detail-section">
+                                    <summary>Photography</summary>
+                                    {ad.photography.subjectMatter && <p><strong>Subject:</strong> {ad.photography.subjectMatter}</p>}
+                                    {ad.photography.cameraAngle && <p><strong>Camera angle:</strong> {ad.photography.cameraAngle}</p>}
+                                    {ad.photography.focalLength && <p><strong>Focal length:</strong> {ad.photography.focalLength}</p>}
+                                    {ad.photography.depthOfField && <p><strong>Depth of field:</strong> {ad.photography.depthOfField}</p>}
+                                    {ad.photography.lighting && <p><strong>Lighting:</strong> {ad.photography.lighting}</p>}
+                                    {ad.photography.postProcessing && <p><strong>Post-processing:</strong> {ad.photography.postProcessing}</p>}
+                                  </details>
+                                )}
+
+                                {/* Product (v15 only) */}
+                                {ad.product && (
+                                  <details className="ca-ad-detail-section">
+                                    <summary>Product</summary>
+                                    {ad.product.visibility && <p><strong>Visibility:</strong> {ad.product.visibility}</p>}
+                                    {ad.product.packagingDetails && <p><strong>Packaging:</strong> {ad.product.packagingDetails}</p>}
+                                    {ad.product.foodStyling && <p><strong>Food styling:</strong> {ad.product.foodStyling}</p>}
+                                    {ad.product.proportion && <p><strong>Frame proportion:</strong> {ad.product.proportion}</p>}
+                                  </details>
+                                )}
+
+                                {/* Offer (v15 nested or v14 flat) */}
+                                {ad.offer && typeof ad.offer === 'object' ? (
+                                  <details className="ca-ad-detail-section">
+                                    <summary>Offer & CTA</summary>
+                                    {ad.offer.structure && <p><strong>Structure:</strong> {ad.offer.structure}</p>}
+                                    {ad.offer.urgency && <p><strong>Urgency:</strong> {ad.offer.urgency}</p>}
+                                    {ad.offer.pricePresentation && <p><strong>Price:</strong> {ad.offer.pricePresentation}</p>}
+                                    {ad.offer.cta && <p><strong>CTA:</strong> {ad.offer.cta}</p>}
+                                  </details>
+                                ) : (
+                                  <>
+                                    {ad.heroElement && <p><strong>Hero element:</strong> {ad.heroElement}</p>}
+                                    {ad.offerStructure && <p><strong>Offer/CTA:</strong> {ad.offerStructure}</p>}
+                                  </>
+                                )}
+
+                                <p><strong>Emotional hook:</strong> {ad.emotionalHook}</p>
+                                <p className="ca-ad-why">{ad.whyItWorks}</p>
+                                {ad.howToAdapt && <p className="ca-ad-adapt"><strong>How to adapt:</strong> {ad.howToAdapt}</p>}
                               </div>
                             </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       )}
                     </>
