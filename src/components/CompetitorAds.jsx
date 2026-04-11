@@ -357,6 +357,11 @@ export default function CompetitorAds() {
   const [variantIndex, setVariantIndex] = useState(0) // cycling through DCO variants in modal
   const [copiedPromptIdx, setCopiedPromptIdx] = useState(null) // flash "Copied!" on prompt card
 
+  // ── Analysis History state ──
+  const [pastAnalyses, setPastAnalyses] = useState([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
+
   const hasKey = apiKey.length > 20
 
   // Copy full prompt to clipboard
@@ -378,6 +383,53 @@ export default function CompetitorAds() {
       sel.removeAllRanges()
       sel.addRange(range)
     }
+  }
+
+  // Fetch past analysis history (lightweight — no big JSONB columns)
+  const fetchAnalysisHistory = async () => {
+    setHistoryLoading(true)
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/competitive_analyses?select=id,created_at,brands_analysed,percentile,type_filter,ads_sent,model_used,status&order=created_at.desc&limit=20`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+      })
+      if (res.ok) setPastAnalyses(await res.json())
+    } catch (e) { console.error('Failed to fetch analysis history', e) }
+    setHistoryLoading(false)
+  }
+
+  // Load a full past analysis by ID
+  const loadPastAnalysis = async (id) => {
+    setAnalysisLoading(true)
+    setAnalysisError(null)
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/competitive_analyses?id=eq.${id}&select=*`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+      })
+      if (!res.ok) throw new Error('Failed to load analysis')
+      const rows = await res.json()
+      if (!rows.length) throw new Error('Analysis not found')
+      const row = rows[0]
+      setAnalysisResult({
+        analysis_id: row.id,
+        themes: row.themes,
+        personas: row.personas,
+        creative_pillars: row.creative_pillars,
+        adAnalyses: row.ad_analyses,
+        chefly_prompts: row.chefly_prompts,
+        models: { vision: (row.model_used || '').split(' + ')[0] || '?', prompts: (row.model_used || '').split(' + ')[1] || '?' },
+        _loaded_from_history: true,
+        _loaded_at: row.created_at,
+        _brands: row.brands_analysed,
+        _percentile: row.percentile,
+        _ads_sent: row.ads_sent,
+      })
+      setShowAnalysis(true)
+      setAnalysisTab('overview')
+      setShowHistory(false)
+    } catch (e) {
+      setAnalysisError(e.message)
+    }
+    setAnalysisLoading(false)
   }
 
   const brandColorMap = {}
@@ -1087,6 +1139,41 @@ export default function CompetitorAds() {
                       Show previous analysis
                     </button>
                   )}
+                  <button
+                    className="ca-btn-history"
+                    onClick={() => { setShowHistory(!showHistory); if (!showHistory && !pastAnalyses.length) fetchAnalysisHistory() }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Past Runs
+                  </button>
+                  {showHistory && (
+                    <div className="ca-history-panel">
+                      <div className="ca-history-header">
+                        <h4>Analysis History</h4>
+                        <button className="ca-history-close" onClick={() => setShowHistory(false)}>×</button>
+                      </div>
+                      {historyLoading && <div className="ca-history-loading"><span className="ca-spin-sm"></span> Loading...</div>}
+                      {!historyLoading && pastAnalyses.length === 0 && <div className="ca-history-empty">No past analyses found.</div>}
+                      {pastAnalyses.map(a => (
+                        <button
+                          key={a.id}
+                          className={`ca-history-item ${analysisResult?.analysis_id === a.id ? 'active' : ''}`}
+                          onClick={() => loadPastAnalysis(a.id)}
+                        >
+                          <div className="ca-history-item-top">
+                            <span className="ca-history-date">{new Date(a.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                            <span className={`ca-history-status ${a.status}`}>{a.status}</span>
+                          </div>
+                          <div className="ca-history-item-meta">
+                            <span>{(a.brands_analysed || []).join(', ')}</span>
+                            <span>Top {a.percentile}%</span>
+                            <span>{a.ads_sent} ads</span>
+                            <span>{a.type_filter}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1097,6 +1184,13 @@ export default function CompetitorAds() {
                     <h3>Creative Intelligence Report</h3>
                     <button className="ca-analysis-close" onClick={() => setShowAnalysis(false)}>×</button>
                   </div>
+
+                  {analysisResult?._loaded_from_history && (
+                    <div className="ca-history-banner">
+                      Loaded from {new Date(analysisResult._loaded_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      &nbsp;— {(analysisResult._brands || []).join(', ')} · Top {analysisResult._percentile}% · {analysisResult._ads_sent} ads
+                    </div>
+                  )}
 
                   {analysisLoading && (
                     <div className="ca-analysis-loading">
