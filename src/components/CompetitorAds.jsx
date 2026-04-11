@@ -428,13 +428,25 @@ export default function CompetitorAds() {
     }))
   }
 
-  // ── Top Performers: filtered + ranked ──
+  // ── Top Performers: percentile on raw ads, then dedup for display ──
   const topFiltered = (() => {
     let ads = [...topAds]
     if (topTypeFilter === 'video') ads = ads.filter(a => a.isVideo)
     if (topTypeFilter === 'image') ads = ads.filter(a => !a.isVideo && a.hasMedia)
     ads = ads.filter(a => a.daysActive >= 1)
-    // Deduplicate before ranking
+    // Sort raw ads by metric
+    ads.sort((a, b) => {
+      switch (topSortBy) {
+        case 'velocity': return b.velocity - a.velocity
+        case 'impressions': return b.impressionsMid - a.impressionsMid
+        case 'days': return b.daysActive - a.daysActive
+        default: return b.daysActive - a.daysActive
+      }
+    })
+    // Take top percentile from RAW ads first
+    const rawCutoff = Math.max(1, Math.ceil(ads.length * (topPercentile / 100)))
+    ads = ads.slice(0, rawCutoff)
+    // Then dedup for clean display
     ads = deduplicateAds(ads)
     ads.sort((a, b) => {
       switch (topSortBy) {
@@ -444,23 +456,23 @@ export default function CompetitorAds() {
         default: return b.daysActive - a.daysActive
       }
     })
-    const cutoff = Math.max(1, Math.ceil(ads.length * (topPercentile / 100)))
-    ads = ads.slice(0, cutoff)
     return ads
   })()
+
+  // Count raw eligible ads for the stats bar
+  const topRawEligible = (() => {
+    let ads = [...topAds].filter(a => a.daysActive >= 1)
+    if (topTypeFilter === 'video') ads = ads.filter(a => a.isVideo)
+    if (topTypeFilter === 'image') ads = ads.filter(a => !a.isVideo && a.hasMedia)
+    return ads.length
+  })()
+  const topRawCutoff = Math.max(1, Math.ceil(topRawEligible * (topPercentile / 100)))
 
   const topPageAds = topFiltered.slice(0, topShowCount)
   const topRemaining = topFiltered.length - topShowCount
   const topVideoCount = topAds.filter(a => a.isVideo).length
   const topImageCount = topAds.filter(a => !a.isVideo && a.hasMedia).length
   const topHasImpressions = topAds.some(a => a.impressionsMid > 0)
-  // Count unique creatives after dedup for the stats bar
-  const topDedupedTotal = (() => {
-    let ads = [...topAds].filter(a => a.daysActive >= 1)
-    if (topTypeFilter === 'video') ads = ads.filter(a => a.isVideo)
-    if (topTypeFilter === 'image') ads = ads.filter(a => !a.isVideo && a.hasMedia)
-    return deduplicateAds(ads).length
-  })()
 
   function toggleTopBrand(pageId) {
     setSelectedTopBrands(prev => {
@@ -876,7 +888,7 @@ export default function CompetitorAds() {
                 <h2 className="ca-brand-bar-name">Top Performers</h2>
                 <span className="ca-brand-bar-stats">
                   {topAds.length > 0
-                    ? `${topFiltered.length} top ${topPercentile}% from ${topDedupedTotal} unique creatives (${topAds.length} total ads deduplicated) across ${selectedTopBrands.size} brand${selectedTopBrands.size !== 1 ? 's' : ''}`
+                    ? `${topFiltered.length} unique creatives from top ${topPercentile}% (${topRawCutoff} of ${topRawEligible} ads) across ${selectedTopBrands.size} brand${selectedTopBrands.size !== 1 ? 's' : ''}`
                     : `Select brands and click Analyse to find top performing ads`
                   }
                 </span>
