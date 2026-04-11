@@ -109,6 +109,40 @@ function extractPageId(input) {
   return m ? m[1] : null
 }
 
+// ── Resolve brand name from existing ads or Graph API ──
+async function resolvePageName(pageId, metaToken) {
+  // 1. Check if we already have ads with a page_name for this page_id
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/competitor_ads?page_id=eq.${pageId}&page_name=not.is.null&select=page_name&limit=1`,
+      { headers: sbReadHeaders }
+    )
+    if (res.ok) {
+      const rows = await res.json()
+      if (rows.length > 0 && rows[0].page_name && rows[0].page_name.trim()) {
+        return rows[0].page_name.trim()
+      }
+    }
+  } catch {}
+
+  // 2. Try Facebook Graph API (works with or without token for public pages)
+  if (metaToken) {
+    try {
+      const r = await fetch(`https://graph.facebook.com/${pageId}?access_token=${metaToken}&fields=name`)
+      if (r.ok) { const d = await r.json(); if (d.name) return d.name }
+    } catch {}
+  }
+
+  // 3. Try Graph API without token (some public pages return name)
+  try {
+    const r = await fetch(`https://graph.facebook.com/${pageId}?fields=name`)
+    if (r.ok) { const d = await r.json(); if (d.name) return d.name }
+  } catch {}
+
+  // 4. Fallback
+  return null
+}
+
 // ── Paginated Supabase fetch ──
 async function fetchAllAds(pageId) {
   const PAGE_SIZE = 1000
@@ -335,9 +369,22 @@ export default function CompetitorAds() {
       const rows = await fetchAllAds(pageId)
       if (rows.length > 0) {
         setLoadingStatus(`Processing ${rows.length} ads...`)
-        setAllAds(rows.map(ad => mapDbAd(ad, pageId, pageName)))
+        const mappedAds = rows.map(ad => mapDbAd(ad, pageId, pageName))
+        setAllAds(mappedAds)
         setLoadingStatus('')
         await updateBrand(pageId, { last_fetched_at: new Date().toISOString(), total_ads: rows.length })
+
+        // If brand name looks like a raw page ID, try to resolve it from ads
+        if (pageName && /^Brand \d+$/.test(pageName)) {
+          const realName = rows[0]?.page_name
+          if (realName && realName.trim() && !/^\d+$/.test(realName.trim())) {
+            await updateBrand(pageId, { page_name: realName.trim() })
+            setFollowedBrands(prev => prev.map(b =>
+              b.pageId === pageId ? { ...b, pageName: realName.trim(), adCount: rows.length } : b
+            ))
+            setActiveBrand(prev => prev?.pageId === pageId ? { ...prev, pageName: realName.trim() } : prev)
+          }
+        }
       } else {
         setLoadingStatus('Fetching from Foreplay...')
         await fetch(FOREPLAY_FN_URL, {
@@ -345,8 +392,21 @@ export default function CompetitorAds() {
           body: JSON.stringify({ page_id: pageId, limit: 50 }),
         })
         const reRows = await fetchAllAds(pageId)
-        setAllAds(reRows.map(ad => mapDbAd(ad, pageId, pageName)))
+        const mappedAds = reRows.map(ad => mapDbAd(ad, pageId, pageName))
+        setAllAds(mappedAds)
         setLoadingStatus('')
+
+        // After fetching new ads, try to resolve brand name from the returned ads
+        if (reRows.length > 0) {
+          const realName = reRows[0]?.page_name
+          if (realName && realName.trim() && realName.trim() !== pageName) {
+            await updateBrand(pageId, { page_name: realName.trim(), total_ads: reRows.length })
+            setFollowedBrands(prev => prev.map(b =>
+              b.pageId === pageId ? { ...b, pageName: realName.trim(), adCount: reRows.length } : b
+            ))
+            setActiveBrand(prev => prev?.pageId === pageId ? { ...prev, pageName: realName.trim() } : prev)
+          }
+        }
       }
     } catch (err) {
       setError(err.message)
@@ -364,16 +424,26 @@ export default function CompetitorAds() {
     try {
       const pageId = extractPageId(addInput)
       if (!pageId) { setAddError('Invalid page ID or URL.'); setAddLoading(false); return }
-      let pageName = 'Brand ' + pageId
-      if (hasKey) {
-        try {
-          const r = await fetch(`https://graph.facebook.com/${pageId}?access_token=${apiKey}&fields=name`)
-          if (r.ok) { const d = await r.json(); pageName = d.name || pageName }
-        } catch {}
+
+      // Check if brand is already followed
+      if (followedBrands.some(b => b.pageId === pageId)) {
+        setAddError('This brand is already in your list.')
+        setAddLoading(false)
+        return
       }
+
+      // Resolve the actual brand name (DB ads → Graph API → fallback)
+      const resolvedName = await resolvePageName(pageId, hasKey ? apiKey : null)
+      const pageName = resolvedName || 'Brand ' + pageId
+
       const nb = { pageId, pageName, platforms: ['meta'], adCount: 0, lastFetchedAt: null, thumbnailUrl: null }
-      if (await saveBrand(nb)) { setFollowedBrands([nb, ...followedBrands]); setAddInput(''); setShowAddForm(false) }
-      else setAddError('Could not save brand.')
+      if (await saveBrand(nb)) {
+        setFollowedBrands([nb, ...followedBrands])
+        setAddInput('')
+        setShowAddForm(false)
+      } else {
+        setAddError('Could not save brand.')
+      }
     } catch (err) { setAddError(err.message) }
     finally { setAddLoading(false) }
   }
@@ -432,7 +502,7 @@ export default function CompetitorAds() {
             {addError && <p className="ca-add-err">{addError}</p>}
             <div className="ca-add-modal-btns">
               <button onClick={() => { setShowAddForm(false); setAddInput(''); setAddError(null) }} className="ca-btn-ghost">Cancel</button>
-              <button onClick={handleAddBrand} disabled={addLoading || !addInput.trim()} className="ca-btn-primary">{addLoading ? 'Adding...' : 'Add Competitor'}</button>
+              <button onClick={handleAddBrand} disabled={addLoading || !addInput.trim()} className="ca-btn-primary">{addLoading ? 'Resolving name...' : 'Add Competitor'}</button>
             </div>
           </div>
         </div>
