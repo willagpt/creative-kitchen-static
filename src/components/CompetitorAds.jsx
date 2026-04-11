@@ -562,7 +562,19 @@ export default function CompetitorAds() {
     setAnalysisStep(1)
 
     try {
-      const payload = adsToAnalyse.map(ad => ({
+      // Expand all unique variant images — not just heroes — so AI sees the full creative spread
+      const seenUrls = new Set()
+      const expandedAds = []
+      for (const ad of adsToAnalyse) {
+        const variants = ad.variants || [ad]
+        for (const v of variants) {
+          const url = v.mediaUrl || v.thumbnailUrl || ''
+          if (!url || seenUrls.has(url) || v.isVideo) continue
+          seenUrls.add(url)
+          expandedAds.push(v)
+        }
+      }
+      const payload = expandedAds.map(ad => ({
         imageUrl: ad.mediaUrl || ad.thumbnailUrl || '',
         title: ad.adName || '',
         body: ad.adBody || '',
@@ -1033,9 +1045,19 @@ export default function CompetitorAds() {
                     disabled={analysisLoading || topFiltered.filter(a => !a.isVideo && a.hasMedia).length === 0}
                   >
                     {analysisLoading ? (
-                      <><span className="ca-spin-sm"></span> {analysisStep === 1 ? 'Step 1/2: Sonnet analysing images...' : 'Step 2/2: Opus writing prompts...'}</>
+                      <><span className="ca-spin-sm"></span> {analysisStep === 1 ? 'Step 1/2: Analysing images...' : 'Step 2/2: Writing Chefly prompts...'}</>
                     ) : (
-                      <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Analyse top creatives with AI ({topFiltered.filter(a => !a.isVideo && a.hasMedia).length} images)</>
+                      <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Analyse top creatives with AI ({(() => {
+                        const seen = new Set()
+                        let count = 0
+                        for (const ad of topFiltered.filter(a => !a.isVideo && a.hasMedia)) {
+                          for (const v of (ad.variants || [ad])) {
+                            const url = v.mediaUrl || v.thumbnailUrl || ''
+                            if (url && !seen.has(url) && !v.isVideo) { seen.add(url); count++ }
+                          }
+                        }
+                        return count
+                      })()} images from {topFiltered.filter(a => !a.isVideo && a.hasMedia).length} top ads)</>
                     )}
                   </button>
                   {analysisResult && !showAnalysis && (
@@ -1059,13 +1081,13 @@ export default function CompetitorAds() {
                       <div className="ca-spin"></div>
                       {analysisStep === 1 ? (
                         <>
-                          <p>Step 1 of 2 — Sonnet is analysing {topFiltered.filter(a => !a.isVideo && a.hasMedia).length} competitor images...</p>
-                          <p className="ca-analysis-loading-sub">Extracting visual patterns, themes, personas, and creative pillars. Usually 60–90 seconds.</p>
+                          <p>Step 1 of 2 — Analysing all variant images from your top performers...</p>
+                          <p className="ca-analysis-loading-sub">Sonnet is examining every unique image across all DCO variants — extracting visual patterns, themes, personas, and creative pillars. Usually 60–90 seconds.</p>
                         </>
                       ) : (
                         <>
-                          <p>Step 2 of 2 — Opus is writing detailed Chefly creative briefs...</p>
-                          <p className="ca-analysis-loading-sub">Translating competitor insights into 5–7 production-ready image prompts. Usually 60–90 seconds.</p>
+                          <p>Step 2 of 2 — Writing Chefly creative briefs...</p>
+                          <p className="ca-analysis-loading-sub">Clustering visual approaches and writing one detailed prompt per distinct concept. Usually 30–60 seconds.</p>
                         </>
                       )}
                     </div>
