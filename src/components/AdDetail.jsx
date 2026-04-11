@@ -427,15 +427,27 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
             </button>
 
             {currentImage && (
-              <a
-                href={currentImage}
-                download
-                target="_blank"
-                rel="noreferrer"
+              <button
                 className="btn btn-ghost btn-sm"
+                onClick={async () => {
+                  try {
+                    const res = await fetch(currentImage)
+                    const blob = await res.blob()
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `chefly-ad-${Date.now()}.png`
+                    document.body.appendChild(a)
+                    a.click()
+                    document.body.removeChild(a)
+                    URL.revokeObjectURL(url)
+                  } catch {
+                    window.open(currentImage, '_blank')
+                  }
+                }}
               >
                 {'\u2193'} Download
-              </a>
+              </button>
             )}
 
             {ad.generated_prompt && onTemplatize && (
