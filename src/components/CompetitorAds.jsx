@@ -396,38 +396,62 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
     }
   }
 
-  // Fetch past analysis history from analysis_jobs (the reliable source)
-  // Falls back to competitive_analyses for older runs
+  // Fetch past analysis history: merge both analysis_jobs (new) and competitive_analyses (legacy)
   const fetchAnalysisHistory = async () => {
     setHistoryLoading(true)
     try {
-      // Primary source: analysis_jobs (always written by the batch pipeline)
-      const jobsRes = await fetch(`${SUPABASE_URL}/rest/v1/analysis_jobs?select=id,created_at,brands_analysed,percentile,type_filter,total_images,status,error_message,competitive_analysis_id&order=created_at.desc&limit=20`, {
-        headers: sbReadHeaders
-      })
+      // Fetch from both sources in parallel
+      const [jobsRes, legacyRes] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/analysis_jobs?select=id,created_at,brands_analysed,percentile,type_filter,total_images,status,error_message,competitive_analysis_id&order=created_at.desc&limit=20`, {
+          headers: sbReadHeaders
+        }),
+        fetch(`${SUPABASE_URL}/rest/v1/competitive_analyses?select=id,created_at,brands_analysed,percentile,type_filter,ads_sent,model_used,status&order=created_at.desc&limit=20`, {
+          headers: sbReadHeaders
+        }),
+      ])
+
+      const allRuns = []
+
+      // New batch pipeline runs
       if (jobsRes.ok) {
         const jobs = await jobsRes.json()
-        // Map to the shape the UI expects
-        const mapped = jobs.map(j => ({
-          id: j.id,
-          created_at: j.created_at,
-          brands_analysed: j.brands_analysed || [],
-          percentile: j.percentile,
-          type_filter: j.type_filter,
-          ads_sent: j.total_images,
-          status: j.status,
-          error_message: j.error_message,
-          _source: 'analysis_jobs',
-          _competitive_analysis_id: j.competitive_analysis_id,
-        }))
-        setPastAnalyses(mapped)
-      } else {
-        // Fallback: older competitive_analyses table
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/competitive_analyses?select=id,created_at,brands_analysed,percentile,type_filter,ads_sent,model_used,status&order=created_at.desc&limit=20`, {
-          headers: sbReadHeaders
-        })
-        if (res.ok) setPastAnalyses(await res.json())
+        // Collect competitive_analysis_ids that are linked to jobs (to avoid dupes)
+        const linkedLegacyIds = new Set(jobs.map(j => j.competitive_analysis_id).filter(Boolean))
+        for (const j of jobs) {
+          allRuns.push({
+            id: j.id,
+            created_at: j.created_at,
+            brands_analysed: j.brands_analysed || [],
+            percentile: j.percentile,
+            type_filter: j.type_filter,
+            ads_sent: j.total_images,
+            status: j.status,
+            error_message: j.error_message,
+            _source: 'analysis_jobs',
+            _competitive_analysis_id: j.competitive_analysis_id,
+          })
+        }
+
+        // Legacy runs (exclude any that are already linked to a batch job)
+        if (legacyRes.ok) {
+          const legacy = await legacyRes.json()
+          for (const r of legacy) {
+            if (!linkedLegacyIds.has(r.id)) {
+              allRuns.push({ ...r, _source: 'competitive_analyses' })
+            }
+          }
+        }
+      } else if (legacyRes.ok) {
+        // Only legacy available
+        const legacy = await legacyRes.json()
+        for (const r of legacy) {
+          allRuns.push({ ...r, _source: 'competitive_analyses' })
+        }
       }
+
+      // Sort by date descending and limit
+      allRuns.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      setPastAnalyses(allRuns.slice(0, 20))
     } catch (e) { console.error('Failed to fetch analysis history', e) }
     setHistoryLoading(false)
   }
