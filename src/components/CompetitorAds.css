@@ -412,10 +412,46 @@
   background: #0e0e14;
   overflow: hidden;
 }
+.ca-card-thumb-wrap {
+  width: 100%;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0e0e14;
+}
 .ca-card-thumb {
   width: 100%;
   height: auto;
   display: block;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.ca-card-thumb.loaded {
+  opacity: 1;
+}
+/* Images don't need the loaded class, show immediately */
+img.ca-card-thumb {
+  opacity: 1;
+}
+.ca-card-thumb-placeholder {
+  width: 100%;
+  min-height: 280px;
+  background: linear-gradient(135deg, #14141a 0%, #1a1a24 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ca-card-play-static {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.2);
+  color: #818cf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
 }
 .ca-card-media.no-media {
   min-height: 160px;
@@ -445,6 +481,7 @@
   font-size: 12px;
   backdrop-filter: blur(4px);
   pointer-events: none;
+  z-index: 2;
 }
 
 /* Hover overlay */
@@ -457,6 +494,7 @@
   justify-content: center;
   opacity: 0;
   transition: opacity 0.2s;
+  z-index: 1;
 }
 .ca-card:hover .ca-card-overlay {
   opacity: 1;
