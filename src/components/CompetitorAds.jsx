@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import './CompetitorAds.css'
 
 // ── Supabase config ──
@@ -140,6 +140,47 @@ async function deleteBrand(pageId) {
   } catch { return false }
 }
 
+// ── Lazy video thumbnail component ──
+// Only loads video when card scrolls into view, prevents 1000+ simultaneous requests
+function LazyVideoCard({ src, onError }) {
+  const ref = useRef(null)
+  const [isVisible, setIsVisible] = useState(false)
+  const [hasFrame, setHasFrame] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setIsVisible(true); observer.disconnect() } },
+      { rootMargin: '200px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div ref={ref} className="ca-card-thumb-wrap">
+      {isVisible ? (
+        <video
+          src={src + '#t=0.5'}
+          className={`ca-card-thumb ${hasFrame ? 'loaded' : ''}`}
+          muted
+          playsInline
+          preload="auto"
+          onLoadedData={() => setHasFrame(true)}
+          onMouseOver={e => { try { e.target.play() } catch {} }}
+          onMouseOut={e => { try { e.target.pause(); e.target.currentTime = 0 } catch {} }}
+          onError={onError}
+        />
+      ) : (
+        <div className="ca-card-thumb-placeholder">
+          <span className="ca-card-play-static">▶</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Component ──
 export default function CompetitorAds() {
   const [apiKey, setApiKey] = useState(localStorage.getItem('metaAdLibraryToken') || '')
@@ -179,7 +220,6 @@ export default function CompetitorAds() {
       const q = searchText.toLowerCase()
       ads = ads.filter(a => (a.adName || '').toLowerCase().includes(q) || (a.adBody || '').toLowerCase().includes(q))
     }
-    // Date range filter
     if (dateFrom) {
       const from = new Date(dateFrom)
       ads = ads.filter(a => a.rawStartDate && new Date(a.rawStartDate) >= from)
@@ -205,7 +245,6 @@ export default function CompetitorAds() {
   const imageCount = allAds.filter(a => !a.isVideo).length
   const activeCount = allAds.filter(a => a.status === 'active').length
 
-  // ── Fetch ads (paginated, gets ALL) ──
   async function fetchBrandAds(pageId, pageName) {
     setIsLoading(true)
     setError(null)
@@ -274,7 +313,6 @@ export default function CompetitorAds() {
 
   return (
     <div className="ca-container">
-      {/* ── Header ── */}
       <div className="ca-header">
         <h1>Competitor Ads</h1>
         <div className="ca-token-row">
@@ -284,7 +322,6 @@ export default function CompetitorAds() {
       </div>
 
       <div className="ca-layout">
-        {/* ── Sidebar ── */}
         <aside className="ca-sidebar">
           <div className="ca-sidebar-title">Brands ({followedBrands.length})</div>
           <div className="ca-brand-list">
@@ -313,7 +350,6 @@ export default function CompetitorAds() {
           )}
         </aside>
 
-        {/* ── Main ── */}
         <main className="ca-main">
           {activeBrand && (
             <div className="ca-brand-bar">
@@ -324,7 +360,6 @@ export default function CompetitorAds() {
             </div>
           )}
 
-          {/* Filters */}
           {allAds.length > 0 && (
             <div className="ca-filters">
               <div className="ca-filter-pills">
@@ -348,7 +383,6 @@ export default function CompetitorAds() {
             </div>
           )}
 
-          {/* Date range */}
           {allAds.length > 0 && (
             <div className="ca-date-range">
               <span className="ca-date-label">Date range</span>
@@ -364,25 +398,22 @@ export default function CompetitorAds() {
             </div>
           )}
 
-          {/* Loading */}
           {isLoading && <div className="ca-loading"><div className="ca-spin"></div><span>{loadingStatus}</span></div>}
 
-          {/* Error */}
           {error && <div className="ca-error-msg">{error} <button onClick={() => fetchBrandAds(activeBrand.pageId, activeBrand.pageName)}>Retry</button></div>}
 
-          {/* Grid */}
           {!isLoading && filteredAds.length > 0 && (
             <div className="ca-grid">
               {filteredAds.map(ad => (
                 <div key={ad.adId} className="ca-card" onClick={() => setModalAd(ad)}>
                   <div className="ca-card-media">
                     {ad.isVideo && ad.mediaUrl ? (
-                      <video src={ad.mediaUrl} className="ca-card-thumb" muted playsInline preload="metadata"
-                        onMouseOver={e => { try { e.target.play() } catch {} }}
-                        onMouseOut={e => { try { e.target.pause(); e.target.currentTime = 0 } catch {} }}
-                        onError={e => { e.target.parentElement.classList.add('no-media') }} />
+                      <LazyVideoCard
+                        src={ad.mediaUrl}
+                        onError={e => { e.target.parentElement.parentElement.classList.add('no-media') }}
+                      />
                     ) : ad.mediaUrl ? (
-                      <img src={ad.mediaUrl} alt="" className="ca-card-thumb"
+                      <img src={ad.mediaUrl} alt="" className="ca-card-thumb" loading="lazy"
                         onError={e => { e.target.parentElement.classList.add('no-media') }} />
                     ) : <div className="ca-card-no-thumb">No preview</div>}
                     {ad.isVideo && <div className="ca-card-play">▶</div>}
@@ -415,7 +446,6 @@ export default function CompetitorAds() {
         </main>
       </div>
 
-      {/* ── Modal ── */}
       {modalAd && (
         <div className="ca-modal-bg" onClick={() => setModalAd(null)}>
           <div className="ca-modal" onClick={e => e.stopPropagation()}>
