@@ -691,24 +691,36 @@ export default function CompetitorAds() {
 
       for (let i = 0; i < promptClusters.length; i++) {
         setPromptProgress({ current: i + 1, total: totalPrompts })
-        const res2 = await fetch(ANALYSE_FN_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            step: 2,
-            step1_result: data1.analysis,
-            cluster: promptClusters[i],
-            prompt_index: i,
-            total_prompts: totalPrompts,
-          }),
-        })
-        if (!res2.ok) {
-          const errBody = await res2.json().catch(() => ({}))
-          throw new Error(errBody.error || `Prompt ${i + 1} failed (${res2.status})`)
+        let lastErr = null
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            if (attempt > 0) await new Promise(r => setTimeout(r, 2000))
+            const res2 = await fetch(ANALYSE_FN_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                step: 2,
+                step1_result: data1.analysis,
+                cluster: promptClusters[i],
+                prompt_index: i,
+                total_prompts: totalPrompts,
+              }),
+            })
+            if (!res2.ok) {
+              const errBody = await res2.json().catch(() => ({}))
+              throw new Error(errBody.error || `Step 2 prompt ${i + 1}/${totalPrompts} returned ${res2.status}`)
+            }
+            const d2 = await res2.json()
+            if (d2.error) throw new Error(d2.error)
+            collectedPrompts.push(d2.prompt)
+            lastErr = null
+            break
+          } catch (e) {
+            lastErr = e
+            if (attempt === 0) setPromptProgress({ current: i + 1, total: totalPrompts, retrying: true })
+          }
         }
-        const d2 = await res2.json()
-        if (d2.error) throw new Error(d2.error)
-        collectedPrompts.push(d2.prompt)
+        if (lastErr) throw lastErr
       }
 
       // ── STEP 3: Save assembled analysis ──
@@ -736,7 +748,12 @@ export default function CompetitorAds() {
 
       setAnalysisResult({ ...data3.analysis, analysis_id: data3.analysis_id, models: data3.models })
     } catch (err) {
-      setAnalysisError(err.message)
+      const stepLabels = { 1: 'Vision analysis', 2: 'Prompt generation', 3: 'Saving results' }
+      const stepLabel = stepLabels[analysisStep] || `Step ${analysisStep}`
+      const msg = err.message === 'Failed to fetch'
+        ? `${stepLabel} failed: network error (the server may be temporarily unavailable, try again)`
+        : err.message
+      setAnalysisError(msg)
     } finally {
       setAnalysisLoading(false)
       setAnalysisStep(0)
@@ -1152,7 +1169,7 @@ export default function CompetitorAds() {
                     disabled={analysisLoading || topFiltered.filter(a => !a.isVideo && a.hasMedia).length === 0}
                   >
                     {analysisLoading ? (
-                      <><span className="ca-spin-sm"></span> {analysisStep === 1 ? 'Step 1: Analysing images...' : analysisStep === 2 ? `Writing prompt ${promptProgress.current}/${promptProgress.total}...` : 'Saving analysis...'}</>
+                      <><span className="ca-spin-sm"></span> {analysisStep === 1 ? 'Step 1: Analysing images...' : analysisStep === 2 ? `Writing prompt ${promptProgress.current}/${promptProgress.total}${promptProgress.retrying ? ' (retrying...)' : '...'}` : 'Saving analysis...'}</>
 
                     ) : (
                       <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Analyse top creatives with AI ({(() => {
@@ -1236,7 +1253,7 @@ export default function CompetitorAds() {
                         </>
                       ) : analysisStep === 2 ? (
                         <>
-                          <p>Writing Chefly prompt {promptProgress.current} of {promptProgress.total}...</p>
+                          <p>{promptProgress.retrying ? `Retrying prompt ${promptProgress.current} of ${promptProgress.total}...` : `Writing Chefly prompt ${promptProgress.current} of ${promptProgress.total}...`}</p>
                           <p className="ca-analysis-loading-sub">Each prompt is generated individually with the full Chefly brand DNA, packaging specs, and typography rules. ~30 seconds per prompt.</p>
                         </>
                       ) : (
