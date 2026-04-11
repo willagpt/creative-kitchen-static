@@ -714,7 +714,7 @@ export default function CompetitorAds() {
         }
 
         if (data.phase === 'failed') {
-          setAnalysisError('Batch job failed')
+          setAnalysisError(data.error || 'Batch job failed. Check edge function logs for details.')
           setAnalysisLoading(false)
           setAnalysisStep(0)
           return
@@ -1283,7 +1283,7 @@ export default function CompetitorAds() {
                     disabled={analysisLoading || topFiltered.filter(a => !a.isVideo && a.hasMedia).length === 0}
                   >
                     {analysisLoading ? (
-                      <><span className="ca-spin-sm"></span> {analysisStep === 1 ? `Step 1: Analysing images (${batchSummary?.step1_completed || 0}/${batchSummary?.total || '?'})...` : analysisStep === 2 ? `Writing prompt ${promptProgress.current}/${promptProgress.total}...` : 'Saving analysis...'}</>
+                      <><span className="ca-spin-sm"></span> {analysisStep === 1 ? `Step 1: Analysing (${batchSummary?.step1_completed || 0}/${batchSummary?.total || '?'} images)...` : analysisStep === 2 ? `Step 2: Writing prompt ${promptProgress.current || 0}/${promptProgress.total || batchSummary?.step1_completed || '?'}...` : 'Saving analysis...'}</>
 
                     ) : (
                       <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Analyse top creatives with AI ({(() => {
@@ -1360,31 +1360,51 @@ export default function CompetitorAds() {
                   {analysisLoading && (
                     <div className="ca-analysis-loading">
                       <div className="ca-spin"></div>
-                      {analysisStep === 1 ? (
-                        <>
-                          <p>Step 1 — Vision analysis: {batchSummary?.step1_completed || 0} / {batchSummary?.total || '?'} images</p>
-                          {(batchSummary?.reused_step1 > 0) && (
-                            <p className="ca-analysis-loading-sub" style={{ color: '#4ade80' }}>Reused {batchSummary.reused_step1} cached {batchSummary.reused_step1 === 1 ? 'analysis' : 'analyses'} from previous runs{batchSummary?.reused_step2 > 0 ? ` (${batchSummary.reused_step2} prompts also cached)` : ''}</p>
-                          )}
-                          <p className="ca-analysis-loading-sub">Sonnet is performing forensic visual analysis on each image in batches of 10. Extracting layout grids, typography specs, colour palettes with hex codes, camera angles, and lighting setups.</p>
-                          {batchSummary?.total > 15 && (
-                            <p className="ca-analysis-loading-sub" style={{ opacity: 0.6 }}>Processing {batchSummary.total} images in {Math.ceil(batchSummary.total / 10)} batches. This may take a few minutes. You can close this tab and come back.</p>
-                          )}
-                        </>
-                      ) : analysisStep === 2 ? (
-                        <>
-                          <p>Step 2 — Writing prompt {promptProgress.current} of {promptProgress.total}...</p>
-                          <p className="ca-analysis-loading-sub">Generating a full production brief for each image. One Chefly prompt per competitor ad, with hex codes, font specs, and lens details. ~30s per prompt.</p>
-                          {batchSummary?.total > 15 && (
+                      {analysisStep === 1 ? (() => {
+                        const completed = batchSummary?.step1_completed || 0
+                        const failed = batchSummary?.step1_failed || 0
+                        const total = batchSummary?.total || 0
+                        const processing = batchSummary?.step1_processing || 0
+                        const pct = total > 0 ? Math.round((completed / total) * 100) : 0
+                        const batchSize = 3
+                        const remaining = total - completed - failed
+                        const currentBatch = Math.floor(completed / batchSize) + 1
+                        const totalBatches = Math.ceil(total / batchSize)
+                        return (
+                          <>
+                            <p>Step 1 — Vision analysis: {completed} / {total} images ({pct}%)</p>
                             <div className="ca-batch-progress">
-                              <div className="ca-batch-bar" style={{ width: `${Math.round((promptProgress.current / (promptProgress.total || 1)) * 100)}%` }}></div>
+                              <div className="ca-batch-bar" style={{ width: `${pct}%` }}></div>
                             </div>
-                          )}
-                        </>
-                      ) : (
+                            {(batchSummary?.reused_step1 > 0) && (
+                              <p className="ca-analysis-loading-sub" style={{ color: '#4ade80' }}>Reused {batchSummary.reused_step1} cached {batchSummary.reused_step1 === 1 ? 'analysis' : 'analyses'} from previous runs{batchSummary?.reused_step2 > 0 ? ` (${batchSummary.reused_step2} prompts also cached)` : ''}</p>
+                            )}
+                            {processing > 0 && (
+                              <p className="ca-analysis-loading-sub">Analysing batch {currentBatch} of {totalBatches} ({processing} {processing === 1 ? 'image' : 'images'} in progress)...</p>
+                            )}
+                            {failed > 0 && (
+                              <p className="ca-analysis-loading-sub" style={{ color: '#f87171' }}>{failed} {failed === 1 ? 'image' : 'images'} failed. Will continue with remaining images.</p>
+                            )}
+                            <p className="ca-analysis-loading-sub" style={{ opacity: 0.5 }}>Sonnet is performing forensic visual analysis in batches of {batchSize}. Extracting layout grids, typography specs, colour palettes, camera angles, and lighting. ~30 to 60s per batch.</p>
+                          </>
+                        )
+                      })() : analysisStep === 2 ? (() => {
+                        const done = promptProgress.current || 0
+                        const total = promptProgress.total || batchSummary?.step1_completed || 0
+                        const pct = total > 0 ? Math.round((done / total) * 100) : 0
+                        return (
+                          <>
+                            <p>Step 2 — Writing prompt {done} of {total} ({pct}%)</p>
+                            <div className="ca-batch-progress">
+                              <div className="ca-batch-bar" style={{ width: `${pct}%` }}></div>
+                            </div>
+                            <p className="ca-analysis-loading-sub">Generating a full production brief for each image. One Chefly prompt per competitor ad, with hex codes, font specs, and lens details. ~20 to 40s per prompt.</p>
+                          </>
+                        )
+                      })() : (
                         <>
                           <p>Saving analysis...</p>
-                          <p className="ca-analysis-loading-sub">Storing {batchSummary?.total || ''} image analyses and prompts to your history.</p>
+                          <p className="ca-analysis-loading-sub">Storing {batchSummary?.step1_completed || batchSummary?.total || ''} image analyses and prompts to your history.</p>
                         </>
                       )}
                     </div>
