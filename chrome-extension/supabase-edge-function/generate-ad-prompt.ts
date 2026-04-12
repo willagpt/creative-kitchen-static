@@ -283,7 +283,7 @@ ${image_url ? `Image: ${image_url}` : ''}`
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-20250514',
+        model: 'claude-opus-4-6',
         max_tokens: 4096,
         system: systemPrompt,
         messages,
@@ -308,7 +308,7 @@ ${image_url ? `Image: ${image_url}` : ''}`
       .update({
         generated_prompt: generatedPrompt,
         prompt_generated_at: new Date().toISOString(),
-        prompt_model: 'claude-opus-4-20250514'
+        prompt_model: 'claude-opus-4-6'
       })
       .eq('id', saved_ad_id)
 
@@ -322,7 +322,7 @@ ${image_url ? `Image: ${image_url}` : ''}`
         success: true,
         prompt: generatedPrompt,
         saved_ad_id,
-        model: 'claude-opus-4-20250514'
+        model: 'claude-opus-4-6'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
