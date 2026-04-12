@@ -21,14 +21,14 @@ const FLUX_SIZE_MAP = {
   '2:3': 'portrait_4_3',
 }
 
-// Canva design dimensions mapped to aspect ratios
-const CANVA_SIZE_MAP = {
-  '1:1': { width: 1080, height: 1080 },
-  '4:5': { width: 1080, height: 1350 },
-  '9:16': { width: 1080, height: 1920 },
-  '16:9': { width: 1920, height: 1080 },
-  '3:2': { width: 1080, height: 720 },
-  '2:3': { width: 720, height: 1080 },
+// Canva create page URLs mapped to closest design type for each ratio
+const CANVA_URL_MAP = {
+  '1:1': 'https://www.canva.com/create/instagram-posts/',       // 1080x1080
+  '4:5': 'https://www.canva.com/create/instagram-posts/',       // closest match
+  '9:16': 'https://www.canva.com/create/instagram-stories/',    // 1080x1920
+  '16:9': 'https://www.canva.com/create/youtube-thumbnails/',   // 1280x720 landscape
+  '3:2': 'https://www.canva.com/create/facebook-posts/',        // landscape
+  '2:3': 'https://www.canva.com/create/instagram-stories/',     // portrait
 }
 
 const DEFAULT_PROMPT = `Create a bold headline static advertisement for "CHEFLY" (eatchefly.com). Large, attention-grabbing headline dominates the top third. Product image centered below. Strong call-to-action button at bottom. Brand colors — use ONLY these for all backgrounds, text, accents, and graphic elements: #FF6B2C, #0D0D0D, #FFF6EE, #FFD60A, #A8E10C, #FF8FA3, #5CCFFF. Product: fresh meals. Key claims: Preservative-free meals, no seed oils, high protein. Photography: Clean, minimal, product-focused compositions. Professional advertising quality. 1080x1080 square format.`
@@ -384,7 +384,7 @@ export default function PromptTester() {
     setPromoting(false)
   }
 
-  // Send to Canva: copy image to clipboard + open new Canva design at correct size
+  // Send to Canva: copy image to clipboard + open Canva at the right design type
   const handleSendToCanva = async () => {
     if (!resultImage) return
     setCanvaSending(true)
@@ -394,11 +394,9 @@ export default function PromptTester() {
       // Convert image to blob for clipboard
       let blob
       if (resultImage.startsWith('data:')) {
-        // Data URL — convert to blob
         const resp = await fetch(resultImage)
         blob = await resp.blob()
       } else {
-        // Remote URL — fetch and convert
         const resp = await fetch(resultImage)
         blob = await resp.blob()
       }
@@ -428,23 +426,21 @@ export default function PromptTester() {
         new ClipboardItem({ 'image/png': blob })
       ])
 
-      // Open Canva with correct dimensions
+      // Open Canva at the matching design type page
       const currentRatio = showDetail?.ratio || ratio
-      const size = CANVA_SIZE_MAP[currentRatio] || CANVA_SIZE_MAP['1:1']
-      const canvaUrl = `https://www.canva.com/design/create?width=${size.width}&height=${size.height}`
+      const canvaUrl = CANVA_URL_MAP[currentRatio] || CANVA_URL_MAP['1:1']
       window.open(canvaUrl, '_blank')
 
       setCanvaSent(true)
-      setStatus('image copied — paste into Canva (Ctrl+V)')
+      setStatus('image copied — paste into Canva (Ctrl+V / Cmd+V)')
       setTimeout(() => setCanvaSent(false), 4000)
     } catch (err) {
-      // Fallback: if clipboard fails, just open Canva and tell user to download
+      // Fallback: if clipboard fails, just open Canva and tell user to download first
       console.error('Clipboard copy failed:', err)
       const currentRatio = showDetail?.ratio || ratio
-      const size = CANVA_SIZE_MAP[currentRatio] || CANVA_SIZE_MAP['1:1']
-      const canvaUrl = `https://www.canva.com/design/create?width=${size.width}&height=${size.height}`
+      const canvaUrl = CANVA_URL_MAP[currentRatio] || CANVA_URL_MAP['1:1']
       window.open(canvaUrl, '_blank')
-      setStatus('clipboard blocked — download the image and upload to Canva manually')
+      setStatus('clipboard blocked — download the image first, then upload in Canva')
     }
     setCanvaSending(false)
   }
