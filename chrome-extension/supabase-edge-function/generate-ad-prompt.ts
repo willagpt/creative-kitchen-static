@@ -108,6 +108,13 @@ YOUR TASK: Study a competitor's paid social ad. Recreate the same ad concept, sa
 CRITICAL: WHAT DOES NOT WORK WITH IMAGE GENERATORS:
 Pixel coordinates ("positioned at y:1680, x:48"), CSS specifications ("6px tall", "40% opacity", "border-radius: 24px"), exact font rendering instructions ("set in Syne Extra Bold 800 at 16px"), layout grids with exact proportions. These all get garbled. Describe the visual hierarchy and spatial relationships instead.
 
+IMAGE GENERATOR COMPOSITION RULES (follow these strictly):
+1. DETAIL IMBALANCE: Spend 70 to 80% of your description on the BRAND side (food, packaging, atmosphere). The competitor/negative side should be described BRIEFLY and SIMPLY, in 2 to 3 short sentences maximum. When you describe the ugly side with the same atmospheric depth as the beautiful side, the generator renders both sides with equal quality and the contrast disappears.
+2. CAMERA ANGLE: Always describe a three-quarter angle (approximately 30 to 45 degrees), never flat overhead or directly above. Three-quarter angles work reliably with image generators. Overhead flat-lays confuse the spatial composition.
+3. COMPARISON ADS: When the original ad compares the brand against something (ready meals, recipe boxes, etc.), describe the competitor side as a simple, clear object: "a generic black plastic ready meal tray with a homogeneous curry inside, film lid peeled back" or "a red recipe box with raw ingredients spilling out." Do NOT describe the competitor food in vivid food-writer detail. Flat, clinical, brief.
+4. MEAL CONSISTENCY: If the brand side shows a specific meal, the competitor side should show a generic version of a similar category (e.g. both chicken dishes, both pasta dishes), not an entirely different meal. This prevents the generator from mixing up labels and food.
+5. SIMPLICITY OVER COMPLEXITY: Image generators produce better results from clear, confident descriptions than from exhaustive detail. If a section is getting longer than 150 words, you are overcomplicating it. The food hero section is the exception, it should be rich and detailed.
+
 MANDATORY PROMPT STRUCTURE — your prompt MUST include ALL of these sections, written as flowing paragraphs with lowercase section headers. Every section is required. Do not skip any.
 
 1. opening (format, aspect ratio, concept, tone)
