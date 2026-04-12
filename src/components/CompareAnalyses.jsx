@@ -23,6 +23,7 @@ const TABS = [
   { key: 'personas', label: 'Personas' },
   { key: 'pillars', label: 'Pillars' },
   { key: 'clusters', label: 'Clusters' },
+  { key: 'formats', label: 'Formats' },
 ]
 
 export default function CompareAnalyses() {
@@ -37,7 +38,7 @@ export default function CompareAnalyses() {
   async function loadJobs() {
     try {
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/analysis_jobs?status=eq.completed&order=created_at.desc&select=id,brands_analysed,total_images,completed_step1,pipeline_version,merged_themes,merged_personas,merged_pillars,merged_clusters,consolidation_summary,created_at`,
+        `${SUPABASE_URL}/rest/v1/analysis_jobs?status=eq.completed&order=created_at.desc&select=id,brands_analysed,total_images,completed_step1,pipeline_version,merged_themes,merged_personas,merged_pillars,merged_clusters,merged_formats,consolidation_summary,created_at`,
         { headers: sbHeaders }
       )
       if (res.ok) setJobs(await res.json())
@@ -60,6 +61,7 @@ export default function CompareAnalyses() {
     const allPersonas = new Map()
     const allPillars = new Map()
     const allClusters = new Map()
+    const allFormats = new Map()
 
     for (const job of selectedJobs) {
       const brandLabel = (job.brands_analysed || []).join(', ') || 'Unknown'
@@ -84,6 +86,11 @@ export default function CompareAnalyses() {
         if (!allClusters.has(key)) allClusters.set(key, { name: cluster.name, byBrand: {} })
         allClusters.get(key).byBrand[brandLabel] = cluster
       }
+      for (const fmt of (job.merged_formats || [])) {
+        const key = fmt.name?.toLowerCase() || ''
+        if (!allFormats.has(key)) allFormats.set(key, { name: fmt.name, byBrand: {} })
+        allFormats.get(key).byBrand[brandLabel] = fmt
+      }
     }
 
     const sortByMaxWeight = (map) =>
@@ -93,12 +100,21 @@ export default function CompareAnalyses() {
         return maxB - maxA
       })
 
+    // Sort formats by longevity (avgDaysActive) as primary signal
+    const sortFormatsByLongevity = (map) =>
+      Array.from(map.values()).sort((a, b) => {
+        const maxAvgA = Math.max(...Object.values(a.byBrand).map(v => v.avgDaysActive || 0))
+        const maxAvgB = Math.max(...Object.values(b.byBrand).map(v => v.avgDaysActive || 0))
+        return maxAvgB - maxAvgA
+      })
+
     setCompareData({
       brands: selectedJobs.map(j => (j.brands_analysed || []).join(', ') || 'Unknown'),
       themes: sortByMaxWeight(allThemes),
       personas: sortByMaxWeight(allPersonas),
       pillars: sortByMaxWeight(allPillars),
       clusters: sortByMaxWeight(allClusters),
+      formats: sortFormatsByLongevity(allFormats),
     })
   }
 
@@ -137,7 +153,7 @@ export default function CompareAnalyses() {
                       <div className="ca-compare-job-info">
                         <div className="ca-compare-job-brand">{brandLabel}</div>
                         <div className="ca-compare-job-meta">
-                          {job.total_images} images · {(job.merged_themes || []).length} themes · {(job.merged_pillars || []).length} pillars · {new Date(job.created_at).toLocaleDateString()}
+                          {job.total_images} images · {(job.merged_themes || []).length} themes · {(job.merged_pillars || []).length} pillars · {(job.merged_formats || []).length} formats · {new Date(job.created_at).toLocaleDateString()}
                         </div>
                       </div>
                       <span className="ca-compare-job-version">{job.pipeline_version}</span>
@@ -195,6 +211,15 @@ export default function CompareAnalyses() {
                 <div className="ca-compare-bars">
                   {compareData.brands.map((brand, bi) => {
                     const brandData = item.byBrand[brand]
+                    const isFormats = compareTab === 'formats'
+                    // For formats, show avgDaysActive as bar width (normalize to max across all brands for this format)
+                    const barValue = isFormats
+                      ? (brandData?.avgDaysActive || 0)
+                      : (brandData?.weight || 0)
+                    const maxBarValue = isFormats
+                      ? Math.max(...Object.values(item.byBrand).map(v => v.avgDaysActive || 0), 1)
+                      : 100
+                    const barPct = isFormats ? (barValue / maxBarValue) * 100 : barValue
                     return (
                       <div key={bi} className="ca-compare-bar-row">
                         <div className="ca-compare-bar-label">{brand}</div>
@@ -204,14 +229,25 @@ export default function CompareAnalyses() {
                               <div
                                 className="ca-compare-bar-fill"
                                 style={{
-                                  width: `${brandData.weight || 0}%`,
+                                  width: `${barPct}%`,
                                   backgroundColor: BRAND_COLORS[bi % BRAND_COLORS.length],
                                 }}
                               />
-                              <span className="ca-compare-bar-value">{brandData.weight || 0}</span>
-                              <span className="ca-compare-bar-momentum" style={{ color: MOMENTUM_TEXT[brandData.momentum] || '#71717a' }}>
-                                {brandData.momentum || '—'}
-                              </span>
+                              {isFormats ? (
+                                <>
+                                  <span className="ca-compare-bar-value">avg {brandData.avgDaysActive || 0}d</span>
+                                  <span className="ca-compare-bar-momentum" style={{ color: '#f97316' }}>
+                                    max {brandData.maxDaysActive || 0}d · {brandData.count || 0} ads
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="ca-compare-bar-value">{brandData.weight || 0}</span>
+                                  <span className="ca-compare-bar-momentum" style={{ color: MOMENTUM_TEXT[brandData.momentum] || '#71717a' }}>
+                                    {brandData.momentum || '—'}
+                                  </span>
+                                </>
+                              )}
                             </>
                           ) : (
                             <span className="ca-compare-bar-absent">not present</span>
@@ -224,7 +260,7 @@ export default function CompareAnalyses() {
 
                 {/* Best description */}
                 {(() => {
-                  const best = Object.values(item.byBrand).sort((a, b) => (b.weight || 0) - (a.weight || 0))[0]
+                  const best = Object.values(item.byBrand).sort((a, b) => (b.weight || b.avgDaysActive || 0) - (a.weight || a.avgDaysActive || 0))[0]
                   return best?.description ? (
                     <p className="ca-compare-row-desc">{best.description}</p>
                   ) : null

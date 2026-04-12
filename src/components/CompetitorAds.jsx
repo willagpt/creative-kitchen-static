@@ -929,6 +929,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
         personas: job.merged_personas || [],
         creativePillars: job.merged_pillars || [],
         visualClusters: job.merged_clusters || [],
+        creativeFormats: job.merged_formats || [],
         consolidation_summary: job.consolidation_summary || null,
         analysis_id: job.competitive_analysis_id,
         models: { vision: job.step1_model || 'claude-opus-4-20250514' },
@@ -1826,6 +1827,46 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
                                         {!cp.weight && cp.frequency && <span className="ca-meta-chip">{cp.frequency}</span>}
                                       </div>
                                       {cp.whyItWorks && <p className="ca-card-why"><strong>Why it works:</strong> {cp.whyItWorks}</p>}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {analysisResult.creativeFormats?.length > 0 && (
+                            <div className="ca-analysis-section">
+                              <h4>Creative Formats <span className="ca-section-count">{analysisResult.creativeFormats.length}</span></h4>
+                              <div className="ca-ranked-list">
+                                {[...analysisResult.creativeFormats].sort((a, b) => (b.weight || b.avgDaysActive || 0) - (a.weight || a.avgDaysActive || 0)).map((f, i) => (
+                                  <div key={i} className={`ca-ranked-card ca-card-format ${f.momentum ? 'ca-momentum-' + f.momentum : ''}`}>
+                                    <div className="ca-ranked-rank">#{i + 1}</div>
+                                    <div className="ca-ranked-content">
+                                      <div className="ca-ranked-header">
+                                        <h5>{f.name}</h5>
+                                        {f.momentum && <span className={`ca-momentum-tag ca-tag-${f.momentum}`}>{f.momentum}</span>}
+                                        {f.longevityRank && <span className="ca-meta-chip" style={{ marginLeft: 8, background: '#6366f120', color: '#818cf8' }}>longevity #{f.longevityRank}</span>}
+                                      </div>
+                                      <p>{f.description}</p>
+                                      {f.weight != null && (
+                                        <div className="ca-weight-row">
+                                          <div className="ca-weight-bar-bg">
+                                            <div className="ca-weight-bar" style={{ width: `${Math.min(f.weight, 100)}%`, background: 'linear-gradient(90deg, #6366f1, #a78bfa)' }}></div>
+                                          </div>
+                                          <span className="ca-weight-val">{Math.round(f.weight)}</span>
+                                        </div>
+                                      )}
+                                      <div className="ca-ranked-meta">
+                                        {f.count && <span className="ca-meta-chip">{f.count} ad{f.count !== 1 ? 's' : ''}</span>}
+                                        {f.brandCount && <span className="ca-meta-chip">{f.brandCount} brand{f.brandCount !== 1 ? 's' : ''}</span>}
+                                        {f.avgDaysActive && <span className="ca-meta-chip" style={{ background: '#22c55e20', color: '#4ade80' }}>avg {f.avgDaysActive}d</span>}
+                                        {f.maxDaysActive && <span className="ca-meta-chip" style={{ background: '#f9731620', color: '#fb923c' }}>max {f.maxDaysActive}d</span>}
+                                      </div>
+                                      {f.brands?.length > 0 && (
+                                        <div className="ca-card-pills">
+                                          {f.brands.map((b, j) => <span key={j} className="ca-pill-pain" style={{ background: '#3b82f620', color: '#60a5fa', borderColor: '#3b82f640' }}>{b}</span>)}
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 ))}
