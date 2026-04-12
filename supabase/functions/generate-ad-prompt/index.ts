@@ -50,6 +50,22 @@ serve(async (req) => {
       throw new Error('saved_ad_id is required')
     }
 
+    // ─── Resolve packaging_format from DB if not provided ────
+    let resolvedPackagingFormat = packaging_specs?.type || null
+    if (!resolvedPackagingFormat && brand_name) {
+      const { data: bgData } = await supabase
+        .from('brand_guidelines')
+        .select('packaging_format')
+        .eq('brand_name', brand_name.toLowerCase())
+        .single()
+      if (bgData?.packaging_format) {
+        resolvedPackagingFormat = bgData.packaging_format
+      }
+    }
+    // Default to generic 'packaging' if still unknown
+    const packagingTerm = resolvedPackagingFormat || 'packaging'
+    const packagingTermCapitalised = packagingTerm.charAt(0).toUpperCase() + packagingTerm.slice(1)
+
     // ─── Build the brand DNA context block ───────────────────
     const brandDnaSections: string[] = []
 
@@ -60,7 +76,7 @@ serve(async (req) => {
       brandDnaSections.push(`TONE OF VOICE:\n${tone_of_voice}`)
     }
     if (sleeve_notes) {
-      brandDnaSections.push(`SLEEVE & PACKAGING NOTES:\n${sleeve_notes}`)
+      brandDnaSections.push(`${packagingTermCapitalised.toUpperCase()} & PACKAGING NOTES:\n${sleeve_notes}`)
     }
     if (colour_palette) {
       brandDnaSections.push(`COLOUR PALETTE:\n${typeof colour_palette === 'object' ? JSON.stringify(colour_palette, null, 2) : colour_palette}`)
@@ -112,7 +128,7 @@ PROMPT STRUCTURE — the content inside <prompt> tags must follow this exact str
 PROMPT RULES:
 - Use EXACT hex colour codes from the brand DNA — never approximate.
 - Use EXACT font names from the brand DNA — Syne Extra Bold, Space Grotesk, Instrument Serif Italic, etc.
-- For food photography: describe tray material, sleeve colour from sleeve notes, meal contents in vivid sensory language, lighting.
+- For food photography: describe the packaging (${packagingTerm}, tray, container — whatever the brand uses per the packaging notes), meal contents in vivid sensory language, and lighting.
 - Follow the brand's 95/5 colour rule: 95% cream and near-black, with colour only as purposeful punctuation.
 - All text in the ad must be lowercase with full stops.
 - Describe what things LOOK like, not how they'd be coded.
@@ -210,7 +226,7 @@ First, analyse the competitor ad as a creative director. Then rewrite the concep
     // ─── LEGACY MODE: original prompt-only generation ─────────
     const systemPrompt = `You are a senior creative director at a premium DTC food brand studio. You reverse-engineer competitor paid social ad creatives and rewrite them as production-ready image generation prompts for YOUR brand.
 
-You have been given the brand's complete DNA — colour palette, typography, packaging system, sleeve designs, tone of voice, and photography style. USE IT. Every hex code, every font reference, every packaging detail in your prompt must come from the brand DNA, not guessed or inferred.
+You have been given the brand's complete DNA — colour palette, typography, packaging system (${packagingTerm}), tone of voice, and photography style. USE IT. Every hex code, every font reference, every packaging detail in your prompt must come from the brand DNA, not guessed or inferred.
 
 Your prompts are consumed by an AI image generation model, not a human designer. This means:
 - Vivid visual and sensory descriptions work. Pixel-perfect CSS specifications do not.
@@ -222,13 +238,13 @@ STRUCTURE — your prompt must follow this exact structure:
 2. Section headers in lowercase with full stops (e.g. "the left half — chefly side.") to organise the layout description. These are NOT markdown headers — just short orienting labels on their own line.
 3. Within each section: flowing descriptive paragraphs. No bullet points, no numbered lists, no markdown.
 4. A "what is NOT in the image." section listing deliberate absences.
-5. A "this version." metadata footer: meal name, protein type, sleeve colour, comparison target (if applicable), aspect ratio, platform.
+5. A "this version." metadata footer: meal name, protein type, ${packagingTerm} colour, comparison target (if applicable), aspect ratio, platform.
 
 RULES:
 1. Start with format, aspect ratio, and platform context.
 2. Use EXACT hex colour codes from the brand DNA — never approximate or infer colours.
 3. Use EXACT font names from the brand DNA — Syne Extra Bold, Space Grotesk, Instrument Serif Italic, etc. Never say "like" or "similar to".
-4. For food photography: describe the tray material, sleeve colour and design from sleeve notes, meal contents in vivid sensory language, and lighting warmth/direction. Keep the food description to ONE focused paragraph.
+4. For food photography: describe the packaging (${packagingTerm}, tray, container — whatever the brand uses per the packaging notes), meal contents in vivid sensory language, and lighting warmth/direction. Keep the food description to ONE focused paragraph.
 5. Follow the brand's 95/5 colour rule: 95% cream and near-black, with colour only as purposeful punctuation.
 6. All text in the ad must be lowercase with full stops. Single italic emphasis words use Instrument Serif Italic.
 7. Describe what is deliberately ABSENT.
@@ -244,14 +260,14 @@ PROMPT STRUCTURE TEMPLATE — your output must follow this structural pattern re
 [1-2 paragraphs describing the frame division, spatial organisation, and how the composition works at a high level.]
 [section header for each major visual zone, e.g. "the left half — chefly side." or "the hero section." or "the headline zone."]
 [For each zone: 1-2 paragraphs covering background colour/texture (with exact hex from brand DNA), typography (exact font names and weights from brand DNA), and key visual elements. Use approximate pixel sizes sparingly as spatial guides.]
-[If food is present: ONE paragraph of vivid sensory description — colours, textures, ingredients, plating style, lighting warmth and direction. Describe how the branded tray and sleeve look using details from the sleeve/packaging notes.]
+[If food is present: ONE paragraph of vivid sensory description — colours, textures, ingredients, plating style, lighting warmth and direction. Describe the branded packaging (${packagingTerm}, tray, container) using details from the packaging notes.]
 [If the ad has a comparison or secondary element: a section for that side with the same level of detail.]
 [section header: "colour discipline."]
 [1 paragraph explaining the colour balance — which colours dominate, where accent colours appear, how the 95/5 rule is maintained.]
 [section header: "what is NOT in the image."]
 [1 paragraph listing every deliberate absence — no exclamation marks, no title case, no emojis, no competitor brand names, no gradients, etc. Be thorough.]
 [section header: "this version."]
-[Metadata footer on one line: Meal name. Protein type. Sleeve colour with hex. Comparison target if applicable. Aspect ratio. Platform.]
+[Metadata footer on one line: Meal name. Protein type. ${packagingTermCapitalised} colour with hex. Comparison target if applicable. Aspect ratio. Platform.]
 """
 
 CRITICAL CONSTRAINTS:
