@@ -11,6 +11,13 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
   const fileInputRef = useRef()
   const dropRef = useRef()
 
+  // Shot sequence state
+  const [sequenceMode, setSequenceMode] = useState(false)
+  const [sequenceRef, setSequenceRef] = useState(null)
+  const [sequenceShots, setSequenceShots] = useState([])
+  const [sequenceGenerating, setSequenceGenerating] = useState(false)
+  const [sequenceError, setSequenceError] = useState('')
+
   async function loadPhotos() {
     setLoading(true)
     try {
@@ -102,6 +109,29 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
     }
   }
 
+  // Delete a photo (storage + DB)
+  async function deletePhoto(photo) {
+    if (!window.confirm('Delete this photo? This cannot be undone.')) return
+    try {
+      // Remove from storage if it's in reference-images bucket
+      if (photo.storage_url && photo.storage_url.includes('reference-images')) {
+        const match = photo.storage_url.match(/reference-images\/(.+)$/)
+        if (match) {
+          await supabase.storage.from('reference-images').remove([decodeURIComponent(match[1])])
+        }
+      }
+      // Delete the DB row
+      await supabase.from('photo_library').delete().eq('id', photo.id)
+      // Update local state
+      setPhotos(prev => prev.filter(p => p.id !== photo.id))
+      setSelectedPhoto(null)
+      // If this was the sequence ref, clear it
+      if (sequenceRef?.id === photo.id) setSequenceRef(null)
+    } catch (err) {
+      console.error('Delete failed:', err)
+    }
+  }
+
   // Describe a photo with Claude Vision via edge function
   async function describePhoto(photo) {
     setDescribing(photo.id)
@@ -151,6 +181,63 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
     if (selectedPhoto?.id === id) setSelectedPhoto(prev => ({ ...prev, ...updates }))
   }
 
+  // Generate 5-shot sequence from a reference photo
+  async function generateSequence() {
+    if (!sequenceRef || !activeBrandId) return
+    setSequenceGenerating(true)
+    setSequenceError('')
+    setSequenceShots([])
+    try {
+      const activeBrand = brands?.find(b => b.id === activeBrandId)
+      if (!activeBrand) throw new Error('No brand selected')
+
+      const activeSleeveMode = activeBrand.active_sleeve || 'primary'
+      const sleeveNotes = activeSleeveMode === 'alt'
+        ? (activeBrand.sleeve_notes_alt || activeBrand.sleeve_notes || '')
+        : (activeBrand.sleeve_notes || '')
+
+      const brandContext = {
+        brand_name: activeBrand.name,
+        brand_guidelines: activeBrand.guidelines_text || '',
+        tone_of_voice: activeBrand.tone_of_voice || '',
+        sleeve_notes: sleeveNotes,
+        colour_palette: activeBrand.colour_palette || [],
+        typography: activeBrand.typography || {},
+        packaging_specs: activeBrand.packaging_specs || {},
+        packaging_mode: activeBrand.packaging_mode || 'tray',
+      }
+
+      const imageUrl = sequenceRef.storage_url || sequenceRef.drive_url || sequenceRef.thumbnail_url
+      const res = await fetch(`${supabaseUrl}/functions/v1/generate-shot-sequence`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`
+        },
+        body: JSON.stringify({
+          image_url: imageUrl,
+          meal_name: sequenceRef.meal_name || sequenceRef.name || 'meal',
+          photo_description: sequenceRef.description || sequenceRef.prompt_snippet || '',
+          ...brandContext,
+        })
+      })
+      const data = await res.json()
+      if (!res.ok || !data.shots) throw new Error(data.error || 'No shots returned')
+
+      const defaultTray = (activeBrand.packaging_mode || 'tray') === 'tray'
+      setSequenceShots(data.shots.map(s => ({
+        ...s,
+        trayMode: defaultTray,
+        editing: false,
+      })))
+    } catch (err) {
+      console.error('Shot sequence failed:', err)
+      setSequenceError(`Failed: ${err.message}`)
+    } finally {
+      setSequenceGenerating(false)
+    }
+  }
+
   // Drag and drop handlers
   function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over') }
   function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over') }
@@ -160,12 +247,21 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
     if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files)
   }
 
-  // Escape key to close detail panel
+  // Escape key to close detail panel or sequence mode
   useEffect(() => {
-    const handleKey = (e) => { if (e.key === 'Escape' && selectedPhoto) setSelectedPhoto(null) }
+    const handleKey = (e) => {
+      if (e.key === 'Escape') {
+        if (selectedPhoto) setSelectedPhoto(null)
+        else if (sequenceMode && !sequenceGenerating) {
+          setSequenceMode(false)
+          setSequenceRef(null)
+          setSequenceShots([])
+        }
+      }
+    }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
-  }, [selectedPhoto])
+  }, [selectedPhoto, sequenceMode, sequenceGenerating])
 
   const types = ['product', 'lifestyle', 'ingredients', 'packaging', 'texture', 'mood']
   const undescribedCount = photos.filter(p => !p.description).length
@@ -183,6 +279,15 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
               Describe all ({undescribedCount})
             </button>
           )}
+          <button
+            className={`btn btn-sm ${sequenceMode ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => {
+              setSequenceMode(!sequenceMode)
+              if (sequenceMode) { setSequenceRef(null); setSequenceShots([]); setSequenceError('') }
+            }}
+          >
+            {sequenceMode ? 'Close Sequence' : 'Shot Sequence'}
+          </button>
           <button className="btn btn-primary btn-sm" onClick={() => fileInputRef.current?.click()}>
             + Upload Photos
           </button>
@@ -222,8 +327,164 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
         </div>
       </div>
 
+      {/* ═══ SHOT SEQUENCE MODE ═══ */}
+      {sequenceMode && (
+        <div className="section-card" style={{ marginBottom: 'var(--space-lg)' }}>
+          <h3 className="section-title">Shot Sequence Generator</h3>
+          <p className="section-desc" style={{ marginBottom: 'var(--space-md)' }}>
+            Select a plated reference image, then Opus 4.6 will generate a 5-shot sequence adapted to your brand packaging.
+          </p>
+
+          {/* Reference selection */}
+          {!sequenceRef ? (
+            <div>
+              <p className="text-xs text-muted" style={{ marginBottom: 'var(--space-sm)' }}>Select a reference photo:</p>
+              <div style={{
+                display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                gap: 'var(--space-sm)', maxHeight: 300, overflowY: 'auto',
+                padding: 'var(--space-sm)', background: 'var(--bg-1)', borderRadius: 8,
+              }}>
+                {photos.map(photo => (
+                  <div
+                    key={photo.id}
+                    onClick={() => setSequenceRef(photo)}
+                    style={{
+                      cursor: 'pointer', borderRadius: 6, overflow: 'hidden',
+                      border: '2px solid var(--border)', transition: 'border-color 0.2s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                  >
+                    <img
+                      src={photo.thumbnail_url || photo.storage_url || photo.drive_url}
+                      alt={photo.name}
+                      style={{ width: '100%', height: 80, objectFit: 'cover', display: 'block' }}
+                      loading="lazy"
+                    />
+                    <div style={{ padding: '3px 6px', fontSize: 10, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {photo.meal_name || photo.name}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div>
+              {/* Selected reference */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
+                <img
+                  src={sequenceRef.thumbnail_url || sequenceRef.storage_url || sequenceRef.drive_url}
+                  alt=""
+                  style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '2px solid var(--accent)' }}
+                />
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontWeight: 600, fontSize: 14 }}>{sequenceRef.meal_name || sequenceRef.name}</p>
+                  <p className="text-xs text-muted">{sequenceRef.description ? 'Has description' : 'No description'}</p>
+                </div>
+                <button className="btn btn-ghost btn-sm" onClick={() => { setSequenceRef(null); setSequenceShots([]) }}>Change</button>
+              </div>
+
+              {/* Generate button */}
+              {sequenceShots.length === 0 && !sequenceGenerating && (
+                <button
+                  className="btn btn-primary"
+                  onClick={generateSequence}
+                  disabled={!activeBrandId}
+                >
+                  Generate 5-Shot Sequence
+                </button>
+              )}
+
+              {/* Loading */}
+              {sequenceGenerating && (
+                <div style={{ textAlign: 'center', padding: 'var(--space-xl)' }}>
+                  <span className="spinner" style={{ display: 'inline-block', marginBottom: 'var(--space-sm)' }} />
+                  <p className="text-sm text-muted">Opus 4.6 is analysing your reference image and writing 5 shot prompts...</p>
+                  <p className="text-xs text-muted" style={{ marginTop: 4 }}>This usually takes 30 to 60 seconds.</p>
+                </div>
+              )}
+
+              {/* Error */}
+              {sequenceError && (
+                <div style={{
+                  padding: 'var(--space-md)', marginTop: 'var(--space-md)',
+                  background: 'rgba(255,80,80,0.1)', borderRadius: 8, border: '1px solid rgba(255,80,80,0.3)',
+                }}>
+                  <p className="text-sm" style={{ color: '#ff5050' }}>{sequenceError}</p>
+                </div>
+              )}
+
+              {/* Shot cards */}
+              {sequenceShots.length > 0 && (
+                <div style={{ marginTop: 'var(--space-lg)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-md)' }}>
+                    <span style={{ fontSize: 13, fontWeight: 700 }}>Shot Sequence ({sequenceShots.length} shots)</span>
+                    <button className="btn btn-secondary btn-sm" onClick={() => { setSequenceShots([]); generateSequence() }}>
+                      Regenerate All
+                    </button>
+                  </div>
+                  {sequenceShots.map((shot, i) => (
+                    <div key={i} style={{
+                      background: 'var(--bg-1)', borderRadius: 8, border: '1px solid var(--border)',
+                      padding: 'var(--space-md)', marginBottom: 'var(--space-md)',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)' }}>
+                          Shot {i + 1} — {shot.title}
+                        </span>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button
+                            style={{
+                              padding: '3px 10px', fontSize: 11, fontWeight: 600, borderRadius: 4, cursor: 'pointer', border: 'none',
+                              background: shot.trayMode ? 'var(--accent)' : 'var(--bg-3)',
+                              color: shot.trayMode ? 'var(--bg-0)' : 'var(--text-muted)',
+                              transition: 'all 0.15s ease',
+                            }}
+                            onClick={() => setSequenceShots(prev => prev.map((s, j) => j === i ? { ...s, trayMode: true } : s))}
+                          >
+                            Tray
+                          </button>
+                          <button
+                            style={{
+                              padding: '3px 10px', fontSize: 11, fontWeight: 600, borderRadius: 4, cursor: 'pointer', border: 'none',
+                              background: !shot.trayMode ? 'var(--accent)' : 'var(--bg-3)',
+                              color: !shot.trayMode ? 'var(--bg-0)' : 'var(--text-muted)',
+                              transition: 'all 0.15s ease',
+                            }}
+                            onClick={() => setSequenceShots(prev => prev.map((s, j) => j === i ? { ...s, trayMode: false } : s))}
+                          >
+                            Plated
+                          </button>
+                        </div>
+                      </div>
+                      <textarea
+                        className="prompt-textarea"
+                        value={shot.prompt}
+                        onChange={e => setSequenceShots(prev => prev.map((s, j) => j === i ? { ...s, prompt: e.target.value } : s))}
+                        style={{ minHeight: 200, fontFamily: 'JetBrains Mono, monospace', fontSize: 12, lineHeight: 1.7 }}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-xs)' }}>
+                        <span className="text-xs text-muted">
+                          {shot.prompt.length.toLocaleString()} chars · {shot.prompt.split(/\s+/).length.toLocaleString()} words
+                        </span>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => navigator.clipboard.writeText(shot.prompt)}
+                        >
+                          Copy Prompt
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Drop zone */}
-      {photos.length === 0 && !loading && (
+      {photos.length === 0 && !loading && !sequenceMode && (
         <div
           ref={dropRef}
           className="dropzone"
@@ -248,8 +509,8 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
         </div>
       )}
 
-      {/* Photo grid */}
-      {filteredPhotos.length > 0 && (
+      {/* Photo grid (hidden when sequence mode has a ref selected) */}
+      {filteredPhotos.length > 0 && !(sequenceMode && sequenceRef) && (
         <div className="photo-grid">
           {/* Inline drop zone when photos exist */}
           <div
@@ -373,6 +634,21 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
                 placeholder="A reusable text snippet describing this photo for injection into prompts."
                 style={{ minHeight: 80 }}
               />
+
+              {/* Delete */}
+              <button
+                className="btn btn-sm"
+                style={{
+                  marginTop: 'var(--space-lg)',
+                  color: '#ff5050',
+                  borderColor: 'rgba(255,80,80,0.3)',
+                  border: '1px solid rgba(255,80,80,0.3)',
+                  background: 'rgba(255,80,80,0.08)',
+                }}
+                onClick={() => deletePhoto(selectedPhoto)}
+              >
+                Delete Photo
+              </button>
             </div>
           </div>
         </div>

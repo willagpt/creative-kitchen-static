@@ -10,6 +10,7 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
   const [extracting, setExtracting] = useState(false)
   const [extractStatus, setExtractStatus] = useState('')
   const [sleeveMode, setSleeveMode] = useState('primary')
+  const [packagingMode, setPackagingMode] = useState('tray')
   const htmlInputRef = useRef()
 
   // Load active brand details
@@ -19,6 +20,7 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
     if (b) {
       setBrand({ ...b })
       setSleeveMode(b.active_sleeve || 'primary')
+      setPackagingMode(b.packaging_mode || 'tray')
     }
   }, [activeBrandId, brands])
 
@@ -38,6 +40,7 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
           typography: brand.typography,
           tone_of_voice: brand.tone_of_voice,
           packaging_specs: brand.packaging_specs,
+          packaging_mode: packagingMode,
           logo_url: brand.logo_url,
           website_url: brand.website_url,
           updated_at: new Date().toISOString()
@@ -373,6 +376,34 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
             <h3 className="section-title">Packaging Specs</h3>
             <p className="section-desc">Sleeve styles, tray forms, and packaging details for product shots.</p>
             <div className="form-stack">
+              <div style={{ marginBottom: 'var(--space-lg)' }}>
+                <label className="field-label">Packaging mode (default for prompts)</label>
+                <div className="sleeve-toggle" style={{ marginTop: 4 }}>
+                  <button
+                    className={`sleeve-toggle-btn ${packagingMode === 'tray' ? 'active' : ''}`}
+                    onClick={() => setPackagingMode('tray')}
+                  >
+                    Tray
+                  </button>
+                  <button
+                    className={`sleeve-toggle-btn ${packagingMode === 'plated' ? 'active' : ''}`}
+                    onClick={() => setPackagingMode('plated')}
+                  >
+                    Plated
+                  </button>
+                  <button
+                    className={`sleeve-toggle-btn ${packagingMode === 'off' ? 'active' : ''}`}
+                    onClick={() => setPackagingMode('off')}
+                  >
+                    Off
+                  </button>
+                </div>
+                <p className="text-xs text-muted mt-sm">
+                  {packagingMode === 'tray' ? 'Prompts will describe food in branded trays with sleeves.' 
+                    : packagingMode === 'plated' ? 'Prompts will describe food on plates, no packaging.'
+                    : 'Prompts will not specify a serving format.'}
+                </p>
+              </div>
               <div>
                 <div className="flex-between mb-sm">
                   <label className="field-label" style={{ margin: 0 }}>Sleeve design</label>
