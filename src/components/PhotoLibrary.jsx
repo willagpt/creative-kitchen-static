@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase'
 
+const PACKAGING_MODES = [
+  { value: 'tray', label: 'Tray' },
+  { value: 'plated', label: 'Plate' },
+  { value: 'tray_with_sleeve', label: 'Tray + Sleeve' },
+]
+
 export default function PhotoLibrary({ brands, activeBrandId }) {
   const [photos, setPhotos] = useState([])
   const [loading, setLoading] = useState(true)
@@ -62,7 +68,6 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
           storageUrl = urlData?.publicUrl || ''
         }
 
-        // Get dimensions
         const dims = await getImageDimensions(file)
 
         const { error } = await supabase.from('photo_library').insert({
@@ -93,7 +98,6 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
     })
   }
 
-  // Add photos by Google Drive URL
   async function addDriveUrl(url) {
     if (!url.trim()) return
     try {
@@ -109,30 +113,24 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
     }
   }
 
-  // Delete a photo (storage + DB)
   async function deletePhoto(photo) {
     if (!window.confirm('Delete this photo? This cannot be undone.')) return
     try {
-      // Remove from storage if it's in reference-images bucket
       if (photo.storage_url && photo.storage_url.includes('reference-images')) {
         const match = photo.storage_url.match(/reference-images\/(.+)$/)
         if (match) {
           await supabase.storage.from('reference-images').remove([decodeURIComponent(match[1])])
         }
       }
-      // Delete the DB row
       await supabase.from('photo_library').delete().eq('id', photo.id)
-      // Update local state
       setPhotos(prev => prev.filter(p => p.id !== photo.id))
       setSelectedPhoto(null)
-      // If this was the sequence ref, clear it
       if (sequenceRef?.id === photo.id) setSequenceRef(null)
     } catch (err) {
       console.error('Delete failed:', err)
     }
   }
 
-  // Describe a photo with Claude Vision via edge function
   async function describePhoto(photo) {
     setDescribing(photo.id)
     try {
@@ -150,7 +148,6 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed')
 
-      // Update local state
       setPhotos(prev => prev.map(p =>
         p.id === photo.id
           ? { ...p, description: data.description, prompt_snippet: data.prompt_snippet }
@@ -166,7 +163,6 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
     }
   }
 
-  // Batch describe all undescribed photos
   async function describeAll() {
     const undescribed = photos.filter(p => !p.description)
     for (const photo of undescribed) {
@@ -174,7 +170,6 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
     }
   }
 
-  // Update photo metadata
   async function updatePhoto(id, updates) {
     await supabase.from('photo_library').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id)
     setPhotos(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p))
@@ -224,11 +219,10 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
       const data = await res.json()
       if (!res.ok || !data.shots) throw new Error(data.error || 'No shots returned')
 
-      const defaultTray = (activeBrand.packaging_mode || 'tray') === 'tray'
+      const defaultMode = activeBrand.packaging_mode || 'tray'
       setSequenceShots(data.shots.map(s => ({
         ...s,
-        trayMode: defaultTray,
-        editing: false,
+        packagingMode: defaultMode,
       })))
     } catch (err) {
       console.error('Shot sequence failed:', err)
@@ -247,7 +241,6 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
     if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files)
   }
 
-  // Escape key to close detail panel or sequence mode
   useEffect(() => {
     const handleKey = (e) => {
       if (e.key === 'Escape') {
@@ -327,7 +320,7 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
         </div>
       </div>
 
-      {/* ═══ SHOT SEQUENCE MODE ═══ */}
+      {/* SHOT SEQUENCE MODE */}
       {sequenceMode && (
         <div className="section-card" style={{ marginBottom: 'var(--space-lg)' }}>
           <h3 className="section-title">Shot Sequence Generator</h3>
@@ -335,7 +328,6 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
             Select a plated reference image, then Opus 4.6 will generate a 5-shot sequence adapted to your brand packaging.
           </p>
 
-          {/* Reference selection */}
           {!sequenceRef ? (
             <div>
               <p className="text-xs text-muted" style={{ marginBottom: 'var(--space-sm)' }}>Select a reference photo:</p>
@@ -370,7 +362,6 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
             </div>
           ) : (
             <div>
-              {/* Selected reference */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
                 <img
                   src={sequenceRef.thumbnail_url || sequenceRef.storage_url || sequenceRef.drive_url}
@@ -384,7 +375,6 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
                 <button className="btn btn-ghost btn-sm" onClick={() => { setSequenceRef(null); setSequenceShots([]) }}>Change</button>
               </div>
 
-              {/* Generate button */}
               {sequenceShots.length === 0 && !sequenceGenerating && (
                 <button
                   className="btn btn-primary"
@@ -395,7 +385,6 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
                 </button>
               )}
 
-              {/* Loading */}
               {sequenceGenerating && (
                 <div style={{ textAlign: 'center', padding: 'var(--space-xl)' }}>
                   <span className="spinner" style={{ display: 'inline-block', marginBottom: 'var(--space-sm)' }} />
@@ -404,7 +393,6 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
                 </div>
               )}
 
-              {/* Error */}
               {sequenceError && (
                 <div style={{
                   padding: 'var(--space-md)', marginTop: 'var(--space-md)',
@@ -414,7 +402,6 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
                 </div>
               )}
 
-              {/* Shot cards */}
               {sequenceShots.length > 0 && (
                 <div style={{ marginTop: 'var(--space-lg)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-md)' }}>
@@ -430,31 +417,23 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
                         <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)' }}>
-                          Shot {i + 1} — {shot.title}
+                          Shot {i + 1} \u2014 {shot.title}
                         </span>
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          <button
-                            style={{
-                              padding: '3px 10px', fontSize: 11, fontWeight: 600, borderRadius: 4, cursor: 'pointer', border: 'none',
-                              background: shot.trayMode ? 'var(--accent)' : 'var(--bg-3)',
-                              color: shot.trayMode ? 'var(--bg-0)' : 'var(--text-muted)',
-                              transition: 'all 0.15s ease',
-                            }}
-                            onClick={() => setSequenceShots(prev => prev.map((s, j) => j === i ? { ...s, trayMode: true } : s))}
-                          >
-                            Tray
-                          </button>
-                          <button
-                            style={{
-                              padding: '3px 10px', fontSize: 11, fontWeight: 600, borderRadius: 4, cursor: 'pointer', border: 'none',
-                              background: !shot.trayMode ? 'var(--accent)' : 'var(--bg-3)',
-                              color: !shot.trayMode ? 'var(--bg-0)' : 'var(--text-muted)',
-                              transition: 'all 0.15s ease',
-                            }}
-                            onClick={() => setSequenceShots(prev => prev.map((s, j) => j === i ? { ...s, trayMode: false } : s))}
-                          >
-                            Plated
-                          </button>
+                        <div style={{ display: 'flex', gap: 3 }}>
+                          {PACKAGING_MODES.map(mode => (
+                            <button
+                              key={mode.value}
+                              style={{
+                                padding: '3px 10px', fontSize: 11, fontWeight: 600, borderRadius: 4, cursor: 'pointer', border: 'none',
+                                background: shot.packagingMode === mode.value ? 'var(--accent)' : 'var(--bg-3)',
+                                color: shot.packagingMode === mode.value ? 'var(--bg-0)' : 'var(--text-muted)',
+                                transition: 'all 0.15s ease',
+                              }}
+                              onClick={() => setSequenceShots(prev => prev.map((s, j) => j === i ? { ...s, packagingMode: mode.value } : s))}
+                            >
+                              {mode.label}
+                            </button>
+                          ))}
                         </div>
                       </div>
                       <textarea
@@ -465,7 +444,7 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
                       />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-xs)' }}>
                         <span className="text-xs text-muted">
-                          {shot.prompt.length.toLocaleString()} chars · {shot.prompt.split(/\s+/).length.toLocaleString()} words
+                          {shot.prompt.length.toLocaleString()} chars \u00b7 {shot.prompt.split(/\s+/).length.toLocaleString()} words
                         </span>
                         <button
                           className="btn btn-secondary btn-sm"
@@ -512,7 +491,6 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
       {/* Photo grid (hidden when sequence mode has a ref selected) */}
       {filteredPhotos.length > 0 && !(sequenceMode && sequenceRef) && (
         <div className="photo-grid">
-          {/* Inline drop zone when photos exist */}
           <div
             className="photo-card photo-card-add"
             onDragOver={handleDragOver}
@@ -607,9 +585,7 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
               <textarea
                 className="prompt-textarea"
                 value={selectedPhoto.description || ''}
-                onChange={e => {
-                  setSelectedPhoto(prev => ({ ...prev, description: e.target.value }))
-                }}
+                onChange={e => setSelectedPhoto(prev => ({ ...prev, description: e.target.value }))}
                 onBlur={e => updatePhoto(selectedPhoto.id, { description: e.target.value })}
                 placeholder="Auto-generated by Claude Vision, or write manually."
                 style={{ minHeight: 120 }}
@@ -627,21 +603,17 @@ export default function PhotoLibrary({ brands, activeBrandId }) {
               <textarea
                 className="prompt-textarea"
                 value={selectedPhoto.prompt_snippet || ''}
-                onChange={e => {
-                  setSelectedPhoto(prev => ({ ...prev, prompt_snippet: e.target.value }))
-                }}
+                onChange={e => setSelectedPhoto(prev => ({ ...prev, prompt_snippet: e.target.value }))}
                 onBlur={e => updatePhoto(selectedPhoto.id, { prompt_snippet: e.target.value })}
                 placeholder="A reusable text snippet describing this photo for injection into prompts."
                 style={{ minHeight: 80 }}
               />
 
-              {/* Delete */}
               <button
                 className="btn btn-sm"
                 style={{
                   marginTop: 'var(--space-lg)',
                   color: '#ff5050',
-                  borderColor: 'rgba(255,80,80,0.3)',
                   border: '1px solid rgba(255,80,80,0.3)',
                   background: 'rgba(255,80,80,0.08)',
                 }}

@@ -13,7 +13,6 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
   const [packagingMode, setPackagingMode] = useState('tray')
   const htmlInputRef = useRef()
 
-  // Load active brand details
   useEffect(() => {
     if (!activeBrandId) { setBrand(null); return }
     const b = brands.find(b => b.id === activeBrandId)
@@ -79,7 +78,6 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
     setBrand(prev => ({ ...prev, [field]: value }))
   }
 
-  // Helper for packaging specs (structured JSON)
   function getPackaging(key) {
     const specs = brand?.packaging_specs || {}
     return specs[key] || ''
@@ -89,7 +87,6 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
     updateField('packaging_specs', specs)
   }
 
-  // Helper for colour palette (array of {name, hex})
   function getColours() {
     return brand?.colour_palette || []
   }
@@ -107,7 +104,6 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
     updateField('colour_palette', colours)
   }
 
-  // Upload HTML brand guidelines and extract structured data
   async function handleHtmlUpload(file) {
     if (!file || !brand) return
     setExtracting(true)
@@ -131,7 +127,6 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
       if (!res.ok) throw new Error(data.error || 'Extraction failed')
 
       if (data.structured) {
-        // Auto-populate all fields from the structured response
         setBrand(prev => ({
           ...prev,
           guidelines_text: data.guidelines_text || prev.guidelines_text,
@@ -145,7 +140,6 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
         setExtractStatus('Fields populated from guidelines. Review and save.')
         setSleeveMode('primary')
       } else {
-        // Fallback: put raw text into guidelines
         setBrand(prev => ({ ...prev, guidelines_text: data.raw_text || prev.guidelines_text }))
         setExtractStatus('Extracted as text (could not structure). Pasted into Brand Guidelines.')
       }
@@ -159,7 +153,6 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
     }
   }
 
-  // Sleeve mode helpers
   function getActiveSleeve() {
     return sleeveMode === 'alt' ? (brand?.sleeve_notes_alt || '') : (brand?.sleeve_notes || '')
   }
@@ -169,6 +162,13 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
     } else {
       updateField('sleeve_notes', value)
     }
+  }
+
+  const packagingModeHelp = {
+    tray: 'Prompts will describe food in the branded bagasse tray, no sleeve.',
+    plated: 'Prompts will describe food on plates, no packaging.',
+    tray_with_sleeve: 'Prompts will describe food in the branded tray with the sleeve/belly band wrapped around it.',
+    off: 'Prompts will not specify a serving format.',
   }
 
   return (
@@ -274,7 +274,7 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
               className="prompt-textarea"
               value={brand.guidelines_text || ''}
               onChange={e => updateField('guidelines_text', e.target.value)}
-              placeholder="e.g. Always use lowercase headlines. Never use exclamation marks. Primary layout is typographic with minimal photography. Warm cream backgrounds (#FFF6EE). Heavy black sans-serif for headlines (Syne Extra Bold). Serif italic for accent text (Instrument Serif)..."
+              placeholder="e.g. Always use lowercase headlines. Never use exclamation marks..."
               style={{ minHeight: 180 }}
             />
           </div>
@@ -366,7 +366,7 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
               className="prompt-textarea"
               value={brand.tone_of_voice || ''}
               onChange={e => updateField('tone_of_voice', e.target.value)}
-              placeholder="e.g. Calm, confident, factual. Never aggressive or salesy. Honest questions over bold claims. No emojis, no exclamation marks, no uppercase anywhere."
+              placeholder="e.g. Calm, confident, factual. Never aggressive or salesy..."
               style={{ minHeight: 100 }}
             />
           </div>
@@ -389,19 +389,17 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
                     className={`sleeve-toggle-btn ${packagingMode === 'plated' ? 'active' : ''}`}
                     onClick={() => setPackagingMode('plated')}
                   >
-                    Plated
+                    Plate
                   </button>
                   <button
-                    className={`sleeve-toggle-btn ${packagingMode === 'off' ? 'active' : ''}`}
-                    onClick={() => setPackagingMode('off')}
+                    className={`sleeve-toggle-btn ${packagingMode === 'tray_with_sleeve' ? 'active' : ''}`}
+                    onClick={() => setPackagingMode('tray_with_sleeve')}
                   >
-                    Off
+                    Tray + Sleeve
                   </button>
                 </div>
                 <p className="text-xs text-muted mt-sm">
-                  {packagingMode === 'tray' ? 'Prompts will describe food in branded trays with sleeves.' 
-                    : packagingMode === 'plated' ? 'Prompts will describe food on plates, no packaging.'
-                    : 'Prompts will not specify a serving format.'}
+                  {packagingModeHelp[packagingMode] || ''}
                 </p>
               </div>
               <div>
@@ -443,7 +441,7 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
                   className="prompt-textarea"
                   value={getPackaging('tray') || ''}
                   onChange={e => setPackaging('tray', e.target.value)}
-                  placeholder="e.g. Black matte rectangular tray, 250mm x 180mm, rounded corners, 35mm depth. Visible contents through clear film lid..."
+                  placeholder="e.g. Natural bagasse tray, 200x155x40mm, rounded corners..."
                   style={{ minHeight: 100 }}
                 />
               </div>
@@ -453,7 +451,7 @@ export default function BrandDNA({ brands, activeBrandId, setActiveBrandId, onRe
                   className="prompt-textarea"
                   value={getPackaging('notes') || ''}
                   onChange={e => setPackaging('notes', e.target.value)}
-                  placeholder="e.g. Outer box is kraft brown with brand sticker. Ice packs visible in delivery shots. Unboxing should feel premium..."
+                  placeholder="e.g. Outer box is kraft brown with brand sticker..."
                   style={{ minHeight: 80 }}
                 />
               </div>
