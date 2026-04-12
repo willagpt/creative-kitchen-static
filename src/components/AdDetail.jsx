@@ -195,7 +195,14 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
   // Generate a single image for one aspect ratio via fal.ai
   async function generateSingleImage(falKey, aspectRatio, promptText) {
     const headers = { 'Authorization': `Key ${falKey}`, 'Content-Type': 'application/json' }
-    const payload = { prompt: promptText, num_images: 1, aspect_ratio: aspectRatio, enable_safety_checker: false }
+    // Prepend aspect ratio context so the image generator composes for the right canvas shape
+    const ratioHint = aspectRatio === '9:16'
+      ? 'This image must be composed for a tall 9:16 vertical story format (1080x1920). Stack elements vertically with generous spacing. Use the full height of the frame.\n\n'
+      : aspectRatio === '4:5'
+        ? 'This image must be composed for a 4:5 portrait format (1080x1350). Balance elements across a slightly tall rectangular frame.\n\n'
+        : ''
+    const finalPrompt = ratioHint + promptText
+    const payload = { prompt: finalPrompt, num_images: 1, aspect_ratio: aspectRatio, enable_safety_checker: false }
 
     const submitRes = await fetch(`https://queue.fal.run/${FAL_MODEL}`, {
       method: 'POST', headers, body: JSON.stringify(payload)
@@ -231,7 +238,7 @@ export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatiz
     await supabase.from('generated_versions').insert({
       saved_ad_id: ad.id,
       image_url: imageUrl,
-      prompt: promptText,
+      prompt: finalPrompt,
       creative_direction: direction || null,
       aspect_ratio: aspectRatio
     })
