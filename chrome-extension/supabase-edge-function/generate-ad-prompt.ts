@@ -285,6 +285,7 @@ ${image_url ? `Image: ${image_url}` : ''}`
       body: JSON.stringify({
         model: 'claude-opus-4-6',
         max_tokens: 4096,
+        temperature: 0.7,
         system: systemPrompt,
         messages,
       })
