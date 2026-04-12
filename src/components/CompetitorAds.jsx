@@ -1691,7 +1691,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
                             {failed > 0 && (
                               <p className="ca-analysis-loading-sub" style={{ color: '#f87171' }}>{failed} {failed === 1 ? 'image' : 'images'} failed. Will continue with remaining images.</p>
                             )}
-                            <p className="ca-analysis-loading-sub" style={{ opacity: 0.5 }}>Sonnet is performing forensic visual analysis in batches of {batchSize}. Extracting layout grids, typography specs, colour palettes, camera angles, and lighting. ~30 to 60s per batch.</p>
+                            <p className="ca-analysis-loading-sub" style={{ opacity: 0.5 }}>Opus is performing forensic visual analysis in batches of {batchSize}. Extracting layout grids, typography specs, colour palettes, camera angles, and lighting. ~30 to 60s per batch.</p>
                           </>
                         )
                       })() : analysisStep === 1.5 ? (
