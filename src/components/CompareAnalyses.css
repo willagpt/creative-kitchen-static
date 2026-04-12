@@ -1,0 +1,95 @@
+/* \u2500\u2500 Compare Analyses \u2500\u2500 */
+.ca-compare { padding: 0; }
+.ca-compare-header { margin-bottom: 24px; }
+.ca-compare-header h2 { font-size: 20px; font-weight: 600; color: #fff; margin: 0 0 4px; }
+.ca-compare-sub { font-size: 12px; color: #71717a; margin: 0; }
+
+.ca-loading { display: flex; align-items: center; gap: 10px; padding: 40px 0; color: #a1a1a1; font-size: 14px; }
+.ca-empty { color: #71717a; font-size: 13px; }
+
+/* Job selection */
+.ca-compare-jobs { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.ca-compare-job-card {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  background: #1a1a1a; border: 1px solid #333; border-radius: 8px;
+  cursor: pointer; transition: all 0.15s;
+}
+.ca-compare-job-card:hover { border-color: #555; }
+.ca-compare-job-card.selected { border-color: #f97316; box-shadow: 0 0 0 1px rgba(249,115,22,0.2); }
+
+.ca-check-box {
+  width: 20px; height: 20px; border-radius: 4px; border: 2px solid #555;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: #fff; transition: all 0.15s; flex-shrink: 0;
+}
+.ca-check-box.checked { background: #f97316; border-color: #f97316; }
+
+.ca-compare-job-info { flex: 1; min-width: 0; }
+.ca-compare-job-brand { font-size: 14px; color: #fff; font-weight: 500; }
+.ca-compare-job-meta { font-size: 11px; color: #71717a; margin-top: 2px; }
+.ca-compare-job-version { font-size: 10px; color: #22c55e; background: rgba(34,197,94,0.1); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(34,197,94,0.2); }
+
+.ca-btn-compare {
+  padding: 10px 24px; background: #f97316; color: #fff; border: none; border-radius: 8px;
+  font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s;
+}
+.ca-btn-compare:hover { background: #ea580c; }
+.ca-btn-compare:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Legend */
+.ca-compare-legend { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.ca-compare-legend-items { display: flex; gap: 16px; flex-wrap: wrap; }
+.ca-compare-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #d4d4d8; }
+.ca-compare-legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+.ca-btn-back {
+  font-size: 12px; color: #a1a1a1; background: none; border: none; cursor: pointer;
+  padding: 4px 8px; border-radius: 4px;
+}
+.ca-btn-back:hover { color: #fff; background: #2a2a2a; }
+
+/* Tabs */
+.ca-compare-tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 0; }
+.ca-compare-tab {
+  padding: 8px 16px; font-size: 13px; font-weight: 500; color: #71717a;
+  background: none; border: none; border-bottom: 2px solid transparent;
+  cursor: pointer; transition: all 0.15s;
+}
+.ca-compare-tab:hover { color: #d4d4d8; }
+.ca-compare-tab.active { color: #fff; border-bottom-color: #f97316; }
+.ca-tab-count { font-size: 11px; color: #555; margin-left: 4px; }
+
+/* Comparison rows */
+.ca-compare-rows { display: flex; flex-direction: column; gap: 12px; }
+.ca-compare-row {
+  background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 16px;
+}
+.ca-compare-row-name { font-size: 14px; font-weight: 600; color: #fff; margin: 0 0 12px; }
+
+.ca-compare-bars { display: flex; flex-direction: column; gap: 8px; }
+.ca-compare-bar-row { display: flex; align-items: center; gap: 12px; }
+.ca-compare-bar-label { width: 100px; font-size: 11px; color: #a1a1a1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
+.ca-compare-bar-track {
+  flex: 1; height: 16px; background: #2a2a2a; border-radius: 8px;
+  position: relative; overflow: hidden; display: flex; align-items: center;
+}
+.ca-compare-bar-fill { height: 100%; border-radius: 8px; transition: width 0.5s; }
+.ca-compare-bar-value { font-size: 10px; color: #a1a1a1; margin-left: 8px; flex-shrink: 0; }
+.ca-compare-bar-momentum { font-size: 10px; margin-left: 4px; flex-shrink: 0; }
+.ca-compare-bar-absent { font-size: 10px; color: #555; font-style: italic; padding-left: 8px; }
+
+.ca-compare-row-desc { font-size: 11px; color: #71717a; margin: 10px 0 0; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Gap analysis */
+.ca-compare-gaps {
+  margin-top: 24px; padding: 16px; background: #1a1a1a;
+  border: 1px solid rgba(59,130,246,0.2); border-radius: 8px;
+}
+.ca-compare-gaps h3 { font-size: 14px; font-weight: 500; color: #3b82f6; margin: 0 0 4px; }
+.ca-compare-gaps-sub { font-size: 11px; color: #71717a; margin: 0 0 12px; }
+.ca-compare-gap-list { display: flex; flex-direction: column; gap: 6px; }
+.ca-compare-gap-item { display: flex; align-items: center; gap: 8px; }
+.ca-compare-gap-name { font-size: 12px; color: #d4d4d8; }
+.ca-compare-gap-brand { font-size: 11px; color: #71717a; }
+.ca-compare-gap-weight { font-size: 10px; }
+.ca-compare-gap-none { font-size: 11px; color: #555; }
