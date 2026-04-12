@@ -1,25 +1,19 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase'
 
-/**
- * AdDetail — 3-step scan flow + version history:
- * 1. Review brand guidelines (D3)
- * 2. Opus 4.6 visual analysis of the competitor ad
- * 3. Long-format prompt output
- * + Previous generated versions displayed below
- */
+const FAL_MODEL = 'fal-ai/nano-banana-2'
 
-export default function AdDetail({ ad, versions = [], onClose, onRefresh, brands, activeBrandId }) {
-  const [step, setStep] = useState(0) // 0=idle, 1=guidelines, 2=analysing, 3=done
-  const [analysis, setAnalysis] = useState('')
+export default function AdDetail({ ad, versions, onClose, onRefresh, onTemplatize, brands, activeBrandId }) {
   const [prompt, setPrompt] = useState(ad.generated_prompt || '')
+  const [direction, setDirection] = useState('')
   const [status, setStatus] = useState('')
-  const [error, setError] = useState('')
-  const [copied, setCopied] = useState(false)
-  const [selectedVersion, setSelectedVersion] = useState(null)
-  const scanRanRef = useRef(false)
-
-  const activeBrand = brands?.find(b => b.id === activeBrandId)
+  const [statusType, setStatusType] = useState('')
+  const [activeVersion, setActiveVersion] = useState(0)
+  const [ratio, setRatio] = useState('both')
+  const [generating, setGenerating] = useState(false)
+  const [generatingPrompt, setGeneratingPrompt] = useState(false)
+  const [autoPipeline, setAutoPipeline] = useState(false)
+  const pipelineRanRef = useRef(false)
 
   // Escape key to close
   useEffect(() => {
@@ -31,15 +25,17 @@ export default function AdDetail({ ad, versions = [], onClose, onRefresh, brands
   // Reset when ad changes
   useEffect(() => {
     setPrompt(ad.generated_prompt || '')
-    setAnalysis('')
-    setStep(0)
+    setActiveVersion(0)
     setStatus('')
-    setError('')
-    setSelectedVersion(null)
-    scanRanRef.current = false
+    setDirection('')
+    pipelineRanRef.current = false
   }, [ad.id])
 
-  // Build brand context
+  const currentImage = versions[activeVersion]?.image_url || ad.generated_image_url
+  const hasVersions = versions.length > 0
+  const activeBrand = brands?.find(b => b.id === activeBrandId)
+
+  // Build brand context for prompt generation
   function getBrandContext() {
     if (!activeBrand) return {}
     const activeSleeveMode = activeBrand.active_sleeve || 'primary'
@@ -57,7 +53,7 @@ export default function AdDetail({ ad, versions = [], onClose, onRefresh, brands
     }
   }
 
-  // Fetch photo descriptions
+  // Fetch described photos from the photo library for the active brand
   async function getPhotoDescriptions() {
     try {
       let query = supabase
@@ -67,34 +63,27 @@ export default function AdDetail({ ad, versions = [], onClose, onRefresh, brands
       if (activeBrandId) query = query.eq('brand_id', activeBrandId)
       const { data } = await query
       return data || []
-    } catch {
+    } catch (err) {
+      console.error('Failed to fetch photo descriptions:', err)
       return []
     }
   }
 
-  // The 3-step scan
-  async function runScan() {
-    if (scanRanRef.current) return
-    scanRanRef.current = true
-    setError('')
-    setAnalysis('')
+  // Auto-pipeline: when opening an ad with no prompt, auto-generate prompt then image
+  useEffect(() => {
+    if (pipelineRanRef.current) return
+    if (ad.generated_prompt || generatingPrompt || generating) return
+    const falKey = localStorage.getItem('ck_fal_api_key')
+    if (!falKey) return
+    pipelineRanRef.current = true
+    setAutoPipeline(true)
+    runAutoPipeline()
+  }, [ad.id])
 
-    // Step 1: Brand guidelines
-    setStep(1)
-    setStatus('Reviewing brand guidelines...')
-    await new Promise(r => setTimeout(r, 800))
-
-    if (!activeBrand) {
-      setError('No brand selected. Go to Brand DNA and select a brand first.')
-      setStep(0)
-      scanRanRef.current = false
-      return
-    }
-
-    // Step 2: Opus analysis + prompt generation
-    setStep(2)
-    setStatus('Opus 4.6 is analysing the ad and writing your prompt...')
-
+  async function runAutoPipeline() {
+    setGeneratingPrompt(true)
+    setStatus('Studying the ad and writing your prompt...')
+    setStatusType('')
     try {
       const photoDescs = await getPhotoDescriptions()
       const res = await fetch(`${supabaseUrl}/functions/v1/generate-ad-prompt`, {
@@ -109,7 +98,75 @@ export default function AdDetail({ ad, versions = [], onClose, onRefresh, brands
           ad_copy: ad.ad_copy,
           image_url: ad.image_url,
           media_type: ad.media_type,
-          mode: 'scan',
+          ...getBrandContext(),
+          photo_descriptions: photoDescs.length > 0 ? photoDescs : undefined,
+        })
+      })
+      const data = await res.json()
+      if (!res.ok || !data.prompt) throw new Error(data.error || 'No prompt returned')
+      setPrompt(data.prompt)
+      setGeneratingPrompt(false)
+      setStatus('Prompt written. Now generating your image...')
+      onRefresh()
+
+      const falKey = localStorage.getItem('ck_fal_api_key')
+      if (!falKey) {
+        setStatus('Prompt generated. Set your fal.ai key to auto-generate images.')
+        setStatusType('success')
+        setAutoPipeline(false)
+        return
+      }
+      setGenerating(true)
+      const ratios = ratio === 'both' ? ['4:5', '9:16'] : [ratio]
+      setStatus(`Generating ${ratios.length === 2 ? 'both 4:5 + 9:16' : ratios[0]}...`)
+
+      const results = await Promise.allSettled(
+        ratios.map(r => generateSingleImage(falKey, r, data.prompt.trim()))
+      )
+      const succeeded = results.filter(r => r.status === 'fulfilled').map(r => r.value)
+      if (succeeded.length > 0) {
+        await supabase
+          .from('saved_ads')
+          .update({ generated_image_url: succeeded[0].imageUrl, image_generated_at: new Date().toISOString() })
+          .eq('id', ad.id)
+        const ratioList = succeeded.map(s => s.aspectRatio).join(' + ')
+        setStatus(`Done. Your Chefly version is ready (${ratioList}).`)
+        setStatusType('success')
+        setActiveVersion(0)
+        onRefresh()
+      } else {
+        throw results[0].reason || new Error('Image generation failed')
+      }
+    } catch (err) {
+      console.error('Auto-pipeline failed:', err)
+      setStatus(`Pipeline failed: ${err.message}`)
+      setStatusType('error')
+    } finally {
+      setGenerating(false)
+      setGeneratingPrompt(false)
+      setAutoPipeline(false)
+    }
+  }
+
+  async function generatePrompt() {
+    setGeneratingPrompt(true)
+    setStatus('Studying the ad and writing your prompt...')
+    setStatusType('')
+    try {
+      const photoDescs = await getPhotoDescriptions()
+      const res = await fetch(`${supabaseUrl}/functions/v1/generate-ad-prompt`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`
+        },
+        body: JSON.stringify({
+          saved_ad_id: ad.id,
+          advertiser_name: ad.advertiser_name,
+          ad_copy: ad.ad_copy,
+          image_url: ad.image_url,
+          media_type: ad.media_type,
+          creative_direction: direction || undefined,
           ...getBrandContext(),
           photo_descriptions: photoDescs.length > 0 ? photoDescs : undefined,
         })
@@ -118,410 +175,377 @@ export default function AdDetail({ ad, versions = [], onClose, onRefresh, brands
       const data = await res.json()
       if (!res.ok || !data.prompt) throw new Error(data.error || 'No prompt returned')
 
-      setAnalysis(data.analysis || '')
       setPrompt(data.prompt)
-      setStep(3)
-      setStatus('Scan complete.')
-      if (onRefresh) onRefresh()
+      setStatus('Prompt generated.')
+      setStatusType('success')
+      onRefresh()
     } catch (err) {
-      console.error('Scan failed:', err)
-      setError(`Scan failed: ${err.message}`)
-      setStep(0)
-      scanRanRef.current = false
+      console.error('Prompt generation failed:', err)
+      setStatus(`Failed: ${err.message}`)
+      setStatusType('error')
+    } finally {
+      setGeneratingPrompt(false)
     }
   }
 
-  function copyPrompt() {
-    navigator.clipboard.writeText(prompt)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+  async function generateSingleImage(falKey, aspectRatio, promptText) {
+    const headers = { 'Authorization': `Key ${falKey}`, 'Content-Type': 'application/json' }
+    const ratioHint = aspectRatio === '9:16'
+      ? 'This image must be composed for a tall 9:16 vertical story format (1080x1920). Stack elements vertically with generous spacing. Use the full height of the frame.\n\n'
+      : aspectRatio === '4:5'
+        ? 'This image must be composed for a 4:5 portrait format (1080x1350). Balance elements across a slightly tall rectangular frame.\n\n'
+        : ''
+    const finalPrompt = ratioHint + promptText
+    const payload = { prompt: finalPrompt, num_images: 1, aspect_ratio: aspectRatio, enable_safety_checker: false }
 
-  function copyVersionPrompt(text) {
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  // Auto-scan on open if no prompt exists
-  useEffect(() => {
-    if (!ad.generated_prompt && !scanRanRef.current) {
-      runScan()
+    const submitRes = await fetch(`https://queue.fal.run/${FAL_MODEL}`, {
+      method: 'POST', headers, body: JSON.stringify(payload)
+    })
+    if (!submitRes.ok) {
+      const errText = await submitRes.text()
+      throw new Error(`fal.ai submit failed for ${aspectRatio} (${submitRes.status}): ${errText.slice(0, 200)}`)
     }
-  }, [ad.id])
+    const submitData = await submitRes.json()
+    if (!submitData.request_id) throw new Error(`No request_id for ${aspectRatio}`)
 
-  const brandContext = getBrandContext()
-  const hasBrandData = !!(brandContext.brand_guidelines || brandContext.tone_of_voice || brandContext.sleeve_notes)
+    for (let i = 0; i < 60; i++) {
+      await new Promise(r => setTimeout(r, 1500))
+      const statusRes = await fetch(
+        `https://queue.fal.run/${FAL_MODEL}/requests/${submitData.request_id}/status`,
+        { headers }
+      )
+      const statusData = await statusRes.json()
+      if (statusData.status === 'COMPLETED') break
+      if (statusData.status === 'FAILED') throw new Error(`fal.ai generation failed for ${aspectRatio}`)
+    }
+
+    const resultRes = await fetch(
+      `https://queue.fal.run/${FAL_MODEL}/requests/${submitData.request_id}`,
+      { headers }
+    )
+    const resultData = await resultRes.json()
+    const imageUrl = resultData?.images?.[0]?.url || resultData?.image?.url
+    if (!imageUrl) throw new Error(`No image in fal.ai result for ${aspectRatio}`)
+
+    await supabase.from('generated_versions').insert({
+      saved_ad_id: ad.id,
+      image_url: imageUrl,
+      prompt: finalPrompt,
+      creative_direction: direction || null,
+      aspect_ratio: aspectRatio
+    })
+
+    return { imageUrl, aspectRatio }
+  }
+
+  async function generateImage() {
+    if (!prompt.trim()) {
+      setStatus('Write or generate a prompt first.')
+      setStatusType('error')
+      return
+    }
+
+    setGenerating(true)
+    setStatusType('')
+
+    try {
+      const falKey = localStorage.getItem('ck_fal_api_key')
+      if (!falKey) {
+        setStatus('fal.ai API key not set. Click settings to add it.')
+        setStatusType('error')
+        setGenerating(false)
+        return
+      }
+
+      const ratios = ratio === 'both' ? ['4:5', '9:16'] : [ratio]
+      setStatus(`Generating ${ratios.length === 2 ? 'both 4:5 + 9:16' : ratios[0]}...`)
+
+      const results = await Promise.allSettled(
+        ratios.map(r => generateSingleImage(falKey, r, prompt.trim()))
+      )
+
+      const succeeded = results.filter(r => r.status === 'fulfilled').map(r => r.value)
+      const failed = results.filter(r => r.status === 'rejected').map(r => r.reason)
+
+      if (succeeded.length > 0) {
+        await supabase
+          .from('saved_ads')
+          .update({ generated_image_url: succeeded[0].imageUrl, image_generated_at: new Date().toISOString() })
+          .eq('id', ad.id)
+
+        const ratioList = succeeded.map(s => s.aspectRatio).join(' + ')
+        if (failed.length > 0) {
+          setStatus(`Generated ${ratioList}. One ratio failed: ${failed[0].message}`)
+          setStatusType('success')
+        } else {
+          setStatus(`Generated ${ratioList}.`)
+          setStatusType('success')
+        }
+        setActiveVersion(0)
+        onRefresh()
+      } else {
+        throw failed[0] || new Error('All generations failed')
+      }
+    } catch (err) {
+      console.error('Image generation failed:', err)
+      setStatus(`Failed: ${err.message}`)
+      setStatusType('error')
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   return (
-    <div className="detail-overlay" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="detail-panel" style={{ maxWidth: 900 }}>
+    <div className="detail-overlay" role="dialog" aria-modal="true" aria-label="Ad detail" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="detail-panel">
         {/* Header */}
         <div className="detail-header">
           <div>
             <span className="font-heading">{ad.advertiser_name || 'Unknown brand'}</span>
             <span className="text-xs text-muted" style={{ marginLeft: 'var(--space-sm)' }}>
-              {ad.platform} {ad.started_running && `· ${ad.started_running}`}
+              {ad.platform} {ad.started_running && `\u00b7 ${ad.started_running}`}
             </span>
           </div>
-          <button className="detail-close" onClick={onClose} aria-label="Close">&times;</button>
+          <button className="detail-close" onClick={onClose} aria-label="Close detail panel">&times;</button>
         </div>
 
-        {/* Original ad image */}
-        <div style={{ marginBottom: 'var(--space-lg)' }}>
-          <div style={{
-            borderRadius: 8, overflow: 'hidden', maxHeight: 400,
-            display: 'flex', justifyContent: 'center', background: 'var(--bg-2)',
-          }}>
-            {ad.image_url ? (
-              <img
-                src={ad.image_url}
-                alt="Original ad"
-                style={{ maxHeight: 400, objectFit: 'contain', width: '100%' }}
-                onError={e => { e.target.style.display = 'none' }}
-              />
-            ) : (
-              <div className="panel-placeholder" style={{ padding: 40 }}>
-                <p>No image captured</p>
-              </div>
+        {/* Comparison */}
+        <div className="detail-comparison">
+          <div className="detail-comparison-panel">
+            <span className="panel-tag panel-tag-original">Original Ad</span>
+            <div className="panel-image">
+              {ad.image_url ? (
+                <OriginalImage src={ad.image_url} />
+              ) : (
+                <div className="panel-placeholder"><p>No image captured</p></div>
+              )}
+            </div>
+            {ad.ad_copy && (
+              <p className="text-xs text-muted mt-sm" style={{ lineHeight: 1.4 }}>
+                {ad.ad_copy.length > 200 ? ad.ad_copy.slice(0, 200) + '...' : ad.ad_copy}
+              </p>
             )}
           </div>
-          {ad.ad_copy && (
-            <p className="text-xs text-muted" style={{ marginTop: 'var(--space-sm)', lineHeight: 1.5 }}>
-              {ad.ad_copy.length > 300 ? ad.ad_copy.slice(0, 300) + '...' : ad.ad_copy}
-            </p>
-          )}
-        </div>
 
-        {/* 3-Step Progress */}
-        <div style={{
-          display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-lg)',
-          padding: 'var(--space-md)', background: 'var(--bg-2)', borderRadius: 8,
-        }}>
-          <StepIndicator num={1} label="Brand Guidelines" active={step === 1} done={step > 1} />
-          <StepIndicator num={2} label="Opus 4.6 Analysis" active={step === 2} done={step > 2} />
-          <StepIndicator num={3} label="Long-Format Prompt" active={step === 3} done={step === 3 && !!prompt} />
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div style={{
-            padding: 'var(--space-md)', marginBottom: 'var(--space-lg)',
-            background: 'rgba(255,80,80,0.1)', borderRadius: 8, border: '1px solid rgba(255,80,80,0.3)',
-          }}>
-            <p className="text-sm" style={{ color: '#ff5050' }}>{error}</p>
-          </div>
-        )}
-
-        {/* Step 1: Brand Guidelines Summary */}
-        {step >= 1 && hasBrandData && (
-          <div style={{ marginBottom: 'var(--space-lg)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-sm)' }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: 1 }}>
-                Step 1 — Brand Guidelines
-              </span>
-              {step > 1 && <span style={{ fontSize: 11, color: 'var(--text-success)' }}>✓</span>}
-            </div>
-            <div style={{
-              padding: 'var(--space-md)', background: 'var(--bg-1)', borderRadius: 8,
-              border: '1px solid var(--border)', maxHeight: step > 1 ? 120 : 'none',
-              overflow: step > 1 ? 'hidden' : 'visible', position: 'relative',
-            }}>
-              <p className="text-xs text-muted" style={{ lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                <strong>Brand:</strong> {activeBrand?.name || 'Unknown'}<br />
-                {brandContext.brand_guidelines && (
-                  <>{brandContext.brand_guidelines.slice(0, step > 1 ? 200 : 500)}{brandContext.brand_guidelines.length > (step > 1 ? 200 : 500) ? '...' : ''}</>
-                )}
-              </p>
-              {step > 1 && brandContext.brand_guidelines?.length > 200 && (
-                <div style={{
-                  position: 'absolute', bottom: 0, left: 0, right: 0, height: 40,
-                  background: 'linear-gradient(transparent, var(--bg-1))',
-                }} />
+          <div className="detail-comparison-panel">
+            <span className="panel-tag panel-tag-generated">AI Generated</span>
+            <div className="panel-image">
+              {currentImage ? (
+                <img src={currentImage} alt="Generated" />
+              ) : (
+                <div className="panel-placeholder">
+                  {autoPipeline ? (
+                    <>
+                      <span className="spinner" style={{ marginBottom: 'var(--space-sm)' }} />
+                      <p>{status || 'Processing...'}</p>
+                      <p className="text-xs text-muted" style={{ marginTop: 'var(--space-xs)' }}>
+                        Claude is studying the original ad and writing a detailed prompt, then generating an image.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p>Your Chefly version will appear here</p>
+                      <p className="text-xs text-muted" style={{ lineHeight: 1.5 }}>
+                        Click "Study Ad & Write Prompt" to have Claude analyse the competitor ad and design an ad creative for Chefly.
+                        Then click "Generate Image" to create your version.
+                      </p>
+                    </>
+                  )}
+                </div>
               )}
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Step 2: Visual Analysis */}
-        {step >= 2 && (
-          <div style={{ marginBottom: 'var(--space-lg)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-sm)' }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: 1 }}>
-                Step 2 — Opus 4.6 Visual Analysis
-              </span>
-              {step > 2 && <span style={{ fontSize: 11, color: 'var(--text-success)' }}>✓</span>}
-            </div>
-            {step === 2 && !analysis && (
-              <div style={{
-                padding: 'var(--space-lg)', background: 'var(--bg-1)', borderRadius: 8,
-                border: '1px solid var(--border)', textAlign: 'center',
-              }}>
-                <span className="spinner" style={{ marginBottom: 'var(--space-sm)', display: 'inline-block' }} />
-                <p className="text-sm text-muted">{status}</p>
-              </div>
-            )}
-            {analysis && (
-              <div style={{
-                padding: 'var(--space-md)', background: 'var(--bg-1)', borderRadius: 8,
-                border: '1px solid var(--border)',
-              }}>
-                <p className="text-sm" style={{ lineHeight: 1.7, whiteSpace: 'pre-wrap', color: 'var(--text-secondary)' }}>
-                  {analysis}
-                </p>
-              </div>
-            )}
+        {/* Versions strip */}
+        {hasVersions && (
+          <div className="versions-strip">
+            {versions.map((v, i) => {
+              const num = versions.length - i
+              const ratioLabel = v.aspect_ratio || ''
+              return (
+                <div
+                  key={v.id}
+                  className={`version-thumb ${i === activeVersion ? 'active' : ''}`}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveVersion(i); if (v.prompt) setPrompt(v.prompt) }}
+                >
+                  <img src={v.image_url} alt={`v${num}`} draggable="false" />
+                  <span className="version-thumb-label">v{num} {ratioLabel}</span>
+                </div>
+              )
+            })}
           </div>
         )}
 
-        {/* Step 3: Long-Format Prompt */}
-        {step >= 3 && prompt && (
-          <div style={{ marginBottom: 'var(--space-lg)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: 1 }}>
-                Step 3 — Long-Format Prompt
-              </span>
-              <button onClick={copyPrompt} className="btn-copy-pill" style={{
-                background: copied ? 'var(--accent)' : 'var(--bg-3)',
-                color: copied ? 'var(--bg-0)' : 'var(--text-primary)',
-                border: 'none', borderRadius: 6, padding: '6px 14px',
-                fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease',
-              }}>
-                {copied ? '✓ Copied' : 'Copy Prompt'}
-              </button>
-            </div>
-            <div style={{
-              padding: 'var(--space-md)', background: 'var(--bg-1)', borderRadius: 8,
-              border: '1px solid var(--border)', maxHeight: 500, overflowY: 'auto',
-            }}>
-              <pre style={{
-                whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                fontFamily: 'JetBrains Mono, monospace', fontSize: 12,
-                lineHeight: 1.7, color: 'var(--text-primary)', margin: 0,
-              }}>
-                {prompt}
-              </pre>
-            </div>
-            <p className="text-xs text-muted" style={{ marginTop: 'var(--space-xs)' }}>
-              {prompt.length.toLocaleString()} characters · {prompt.split(/\s+/).length.toLocaleString()} words · Opus 4.6
-            </p>
-          </div>
-        )}
+        {/* Action bar */}
+        <div className="action-bar">
+          <div className="action-bar-left">
+            <button
+              className="btn btn-secondary"
+              onClick={generatePrompt}
+              disabled={generatingPrompt}
+              title="Re-studies the original competitor ad with your current Brand DNA and writes a fresh ad creative prompt"
+            >
+              {generatingPrompt
+                ? <><span className="spinner spinner-inline" /> Studying ad...</>
+                : prompt
+                  ? '\u21bb Re-study Ad'
+                  : '\u21bb Study Ad & Write Prompt'}
+            </button>
 
-        {/* Scan / Re-scan button for already-scanned ads */}
-        {step === 0 && !error && ad.generated_prompt && (
-          <div style={{ textAlign: 'center', padding: 'var(--space-lg)' }}>
-            <p className="text-sm text-muted" style={{ marginBottom: 'var(--space-md)' }}>
-              This ad has been scanned before. Re-scan to get a fresh analysis and prompt.
-            </p>
+            <div className="aspect-pills">
+              {['4:5', '9:16', 'both'].map(r => (
+                <button
+                  key={r}
+                  className={`aspect-pill ${ratio === r ? 'active' : ''}`}
+                  onClick={() => setRatio(r)}
+                >
+                  {r === 'both' ? '4:5 + 9:16' : r}
+                </button>
+              ))}
+            </div>
+
             <button
               className="btn btn-primary"
-              onClick={() => { scanRanRef.current = false; runScan() }}
+              onClick={generateImage}
+              disabled={generating || !prompt.trim()}
             >
-              ↻ Re-scan with Opus 4.6
+              {generating ? <><span className="spinner spinner-inline" /> Generating...</> : `\u26a1 Generate ${ratio === 'both' ? 'Images' : 'Image'}`}
             </button>
-          </div>
-        )}
 
-        {/* Show existing prompt if loaded from DB but not re-scanned */}
-        {step === 0 && !error && ad.generated_prompt && prompt && (
-          <div style={{ marginTop: 'var(--space-lg)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>
-                Previous Prompt
-              </span>
-              <button onClick={copyPrompt} style={{
-                background: copied ? 'var(--accent)' : 'var(--bg-3)',
-                color: copied ? 'var(--bg-0)' : 'var(--text-primary)',
-                border: 'none', borderRadius: 6, padding: '6px 14px',
-                fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              }}>
-                {copied ? '✓ Copied' : 'Copy Prompt'}
+            {currentImage && (
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={async () => {
+                  try {
+                    const res = await fetch(currentImage)
+                    const blob = await res.blob()
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `chefly-ad-${Date.now()}.png`
+                    document.body.appendChild(a)
+                    a.click()
+                    document.body.removeChild(a)
+                    URL.revokeObjectURL(url)
+                  } catch {
+                    window.open(currentImage, '_blank')
+                  }
+                }}
+              >
+                {'\u2193'} Download
               </button>
-            </div>
-            <div style={{
-              padding: 'var(--space-md)', background: 'var(--bg-1)', borderRadius: 8,
-              border: '1px solid var(--border)', maxHeight: 400, overflowY: 'auto',
-            }}>
-              <pre style={{
-                whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                fontFamily: 'JetBrains Mono, monospace', fontSize: 12,
-                lineHeight: 1.7, color: 'var(--text-primary)', margin: 0,
-              }}>
-                {prompt}
-              </pre>
-            </div>
-            <p className="text-xs text-muted" style={{ marginTop: 'var(--space-xs)' }}>
-              {prompt.length.toLocaleString()} characters · {prompt.split(/\s+/).length.toLocaleString()} words
-            </p>
+            )}
+
+            {ad.generated_prompt && onTemplatize && (
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => onTemplatize(ad.id)}
+              >
+                Templatize &rarr;
+              </button>
+            )}
           </div>
-        )}
 
-        {/* ═══ GENERATED VERSIONS ═══ */}
-        {versions.length > 0 && (
-          <div style={{ marginTop: 'var(--space-xl)', borderTop: '1px solid var(--border)', paddingTop: 'var(--space-lg)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-md)' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-                Generated Versions ({versions.length})
-              </span>
+          {status && (
+            <span className={`action-status ${statusType}`}>{status}</span>
+          )}
+        </div>
+
+        {/* Prompt editor */}
+        <div className="prompt-section">
+          <div className="mb-lg">
+            <span className="prompt-label">Creative Direction (optional)</span>
+            <input
+              type="text"
+              className="text-input"
+              value={direction}
+              onChange={(e) => setDirection(e.target.value)}
+              placeholder='e.g. "9:16 story, coloured background, packaging flat-lay"'
+            />
+          </div>
+          <div>
+            <div className="prompt-header">
+              <span className="prompt-label">Chefly Prompt</span>
+              {prompt && (
+                <button
+                  className="btn-copy"
+                  onClick={() => {
+                    navigator.clipboard.writeText(prompt)
+                    setStatus('Copied to clipboard.')
+                    setStatusType('success')
+                    setTimeout(() => setStatus(''), 2000)
+                  }}
+                >
+                  Copy all
+                </button>
+              )}
             </div>
-
-            {/* Version thumbnails strip */}
-            <div style={{
-              display: 'flex', gap: 'var(--space-sm)', overflowX: 'auto',
-              paddingBottom: 'var(--space-sm)', marginBottom: 'var(--space-md)',
-            }}>
-              {versions.map((v, i) => {
-                const num = versions.length - i
-                const isSelected = selectedVersion === i
-                return (
-                  <div
-                    key={v.id}
-                    onClick={() => setSelectedVersion(isSelected ? null : i)}
-                    style={{
-                      flexShrink: 0, cursor: 'pointer',
-                      borderRadius: 8, overflow: 'hidden',
-                      border: isSelected ? '2px solid var(--accent)' : '2px solid var(--border)',
-                      transition: 'border-color 0.2s ease',
-                      width: 100,
-                    }}
-                  >
-                    <img
-                      src={v.image_url}
-                      alt={`v${num}`}
-                      style={{ width: 100, height: 120, objectFit: 'cover', display: 'block' }}
-                      loading="lazy"
-                    />
-                    <div style={{
-                      padding: '4px 6px', background: 'var(--bg-2)',
-                      fontSize: 10, color: 'var(--text-muted)', textAlign: 'center',
-                    }}>
-                      v{num} {v.aspect_ratio || ''}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-
-            {/* Expanded version detail */}
-            {selectedVersion !== null && versions[selectedVersion] && (
-              <div style={{
-                background: 'var(--bg-1)', borderRadius: 8,
-                border: '1px solid var(--border)', overflow: 'hidden',
-              }}>
-                {/* Image */}
-                <div style={{
-                  display: 'flex', justifyContent: 'center', background: 'var(--bg-2)',
-                  maxHeight: 500,
-                }}>
-                  <img
-                    src={versions[selectedVersion].image_url}
-                    alt={`Version ${versions.length - selectedVersion}`}
-                    style={{ maxHeight: 500, objectFit: 'contain', width: '100%' }}
-                  />
-                </div>
-
-                {/* Version info */}
-                <div style={{ padding: 'var(--space-md)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      v{versions.length - selectedVersion} · {versions[selectedVersion].aspect_ratio || 'unknown'} ·{' '}
-                      {new Date(versions[selectedVersion].created_at).toLocaleDateString('en-GB', {
-                        day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                      })}
-                    </span>
-                    <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
-                      {versions[selectedVersion].prompt && (
-                        <button
-                          onClick={() => copyVersionPrompt(versions[selectedVersion].prompt)}
-                          style={{
-                            background: 'var(--bg-3)', color: 'var(--text-primary)',
-                            border: 'none', borderRadius: 6, padding: '4px 10px',
-                            fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                          }}
-                        >
-                          Copy Prompt
-                        </button>
-                      )}
-                      <button
-                        onClick={async () => {
-                          try {
-                            const res = await fetch(versions[selectedVersion].image_url)
-                            const blob = await res.blob()
-                            const url = URL.createObjectURL(blob)
-                            const a = document.createElement('a')
-                            a.href = url
-                            a.download = `chefly-v${versions.length - selectedVersion}-${Date.now()}.png`
-                            document.body.appendChild(a)
-                            a.click()
-                            document.body.removeChild(a)
-                            URL.revokeObjectURL(url)
-                          } catch {
-                            window.open(versions[selectedVersion].image_url, '_blank')
-                          }
-                        }}
-                        style={{
-                          background: 'var(--bg-3)', color: 'var(--text-primary)',
-                          border: 'none', borderRadius: 6, padding: '4px 10px',
-                          fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                        }}
-                      >
-                        ↓ Download
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Version prompt */}
-                  {versions[selectedVersion].prompt && (
-                    <details style={{ marginTop: 'var(--space-sm)' }}>
-                      <summary className="text-xs" style={{ cursor: 'pointer', color: 'var(--text-muted)', userSelect: 'none' }}>
-                        View prompt used ({versions[selectedVersion].prompt.length.toLocaleString()} chars)
-                      </summary>
-                      <pre style={{
-                        whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                        fontFamily: 'JetBrains Mono, monospace', fontSize: 11,
-                        lineHeight: 1.6, color: 'var(--text-secondary)', margin: 0,
-                        marginTop: 'var(--space-sm)', maxHeight: 300, overflowY: 'auto',
-                      }}>
-                        {versions[selectedVersion].prompt}
-                      </pre>
-                    </details>
-                  )}
-                </div>
+            <textarea
+              className="prompt-textarea"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="No prompt generated yet. Click 'Study Ad & Write Prompt' above to analyse the competitor ad and design your Chefly ad creative."
+            />
+            {hasVersions && versions[activeVersion] && (
+              <div className="version-meta">
+                v{versions.length - activeVersion} {versions[activeVersion].aspect_ratio || ''} · generated {new Date(versions[activeVersion].created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} · {versions[activeVersion].prompt ? `${versions[activeVersion].prompt.length.toLocaleString()} chars` : 'no prompt saved'}
               </div>
             )}
           </div>
-        )}
+        </div>
+
+        {/* Settings hint */}
+        <FalKeySettings />
       </div>
     </div>
   )
 }
 
-function StepIndicator({ num, label, active, done }) {
-  const bg = done ? 'var(--accent)' : active ? 'var(--bg-3)' : 'transparent'
-  const border = done ? 'var(--accent)' : active ? 'var(--accent)' : 'var(--border)'
-  const numColor = done ? 'var(--bg-0)' : active ? 'var(--accent)' : 'var(--text-muted)'
-  const labelColor = done ? 'var(--text-primary)' : active ? 'var(--text-primary)' : 'var(--text-muted)'
+function OriginalImage({ src }) {
+  const [broken, setBroken] = useState(false)
+  if (broken) {
+    return (
+      <div className="panel-placeholder" style={{ textAlign: 'center' }}>
+        <p style={{ marginBottom: 6 }}>Original image expired</p>
+        <p className="text-xs text-muted" style={{ lineHeight: 1.4 }}>
+          Facebook CDN links are temporary. The image was available when captured but has since expired.
+          Re-save the ad from the Ad Library extension to refresh the link.
+        </p>
+      </div>
+    )
+  }
+  return <img src={src} alt="Original" onError={() => setBroken(true)} />
+}
+
+function FalKeySettings() {
+  const [show, setShow] = useState(false)
+  const [key, setKey] = useState(localStorage.getItem('ck_fal_api_key') || '')
+
+  function save() {
+    localStorage.setItem('ck_fal_api_key', key.trim())
+    setShow(false)
+  }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
-      <div style={{
-        width: 28, height: 28, borderRadius: '50%',
-        border: `2px solid ${border}`, background: bg,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 12, fontWeight: 700, color: numColor,
-        transition: 'all 0.3s ease',
-      }}>
-        {done ? '✓' : num}
-      </div>
-      <span style={{
-        fontSize: 12, fontWeight: active || done ? 600 : 400,
-        color: labelColor, transition: 'all 0.3s ease',
-      }}>
-        {label}
-      </span>
-      {active && !done && (
-        <span className="spinner spinner-inline" style={{ marginLeft: 4 }} />
+    <div className="fal-settings-bar">
+      <button
+        className="btn btn-ghost btn-sm text-xs"
+        onClick={() => setShow(!show)}
+      >
+        {show ? 'Hide settings' : 'Settings (fal.ai key)'}
+      </button>
+      {show && (
+        <div className="flex-center gap-sm mt-sm">
+          <input
+            type="password"
+            className="text-input text-input-sm flex-1"
+            value={key}
+            onChange={(e) => setKey(e.target.value)}
+            placeholder="fal.ai API key"
+          />
+          <button className="btn btn-secondary btn-sm" onClick={save}>Save</button>
+        </div>
       )}
     </div>
   )
