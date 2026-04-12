@@ -402,7 +402,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
     try {
       // Fetch from both sources in parallel
       const [jobsRes, legacyRes] = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/analysis_jobs?select=id,created_at,brands_analysed,percentile,type_filter,total_images,status,error_message,competitive_analysis_id&order=created_at.desc&limit=20`, {
+        fetch(`${SUPABASE_URL}/rest/v1/analysis_jobs?select=id,created_at,brands_analysed,percentile,type_filter,total_images,status,error_message,competitive_analysis_id,pipeline_version&order=created_at.desc&limit=20`, {
           headers: sbReadHeaders
         }),
         fetch(`${SUPABASE_URL}/rest/v1/competitive_analyses?select=id,created_at,brands_analysed,percentile,type_filter,ads_sent,model_used,status&order=created_at.desc&limit=20`, {
@@ -427,6 +427,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
             ads_sent: j.total_images,
             status: j.status,
             error_message: j.error_message,
+            pipeline_version: j.pipeline_version || 'v1',
             _source: 'analysis_jobs',
             _competitive_analysis_id: j.competitive_analysis_id,
           })
@@ -798,7 +799,11 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
           // Update UI based on current phase
           if (data.phase === 'step1_running') {
             setAnalysisStep(1)
-          } else if (data.phase === 'step1_done' || data.phase === 'step2_running') {
+          } else if (data.phase === 'consolidation_done' || data.phase === 'consolidation_skipped') {
+            setAnalysisStep(2)
+          } else if (data.phase === 'step1_done') {
+            setAnalysisStep(1.5)
+          } else if (data.phase === 'step2_running') {
             setAnalysisStep(2)
           } else if (data.phase === 'saving') {
             setAnalysisStep(3)
@@ -1558,7 +1563,10 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
                         >
                           <div className="ca-history-item-top">
                             <span className="ca-history-date">{new Date(a.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                            <span className={`ca-history-status ${a.status}`}>{a.status}</span>
+                            <span style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                              <span className={`ca-history-version ${a.pipeline_version || 'v1'}`} title={a.pipeline_version === 'v2' ? 'Consolidated pipeline' : 'Pre-consolidation pipeline'}>{a.pipeline_version || 'v1'}</span>
+                              <span className={`ca-history-status ${a.status}`}>{a.status}</span>
+                            </span>
                           </div>
                           <div className="ca-history-item-meta">
                             <span>{(a.brands_analysed || []).join(', ')}</span>
@@ -1637,7 +1645,15 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
                             <p className="ca-analysis-loading-sub" style={{ opacity: 0.5 }}>Sonnet is performing forensic visual analysis in batches of {batchSize}. Extracting layout grids, typography specs, colour palettes, camera angles, and lighting. ~30 to 60s per batch.</p>
                           </>
                         )
-                      })() : analysisStep === 2 ? (() => {
+                      })() : analysisStep === 1.5 ? (
+                        <>
+                          <p>Consolidating insights...</p>
+                          <div className="ca-batch-progress">
+                            <div className="ca-batch-bar ca-batch-bar-pulse" style={{ width: '60%' }}></div>
+                          </div>
+                          <p className="ca-analysis-loading-sub">Merging duplicate themes, personas, and pillars across batches into a clean, non-overlapping set. One-time step, ~15 to 30s.</p>
+                        </>
+                      ) : analysisStep === 2 ? (() => {
                         const done = promptProgress.current || 0
                         const total = promptProgress.total || batchSummary?.step1_completed || 0
                         const pct = total > 0 ? Math.round((done / total) * 100) : 0
