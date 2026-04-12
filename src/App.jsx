@@ -146,14 +146,9 @@ export default function App() {
 
         {tab === 'gallery' && (
           <Gallery
-            ads={filteredAds}
-            versions={versions}
+            ads={ads}
             loading={loading}
-            filter={filter}
-            setFilter={setFilter}
-            stats={stats}
             onSelectAd={setSelectedAdId}
-            onRefresh={loadAds}
             brands={brands}
             activeBrandId={activeBrandId}
           />
@@ -206,10 +201,8 @@ export default function App() {
       {selectedAd && (
         <AdDetail
           ad={selectedAd}
-          versions={selectedVersions}
           onClose={() => setSelectedAdId(null)}
           onRefresh={loadAds}
-          onTemplatize={goToGenerator}
           brands={brands}
           activeBrandId={activeBrandId}
         />
