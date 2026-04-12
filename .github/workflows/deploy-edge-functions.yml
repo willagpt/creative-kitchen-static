@@ -1,0 +1,42 @@
+name: Deploy Edge Functions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link Supabase project
+        run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Deploy changed functions
+        run: |
+          # Get list of changed files
+          CHANGED=$(git diff --name-only HEAD~1 HEAD -- supabase/functions/ || echo "")
+          
+          if [ -z "$CHANGED" ]; then
+            echo "No edge function changes detected"
+            exit 0
+          fi
+          
+          # Extract unique function names from changed paths
+          FUNCTIONS=$(echo "$CHANGED" | grep -oP 'supabase/functions/\K[^/]+' | sort -u)
+          
+          for func in $FUNCTIONS; do
+            echo "Deploying $func..."
+            supabase functions deploy "$func" --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+          done
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
