@@ -84,18 +84,6 @@ serve(async (req) => {
       ? `\n\n── BRAND IDENTITY FOR ${(brand_name || 'the target brand').toUpperCase()} ──\n\n${brandContextParts.join('\n\n')}\n\n── END BRAND IDENTITY ──`
       : ''
 
-    // ─── Detect packaging format from sleeve_notes / packaging_specs ──
-    const sleeveStr = ((sleeve_notes || '') + ' ' + (typeof packaging_specs === 'string' ? packaging_specs : JSON.stringify(packaging_specs || ''))).toLowerCase()
-    const hasNoSleeve = sleeveStr.includes('tray only') || sleeveStr.includes('no sleeve') || sleeveStr.includes('without sleeve')
-    const hasPlate = sleeveStr.includes('plate')
-
-    let packagingInstruction = ''
-    if (hasNoSleeve) {
-      packagingInstruction = `\n\nPACKAGING FORMAT OVERRIDE — CRITICAL:\nThe brand uses TRAY ONLY — a natural bagasse tray with NO sleeve, NO belly band, NO cardboard wrapper. Do NOT describe or include any sleeve, belly band, wrapper, cardboard band, or yellow band around the tray. The tray is bare — show only the natural bagasse/sugarcane fibre material. The examples above show tray+sleeve format but that is NOT the active format. Adapt all packaging descriptions to show a bare tray only.`
-    } else if (hasPlate) {
-      packagingInstruction = `\n\nPACKAGING FORMAT OVERRIDE — CRITICAL:\nThe brand uses PLATED presentation — food is shown on a plate, not in a tray. Do NOT describe any tray, sleeve, or belly band. The examples above show tray+sleeve format but that is NOT the active format. Describe plated food with appropriate dinnerware.`
-    }
-
     // ─── Build photo reference block ─────────────────────────────
     let photoBlock = ''
     if (photo_descriptions?.length) {
@@ -120,7 +108,7 @@ Write the way a food photographer and creative director think together: vivid, a
 When the ad is a comparison (brand vs ready meals, brand vs recipe boxes), spend most of your description on the Chefly side. The competitor side should be brief and flat: a few sentences describing a generic, unappealing object. Do not describe competitor food in vivid detail or the generator will render both sides equally well and the contrast disappears.
 
 Always use a three-quarter camera angle. Never describe flat overhead or directly-above shots. Describe food like a food writer: textures, glazes, char marks, how light catches surfaces. Describe packaging as a physical object in the scene.
-${brandContextBlock}${packagingInstruction}${photoBlock}
+${brandContextBlock}${photoBlock}
 
 Here are two prompts that produce excellent results with this generator. Match their quality, depth, and atmospheric style. Write as much as you need. No length limits.
 
