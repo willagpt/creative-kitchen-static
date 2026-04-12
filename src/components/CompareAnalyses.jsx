@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 
 const SUPABASE_URL = 'https://ifrxylvoufncdxyltgqt.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA'
@@ -58,6 +58,66 @@ const S = {
     padding: '10px 12px', backgroundColor: '#0a0a0a',
     border: '1px dashed #f97316', borderRadius: '4px', fontSize: '12px'
   }
+}
+
+// ── Expandable text component ──
+function ExpandableText({ text, maxLen = 120 }) {
+  const [expanded, setExpanded] = useState(false)
+  if (!text) return null
+  if (text.length <= maxLen) return <div style={{ fontSize: '12px', color: '#a1a1a1', lineHeight: '1.5' }}>{text}</div>
+  return (
+    <div style={{ fontSize: '12px', color: '#a1a1a1', lineHeight: '1.5' }}>
+      {expanded ? text : text.substring(0, maxLen) + '...'}
+      <button
+        onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }}
+        style={{
+          background: 'none', border: 'none', color: '#f97316', fontSize: '11px',
+          cursor: 'pointer', padding: '0 4px', marginLeft: '4px'
+        }}
+      >
+        {expanded ? 'less' : 'more'}
+      </button>
+    </div>
+  )
+}
+
+// ── Thumbnail strip for example ads ──
+function ThumbnailStrip({ adIndices, allImages, max = 4 }) {
+  if (!adIndices || !allImages || allImages.length === 0) return null
+
+  // Find images matching adIndices, sorted by days_active desc
+  const matches = adIndices
+    .map(idx => allImages.find(img => img.ad_index === idx))
+    .filter(img => img && img.image_url)
+    .sort((a, b) => (b.days_active || 0) - (a.days_active || 0))
+    .slice(0, max)
+
+  if (matches.length === 0) return null
+
+  return (
+    <div style={{ display: 'flex', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
+      {matches.map((img, i) => (
+        <div key={i} style={{ position: 'relative' }}>
+          <img
+            src={img.image_url}
+            alt={img.headline || `Ad ${img.ad_index}`}
+            style={{
+              width: '72px', height: '72px', objectFit: 'cover',
+              borderRadius: '4px', border: '1px solid #333'
+            }}
+            onError={(e) => { e.target.style.display = 'none' }}
+          />
+          <div style={{
+            position: 'absolute', bottom: '2px', right: '2px',
+            backgroundColor: 'rgba(0,0,0,0.75)', borderRadius: '2px',
+            padding: '1px 4px', fontSize: '9px', color: '#f97316'
+          }}>
+            {img.days_active}d
+          </div>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 export default function CompareAnalyses() {
@@ -170,7 +230,7 @@ export default function CompareAnalyses() {
         const params = new URLSearchParams({
           job_id: `eq.${job.id}`,
           step1_status: 'eq.completed',
-          select: 'ad_index,page_name,days_active,visual_cluster,creative_format',
+          select: 'ad_index,page_name,days_active,visual_cluster,creative_format,image_url,headline',
           order: 'ad_index.asc'
         })
         const res = await fetch(
@@ -310,9 +370,16 @@ export default function CompareAnalyses() {
             existing.brandCount = existing.brands.length
           }
           existing.totalDaysActive += item.totalDaysActive
+          // Merge adIndices per brand
+          if (!existing.adIndicesByBrand[brand]) existing.adIndicesByBrand[brand] = []
+          existing.adIndicesByBrand[brand].push(...(item.adIndices || []))
           // Prefer longer description
           if (item.description && (!existing.description || item.description.length > existing.description.length)) {
             existing.description = item.description
+          }
+          // Also merge painPoints if present
+          if (item.painPoints) {
+            existing.painPoints = [...new Set([...(existing.painPoints || []), ...item.painPoints])]
           }
         } else {
           merged.push({
@@ -322,7 +389,9 @@ export default function CompareAnalyses() {
             momentum: item.momentum || 'niche',
             brands: [brand],
             brandCount: 1,
-            totalDaysActive: item.totalDaysActive
+            totalDaysActive: item.totalDaysActive,
+            adIndicesByBrand: { [brand]: [...(item.adIndices || [])] },
+            painPoints: item.painPoints || []
           })
         }
       })
@@ -690,9 +759,9 @@ export default function CompareAnalyses() {
                     {analysis.workingFormats.map((fmt, idx) => (
                       <div key={idx} style={S.itemCard('#f97316')}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          <div>
+                          <div style={{ flex: 1 }}>
                             <div style={{ fontWeight: '600', fontSize: '13px', marginBottom: '4px' }}>{fmt.name}</div>
-                            <div style={{ fontSize: '12px', color: '#a1a1a1', marginBottom: '4px' }}>{fmt.description?.substring(0, 200)}{fmt.description?.length > 200 ? '...' : ''}</div>
+                            <ExpandableText text={fmt.description} maxLen={150} />
                           </div>
                           {fmt.weight > 0 && (
                             <span style={{
@@ -703,9 +772,16 @@ export default function CompareAnalyses() {
                             </span>
                           )}
                         </div>
-                        <div style={{ fontSize: '11px', color: '#71717a' }}>
+                        <div style={{ fontSize: '11px', color: '#71717a', marginTop: '4px' }}>
                           {fmt.brands.join(', ')} · {fmt.totalDaysActive} total days · {fmt.momentum}
                         </div>
+                        {fmt.brands.map(brand => (
+                          <ThumbnailStrip
+                            key={brand}
+                            adIndices={fmt.adIndicesByBrand?.[brand] || []}
+                            allImages={analysis.imagesByBrand[brand] || []}
+                          />
+                        ))}
                       </div>
                     ))}
                   </div>
@@ -734,10 +810,17 @@ export default function CompareAnalyses() {
                             </span>
                           )}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#a1a1a1', marginBottom: '4px' }}>{theme.description?.substring(0, 250)}{theme.description?.length > 250 ? '...' : ''}</div>
-                        <div style={{ fontSize: '11px', color: '#71717a' }}>
+                        <ExpandableText text={theme.description} maxLen={150} />
+                        <div style={{ fontSize: '11px', color: '#71717a', marginTop: '4px' }}>
                           {theme.brands.join(', ')} · {theme.totalDaysActive} total days · {theme.momentum}
                         </div>
+                        {theme.brands.map(brand => (
+                          <ThumbnailStrip
+                            key={brand}
+                            adIndices={theme.adIndicesByBrand?.[brand] || []}
+                            allImages={analysis.imagesByBrand[brand] || []}
+                          />
+                        ))}
                       </div>
                     ))}
                   </div>
@@ -766,10 +849,30 @@ export default function CompareAnalyses() {
                             </span>
                           )}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#a1a1a1', marginBottom: '4px' }}>{p.description?.substring(0, 250)}{p.description?.length > 250 ? '...' : ''}</div>
-                        <div style={{ fontSize: '11px', color: '#71717a' }}>
+                        <ExpandableText text={p.description} maxLen={150} />
+                        {p.painPoints && p.painPoints.length > 0 && (
+                          <div style={{ marginTop: '6px' }}>
+                            <div style={{ fontSize: '11px', color: '#71717a', marginBottom: '4px' }}>Pain points:</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                              {p.painPoints.map((pp, i) => (
+                                <span key={i} style={{
+                                  fontSize: '10px', padding: '2px 6px', borderRadius: '3px',
+                                  backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#93c5fd'
+                                }}>{pp}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <div style={{ fontSize: '11px', color: '#71717a', marginTop: '4px' }}>
                           {p.brands.join(', ')} · {p.totalDaysActive} total days · {p.momentum}
                         </div>
+                        {p.brands.map(brand => (
+                          <ThumbnailStrip
+                            key={brand}
+                            adIndices={p.adIndicesByBrand?.[brand] || []}
+                            allImages={analysis.imagesByBrand[brand] || []}
+                          />
+                        ))}
                       </div>
                     ))}
                   </div>
@@ -798,10 +901,17 @@ export default function CompareAnalyses() {
                             </span>
                           )}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#a1a1a1', marginBottom: '4px' }}>{p.description?.substring(0, 250)}{p.description?.length > 250 ? '...' : ''}</div>
-                        <div style={{ fontSize: '11px', color: '#71717a' }}>
+                        <ExpandableText text={p.description} maxLen={150} />
+                        <div style={{ fontSize: '11px', color: '#71717a', marginTop: '4px' }}>
                           {p.brands.join(', ')} · {p.totalDaysActive} total days · {p.momentum}
                         </div>
+                        {p.brands.map(brand => (
+                          <ThumbnailStrip
+                            key={brand}
+                            adIndices={p.adIndicesByBrand?.[brand] || []}
+                            allImages={analysis.imagesByBrand[brand] || []}
+                          />
+                        ))}
                       </div>
                     ))}
                   </div>
