@@ -35,7 +35,7 @@ const PRESETS = [
 const DB_NAME = 'ck_prompt_tester'
 const DB_VERSION = 1
 const STORE_NAME = 'generations'
-const MAX_SAVED = 50
+const MAX_SAVED = Infinity  // no cap — keep everything
 
 function openDB() {
   return new Promise((resolve, reject) => {
@@ -131,17 +131,75 @@ export default function PromptTester() {
     localStorage.setItem('ck_fal_api_key', apiKey)
   }, [apiKey])
 
-  // Load history from IndexedDB on mount
+  // Load history from IndexedDB + Supabase on mount
   useEffect(() => {
-    loadAllFromDB().then(saved => {
-      if (saved.length) {
-        setHistory(saved)
-        setSelectedId(saved[0].id)
-        setResultImage(saved[0].dataUrl || saved[0].url)
-        setShowDetail(saved[0])
-        setStatus(saved[0].model.split('/').pop() + ' · ' + saved[0].ratio + ' · ' + saved[0].resolution + ' · ' + saved[0].time + 's · restored')
+    async function loadHistory() {
+      // 1. Load from local IndexedDB
+      let local = []
+      try { local = await loadAllFromDB() } catch {}
+
+      // 2. Load from Supabase gen_images (backed-up prompt tester images)
+      let remote = []
+      try {
+        const { data } = await supabase
+          .from('gen_images')
+          .select('id,prompt_used,image_url,aspect_ratio,created_at')
+          .order('created_at', { ascending: false })
+        if (data) {
+          remote = data.map(r => ({
+            id: new Date(r.created_at).getTime(),
+            url: r.image_url,
+            dataUrl: null,
+            model: 'supabase-backup',
+            ratio: r.aspect_ratio || '1:1',
+            resolution: '1K',
+            time: 0,
+            prompt: r.prompt_used || '',
+            source: 'supabase'
+          }))
+        }
+      } catch {}
+
+      // 3. Load from static_images (generator tab images)
+      try {
+        const { data } = await supabase
+          .from('static_images')
+          .select('id,prompt,image_url,template_name,category,version,created_at')
+          .order('created_at', { ascending: false })
+        if (data) {
+          const staticItems = data.map(r => ({
+            id: new Date(r.created_at).getTime() + Math.random(),
+            url: r.image_url,
+            dataUrl: null,
+            model: `generator/${r.template_name || 'unknown'}`,
+            ratio: '1:1',
+            resolution: '1K',
+            time: 0,
+            prompt: r.prompt || '',
+            source: 'generator',
+            category: r.category,
+            version: r.version,
+          }))
+          remote = [...remote, ...staticItems]
+        }
+      } catch {}
+
+      // 4. Merge: local takes priority, add remote items not already in local (by URL)
+      const localUrls = new Set(local.map(l => l.url))
+      const merged = [...local, ...remote.filter(r => !localUrls.has(r.url))]
+      merged.sort((a, b) => b.id - a.id)
+
+      if (merged.length) {
+        setHistory(merged)
+        setSelectedId(merged[0].id)
+        setResultImage(merged[0].dataUrl || merged[0].url)
+        setShowDetail(merged[0])
+        const m = merged[0]
+        const modelLabel = m.model ? m.model.split('/').pop() : 'unknown'
+        setStatus(`${modelLabel} · ${m.ratio} · ${m.resolution} · ${m.time}s · ${merged.length} total (${local.length} local, ${merged.length - local.length} from cloud)`)
       }
-    }).catch(() => {})
+    }
+    loadHistory()
   }, [])
 
   const charCount = prompt.length
