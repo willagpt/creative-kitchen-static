@@ -26,14 +26,12 @@ const TABS = [
 export default function App() {
   const [tab, setTab] = useState('competitors')
 
-  // Gallery state
   const [ads, setAds] = useState([])
   const [versions, setVersions] = useState({})
   const [loading, setLoading] = useState(true)
   const [selectedAdId, setSelectedAdId] = useState(null)
   const [filter, setFilter] = useState('all')
 
-  // Shared state
   const [brands, setBrands] = useState([])
   const [activeBrandId, setActiveBrandId] = useState(null)
 
@@ -99,11 +97,9 @@ export default function App() {
     withImages: ads.filter(a => a.generated_image_url || versions[a.id]?.length > 0).length,
   }
 
-  // Navigation helper: jump to generator with a specific ad pre-selected
   function goToGenerator(adId) {
     setSelectedAdId(null)
     setTab('generator')
-    // The Generator component will handle loading the ad + template
     window.__ckGeneratorAdId = adId
   }
 
@@ -146,10 +142,14 @@ export default function App() {
 
         {tab === 'gallery' && (
           <Gallery
-            ads={ads}
+            ads={filteredAds}
             versions={versions}
             loading={loading}
+            filter={filter}
+            setFilter={setFilter}
+            stats={stats}
             onSelectAd={setSelectedAdId}
+            onRefresh={loadAds}
             brands={brands}
             activeBrandId={activeBrandId}
           />
@@ -205,6 +205,7 @@ export default function App() {
           versions={selectedVersions}
           onClose={() => setSelectedAdId(null)}
           onRefresh={loadAds}
+          onTemplatize={goToGenerator}
           brands={brands}
           activeBrandId={activeBrandId}
         />
