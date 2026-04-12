@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import './CompareAnalyses.css'
 
 // ── Supabase config (matches CompetitorAds.jsx) ──
 const SUPABASE_URL = 'https://ifrxylvoufncdxyltgqt.supabase.co'
@@ -132,13 +131,13 @@ export default function CompareAnalyses() {
                     >
                       <div className="ca-compare-job-check">
                         <div className={`ca-check-box ${isSelected ? 'checked' : ''}`}>
-                          {isSelected && '\u2713'}
+                          {isSelected && '✓'}
                         </div>
                       </div>
                       <div className="ca-compare-job-info">
                         <div className="ca-compare-job-brand">{brandLabel}</div>
                         <div className="ca-compare-job-meta">
-                          {job.total_images} images \u00b7 {(job.merged_themes || []).length} themes \u00b7 {(job.merged_pillars || []).length} pillars \u00b7 {new Date(job.created_at).toLocaleDateString()}
+                          {job.total_images} images · {(job.merged_themes || []).length} themes · {(job.merged_pillars || []).length} pillars · {new Date(job.created_at).toLocaleDateString()}
                         </div>
                       </div>
                       <span className="ca-compare-job-version">{job.pipeline_version}</span>
@@ -170,7 +169,7 @@ export default function CompareAnalyses() {
               ))}
             </div>
             <button className="ca-btn-back" onClick={() => { setCompareData(null); setSelectedJobs([]) }}>
-              \u2190 Back
+              ← Back
             </button>
           </div>
 
@@ -211,7 +210,7 @@ export default function CompareAnalyses() {
                               />
                               <span className="ca-compare-bar-value">{brandData.weight || 0}</span>
                               <span className="ca-compare-bar-momentum" style={{ color: MOMENTUM_TEXT[brandData.momentum] || '#71717a' }}>
-                                {brandData.momentum || '\u2014'}
+                                {brandData.momentum || '—'}
                               </span>
                             </>
                           ) : (
@@ -241,7 +240,7 @@ export default function CompareAnalyses() {
           {/* Gap analysis */}
           <div className="ca-compare-gaps">
             <h3>Gap Analysis</h3>
-            <p className="ca-compare-gaps-sub">Items only present in one brand \u2014 potential gaps or unique strategies.</p>
+            <p className="ca-compare-gaps-sub">Items only present in one brand — potential gaps or unique strategies.</p>
             <div className="ca-compare-gap-list">
               {currentItems
                 .filter(item => Object.keys(item.byBrand).length === 1)
@@ -253,7 +252,7 @@ export default function CompareAnalyses() {
                     <div key={i} className="ca-compare-gap-item">
                       <div className="ca-compare-legend-dot" style={{ backgroundColor: BRAND_COLORS[brandIdx % BRAND_COLORS.length] }} />
                       <span className="ca-compare-gap-name">{item.name}</span>
-                      <span className="ca-compare-gap-brand">\u2014 only {brand}</span>
+                      <span className="ca-compare-gap-brand">— only {brand}</span>
                       <span className="ca-compare-gap-weight" style={{ color: MOMENTUM_TEXT[data.momentum] || '#71717a' }}>
                         weight: {data.weight || 0}
                       </span>

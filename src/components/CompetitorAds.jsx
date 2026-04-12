@@ -356,8 +356,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
   const [analysisTab, setAnalysisTab] = useState('overview') // overview | prompts | ads | trends
   const [trendsData, setTrendsData] = useState(null)
   const [trendsLoading, setTrendsLoading] = useState(false)
-  const [analysisStep, setAnalysisStep] = useState(0) // 0=idle, 1=vision, 2=prompts, 3=saving
-  const [promptProgress, setPromptProgress] = useState({ current: 0, total: 0 })
+  const [analysisStep, setAnalysisStep] = useState(0) // 0=idle, 1=vision, 1.5=consolidating, 2=saving
   const [variantIndex, setVariantIndex] = useState(0) // cycling through DCO variants in modal
   const [copiedPromptIdx, setCopiedPromptIdx] = useState(null) // flash "Copied!" on prompt card
   const [cardVariantIdx, setCardVariantIdx] = useState({}) // { [adId]: index } for inline carousel
@@ -483,13 +482,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
           creativePillars: job.merged_pillars || [],
           visualClusters: job.merged_clusters || [],
           adAnalyses: images.filter(img => img.step1_analysis).map(img => img.step1_analysis),
-          chefly_prompts: images.filter(img => img.step2_prompt).map(img => ({
-            ...img.step2_prompt,
-            _sourceImage: img.image_url,
-            _sourcePageName: img.page_name,
-            _sourceHeadline: img.headline,
-          })),
-          models: { vision: job.step1_model || '?', prompts: job.step2_model || '?' },
+          models: { vision: job.step1_model || '?' },
           _loaded_from_history: true,
           _loaded_at: job.created_at,
           _brands: job.brands_analysed,
@@ -811,9 +804,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
           setBatchImages(d.images || [])
           setBatchSummary(d.summary)
           const s = d.summary || {}
-          if (d.job?.status === 'step2_running' || d.job?.status === 'saving' || d.job?.status === 'completed') {
-            setPromptProgress({ current: s.step2_completed || 0, total: s.total || 0 })
-          }
+          // Pipeline v3: no step 2 prompt generation
         }
       } catch { /* swallow */ }
     }, 5000)
@@ -869,14 +860,10 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
           // Update UI based on current phase
           if (data.phase === 'step1_running') {
             setAnalysisStep(1)
-          } else if (data.phase === 'consolidation_done' || data.phase === 'consolidation_skipped') {
-            setAnalysisStep(2)
-          } else if (data.phase === 'step1_done') {
+          } else if (data.phase === 'step1_done' || data.phase === 'consolidation_done' || data.phase === 'consolidation_skipped') {
             setAnalysisStep(1.5)
-          } else if (data.phase === 'step2_running') {
-            setAnalysisStep(2)
           } else if (data.phase === 'saving') {
-            setAnalysisStep(3)
+            setAnalysisStep(2)
           }
 
           // Job finished
@@ -936,26 +923,20 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
 
       // Build analysisResult in the format the UI expects, plus 1:1 image-prompt pairs
       const adAnalyses = images.filter(img => img.step1_analysis).map(img => img.step1_analysis)
-      const cheflyPrompts = images.filter(img => img.step2_prompt).map(img => ({
-        ...img.step2_prompt,
-        _sourceImage: img.image_url,
-        _sourcePageName: img.page_name,
-        _sourceHeadline: img.headline,
-      }))
-
       setAnalysisResult({
         adAnalyses,
-        chefly_prompts: cheflyPrompts,
         themes: job.merged_themes || [],
         personas: job.merged_personas || [],
         creativePillars: job.merged_pillars || [],
         visualClusters: job.merged_clusters || [],
+        consolidation_summary: job.consolidation_summary || null,
         analysis_id: job.competitive_analysis_id,
-        models: { vision: job.step1_model || 'claude-sonnet-4-20250514', prompts: job.step2_model || 'claude-sonnet-4-20250514' },
+        models: { vision: job.step1_model || 'claude-opus-4-20250514' },
         _batch_job_id: jobId,
         _batch_images: images,
+        _brands: job.brands_analysed,
       })
-      setAnalysisTab('prompts')
+      setAnalysisTab('overview')
     } catch (err) {
       setAnalysisError(err.message)
     } finally {
@@ -1028,13 +1009,10 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
 
       setBatchJobId(data.job_id)
       const reusedS1 = data.reused_step1 || 0
-      const reusedS2 = data.reused_step2 || 0
       setBatchSummary({
         total: data.total_images,
         step1_completed: reusedS1,
-        step2_completed: reusedS2,
         reused_step1: reusedS1,
-        reused_step2: reusedS2,
       })
 
       // Drive processing loop (frontend calls process_next repeatedly)
@@ -1581,7 +1559,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
                     disabled={analysisLoading || topFiltered.filter(a => !a.isVideo && a.hasMedia).length === 0}
                   >
                     {analysisLoading ? (
-                      <><span className="ca-spin-sm"></span> {analysisStep === 1 ? `Step 1: Analysing (${batchSummary?.step1_completed || 0}/${batchSummary?.total || '?'} images)...` : analysisStep === 2 ? `Step 2: Writing prompt ${promptProgress.current || 0}/${promptProgress.total || batchSummary?.step1_completed || '?'}...` : 'Saving analysis...'}</>
+                      <><span className="ca-spin-sm"></span> {analysisStep === 1 ? `Analysing (${batchSummary?.step1_completed || 0}/${batchSummary?.total || '?'} images)...` : analysisStep === 1.5 ? 'Consolidating insights...' : 'Saving analysis...'}</>
 
                     ) : (
                       <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Analyse top creatives with AI ({(() => {
@@ -1704,7 +1682,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
                               <div className="ca-batch-bar" style={{ width: `${pct}%` }}></div>
                             </div>
                             {(batchSummary?.reused_step1 > 0) && (
-                              <p className="ca-analysis-loading-sub" style={{ color: '#4ade80' }}>Reused {batchSummary.reused_step1} cached {batchSummary.reused_step1 === 1 ? 'analysis' : 'analyses'} from previous runs{batchSummary?.reused_step2 > 0 ? ` (${batchSummary.reused_step2} prompts also cached)` : ''}</p>
+                              <p className="ca-analysis-loading-sub" style={{ color: '#4ade80' }}>Reused {batchSummary.reused_step1} cached {batchSummary.reused_step1 === 1 ? 'analysis' : 'analyses'} from previous runs</p>
                             )}
                             {processing > 0 && (
                               <p className="ca-analysis-loading-sub">Analysing batch {currentBatch} of {totalBatches} ({processing} {processing === 1 ? 'image' : 'images'} in progress)...</p>
@@ -1723,23 +1701,10 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
                           </div>
                           <p className="ca-analysis-loading-sub">Merging duplicate themes, personas, and pillars across batches into a clean, non-overlapping set. One-time step, ~15 to 30s.</p>
                         </>
-                      ) : analysisStep === 2 ? (() => {
-                        const done = promptProgress.current || 0
-                        const total = promptProgress.total || batchSummary?.step1_completed || 0
-                        const pct = total > 0 ? Math.round((done / total) * 100) : 0
-                        return (
-                          <>
-                            <p>Step 2 — Writing prompt {done} of {total} ({pct}%)</p>
-                            <div className="ca-batch-progress">
-                              <div className="ca-batch-bar" style={{ width: `${pct}%` }}></div>
-                            </div>
-                            <p className="ca-analysis-loading-sub">Generating a full production brief for each image. One Chefly prompt per competitor ad, with hex codes, font specs, and lens details. ~20 to 40s per prompt.</p>
-                          </>
-                        )
-                      })() : (
+                      ) : (
                         <>
-                          <p>Saving analysis...</p>
-                          <p className="ca-analysis-loading-sub">Storing {batchSummary?.step1_completed || batchSummary?.total || ''} image analyses and prompts to your history.</p>
+                          <p>Saving intelligence report...</p>
+                          <p className="ca-analysis-loading-sub">Storing {batchSummary?.step1_completed || batchSummary?.total || ''} image analyses to your history.</p>
                         </>
                       )}
                     </div>
@@ -1757,7 +1722,6 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
                       <div className="ca-analysis-tabs">
                         <button className={`ca-analysis-tab ${analysisTab === 'overview' ? 'active' : ''}`} onClick={() => setAnalysisTab('overview')}>Themes & Pillars</button>
                         <button className={`ca-analysis-tab ${analysisTab === 'trends' ? 'active' : ''}`} onClick={() => { setAnalysisTab('trends'); loadTrendsData() }}>Market Trends</button>
-                        <button className={`ca-analysis-tab ${analysisTab === 'prompts' ? 'active' : ''}`} onClick={() => setAnalysisTab('prompts')}>Chefly Prompts ({analysisResult.chefly_prompts?.length || 0})</button>
                         <button className={`ca-analysis-tab ${analysisTab === 'ads' ? 'active' : ''}`} onClick={() => setAnalysisTab('ads')}>Per-Ad Breakdown ({analysisResult.adAnalyses?.length || 0})</button>
                       </div>
 
@@ -2001,103 +1965,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
                         </div>
                       )}
 
-                      {analysisTab === 'prompts' && (
-                        <div className="ca-analysis-prompts">
-                          {analysisResult.models && (
-                            <div className="ca-models-badge">
-                              Vision: {analysisResult.models.vision} · Prompts: {analysisResult.models.prompts}
-                              {analysisResult.analysis_id && <span className="ca-saved-badge">Saved</span>}
-                              {analysisResult._batch_job_id && <span className="ca-saved-badge" style={{ background: 'rgba(99,102,241,0.15)', color: '#818cf8' }}>1:1 Batch</span>}
-                            </div>
-                          )}
-                          {analysisResult.chefly_prompts?.map((pr, i) => (
-                            <div key={i} className="ca-prompt-card">
-                              <div className="ca-prompt-header">
-                                <span className="ca-prompt-num">#{pr.promptNumber || i + 1}</span>
-                                <h5>{pr.promptName}</h5>
-                                <span className="ca-prompt-basis">{pr.basedOn}</span>
-                                {pr.aspectRatio && <span className="ca-prompt-ratio">{pr.aspectRatio}</span>}
-                                <button
-                                  className={`ca-copy-btn ${copiedPromptIdx === i ? 'copied' : ''}`}
-                                  onClick={() => copyPrompt(pr.full_prompt || pr.imagePrompt || '', i)}
-                                  title="Copy full prompt"
-                                >
-                                  {copiedPromptIdx === i ? '✓ Copied' : 'Copy'}
-                                </button>
-                              </div>
-
-                              {/* 1:1 Source Ad comparison */}
-                              {pr._sourceImage && (
-                                <div className="ca-prompt-source">
-                                  <div className="ca-prompt-source-img">
-                                    <img src={pr._sourceImage} alt="" loading="lazy" onError={handleImgError} />
-                                    <div className="ca-img-fallback" style={{ display: 'none' }}><span className="ca-fallback-text">Image unavailable</span></div>
-                                  </div>
-                                  <div className="ca-prompt-source-meta">
-                                    <span className="ca-prompt-source-label">Source ad</span>
-                                    {pr._sourcePageName && <span className="ca-prompt-source-brand">{pr._sourcePageName}</span>}
-                                    {pr._sourceHeadline && <span className="ca-prompt-source-headline">{pr._sourceHeadline}</span>}
-                                  </div>
-                                </div>
-                              )}
-
-                              <div className="ca-prompt-body">
-                                {pr.full_prompt && (
-                                  <div className="ca-prompt-field">
-                                    <label>Full Creative Brief</label>
-                                    <div className="ca-prompt-text ca-prompt-full" tabIndex={0} onKeyDown={handlePromptKeyDown}>{pr.full_prompt}</div>
-                                  </div>
-                                )}
-
-                                <details className="ca-prompt-sections">
-                                  <summary>View sections breakdown</summary>
-                                  {pr.concept_and_hook && (
-                                    <div className="ca-prompt-field"><label>Concept & Hook</label><div className="ca-prompt-text">{pr.concept_and_hook}</div></div>
-                                  )}
-                                  {pr.setting_and_surface && (
-                                    <div className="ca-prompt-field"><label>Setting & Surface</label><div className="ca-prompt-text">{pr.setting_and_surface}</div></div>
-                                  )}
-                                  {pr.hero_element && (
-                                    <div className="ca-prompt-field"><label>Hero Element</label><div className="ca-prompt-text">{pr.hero_element}</div></div>
-                                  )}
-                                  {pr.copy_and_text && (
-                                    <div className="ca-prompt-field"><label>Copy & Text</label><div className="ca-prompt-text">{pr.copy_and_text}</div></div>
-                                  )}
-                                  {pr.lighting && (
-                                    <div className="ca-prompt-field"><label>Lighting</label><div className="ca-prompt-text">{pr.lighting}</div></div>
-                                  )}
-                                  {pr.camera_and_lens && (
-                                    <div className="ca-prompt-field"><label>Camera & Lens</label><div className="ca-prompt-text">{pr.camera_and_lens}</div></div>
-                                  )}
-                                  {pr.colour_grading && (
-                                    <div className="ca-prompt-field"><label>Colour Grading</label><div className="ca-prompt-text">{pr.colour_grading}</div></div>
-                                  )}
-                                  {pr.exclusions && (
-                                    <div className="ca-prompt-field"><label>Exclusions</label><div className="ca-prompt-text">{pr.exclusions}</div></div>
-                                  )}
-                                  {pr.composition_summary && (
-                                    <div className="ca-prompt-field"><label>Composition Summary</label><div className="ca-prompt-text">{pr.composition_summary}</div></div>
-                                  )}
-                                </details>
-
-                                {!pr.full_prompt && pr.imagePrompt && (
-                                  <div className="ca-prompt-field"><label>Image Prompt</label><div className="ca-prompt-text">{pr.imagePrompt}</div></div>
-                                )}
-                                {pr.suggestedHeadline && (
-                                  <div className="ca-prompt-row">
-                                    <div className="ca-prompt-field"><label>Headline</label><div className="ca-prompt-text">{pr.suggestedHeadline}</div></div>
-                                    {pr.suggestedBody && <div className="ca-prompt-field"><label>Body Copy</label><div className="ca-prompt-text">{pr.suggestedBody}</div></div>}
-                                  </div>
-                                )}
-
-                                <div className="ca-prompt-rationale">
-                                  <strong>Rationale:</strong> {pr.rationale}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      {/* Chefly Prompts tab removed in v3 — prompt writing happens in Cowork */}
 
                       {analysisTab === 'ads' && (
                         <div className="ca-analysis-ads">
