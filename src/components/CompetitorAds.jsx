@@ -353,7 +353,9 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
   const [analysisLoading, setAnalysisLoading] = useState(false)
   const [analysisError, setAnalysisError] = useState(null)
   const [showAnalysis, setShowAnalysis] = useState(false)
-  const [analysisTab, setAnalysisTab] = useState('overview') // overview | prompts | ads
+  const [analysisTab, setAnalysisTab] = useState('overview') // overview | prompts | ads | trends
+  const [trendsData, setTrendsData] = useState(null)
+  const [trendsLoading, setTrendsLoading] = useState(false)
   const [analysisStep, setAnalysisStep] = useState(0) // 0=idle, 1=vision, 2=prompts, 3=saving
   const [promptProgress, setPromptProgress] = useState({ current: 0, total: 0 })
   const [variantIndex, setVariantIndex] = useState(0) // cycling through DCO variants in modal
@@ -527,6 +529,74 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
       setAnalysisError(e.message)
     }
     setAnalysisLoading(false)
+  }
+
+  // Load all v2 runs for Market Trends comparison
+  async function loadTrendsData() {
+    if (trendsData) return // already loaded
+    setTrendsLoading(true)
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/analysis_jobs?pipeline_version=eq.v2&status=eq.completed&select=id,created_at,brands_analysed,merged_themes,merged_personas,merged_pillars,total_images,percentile&order=created_at.asc`,
+        { headers: sbReadHeaders }
+      )
+      if (!res.ok) throw new Error('Failed to load trends data')
+      const runs = await res.json()
+      if (!runs.length) { setTrendsData({ runs: [], themes: [], personas: [], pillars: [] }); setTrendsLoading(false); return }
+
+      // Collect all unique names across runs and track their weight over time
+      const themeMap = {}, personaMap = {}, pillarMap = {}
+      for (const run of runs) {
+        const runDate = new Date(run.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+        const runMeta = { id: run.id, date: runDate, fullDate: run.created_at, brands: run.brands_analysed, totalImages: run.total_images }
+        for (const t of (run.merged_themes || [])) {
+          if (!themeMap[t.name]) themeMap[t.name] = { name: t.name, description: t.description, points: [] }
+          themeMap[t.name].points.push({ ...runMeta, weight: t.weight || 0, momentum: t.momentum || 'niche' })
+        }
+        for (const p of (run.merged_personas || [])) {
+          if (!personaMap[p.name]) personaMap[p.name] = { name: p.name, description: p.description, points: [] }
+          personaMap[p.name].points.push({ ...runMeta, weight: p.weight || 0, momentum: p.momentum || 'niche' })
+        }
+        for (const pl of (run.merged_pillars || [])) {
+          if (!pillarMap[pl.name]) pillarMap[pl.name] = { name: pl.name, description: pl.description, points: [] }
+          pillarMap[pl.name].points.push({ ...runMeta, weight: pl.weight || 0, momentum: pl.momentum || 'niche' })
+        }
+      }
+
+      // Sort each by latest weight descending
+      const sortByLatest = items => Object.values(items).sort((a, b) => {
+        const aLast = a.points[a.points.length - 1]?.weight || 0
+        const bLast = b.points[b.points.length - 1]?.weight || 0
+        return bLast - aLast
+      })
+
+      // Calculate trend direction for items with 2+ data points
+      for (const map of [themeMap, personaMap, pillarMap]) {
+        for (const item of Object.values(map)) {
+          if (item.points.length >= 2) {
+            const first = item.points[0].weight
+            const last = item.points[item.points.length - 1].weight
+            const diff = last - first
+            item.trend = diff > 10 ? 'rising' : diff < -10 ? 'declining' : 'stable'
+            item.trendDelta = diff
+          } else {
+            item.trend = 'new'
+            item.trendDelta = 0
+          }
+        }
+      }
+
+      setTrendsData({
+        runs: runs.map(r => ({ id: r.id, date: new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }), fullDate: r.created_at, brands: r.brands_analysed, totalImages: r.total_images })),
+        themes: sortByLatest(themeMap),
+        personas: sortByLatest(personaMap),
+        pillars: sortByLatest(pillarMap),
+      })
+    } catch (e) {
+      console.error('Failed to load trends', e)
+      setTrendsData({ runs: [], themes: [], personas: [], pillars: [], error: e.message })
+    }
+    setTrendsLoading(false)
   }
 
   const brandColorMap = {}
@@ -1686,6 +1756,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
                     <>
                       <div className="ca-analysis-tabs">
                         <button className={`ca-analysis-tab ${analysisTab === 'overview' ? 'active' : ''}`} onClick={() => setAnalysisTab('overview')}>Themes & Pillars</button>
+                        <button className={`ca-analysis-tab ${analysisTab === 'trends' ? 'active' : ''}`} onClick={() => { setAnalysisTab('trends'); loadTrendsData() }}>Market Trends</button>
                         <button className={`ca-analysis-tab ${analysisTab === 'prompts' ? 'active' : ''}`} onClick={() => setAnalysisTab('prompts')}>Chefly Prompts ({analysisResult.chefly_prompts?.length || 0})</button>
                         <button className={`ca-analysis-tab ${analysisTab === 'ads' ? 'active' : ''}`} onClick={() => setAnalysisTab('ads')}>Per-Ad Breakdown ({analysisResult.adAnalyses?.length || 0})</button>
                       </div>
@@ -1694,14 +1765,32 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
                         <div className="ca-analysis-overview">
                           {analysisResult.themes?.length > 0 && (
                             <div className="ca-analysis-section">
-                              <h4>Themes</h4>
-                              <div className="ca-analysis-cards">
-                                {analysisResult.themes.map((t, i) => (
-                                  <div key={i} className="ca-analysis-card ca-card-theme">
-                                    <div className="ca-card-label">Theme</div>
-                                    <h5>{t.name}</h5>
-                                    <p>{t.description}</p>
-                                    <span className="ca-card-freq">{t.frequency}</span>
+                              <h4>Themes <span className="ca-section-count">{analysisResult.themes.length}</span></h4>
+                              <div className="ca-ranked-list">
+                                {[...analysisResult.themes].sort((a, b) => (b.weight || 0) - (a.weight || 0)).map((t, i) => (
+                                  <div key={i} className={`ca-ranked-card ca-card-theme ${t.momentum ? 'ca-momentum-' + t.momentum : ''}`}>
+                                    <div className="ca-ranked-rank">#{i + 1}</div>
+                                    <div className="ca-ranked-content">
+                                      <div className="ca-ranked-header">
+                                        <h5>{t.name}</h5>
+                                        {t.momentum && <span className={`ca-momentum-tag ca-tag-${t.momentum}`}>{t.momentum}</span>}
+                                      </div>
+                                      <p>{t.description}</p>
+                                      {t.weight != null && (
+                                        <div className="ca-weight-row">
+                                          <div className="ca-weight-bar-bg">
+                                            <div className="ca-weight-bar ca-weight-bar-theme" style={{ width: `${Math.min(t.weight, 100)}%` }}></div>
+                                          </div>
+                                          <span className="ca-weight-val">{Math.round(t.weight)}</span>
+                                        </div>
+                                      )}
+                                      <div className="ca-ranked-meta">
+                                        {t.brandCount && <span className="ca-meta-chip">{t.brandCount} brand{t.brandCount !== 1 ? 's' : ''}</span>}
+                                        {t.totalDaysActive && <span className="ca-meta-chip">{t.totalDaysActive}d active</span>}
+                                        {!t.weight && t.frequency && <span className="ca-meta-chip">{t.frequency}</span>}
+                                        {t.topAds?.length > 0 && <span className="ca-meta-chip ca-meta-chip-subtle">Top: {t.topAds.slice(0, 2).map(a => a.page_name || a.headline || 'Ad').join(', ')}</span>}
+                                      </div>
+                                    </div>
                                   </div>
                                 ))}
                               </div>
@@ -1710,18 +1799,36 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
 
                           {analysisResult.personas?.length > 0 && (
                             <div className="ca-analysis-section">
-                              <h4>Target Personas</h4>
-                              <div className="ca-analysis-cards">
-                                {analysisResult.personas.map((p, i) => (
-                                  <div key={i} className="ca-analysis-card ca-card-persona">
-                                    <div className="ca-card-label">Persona</div>
-                                    <h5>{p.name}</h5>
-                                    <p>{p.description}</p>
-                                    {p.painPoints?.length > 0 && (
-                                      <div className="ca-card-pills">
-                                        {p.painPoints.map((pp, j) => <span key={j} className="ca-pill-pain">{pp}</span>)}
+                              <h4>Target Personas <span className="ca-section-count">{analysisResult.personas.length}</span></h4>
+                              <div className="ca-ranked-list">
+                                {[...analysisResult.personas].sort((a, b) => (b.weight || 0) - (a.weight || 0)).map((p, i) => (
+                                  <div key={i} className={`ca-ranked-card ca-card-persona ${p.momentum ? 'ca-momentum-' + p.momentum : ''}`}>
+                                    <div className="ca-ranked-rank">#{i + 1}</div>
+                                    <div className="ca-ranked-content">
+                                      <div className="ca-ranked-header">
+                                        <h5>{p.name}</h5>
+                                        {p.momentum && <span className={`ca-momentum-tag ca-tag-${p.momentum}`}>{p.momentum}</span>}
                                       </div>
-                                    )}
+                                      <p>{p.description}</p>
+                                      {p.weight != null && (
+                                        <div className="ca-weight-row">
+                                          <div className="ca-weight-bar-bg">
+                                            <div className="ca-weight-bar ca-weight-bar-persona" style={{ width: `${Math.min(p.weight, 100)}%` }}></div>
+                                          </div>
+                                          <span className="ca-weight-val">{Math.round(p.weight)}</span>
+                                        </div>
+                                      )}
+                                      <div className="ca-ranked-meta">
+                                        {p.brandCount && <span className="ca-meta-chip">{p.brandCount} brand{p.brandCount !== 1 ? 's' : ''}</span>}
+                                        {p.totalDaysActive && <span className="ca-meta-chip">{p.totalDaysActive}d active</span>}
+                                        {!p.weight && p.frequency && <span className="ca-meta-chip">{p.frequency}</span>}
+                                      </div>
+                                      {p.painPoints?.length > 0 && (
+                                        <div className="ca-card-pills">
+                                          {p.painPoints.map((pp, j) => <span key={j} className="ca-pill-pain">{pp}</span>)}
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 ))}
                               </div>
@@ -1730,18 +1837,166 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
 
                           {analysisResult.creativePillars?.length > 0 && (
                             <div className="ca-analysis-section">
-                              <h4>Creative Pillars</h4>
-                              <div className="ca-analysis-cards">
-                                {analysisResult.creativePillars.map((cp, i) => (
-                                  <div key={i} className="ca-analysis-card ca-card-pillar">
-                                    <div className="ca-card-label">Pillar</div>
-                                    <h5>{cp.name}</h5>
-                                    <p>{cp.description}</p>
-                                    <p className="ca-card-why"><strong>Why it works:</strong> {cp.whyItWorks}</p>
+                              <h4>Creative Pillars <span className="ca-section-count">{analysisResult.creativePillars.length}</span></h4>
+                              <div className="ca-ranked-list">
+                                {[...analysisResult.creativePillars].sort((a, b) => (b.weight || 0) - (a.weight || 0)).map((cp, i) => (
+                                  <div key={i} className={`ca-ranked-card ca-card-pillar ${cp.momentum ? 'ca-momentum-' + cp.momentum : ''}`}>
+                                    <div className="ca-ranked-rank">#{i + 1}</div>
+                                    <div className="ca-ranked-content">
+                                      <div className="ca-ranked-header">
+                                        <h5>{cp.name}</h5>
+                                        {cp.momentum && <span className={`ca-momentum-tag ca-tag-${cp.momentum}`}>{cp.momentum}</span>}
+                                      </div>
+                                      <p>{cp.description}</p>
+                                      {cp.weight != null && (
+                                        <div className="ca-weight-row">
+                                          <div className="ca-weight-bar-bg">
+                                            <div className="ca-weight-bar ca-weight-bar-pillar" style={{ width: `${Math.min(cp.weight, 100)}%` }}></div>
+                                          </div>
+                                          <span className="ca-weight-val">{Math.round(cp.weight)}</span>
+                                        </div>
+                                      )}
+                                      <div className="ca-ranked-meta">
+                                        {cp.brandCount && <span className="ca-meta-chip">{cp.brandCount} brand{cp.brandCount !== 1 ? 's' : ''}</span>}
+                                        {cp.totalDaysActive && <span className="ca-meta-chip">{cp.totalDaysActive}d active</span>}
+                                        {!cp.weight && cp.frequency && <span className="ca-meta-chip">{cp.frequency}</span>}
+                                      </div>
+                                      {cp.whyItWorks && <p className="ca-card-why"><strong>Why it works:</strong> {cp.whyItWorks}</p>}
+                                    </div>
                                   </div>
                                 ))}
                               </div>
                             </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* ── Market Trends tab ── */}
+                      {analysisTab === 'trends' && (
+                        <div className="ca-analysis-overview ca-trends-tab">
+                          {trendsLoading && (
+                            <div className="ca-trends-loading">
+                              <div className="ca-batch-bar-pulse" style={{ width: 120, height: 4, background: '#6366f1', borderRadius: 2 }}></div>
+                              <p style={{ color: '#71717a', fontSize: 13, marginTop: 10 }}>Loading trend data across all v2 runs...</p>
+                            </div>
+                          )}
+                          {trendsData && !trendsLoading && trendsData.runs.length === 0 && (
+                            <div className="ca-trends-empty">
+                              <p style={{ color: '#71717a', fontSize: 14, textAlign: 'center', padding: '40px 20px' }}>
+                                No v2 pipeline runs found yet. Run a new analysis to start tracking trends over time.
+                              </p>
+                            </div>
+                          )}
+                          {trendsData && !trendsLoading && trendsData.runs.length === 1 && (
+                            <div className="ca-trends-single">
+                              <p style={{ color: '#a0a0b0', fontSize: 14, textAlign: 'center', padding: '30px 20px' }}>
+                                One v2 run found ({trendsData.runs[0].date}). Run another analysis to start seeing trend comparisons.
+                              </p>
+                            </div>
+                          )}
+                          {trendsData && !trendsLoading && trendsData.runs.length >= 1 && (
+                            <>
+                              <div className="ca-trends-header">
+                                <h4>Market Trends</h4>
+                                <p className="ca-trends-sub">{trendsData.runs.length} run{trendsData.runs.length !== 1 ? 's' : ''} tracked: {trendsData.runs.map(r => r.date).join(' → ')}</p>
+                              </div>
+
+                              {trendsData.themes.length > 0 && (
+                                <div className="ca-analysis-section">
+                                  <h4>Theme Trends <span className="ca-section-count">{trendsData.themes.length}</span></h4>
+                                  <div className="ca-trends-list">
+                                    {trendsData.themes.map((t, i) => (
+                                      <div key={i} className="ca-trend-row">
+                                        <div className="ca-trend-name">
+                                          <span className="ca-trend-rank">#{i + 1}</span>
+                                          <span>{t.name}</span>
+                                          <span className={`ca-trend-dir ca-trend-${t.trend}`}>
+                                            {t.trend === 'rising' ? '↑' : t.trend === 'declining' ? '↓' : t.trend === 'new' ? '★' : '→'}
+                                            {t.trend !== 'new' && t.trendDelta !== 0 && ` ${t.trendDelta > 0 ? '+' : ''}${Math.round(t.trendDelta)}`}
+                                          </span>
+                                        </div>
+                                        <div className="ca-trend-sparkline">
+                                          {t.points.map((pt, j) => (
+                                            <div key={j} className="ca-spark-bar-wrap" title={`${pt.date}: weight ${Math.round(pt.weight)}`}>
+                                              <div className="ca-spark-bar ca-spark-theme" style={{ height: `${Math.max(pt.weight, 4)}%` }}></div>
+                                              <span className="ca-spark-label">{pt.date}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                        <div className="ca-trend-latest">
+                                          <span className="ca-trend-weight">{Math.round(t.points[t.points.length - 1]?.weight || 0)}</span>
+                                          <span className={`ca-momentum-tag ca-tag-${t.points[t.points.length - 1]?.momentum || 'niche'}`}>{t.points[t.points.length - 1]?.momentum || 'niche'}</span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {trendsData.personas.length > 0 && (
+                                <div className="ca-analysis-section">
+                                  <h4>Persona Trends <span className="ca-section-count">{trendsData.personas.length}</span></h4>
+                                  <div className="ca-trends-list">
+                                    {trendsData.personas.map((p, i) => (
+                                      <div key={i} className="ca-trend-row">
+                                        <div className="ca-trend-name">
+                                          <span className="ca-trend-rank">#{i + 1}</span>
+                                          <span>{p.name}</span>
+                                          <span className={`ca-trend-dir ca-trend-${p.trend}`}>
+                                            {p.trend === 'rising' ? '↑' : p.trend === 'declining' ? '↓' : p.trend === 'new' ? '★' : '→'}
+                                            {p.trend !== 'new' && p.trendDelta !== 0 && ` ${p.trendDelta > 0 ? '+' : ''}${Math.round(p.trendDelta)}`}
+                                          </span>
+                                        </div>
+                                        <div className="ca-trend-sparkline">
+                                          {p.points.map((pt, j) => (
+                                            <div key={j} className="ca-spark-bar-wrap" title={`${pt.date}: weight ${Math.round(pt.weight)}`}>
+                                              <div className="ca-spark-bar ca-spark-persona" style={{ height: `${Math.max(pt.weight, 4)}%` }}></div>
+                                              <span className="ca-spark-label">{pt.date}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                        <div className="ca-trend-latest">
+                                          <span className="ca-trend-weight">{Math.round(p.points[p.points.length - 1]?.weight || 0)}</span>
+                                          <span className={`ca-momentum-tag ca-tag-${p.points[p.points.length - 1]?.momentum || 'niche'}`}>{p.points[p.points.length - 1]?.momentum || 'niche'}</span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {trendsData.pillars.length > 0 && (
+                                <div className="ca-analysis-section">
+                                  <h4>Pillar Trends <span className="ca-section-count">{trendsData.pillars.length}</span></h4>
+                                  <div className="ca-trends-list">
+                                    {trendsData.pillars.map((pl, i) => (
+                                      <div key={i} className="ca-trend-row">
+                                        <div className="ca-trend-name">
+                                          <span className="ca-trend-rank">#{i + 1}</span>
+                                          <span>{pl.name}</span>
+                                          <span className={`ca-trend-dir ca-trend-${pl.trend}`}>
+                                            {pl.trend === 'rising' ? '↑' : pl.trend === 'declining' ? '↓' : pl.trend === 'new' ? '★' : '→'}
+                                            {pl.trend !== 'new' && pl.trendDelta !== 0 && ` ${pl.trendDelta > 0 ? '+' : ''}${Math.round(pl.trendDelta)}`}
+                                          </span>
+                                        </div>
+                                        <div className="ca-trend-sparkline">
+                                          {pl.points.map((pt, j) => (
+                                            <div key={j} className="ca-spark-bar-wrap" title={`${pt.date}: weight ${Math.round(pt.weight)}`}>
+                                              <div className="ca-spark-bar ca-spark-pillar" style={{ height: `${Math.max(pt.weight, 4)}%` }}></div>
+                                              <span className="ca-spark-label">{pt.date}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                        <div className="ca-trend-latest">
+                                          <span className="ca-trend-weight">{Math.round(pl.points[pl.points.length - 1]?.weight || 0)}</span>
+                                          <span className={`ca-momentum-tag ca-tag-${pl.points[pl.points.length - 1]?.momentum || 'niche'}`}>{pl.points[pl.points.length - 1]?.momentum || 'niche'}</span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       )}

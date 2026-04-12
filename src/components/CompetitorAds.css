@@ -870,6 +870,119 @@
 }
 .ca-card-why { font-style: italic; color: #71717a; font-size: 12px; }
 
+/* ── Ranked weighted cards (v2 overview) ── */
+.ca-section-count {
+  font-size: 11px; font-weight: 600; color: #52525b; background: rgba(255,255,255,0.05);
+  padding: 2px 7px; border-radius: 10px; margin-left: 6px; vertical-align: middle;
+}
+.ca-ranked-list { display: flex; flex-direction: column; gap: 8px; }
+.ca-ranked-card {
+  display: flex; gap: 14px; padding: 14px 16px; border-radius: 10px;
+  border: 1px solid #2a2a34; background: rgba(255,255,255,0.02);
+  transition: border-color 0.15s, background 0.15s;
+}
+.ca-ranked-card:hover { background: rgba(255,255,255,0.04); }
+.ca-ranked-card.ca-card-theme { border-left: 3px solid #6366f1; }
+.ca-ranked-card.ca-card-persona { border-left: 3px solid #f59e0b; }
+.ca-ranked-card.ca-card-pillar { border-left: 3px solid #22c55e; }
+.ca-ranked-rank {
+  flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; font-size: 12px; font-weight: 800; color: #71717a;
+  background: rgba(255,255,255,0.04);
+}
+.ca-ranked-card:nth-child(1) .ca-ranked-rank { color: #fbbf24; background: rgba(251,191,36,0.1); }
+.ca-ranked-card:nth-child(2) .ca-ranked-rank { color: #a0a0b0; background: rgba(255,255,255,0.06); }
+.ca-ranked-card:nth-child(3) .ca-ranked-rank { color: #cd7f32; background: rgba(205,127,50,0.1); }
+.ca-ranked-content { flex: 1; min-width: 0; }
+.ca-ranked-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+.ca-ranked-header h5 { margin: 0; font-size: 15px; color: #e4e4e7; font-weight: 600; }
+.ca-ranked-content p { margin: 0 0 8px; font-size: 13px; color: #a0a0b0; line-height: 1.5; }
+
+/* Momentum tags */
+.ca-momentum-tag {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 2px 8px; border-radius: 4px;
+}
+.ca-tag-dominant { background: rgba(239,68,68,0.15); color: #f87171; }
+.ca-tag-strong { background: rgba(251,191,36,0.15); color: #fbbf24; }
+.ca-tag-emerging { background: rgba(34,197,94,0.15); color: #4ade80; }
+.ca-tag-niche { background: rgba(113,113,122,0.15); color: #a1a1aa; }
+
+/* Weight bar */
+.ca-weight-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.ca-weight-bar-bg {
+  flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden;
+}
+.ca-weight-bar {
+  height: 100%; border-radius: 3px; transition: width 0.6s ease;
+}
+.ca-weight-bar-theme { background: linear-gradient(90deg, #4f46e5, #818cf8); }
+.ca-weight-bar-persona { background: linear-gradient(90deg, #d97706, #fbbf24); }
+.ca-weight-bar-pillar { background: linear-gradient(90deg, #16a34a, #4ade80); }
+.ca-weight-val {
+  flex-shrink: 0; font-size: 13px; font-weight: 700; color: #e4e4e7; min-width: 28px; text-align: right;
+}
+
+/* Ranked meta chips */
+.ca-ranked-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+.ca-meta-chip {
+  font-size: 11px; padding: 2px 8px; border-radius: 4px;
+  background: rgba(255,255,255,0.05); color: #71717a;
+}
+.ca-meta-chip-subtle { color: #52525b; }
+
+/* ── Market Trends tab ── */
+.ca-trends-tab { padding: 20px; }
+.ca-trends-header { margin-bottom: 20px; }
+.ca-trends-header h4 { margin: 0 0 4px; font-size: 18px; font-weight: 700; color: #fff; }
+.ca-trends-sub { margin: 0; font-size: 12px; color: #52525b; }
+.ca-trends-list { display: flex; flex-direction: column; gap: 4px; }
+.ca-trend-row {
+  display: flex; align-items: center; gap: 14px; padding: 10px 14px;
+  border-radius: 8px; background: rgba(255,255,255,0.02);
+  border: 1px solid transparent; transition: background 0.15s;
+}
+.ca-trend-row:hover { background: rgba(255,255,255,0.04); border-color: #2a2a34; }
+.ca-trend-name {
+  display: flex; align-items: center; gap: 8px; min-width: 220px; max-width: 280px;
+  font-size: 13px; color: #e4e4e7; font-weight: 500;
+}
+.ca-trend-rank {
+  font-size: 11px; font-weight: 800; color: #52525b; min-width: 24px;
+}
+.ca-trend-dir { font-size: 12px; font-weight: 700; margin-left: auto; white-space: nowrap; }
+.ca-trend-rising { color: #4ade80; }
+.ca-trend-declining { color: #f87171; }
+.ca-trend-stable { color: #71717a; }
+.ca-trend-new { color: #818cf8; }
+
+/* Sparkline bars */
+.ca-trend-sparkline {
+  display: flex; align-items: flex-end; gap: 3px; height: 40px; flex: 1; min-width: 100px;
+}
+.ca-spark-bar-wrap {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  flex: 1; height: 100%; position: relative;
+}
+.ca-spark-bar {
+  width: 100%; max-width: 24px; min-height: 2px; border-radius: 2px 2px 0 0;
+  transition: height 0.4s ease;
+}
+.ca-spark-theme { background: #6366f1; }
+.ca-spark-persona { background: #f59e0b; }
+.ca-spark-pillar { background: #22c55e; }
+.ca-spark-label {
+  font-size: 8px; color: #52525b; margin-top: 2px; white-space: nowrap;
+}
+
+/* Trend latest column */
+.ca-trend-latest {
+  display: flex; align-items: center; gap: 8px; min-width: 100px; justify-content: flex-end;
+}
+.ca-trend-weight { font-size: 16px; font-weight: 800; color: #e4e4e7; }
+
+.ca-trends-loading { display: flex; flex-direction: column; align-items: center; padding: 40px 20px; }
+
 /* Prompts tab */
 .ca-analysis-prompts { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
 .ca-prompt-card {
