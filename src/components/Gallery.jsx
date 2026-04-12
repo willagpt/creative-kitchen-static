@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function Gallery({ ads, loading, onSelectAd, brands, activeBrandId }) {
+export default function Gallery({ ads, versions, loading, onSelectAd, brands, activeBrandId }) {
   const activeBrand = brands?.find(b => b.id === activeBrandId)
 
   return (
@@ -46,6 +46,7 @@ export default function Gallery({ ads, loading, onSelectAd, brands, activeBrandI
             <AdCard
               key={ad.id}
               ad={ad}
+              versions={versions[ad.id] || []}
               onClick={() => onSelectAd(ad.id)}
             />
           ))}
@@ -55,11 +56,17 @@ export default function Gallery({ ads, loading, onSelectAd, brands, activeBrandI
   )
 }
 
-function AdCard({ ad, onClick }) {
+function AdCard({ ad, versions, onClick }) {
   const hasPrompt = !!ad.generated_prompt
+  const hasImage = !!ad.generated_image_url || versions.length > 0
   const date = ad.created_at
     ? new Date(ad.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
     : ''
+
+  let badge = null
+  if (hasImage) badge = <span className="ad-card-badge has-image">{versions.length || 1} version{versions.length !== 1 ? 's' : ''}</span>
+  else if (hasPrompt) badge = <span className="ad-card-badge has-prompt">scanned</span>
+  else badge = <span className="ad-card-badge pending">ready to scan</span>
 
   return (
     <div className="card" onClick={onClick} style={{ cursor: 'pointer' }}>
@@ -76,11 +83,7 @@ function AdCard({ ad, onClick }) {
             <p>No image</p>
           </div>
         )}
-        {hasPrompt ? (
-          <span className="ad-card-badge has-prompt">scanned</span>
-        ) : (
-          <span className="ad-card-badge pending">ready to scan</span>
-        )}
+        {badge}
       </div>
       <div className="ad-card-body">
         <div className="ad-card-name">{ad.advertiser_name || 'Unknown brand'}</div>
@@ -88,6 +91,22 @@ function AdCard({ ad, onClick }) {
           {date}
           {ad.platform && ` · ${ad.platform}`}
         </div>
+        {versions.length > 0 && (
+          <div className="ad-card-versions">
+            {versions.slice(0, 5).map(v => (
+              <div key={v.id} className="ad-card-version-dot">
+                <img src={v.image_url} alt="" loading="lazy" />
+              </div>
+            ))}
+            {versions.length > 5 && (
+              <div className="ad-card-version-dot flex-center text-xs text-muted" style={{
+                justifyContent: 'center', background: 'var(--bg-3)'
+              }}>
+                +{versions.length - 5}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

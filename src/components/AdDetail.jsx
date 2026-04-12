@@ -2,21 +2,21 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase'
 
 /**
- * AdDetail — Stripped-down 3-step scan flow:
+ * AdDetail — 3-step scan flow + version history:
  * 1. Review brand guidelines (D3)
  * 2. Opus 4.6 visual analysis of the competitor ad
  * 3. Long-format prompt output
- *
- * No image generation, no creative direction, no versions, no fal.ai.
+ * + Previous generated versions displayed below
  */
 
-export default function AdDetail({ ad, onClose, onRefresh, brands, activeBrandId }) {
+export default function AdDetail({ ad, versions = [], onClose, onRefresh, brands, activeBrandId }) {
   const [step, setStep] = useState(0) // 0=idle, 1=guidelines, 2=analysing, 3=done
   const [analysis, setAnalysis] = useState('')
   const [prompt, setPrompt] = useState(ad.generated_prompt || '')
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [selectedVersion, setSelectedVersion] = useState(null)
   const scanRanRef = useRef(false)
 
   const activeBrand = brands?.find(b => b.id === activeBrandId)
@@ -35,6 +35,7 @@ export default function AdDetail({ ad, onClose, onRefresh, brands, activeBrandId
     setStep(0)
     setStatus('')
     setError('')
+    setSelectedVersion(null)
     scanRanRef.current = false
   }, [ad.id])
 
@@ -81,7 +82,7 @@ export default function AdDetail({ ad, onClose, onRefresh, brands, activeBrandId
     // Step 1: Brand guidelines
     setStep(1)
     setStatus('Reviewing brand guidelines...')
-    await new Promise(r => setTimeout(r, 800)) // brief pause so user sees the step
+    await new Promise(r => setTimeout(r, 800))
 
     if (!activeBrand) {
       setError('No brand selected. Go to Brand DNA and select a brand first.')
@@ -136,6 +137,12 @@ export default function AdDetail({ ad, onClose, onRefresh, brands, activeBrandId
     setTimeout(() => setCopied(false), 2000)
   }
 
+  function copyVersionPrompt(text) {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   // Auto-scan on open if no prompt exists
   useEffect(() => {
     if (!ad.generated_prompt && !scanRanRef.current) {
@@ -163,12 +170,8 @@ export default function AdDetail({ ad, onClose, onRefresh, brands, activeBrandId
         {/* Original ad image */}
         <div style={{ marginBottom: 'var(--space-lg)' }}>
           <div style={{
-            borderRadius: 8,
-            overflow: 'hidden',
-            maxHeight: 400,
-            display: 'flex',
-            justifyContent: 'center',
-            background: 'var(--bg-2)',
+            borderRadius: 8, overflow: 'hidden', maxHeight: 400,
+            display: 'flex', justifyContent: 'center', background: 'var(--bg-2)',
           }}>
             {ad.image_url ? (
               <img
@@ -213,10 +216,7 @@ export default function AdDetail({ ad, onClose, onRefresh, brands, activeBrandId
         {/* Step 1: Brand Guidelines Summary */}
         {step >= 1 && hasBrandData && (
           <div style={{ marginBottom: 'var(--space-lg)' }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 'var(--space-sm)',
-              marginBottom: 'var(--space-sm)',
-            }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-sm)' }}>
               <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: 1 }}>
                 Step 1 — Brand Guidelines
               </span>
@@ -246,10 +246,7 @@ export default function AdDetail({ ad, onClose, onRefresh, brands, activeBrandId
         {/* Step 2: Visual Analysis */}
         {step >= 2 && (
           <div style={{ marginBottom: 'var(--space-lg)' }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 'var(--space-sm)',
-              marginBottom: 'var(--space-sm)',
-            }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-sm)' }}>
               <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: 1 }}>
                 Step 2 — Opus 4.6 Visual Analysis
               </span>
@@ -280,23 +277,16 @@ export default function AdDetail({ ad, onClose, onRefresh, brands, activeBrandId
         {/* Step 3: Long-Format Prompt */}
         {step >= 3 && prompt && (
           <div style={{ marginBottom: 'var(--space-lg)' }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              marginBottom: 'var(--space-sm)',
-            }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
               <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: 1 }}>
                 Step 3 — Long-Format Prompt
               </span>
-              <button
-                onClick={copyPrompt}
-                style={{
-                  background: copied ? 'var(--accent)' : 'var(--bg-3)',
-                  color: copied ? 'var(--bg-0)' : 'var(--text-primary)',
-                  border: 'none', borderRadius: 6, padding: '6px 14px',
-                  fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                }}
-              >
+              <button onClick={copyPrompt} className="btn-copy-pill" style={{
+                background: copied ? 'var(--accent)' : 'var(--bg-3)',
+                color: copied ? 'var(--bg-0)' : 'var(--text-primary)',
+                border: 'none', borderRadius: 6, padding: '6px 14px',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease',
+              }}>
                 {copied ? '✓ Copied' : 'Copy Prompt'}
               </button>
             </div>
@@ -318,7 +308,7 @@ export default function AdDetail({ ad, onClose, onRefresh, brands, activeBrandId
           </div>
         )}
 
-        {/* Scan button — only shows if we haven't auto-scanned */}
+        {/* Scan / Re-scan button for already-scanned ads */}
         {step === 0 && !error && ad.generated_prompt && (
           <div style={{ textAlign: 'center', padding: 'var(--space-lg)' }}>
             <p className="text-sm text-muted" style={{ marginBottom: 'var(--space-md)' }}>
@@ -336,22 +326,16 @@ export default function AdDetail({ ad, onClose, onRefresh, brands, activeBrandId
         {/* Show existing prompt if loaded from DB but not re-scanned */}
         {step === 0 && !error && ad.generated_prompt && prompt && (
           <div style={{ marginTop: 'var(--space-lg)' }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              marginBottom: 'var(--space-sm)',
-            }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
               <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>
                 Previous Prompt
               </span>
-              <button
-                onClick={copyPrompt}
-                style={{
-                  background: copied ? 'var(--accent)' : 'var(--bg-3)',
-                  color: copied ? 'var(--bg-0)' : 'var(--text-primary)',
-                  border: 'none', borderRadius: 6, padding: '6px 14px',
-                  fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                }}
-              >
+              <button onClick={copyPrompt} style={{
+                background: copied ? 'var(--accent)' : 'var(--bg-3)',
+                color: copied ? 'var(--bg-0)' : 'var(--text-primary)',
+                border: 'none', borderRadius: 6, padding: '6px 14px',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              }}>
                 {copied ? '✓ Copied' : 'Copy Prompt'}
               </button>
             </div>
@@ -370,6 +354,142 @@ export default function AdDetail({ ad, onClose, onRefresh, brands, activeBrandId
             <p className="text-xs text-muted" style={{ marginTop: 'var(--space-xs)' }}>
               {prompt.length.toLocaleString()} characters · {prompt.split(/\s+/).length.toLocaleString()} words
             </p>
+          </div>
+        )}
+
+        {/* ═══ GENERATED VERSIONS ═══ */}
+        {versions.length > 0 && (
+          <div style={{ marginTop: 'var(--space-xl)', borderTop: '1px solid var(--border)', paddingTop: 'var(--space-lg)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-md)' }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                Generated Versions ({versions.length})
+              </span>
+            </div>
+
+            {/* Version thumbnails strip */}
+            <div style={{
+              display: 'flex', gap: 'var(--space-sm)', overflowX: 'auto',
+              paddingBottom: 'var(--space-sm)', marginBottom: 'var(--space-md)',
+            }}>
+              {versions.map((v, i) => {
+                const num = versions.length - i
+                const isSelected = selectedVersion === i
+                return (
+                  <div
+                    key={v.id}
+                    onClick={() => setSelectedVersion(isSelected ? null : i)}
+                    style={{
+                      flexShrink: 0, cursor: 'pointer',
+                      borderRadius: 8, overflow: 'hidden',
+                      border: isSelected ? '2px solid var(--accent)' : '2px solid var(--border)',
+                      transition: 'border-color 0.2s ease',
+                      width: 100,
+                    }}
+                  >
+                    <img
+                      src={v.image_url}
+                      alt={`v${num}`}
+                      style={{ width: 100, height: 120, objectFit: 'cover', display: 'block' }}
+                      loading="lazy"
+                    />
+                    <div style={{
+                      padding: '4px 6px', background: 'var(--bg-2)',
+                      fontSize: 10, color: 'var(--text-muted)', textAlign: 'center',
+                    }}>
+                      v{num} {v.aspect_ratio || ''}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Expanded version detail */}
+            {selectedVersion !== null && versions[selectedVersion] && (
+              <div style={{
+                background: 'var(--bg-1)', borderRadius: 8,
+                border: '1px solid var(--border)', overflow: 'hidden',
+              }}>
+                {/* Image */}
+                <div style={{
+                  display: 'flex', justifyContent: 'center', background: 'var(--bg-2)',
+                  maxHeight: 500,
+                }}>
+                  <img
+                    src={versions[selectedVersion].image_url}
+                    alt={`Version ${versions.length - selectedVersion}`}
+                    style={{ maxHeight: 500, objectFit: 'contain', width: '100%' }}
+                  />
+                </div>
+
+                {/* Version info */}
+                <div style={{ padding: 'var(--space-md)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      v{versions.length - selectedVersion} · {versions[selectedVersion].aspect_ratio || 'unknown'} ·{' '}
+                      {new Date(versions[selectedVersion].created_at).toLocaleDateString('en-GB', {
+                        day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                      })}
+                    </span>
+                    <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
+                      {versions[selectedVersion].prompt && (
+                        <button
+                          onClick={() => copyVersionPrompt(versions[selectedVersion].prompt)}
+                          style={{
+                            background: 'var(--bg-3)', color: 'var(--text-primary)',
+                            border: 'none', borderRadius: 6, padding: '4px 10px',
+                            fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                          }}
+                        >
+                          Copy Prompt
+                        </button>
+                      )}
+                      <button
+                        onClick={async () => {
+                          try {
+                            const res = await fetch(versions[selectedVersion].image_url)
+                            const blob = await res.blob()
+                            const url = URL.createObjectURL(blob)
+                            const a = document.createElement('a')
+                            a.href = url
+                            a.download = `chefly-v${versions.length - selectedVersion}-${Date.now()}.png`
+                            document.body.appendChild(a)
+                            a.click()
+                            document.body.removeChild(a)
+                            URL.revokeObjectURL(url)
+                          } catch {
+                            window.open(versions[selectedVersion].image_url, '_blank')
+                          }
+                        }}
+                        style={{
+                          background: 'var(--bg-3)', color: 'var(--text-primary)',
+                          border: 'none', borderRadius: 6, padding: '4px 10px',
+                          fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                        }}
+                      >
+                        ↓ Download
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Version prompt */}
+                  {versions[selectedVersion].prompt && (
+                    <details style={{ marginTop: 'var(--space-sm)' }}>
+                      <summary className="text-xs" style={{ cursor: 'pointer', color: 'var(--text-muted)', userSelect: 'none' }}>
+                        View prompt used ({versions[selectedVersion].prompt.length.toLocaleString()} chars)
+                      </summary>
+                      <pre style={{
+                        whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                        fontFamily: 'JetBrains Mono, monospace', fontSize: 11,
+                        lineHeight: 1.6, color: 'var(--text-secondary)', margin: 0,
+                        marginTop: 'var(--space-sm)', maxHeight: 300, overflowY: 'auto',
+                      }}>
+                        {versions[selectedVersion].prompt}
+                      </pre>
+                    </details>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -147,6 +147,7 @@ export default function App() {
         {tab === 'gallery' && (
           <Gallery
             ads={ads}
+            versions={versions}
             loading={loading}
             onSelectAd={setSelectedAdId}
             brands={brands}
@@ -201,6 +202,7 @@ export default function App() {
       {selectedAd && (
         <AdDetail
           ad={selectedAd}
+          versions={selectedVersions}
           onClose={() => setSelectedAdId(null)}
           onRefresh={loadAds}
           brands={brands}
