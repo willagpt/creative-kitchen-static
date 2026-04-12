@@ -21,6 +21,16 @@ const FLUX_SIZE_MAP = {
   '2:3': 'portrait_4_3',
 }
 
+// Canva design dimensions mapped to aspect ratios
+const CANVA_SIZE_MAP = {
+  '1:1': { width: 1080, height: 1080 },
+  '4:5': { width: 1080, height: 1350 },
+  '9:16': { width: 1080, height: 1920 },
+  '16:9': { width: 1920, height: 1080 },
+  '3:2': { width: 1080, height: 720 },
+  '2:3': { width: 720, height: 1080 },
+}
+
 const DEFAULT_PROMPT = `Create a bold headline static advertisement for "CHEFLY" (eatchefly.com). Large, attention-grabbing headline dominates the top third. Product image centered below. Strong call-to-action button at bottom. Brand colors — use ONLY these for all backgrounds, text, accents, and graphic elements: #FF6B2C, #0D0D0D, #FFF6EE, #FFD60A, #A8E10C, #FF8FA3, #5CCFFF. Product: fresh meals. Key claims: Preservative-free meals, no seed oils, high protein. Photography: Clean, minimal, product-focused compositions. Professional advertising quality. 1080x1080 square format.`
 
 const PRESETS = [
@@ -121,6 +131,8 @@ export default function PromptTester() {
   const [refineText, setRefineText] = useState('')
   const [promoting, setPromoting] = useState(false)
   const [promoted, setPromoted] = useState(false)
+  const [canvaSending, setCanvaSending] = useState(false)
+  const [canvaSent, setCanvaSent] = useState(false)
 
   const timerRef = useRef(null)
 
@@ -372,6 +384,71 @@ export default function PromptTester() {
     setPromoting(false)
   }
 
+  // Send to Canva: copy image to clipboard + open new Canva design at correct size
+  const handleSendToCanva = async () => {
+    if (!resultImage) return
+    setCanvaSending(true)
+    setCanvaSent(false)
+
+    try {
+      // Convert image to blob for clipboard
+      let blob
+      if (resultImage.startsWith('data:')) {
+        // Data URL — convert to blob
+        const resp = await fetch(resultImage)
+        blob = await resp.blob()
+      } else {
+        // Remote URL — fetch and convert
+        const resp = await fetch(resultImage)
+        blob = await resp.blob()
+      }
+
+      // Ensure it's a PNG for clipboard compatibility
+      if (blob.type !== 'image/png') {
+        const img = new Image()
+        const canvas = document.createElement('canvas')
+        await new Promise((resolve, reject) => {
+          img.onload = () => {
+            canvas.width = img.naturalWidth
+            canvas.height = img.naturalHeight
+            const ctx = canvas.getContext('2d')
+            ctx.drawImage(img, 0, 0)
+            canvas.toBlob((pngBlob) => {
+              blob = pngBlob
+              resolve()
+            }, 'image/png')
+          }
+          img.onerror = reject
+          img.src = resultImage
+        })
+      }
+
+      // Copy to clipboard
+      await navigator.clipboard.write([
+        new ClipboardItem({ 'image/png': blob })
+      ])
+
+      // Open Canva with correct dimensions
+      const currentRatio = showDetail?.ratio || ratio
+      const size = CANVA_SIZE_MAP[currentRatio] || CANVA_SIZE_MAP['1:1']
+      const canvaUrl = `https://www.canva.com/design/create?width=${size.width}&height=${size.height}`
+      window.open(canvaUrl, '_blank')
+
+      setCanvaSent(true)
+      setStatus('image copied — paste into Canva (Ctrl+V)')
+      setTimeout(() => setCanvaSent(false), 4000)
+    } catch (err) {
+      // Fallback: if clipboard fails, just open Canva and tell user to download
+      console.error('Clipboard copy failed:', err)
+      const currentRatio = showDetail?.ratio || ratio
+      const size = CANVA_SIZE_MAP[currentRatio] || CANVA_SIZE_MAP['1:1']
+      const canvaUrl = `https://www.canva.com/design/create?width=${size.width}&height=${size.height}`
+      window.open(canvaUrl, '_blank')
+      setStatus('clipboard blocked — download the image and upload to Canva manually')
+    }
+    setCanvaSending(false)
+  }
+
   // Refine: append refinement text and re-generate
   const handleRefine = () => {
     if (!refineText.trim()) return
@@ -487,7 +564,7 @@ export default function PromptTester() {
             <span style={{ fontVariantNumeric: 'tabular-nums' }}>{elapsed}</span>
           </div>
 
-          {/* Actions: Refine, Download, Promote */}
+          {/* Actions: Refine, Download, Canva, Promote */}
           {resultImage && (
             <>
               <div className="pt-refine-bar">
@@ -510,6 +587,18 @@ export default function PromptTester() {
               <div className="pt-actions">
                 <button className="btn btn-ghost btn-sm" onClick={handleDownload}>
                   download
+                </button>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={handleSendToCanva}
+                  disabled={canvaSending || canvaSent}
+                  style={{
+                    background: canvaSent ? 'var(--green)' : 'rgba(0, 196, 204, 0.12)',
+                    color: canvaSent ? '#000' : '#00c4cc',
+                    borderColor: canvaSent ? 'var(--green)' : 'rgba(0, 196, 204, 0.3)',
+                  }}
+                >
+                  {canvaSent ? 'copied — paste in Canva' : canvaSending ? 'copying...' : 'send to canva'}
                 </button>
                 <button
                   className="btn btn-primary btn-sm"
