@@ -1,5 +1,6 @@
 // POST /functions/v1/generate-ugc-brief
 // Generate a structured UGC creator brief from video analysis insights using Claude AI
+// v2: Chefly-branded, with shot variations for building creator shot libraries
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -68,7 +69,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    const { analysis_id, shot_count = 5, brand_name } = body;
+    const { analysis_id, shot_count = 5, brand_name, variations_per_shot = 3 } = body;
 
     if (!analysis_id) {
       return new Response(JSON.stringify({ error: "analysis_id required" }), {
@@ -79,6 +80,13 @@ Deno.serve(async (req: Request) => {
 
     if (![5, 10].includes(shot_count)) {
       return new Response(JSON.stringify({ error: "shot_count must be 5 or 10" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (![2, 3, 4].includes(variations_per_shot)) {
+      return new Response(JSON.stringify({ error: "variations_per_shot must be 2, 3, or 4" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -144,23 +152,33 @@ Deno.serve(async (req: Request) => {
 
     const resolvedBrand = brand_name || adContext.page_name || "the brand";
 
-    const systemPrompt = `You are an expert UGC (User Generated Content) brief writer for DTC food and meal delivery brands. You translate competitor video ad analysis into actionable, shootable briefs that real creators can execute.
+    const systemPrompt = `You are an expert UGC (User Generated Content) brief writer for Chefly, a premium DTC meal delivery brand. You analyse competitor video ads and translate their insights into actionable, shootable briefs that Chefly's creators can execute.
 
 Key principles:
+- Every brief is FOR Chefly — adapt competitor insights to Chefly's brand, voice, and products
 - Be SPECIFIC and ACTIONABLE — creators need exact shot directions, not vague concepts
 - Include precise timings and realistic framing language (handheld, close-up, POV, etc.)
 - Script lines must sound authentic and conversational — never corporate or salesy
 - Production tips must be practical and achievable with a phone camera and natural light
-- Capture the FEELING and STRUCTURE of what works, don't copy the content
+- Capture the FEELING and STRUCTURE of what works, don't copy the competitor's content
 - For food brands: emphasise product beauty shots, unboxing moments, and real eating reactions
+- Each shot MUST include exactly ${variations_per_shot} VARIATIONS (labelled A, B, C, etc.) — different angles, framings, or creative approaches for the same moment, giving creators options to build a comprehensive shot library
 
 Always output valid JSON with no markdown formatting or code blocks.`;
 
-    const userPrompt = `Generate a ${shot_count}-shot UGC creator brief based on this competitor video analysis.
+    const variationLabels = Array.from({ length: variations_per_shot }, (_, i) => String.fromCharCode(65 + i));
+    const variationExample = variationLabels.map(label => ({
+      label,
+      framing: `Variation ${label} framing description`,
+      action: `Variation ${label} action description`,
+      notes: "What makes this variation different"
+    }));
+
+    const userPrompt = `Generate a ${shot_count}-shot UGC creator brief for Chefly, based on this competitor video analysis from ${resolvedBrand}.
 
 **Original Video Stats:**
 - Duration: ${analysis.duration_seconds}s | Shots: ${analysis.total_shots} | Pacing: ${analysis.pacing_profile}
-- Brand: ${resolvedBrand}
+- Competitor Brand: ${resolvedBrand}
 - Creative title: "${adContext.creative_title || "N/A"}"
 - Body copy: "${adContext.creative_body || "N/A"}"
 
@@ -187,10 +205,14 @@ ${analysis.combined_script || "(No script available)"}
 
 ---
 
+Remember: This brief is FOR CHEFLY, not for ${resolvedBrand}. Adapt the competitor's winning formula to work for Chefly's brand and products.
+
+Each shot MUST have exactly ${variations_per_shot} variations in the "variations" array.
+
 Generate a JSON object with this EXACT structure:
 {
-  "concept": "One-line creative angle for this brief",
-  "inspired_by": "What from the original ad inspired this brief",
+  "concept": "One-line creative angle for this Chefly brief",
+  "inspired_by": "What from the ${resolvedBrand} ad inspired this brief",
   "target_duration": "e.g. 15-20 seconds",
   "tone": "e.g. casual, energetic, authentic",
   "music_direction": "e.g. upbeat trending audio, lo-fi chill",
@@ -204,14 +226,15 @@ Generate a JSON object with this EXACT structure:
       "action": "Specific physical action the creator does",
       "script_line": "Exact words the creator says",
       "text_overlay": "On-screen text/emoji or null",
-      "notes": "Camera movement, lighting, energy level"
+      "notes": "Camera movement, lighting, energy level",
+      "variations": ${JSON.stringify(variationExample)}
     }
   ]
 }
 
-The brief must have exactly ${shot_count} shots. Make every shot specific enough that a creator could film it from this description alone.`;
+The brief must have exactly ${shot_count} shots, each with exactly ${variations_per_shot} variations. Make every shot specific enough that a creator could film it from this description alone.`;
 
-    console.log(`Generating ${shot_count}-shot UGC brief for analysis ${analysis_id}...`);
+    console.log(`Generating ${shot_count}-shot Chefly UGC brief (${variations_per_shot} variations each) for analysis ${analysis_id}...`);
     const claudeResponse = await callClaudeWithRetry(claudeApiKey, systemPrompt, userPrompt);
 
     // Parse JSON response
@@ -237,7 +260,7 @@ The brief must have exactly ${shot_count} shots. Make every shot specific enough
       );
     }
 
-    return new Response(JSON.stringify({ brief, analysis_id, shot_count }), {
+    return new Response(JSON.stringify({ brief, analysis_id, shot_count, variations_per_shot }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

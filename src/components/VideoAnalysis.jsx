@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import './VideoAnalysis.css'
 import { supabaseUrl, supabaseAnonKey } from '../lib/supabase'
 import { generateShareableHTML } from '../lib/shareableExport'
+import { generateBriefHTML } from '../lib/briefExport'
 
 const fnHeaders = {
   apikey: supabaseAnonKey,
@@ -339,6 +340,7 @@ function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
   const [briefLoading, setBriefLoading] = useState(false)
   const [briefError, setBriefError] = useState(null)
   const [briefShotCount, setBriefShotCount] = useState(5)
+  const [briefVariations, setBriefVariations] = useState(3)
   const [shareLoading, setShareLoading] = useState(false)
 
   if (!analysis) return null
@@ -380,6 +382,7 @@ function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
             analysis_id: analysis.id,
             shot_count: briefShotCount,
             brand_name: analysis.brand_name,
+            variations_per_shot: briefVariations,
           }),
         }
       )
@@ -442,12 +445,22 @@ function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
                 <option value={5}>5 Shots</option>
                 <option value={10}>10 Shots</option>
               </select>
+              <select
+                className="va-select"
+                value={briefVariations}
+                onChange={(e) => setBriefVariations(Number(e.target.value))}
+                disabled={briefLoading}
+              >
+                <option value={2}>2 Variations</option>
+                <option value={3}>3 Variations</option>
+                <option value={4}>4 Variations</option>
+              </select>
               <button
                 className="va-btn va-btn-primary"
                 onClick={handleGenerateBrief}
                 disabled={briefLoading}
               >
-                {briefLoading ? 'Generating...' : 'Generate UGC Brief'}
+                {briefLoading ? 'Generating...' : 'Generate Chefly Brief'}
               </button>
             </div>
           </div>
@@ -457,8 +470,8 @@ function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
             <div className="va-loading-banner">
               <div className="va-spinner-sm"></div>
               <div className="va-loading-banner-text">
-                <span className="va-loading-banner-title">Generating UGC Brief...</span>
-                <span className="va-loading-banner-sub">AI is crafting a {briefShotCount}-shot production brief. This usually takes 10-15 seconds.</span>
+                <span className="va-loading-banner-title">Generating Chefly UGC Brief...</span>
+                <span className="va-loading-banner-sub">AI is crafting a {briefShotCount}-shot brief with {briefVariations} variations per shot. This usually takes 10-15 seconds.</span>
               </div>
             </div>
           )}
@@ -491,7 +504,7 @@ function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
               className={`va-tab ${detailTab === 'brief' ? 'active' : ''}`}
               onClick={() => onTabChange('brief')}
             >
-              UGC Brief
+              Chefly Brief
             </button>
           )}
         </div>
@@ -501,7 +514,7 @@ function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
           {detailTab === 'script' && <ScriptTab analysis={analysis} />}
           {detailTab === 'analysis' && <AnalysisTab analysis={analysis} />}
           {detailTab === 'shots' && <ShotsTab analysis={analysis} />}
-          {detailTab === 'brief' && briefData && <BriefTab brief={briefData} />}
+          {detailTab === 'brief' && briefData && <BriefTab brief={briefData} brandName={analysis.brand_name} />}
         </div>
       </div>
     </div>
@@ -814,11 +827,41 @@ function ShotsTab({ analysis }) {
   )
 }
 
-function BriefTab({ brief }) {
+function BriefTab({ brief, brandName }) {
   if (!brief) return <div className="va-tab-empty">No brief generated yet</div>
+
+  const handleExportHTML = () => {
+    const html = generateBriefHTML(brief, brandName)
+    const blob = new Blob([html], { type: 'text/html' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `chefly-ugc-brief-${new Date().toISOString().slice(0, 10)}.html`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleExportPDF = () => {
+    const html = generateBriefHTML(brief, brandName)
+    const win = window.open('', '_blank')
+    win.document.write(html)
+    win.document.close()
+    // Give it a moment to render, then trigger print
+    setTimeout(() => win.print(), 500)
+  }
 
   return (
     <div className="va-analysis">
+      {/* Export bar */}
+      <div className="va-brief-export-bar">
+        <button className="va-btn va-btn-ghost" onClick={handleExportHTML}>
+          ↓ Download HTML
+        </button>
+        <button className="va-btn va-btn-ghost" onClick={handleExportPDF}>
+          ↓ Save as PDF
+        </button>
+      </div>
+
       {/* Concept */}
       <Section title="Creative Concept">
         <p className="va-section-text" style={{fontSize:'1.1rem',fontWeight:600,color:'#fff'}}>{brief.concept}</p>
@@ -880,6 +923,36 @@ function BriefTab({ brief }) {
                   <div className="va-brief-shot-row">
                     <span className="va-brief-shot-label">Notes</span>
                     <span className="va-brief-shot-value va-brief-note">{shot.notes}</span>
+                  </div>
+                )}
+
+                {/* Variations */}
+                {shot.variations && shot.variations.length > 0 && (
+                  <div className="va-brief-variations">
+                    <div className="va-brief-variations-title">Variations</div>
+                    {shot.variations.map((v, vIdx) => (
+                      <div key={vIdx} className="va-brief-variation">
+                        <div className="va-brief-variation-label">Variation {v.label}</div>
+                        {v.framing && (
+                          <div className="va-brief-variation-row">
+                            <span className="va-brief-shot-label">Framing</span>
+                            <span className="va-brief-shot-value">{v.framing}</span>
+                          </div>
+                        )}
+                        {v.action && (
+                          <div className="va-brief-variation-row">
+                            <span className="va-brief-shot-label">Action</span>
+                            <span className="va-brief-shot-value">{v.action}</span>
+                          </div>
+                        )}
+                        {v.notes && (
+                          <div className="va-brief-variation-row">
+                            <span className="va-brief-shot-label">Notes</span>
+                            <span className="va-brief-shot-value va-brief-note">{v.notes}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
