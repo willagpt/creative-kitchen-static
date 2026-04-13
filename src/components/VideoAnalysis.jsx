@@ -26,11 +26,17 @@ function filterMeaningful(arr) {
   return arr.filter(item => {
     if (typeof item === 'string') return !isEmptyValue(item)
     if (typeof item === 'object' && item !== null) {
-      // For object beats/phases, check if any value is meaningful
       return Object.values(item).some(v => !isEmptyValue(v))
     }
     return true
   })
+}
+
+// Helper: format cuts per second as "cut every Xs"
+function formatCutInterval(cutsPerSecond) {
+  if (!cutsPerSecond || cutsPerSecond <= 0) return '—'
+  const interval = 1 / cutsPerSecond
+  return `${interval.toFixed(1)}s`
 }
 
 export default function VideoAnalysis() {
@@ -313,7 +319,7 @@ function AnalysisCard({ analysis, onClick }) {
           )}
           {analysis.cuts_per_second && (
             <span className="va-meta-item">
-              ✂ {analysis.cuts_per_second.toFixed(2)}/s
+              ✂ cut every {formatCutInterval(analysis.cuts_per_second)}
             </span>
           )}
         </div>
@@ -411,8 +417,8 @@ function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
           <div className="va-detail-stats">
             <StatItem label="Duration" value={`${analysis.duration_seconds?.toFixed(1) || '—'}s`} />
             <StatItem label="Total Shots" value={analysis.total_shots || '—'} />
-            <StatItem label="Avg Shot" value={`${analysis.avg_shot_duration?.toFixed(2) || '—'}s`} />
-            <StatItem label="Cuts/Sec" value={analysis.cuts_per_second?.toFixed(2) || '—'} />
+            <StatItem label="Avg Shot Length" value={`${analysis.avg_shot_duration?.toFixed(1) || '—'}s`} />
+            <StatItem label="Cut Every" value={formatCutInterval(analysis.cuts_per_second)} />
             <StatItem label="Pacing" value={analysis.pacing_profile || '—'} />
             <StatItem label="Status" value={analysis.status} />
           </div>
