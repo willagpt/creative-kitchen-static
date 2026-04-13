@@ -90,9 +90,9 @@ function extractImageFromHtml(html: string, baseUrl: string): { thumbnail_url: s
   // 7. JSON-LD schema.org image
   const jsonLdMatches = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) || [];
   for (const block of jsonLdMatches) {
-    const content = block.match(/>([\s\S]*?)<\/script>/i);
+    const content = block.match(/>[\s\S]*?<\/script>/i);
     if (content) {
-      const imgInJson = content[1].match(/"image"\s*:\s*["']([^"']+)["']/i);
+      const imgInJson = content[0].match(/"image"\s*:\s*["']([^"']+)["']/i);
       if (imgInJson && isGoodImageUrl(imgInJson[1])) {
         candidates.push({ url: resolveUrl(imgInJson[1], baseUrl), score: 70, source: 'json-ld' });
       }
