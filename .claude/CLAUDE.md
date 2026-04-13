@@ -1,113 +1,210 @@
 # Creative Kitchen Static
 
-AI-powered static ad image generator for Willa Ltd, branded as "Big Tasty Productions". Generates marketing images from brand DNA analysis, with AI prompt iteration and a review/rating system. Part of the Marketing suite in Willa HQ.
+Static image ad generator and competitive intelligence tool for Willa Ltd (trading as Chefly). Generates AI ad creatives, analyses competitor ads from Meta Ad Library, and manages brand guidelines. Separate project from Creative Kitchen Video (v3).
 
 ## Tech Stack
 
-- **Framework:** Vite + React
-- **Database:** Supabase project `ifrxylvoufncdxyltgqt` (URL: `https://ifrxylvoufncdxyltgqt.supabase.co`)
-- **Hosting:** Vercel (personal account: jameseatcheflycos-projects)
-- **Fonts:** Plus Jakarta Sans, Syne, Instrument Serif (Google Fonts)
+- **Framework:** Vite + React (not Next.js)
+- **Database:** Supabase (ref: `ifrxylvoufncdxyltgqt`, EU Central)
+- **Secondary DB:** Supabase (ref: `ajpxzifhoohjkyoyktsi`, US East) for cross-project data (ad launches)
+- **Hosting:** Vercel (auto-deploy from main)
+- **AI:** Anthropic Claude (via Supabase edge functions for prompt generation and ad analysis)
 - **Repo:** github.com/willagpt/creative-kitchen-static
-
-## Live URL
-
-https://creative-kitchen-static.vercel.app
+- **Live URL:** https://creative-kitchen-static.vercel.app
 
 ## Architecture
 
-Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product info), generates AI image prompts across templates, creates images, and tracks reviews/ratings.
+Vite + React SPA. No auth layer currently. Single workspace. Components handle distinct product areas: ad generation, competitor intelligence, brand DNA, photo library, and ad launching.
 
-### Supabase Tables
+### Frontend Structure
 
-- `static_runs` — brand DNA generation runs (brand name, URL, product, DNA as JSONB)
-- `static_images` — generated images (74+ images). Fields: template_id, template_name, category, prompt, image_url, version
-- `static_reviews` — review ratings by claude or user. Ratings: great, good, needs-work, slop. 46+ reviews
-- `static_prompt_versions` — prompt iteration history (32+ versions). Tracks template_id, version, prompt text, image_url, brand_dna_snapshot
-- `brand_guidelines` — brand identity data. Fields: packaging_format, packaging_specs, colour_palette, typography, tone_of_voice, photo_descriptions
-- `competitor_ads` — ~9,900 rows of enriched competitor ads (Simmer data: Jan 11 – Apr 9, 2026). Key fields: `thumbnail_url`, `snapshot_url`, `page_id`, `page_name`, `creative_title`, `creative_body`, `start_date`, `end_date`, `is_active`, `impressions_lower`, `impressions_upper`, `days_active`, `platforms`. **New columns (Apr 2026):** `display_format` (IMAGE/VIDEO/DCO), `video_url`, `card_index`, `parent_ad_id`, `emotional_drivers`, `content_filter`, `creative_targeting`, `categories`, `persona`, `languages`, `market_target`, `niches`, `cta_type`, `link_url`. DCO ads are exploded into one row per card.
-- `followed_brands` — brands being tracked for competitor ad monitoring. Simmer: `brand_id: n68cYDEnS6D6eU4T4bLS`, `page_id: 187701838409772`
-- `foreplay_credit_log` — tracks Foreplay API credit usage per fetch call. Fields: `brand_id`, `page_id`, `credits_used`, `ads_fetched`, `credit_budget`, `start_date`, `stopped_reason`
+```
+src/
+  App.jsx              # Router/tab navigation, loads all views
+  main.jsx             # Entry point
+  index.css            # Global styles (2,031 lines, large)
+  lib/
+    supabase.js        # Primary Supabase client (ifrxylvoufncdxyltgqt)
+    supabase-v3.js     # Secondary client (ajpxzifhoohjkyoyktsi) [DEAD CODE: not imported]
+  components/
+    Generator.jsx      # AI ad prompt generation (580 lines)
+    Review.jsx         # Review generated images (300 lines)
+    Launcher.jsx       # Push ads to Meta via v3 project (887 lines)
+    CompetitorAds.jsx  # Competitor ad library + analysis pipeline (2,369 lines, needs split)
+    CompareAnalyses.jsx # Cross-brand competitive comparison (1,018 lines)
+    AdDetail.jsx       # Individual ad detail view (528 lines)
+    BrandDNA.jsx       # Brand guidelines management (505 lines)
+    PhotoLibrary.jsx   # Photo asset management (630 lines)
+    PromptTester.jsx   # Prompt iteration/testing tool (696 lines)
+    Gallery.jsx        # Image gallery grid (113 lines)
+  CompetitorAds.jsx    # [DEAD CODE] Old version, not imported by App.jsx
+  CompetitorAds.css    # [DEAD CODE] Accompanies dead JSX file above
+```
 
-### Workflow
+### Chrome Extension
 
-1. Create a "run" with brand DNA (name, URL, product, extracted brand DNA)
-2. Generate prompts across templates/categories
-3. Create images from prompts
-4. Review images (by AI or human) with ratings
-5. Iterate on prompts based on feedback
+```
+chrome-extension/
+  manifest.json        # Chrome extension manifest
+  content-script.js    # Injected into Meta Ad Library pages (276 lines)
+  background.js        # Service worker (205 lines)
+  popup.html/js        # Extension popup
+  gallery/
+    gallery.js         # Saved ads gallery (567 lines, needs refactor)
+    gallery.html/css   # Gallery UI
+  supabase-edge-function/
+    generate-ad-prompt.ts   # Local copy of edge function
+    templatize-prompt.ts    # Local copy of edge function
+  sql/
+    001_create_saved_ads.sql
+```
+
+### Other Files
+
+- `competitor-ads.html` (root): [DEAD CODE] Pre-SPA standalone page (1,147 lines)
+- `public/competitor-ads.html`: Redirect to /
+- `public/brand/chefly-brand-guidelines-d3.1.html`: Brand guidelines reference
+- `public/prompt-tester.html`: Standalone prompt tester
+- `docs/pre-session-checklist.md`: Pre-session checklist for AI development
+
+## Supabase Tables (29 tables on ifrxylvoufncdxyltgqt)
+
+### Core Content
+| Table | Rows | RLS | Purpose |
+|---|---|---|---|
+| `brands` | 1 | Yes | Brand profiles |
+| `brand_guidelines` | 1 | **No** | Brand guideline documents and packaging format |
+| `workspaces` | 1 | Yes | Workspace/tenant |
+| `workspace_members` | 1 | Yes | User roles |
+
+### Ad Generation
+| Table | Rows | RLS | Purpose |
+|---|---|---|---|
+| `static_prompt_versions` | 32 | Yes | Prompt templates for image generation |
+| `prompt_templates` | 2 | Yes | Reusable prompt structures |
+| `prompt_structures` | 1 | Yes | Prompt architecture definitions |
+| `static_images` | 74 | Yes | Generated static ad images |
+| `static_reviews` | 46 | Yes | Review status/feedback on generated images |
+| `static_runs` | 7 | Yes | Generation run metadata |
+| `static_uploads` | 0 | Yes | Uploaded source images |
+| `generated_versions` | 57 | Yes | Versioned outputs from generation |
+| `generation_runs` | 0 | Yes | Generation pipeline runs |
+| `gen_images` | 2 | Yes | Generated image outputs |
+| `reference_images` | 0 | Yes | Reference images for generation |
+
+### Competitive Intelligence
+| Table | Rows | RLS | Purpose |
+|---|---|---|---|
+| `competitor_ads` | 14,401 | Yes | Scraped competitor ads from Meta Ad Library |
+| `competitive_analyses` | 12 | Yes | AI analysis results for competitor creatives |
+| `analysis_jobs` | 3 | Yes | Batch analysis job tracking |
+| `analysis_job_images` | 34 | Yes | Images queued for analysis |
+| `advertisers` | 249 | Yes | Known advertiser profiles |
+| `followed_brands` | 5 | Yes | Brands being tracked |
+| `saved_ads` | 9 | Yes | User-saved ads from chrome extension |
+| `foreplay_credit_log` | 7 | **No** | Foreplay API credit tracking |
+
+### Photo Library
+| Table | Rows | RLS | Purpose |
+|---|---|---|---|
+| `photo_library` | 1 | Yes | Photo asset metadata |
+
+### Video (shared with v3 project)
+| Table | Rows | RLS | Purpose |
+|---|---|---|---|
+| `clips` | 215 | Yes | Video clips |
+| `clip_segments` | 1 | Yes | Clip sub-segments |
+| `recipes` | 10 | Yes | Video recipes |
+| `rendered_videos` | 50 | Yes | Rendered video outputs |
+| `activity_log` | 0 | Yes | Activity tracking |
+
+## Edge Functions (14 deployed, only 1 in supabase/functions/)
+
+**CRITICAL: 13 of 14 deployed edge functions are NOT in the repo's supabase/functions/ directory.**
+
+| Function | Version | In Repo? | Purpose |
+|---|---|---|---|
+| `generate-ad-prompt` | v26 | chrome-ext only | Generate AI ad prompts from brand + photo |
+| `templatize-prompt` | v4 | chrome-ext only | Convert prompts to reusable templates |
+| `generate-shot-sequence` | v2 | Yes (supabase/functions/) | Generate video shot sequences |
+| `analyse-competitor-creatives` | v25 | **No** | AI analysis of competitor ad images |
+| `process-analysis-batch` | v16 | **No** | Batch processing for analysis pipeline |
+| `fetch-competitor-ads` | v9 | **No** | Fetch ads from Meta Ad Library API |
+| `describe-photo` | v8 | **No** | AI photo description for prompt context |
+| `extract-ad-thumbnails` | v6 | **No** | Extract thumbnails from ad creatives |
+| `generate-variables` | v6 | **No** | Generate prompt variables from guidelines |
+| `extract-brand-guidelines` | v5 | **No** | Extract structured data from brand docs |
+| `refine-prompt` | v3 | **No** | Iterative prompt refinement |
+| `compare-prompts` | v2 | **No** | A/B compare prompt outputs |
+| `vision-model-test` | v2 | **No** | Vision model testing utility |
+| `seed-advertisers` | v1 | **No** | Seed advertiser database |
+
+## Environment Variables
+
+**Frontend (should use VITE_ prefix, currently hardcoded):**
+- Supabase URL: `https://ifrxylvoufncdxyltgqt.supabase.co`
+- Supabase Anon Key: hardcoded in `src/lib/supabase.js`
+- Secondary Supabase (v3) URL and key: hardcoded in `src/lib/supabase-v3.js`
+
+**Edge Functions (Supabase Secrets):**
+- `SUPABASE_URL` (auto-injected)
+- `SUPABASE_SERVICE_ROLE_KEY` (auto-injected)
+- `ANTHROPIC_API_KEY` (for Claude-powered functions)
+
+**No .env.example exists. This needs to be created.**
+
+## Pre-Flight Check (run before any work)
+
+See `docs/pre-session-checklist.md` for the full checklist. Key steps:
+
+```bash
+# 1. Clone repo
+git clone https://github.com/willagpt/creative-kitchen-static.git
+cd creative-kitchen-static
+
+# 2. Install and build
+npm install && npm run build
+
+# 3. Dev server
+npm run dev  # runs on port 3000
+```
+
+## Code Change Workflow
+
+1. Check Asana for a ticket (create one if touching >1 file)
+2. Read the specific file that needs changing
+3. Use surgical edits, never rewrite entire files
+4. `git add <changed-files> && git commit -m "message" && git push`
+5. Verify Vercel deploy succeeded
 
 ## Key Commands
 
-- **Dev:** `npm run dev` (Vite dev server)
+- **Dev:** `npm run dev` (port 3000)
 - **Build:** `npm run build`
-- **Deploy:** Push to `main` → Vercel auto-deploys
+- **Deploy:** Push to `main`, Vercel auto-deploys
 
-## Design System
+## Known Issues (April 13 2026)
 
-- Dark theme (class="dark" on html element)
-- Background: bg-bg-0
-- Text: white
-- Fonts: Inter (UI), JetBrains Mono (code/prompts)
-- Antialiased rendering
-
-## Current Status
-
-- **Working:** Brand DNA extraction, prompt generation, image creation, review system, competitor ad viewer with inline video playback and Add Competitor button
-- **Last deployed:** 12 April 2026
-- **Edge functions:** All 14 edge functions in repo under `supabase/functions/{slug}/index.ts`. All have `verify_jwt: true`
-- **generate-ad-prompt:** v27 (packaging-aware, dynamic packaging terms)
-- **brand_guidelines table:** Updated with packaging_format, packaging_specs, colour_palette, typography, tone_of_voice, photo_descriptions columns
-- **Edge function `fetch-competitor-ads`:** v6 deployed. Supports `brand_id` or `page_id`, default `start_date: 2025-12-23`, `credit_budget: 500`, DCO card explosion, rich metadata extraction, credit logging to `foreplay_credit_log`
-- **Foreplay API:** `public.api.foreplay.co`, key stored in edge function. 1 credit per ad. Simmer brand_id: `n68cYDEnS6D6eU4T4bLS`
-- **Supabase anon key:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA`
-
-## Edge Functions
-
-All 14 edge functions deployed to repo and have `verify_jwt: true`:
-
-1. `fetch-competitor-ads` — v6: Fetch competitor ads from Foreplay API, support brand_id/page_id, DCO explosion, credit logging
-2. `generate-ad-prompt` — v27: Packaging-aware prompt generation with dynamic packaging terms
-3. `generate-image` — Image generation via Claude API
-4. `list-reviews` — Fetch reviews for images
-5. `save-review` — Save image reviews and ratings
-6. `get-brand-guidelines` — Fetch brand_guidelines table data
-7. `create-static-run` — Create brand DNA generation run
-8. `list-static-runs` — List all static runs
-9. `get-static-run` — Get specific run details
-10. `list-static-images` — List generated images with filters
-11. `save-static-image` — Save generated image records
-12. `list-prompt-versions` — List prompt iteration history
-13. `save-prompt-version` — Save prompt version records
-14. `sync-competitor-metadata` — Sync enriched competitor ad metadata
-
-## Development Rules
-
-- **GitHub is the single source of truth.** If it's not in the repo, it doesn't exist.
-- **Edge functions deploy FROM the repo.** Never deploy directly to Supabase from session code. Commit to GitHub first.
-- **No direct pushes to main** (once branching is set up). Use feature branches → dev → main.
-- **Ticket-first for multi-file changes.** If a change touches >1 file, create an Asana ticket first in "Creative Kitchen — Engineering Stabilisation" project.
-- **Run the pre-session checklist** at `docs/pre-session-checklist.md` before writing any code.
-- **Update this file** at the end of every session if architecture, tables, or edge functions changed.
-
-## Known Issues
-
-- Facebook snapshot URLs (`snapshot_url` in `competitor_ads`) may be blocked by Facebook's CSP when rendered in iframes — needs live verification. If blocked, consider server-side screenshotting as fallback.
-- Local `src/` directory may be empty — code has been pushed directly to GitHub via MCP in previous sessions. Always check GitHub for the source of truth.
-- Shares Supabase tables (static_*) that also appear in the creative-kitchen-video-v3 database
-- Foreplay API credits are limited (10,000 per period). Edge function has a `credit_budget` safeguard (default 500) and logs usage to `foreplay_credit_log`. Be careful with exploratory API calls.
-- Foreplay Spyder only started tracking Simmer from ~Jan 11, 2026 — no historical data before that date
+- **Edge function drift:** 13 of 14 edge functions exist only on Supabase, not in repo. Major risk.
+- **No CI pipeline:** No GitHub Actions. Build errors only caught by Vercel after push.
+- **Hardcoded credentials:** Supabase URL and anon key hardcoded instead of using env vars.
+- **No .env.example:** Environment variables undocumented.
+- **2 tables without RLS:** `foreplay_credit_log` and `brand_guidelines`.
+- **Dead code:** ~3,275 lines of unused files (src/CompetitorAds.jsx, src/CompetitorAds.css, root competitor-ads.html, src/lib/supabase-v3.js).
+- **Oversized components:** CompetitorAds.jsx (2,369 lines), CompareAnalyses.jsx (1,018 lines), Launcher.jsx (887 lines).
 
 ## Related Projects
 
-- **creative-kitchen-video-v3** — sister project (video content), same Marketing department
-- **willa-hq** — loads this tool via iframe as "Static Assets" under Marketing
-- **Creative Kitchen** (Supabase) — may be the database this connects to
+- **creative-kitchen-video-v3** (ref: `ajpxzifhoohjkyoyktsi`, US East): Video ad editor. Launcher.jsx reads ad_launches from this project's Supabase.
+- **willa-services** (ref: `fhztszxpgqhunogwcoxw`, EU West): Separate project. Do NOT confuse.
+- **Chrome Extension** (in `chrome-extension/`): Scrapes Meta Ad Library, saves ads to Supabase.
 
-## Conventions
+## Writing Style
 
-- Vite + React (not Next.js)
-- Dark theme throughout
-- Review ratings: great, good, needs-work, slop
-- Reviewers: "claude" (AI) or "user" (human)
-- Prompt versioning for iterative improvement
+- Never use em dashes or en dashes. Use commas, colons, full stops, or arrows instead.
+- For ranges, write "2 to 3" or "15 to 30" instead of "2-3".
+- Arrows are fine for showing transitions or flows.
+
+## Stabilisation Tracking
+
+Asana project: [Creative Kitchen Static, Engineering Stabilisation](https://app.asana.com/1/5717506944667/project/1214024873723525)
