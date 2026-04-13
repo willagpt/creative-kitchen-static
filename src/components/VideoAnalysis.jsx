@@ -9,6 +9,30 @@ const fnHeaders = {
   'Content-Type': 'application/json',
 }
 
+// Helper: detect meaningless/empty values from AI analysis
+function isEmptyValue(val) {
+  if (val === null || val === undefined) return true
+  if (typeof val === 'string') {
+    const trimmed = val.trim().toLowerCase()
+    return trimmed === '' || trimmed === 'unknown' || trimmed === '—' || trimmed === '-' || trimmed === 'n/a' || trimmed === 'none'
+  }
+  if (Array.isArray(val)) return val.length === 0
+  return false
+}
+
+// Helper: check if an array has any meaningful (non-empty) items
+function filterMeaningful(arr) {
+  if (!Array.isArray(arr)) return []
+  return arr.filter(item => {
+    if (typeof item === 'string') return !isEmptyValue(item)
+    if (typeof item === 'object' && item !== null) {
+      // For object beats/phases, check if any value is meaningful
+      return Object.values(item).some(v => !isEmptyValue(v))
+    }
+    return true
+  })
+}
+
 export default function VideoAnalysis() {
   const [view, setView] = useState('list') // 'list' or 'detail'
   const [analyses, setAnalyses] = useState([])
@@ -503,13 +527,49 @@ function ScriptTab({ analysis }) {
 function AnalysisTab({ analysis }) {
   const ai = analysis.ai_analysis || {}
 
+  // Pre-check which sections have meaningful content
+  const hasHook = ai.hook && (!isEmptyValue(ai.hook.type) || !isEmptyValue(ai.hook.text) || ai.hook.effectiveness_score)
+  
+  const narrativeBeats = filterMeaningful(ai.narrative_arc?.beats || [])
+  const hasNarrativeArc = ai.narrative_arc && (!isEmptyValue(ai.narrative_arc.structure) || narrativeBeats.length > 0)
+  
+  const hasCta = ai.cta && (!isEmptyValue(ai.cta.type) || !isEmptyValue(ai.cta.text) || !isEmptyValue(ai.cta.placement))
+  
+  const sellingPoints = filterMeaningful(ai.selling_points || [])
+  const hasSellingPoints = sellingPoints.length > 0
+  
+  const emotionalDrivers = filterMeaningful(ai.emotional_drivers || [])
+  const hasEmotionalDrivers = emotionalDrivers.length > 0
+  
+  const hasTargetAudience = ai.target_audience && (
+    !isEmptyValue(ai.target_audience.description) || 
+    !isEmptyValue(ai.target_audience.primary) ||
+    filterMeaningful(ai.target_audience.signals || []).length > 0
+  )
+  
+  const productionStyleItems = ai.production_style ? 
+    ['format', 'quality', 'overlays', 'music'].filter(k => !isEmptyValue(ai.production_style[k])) : []
+  const hasProductionStyle = productionStyleItems.length > 0
+  
+  const hasCompetitorInsights = ai.competitor_insights && (
+    !isEmptyValue(ai.competitor_insights.what_works) || 
+    !isEmptyValue(ai.competitor_insights.what_to_steal) || 
+    !isEmptyValue(ai.competitor_insights.weaknesses)
+  )
+
+  const hasAnything = hasHook || hasNarrativeArc || hasCta || hasSellingPoints || hasEmotionalDrivers || hasTargetAudience || hasProductionStyle || hasCompetitorInsights
+
+  if (!hasAnything) {
+    return <div className="va-tab-empty">No AI analysis data available</div>
+  }
+
   return (
     <div className="va-analysis">
       {/* Hook */}
-      {ai.hook && (
+      {hasHook && (
         <Section title="Hook">
           <div className="va-badge-row">
-            {ai.hook.type && <Badge color="indigo">{ai.hook.type}</Badge>}
+            {!isEmptyValue(ai.hook.type) && <Badge color="indigo">{ai.hook.type}</Badge>}
             {ai.hook.effectiveness_score && (
               <div className="va-score-bar">
                 <span className="va-score-label">Effectiveness</span>
@@ -523,20 +583,20 @@ function AnalysisTab({ analysis }) {
               </div>
             )}
           </div>
-          {ai.hook.text && <p className="va-section-text">{ai.hook.text}</p>}
+          {!isEmptyValue(ai.hook.text) && <p className="va-section-text">{ai.hook.text}</p>}
         </Section>
       )}
 
       {/* Narrative Arc */}
-      {ai.narrative_arc && (
+      {hasNarrativeArc && (
         <Section title="Narrative Arc">
-          {ai.narrative_arc.structure && (
+          {!isEmptyValue(ai.narrative_arc.structure) && (
             <Badge color="purple">{ai.narrative_arc.structure}</Badge>
           )}
-          {ai.narrative_arc.beats && (
+          {narrativeBeats.length > 0 && (
             <ol className="va-beats">
-              {ai.narrative_arc.beats.map((beat, idx) => (
-                <li key={idx}>{beat}</li>
+              {narrativeBeats.map((beat, idx) => (
+                <li key={idx}>{typeof beat === 'string' ? beat : (beat.description || beat.phase || beat.name || JSON.stringify(beat))}</li>
               ))}
             </ol>
           )}
@@ -544,21 +604,21 @@ function AnalysisTab({ analysis }) {
       )}
 
       {/* CTA */}
-      {ai.cta && (
+      {hasCta && (
         <Section title="Call-to-Action">
           <div className="va-badge-row">
-            {ai.cta.type && <Badge color="indigo">{ai.cta.type}</Badge>}
-            {ai.cta.placement && <Badge color="slate">{ai.cta.placement}</Badge>}
+            {!isEmptyValue(ai.cta.type) && <Badge color="indigo">{ai.cta.type}</Badge>}
+            {!isEmptyValue(ai.cta.placement) && <Badge color="slate">{ai.cta.placement}</Badge>}
           </div>
-          {ai.cta.text && <p className="va-section-text">{ai.cta.text}</p>}
+          {!isEmptyValue(ai.cta.text) && <p className="va-section-text">{ai.cta.text}</p>}
         </Section>
       )}
 
       {/* Selling Points */}
-      {ai.selling_points && ai.selling_points.length > 0 && (
+      {hasSellingPoints && (
         <Section title="Selling Points">
           <div className="va-pills">
-            {ai.selling_points.map((point, idx) => (
+            {sellingPoints.map((point, idx) => (
               <span key={idx} className="va-pill">{point}</span>
             ))}
           </div>
@@ -566,10 +626,10 @@ function AnalysisTab({ analysis }) {
       )}
 
       {/* Emotional Drivers */}
-      {ai.emotional_drivers && ai.emotional_drivers.length > 0 && (
+      {hasEmotionalDrivers && (
         <Section title="Emotional Drivers">
           <div className="va-emotion-pills">
-            {ai.emotional_drivers.map((driver, idx) => (
+            {emotionalDrivers.map((driver, idx) => (
               <span key={idx} className="va-emotion-pill">{driver}</span>
             ))}
           </div>
@@ -577,14 +637,17 @@ function AnalysisTab({ analysis }) {
       )}
 
       {/* Target Audience */}
-      {ai.target_audience && (
+      {hasTargetAudience && (
         <Section title="Target Audience">
-          {ai.target_audience.description && (
+          {!isEmptyValue(ai.target_audience.description) && (
             <p className="va-section-text">{ai.target_audience.description}</p>
           )}
-          {ai.target_audience.signals && (
+          {!isEmptyValue(ai.target_audience.primary) && (
+            <p className="va-section-text">{ai.target_audience.primary}</p>
+          )}
+          {filterMeaningful(ai.target_audience.signals || []).length > 0 && (
             <div className="va-pills">
-              {ai.target_audience.signals.map((signal, idx) => (
+              {filterMeaningful(ai.target_audience.signals).map((signal, idx) => (
                 <span key={idx} className="va-pill">{signal}</span>
               ))}
             </div>
@@ -593,19 +656,19 @@ function AnalysisTab({ analysis }) {
       )}
 
       {/* Production Style */}
-      {ai.production_style && (
+      {hasProductionStyle && (
         <Section title="Production Style">
           <div className="va-style-grid">
-            {ai.production_style.format && (
+            {!isEmptyValue(ai.production_style.format) && (
               <StyleItem label="Format" value={ai.production_style.format} />
             )}
-            {ai.production_style.quality && (
+            {!isEmptyValue(ai.production_style.quality) && (
               <StyleItem label="Quality" value={ai.production_style.quality} />
             )}
-            {ai.production_style.overlays && (
+            {!isEmptyValue(ai.production_style.overlays) && (
               <StyleItem label="Overlays" value={ai.production_style.overlays} />
             )}
-            {ai.production_style.music && (
+            {!isEmptyValue(ai.production_style.music) && (
               <StyleItem label="Music" value={ai.production_style.music} />
             )}
           </div>
@@ -613,15 +676,15 @@ function AnalysisTab({ analysis }) {
       )}
 
       {/* Competitor Insights */}
-      {ai.competitor_insights && (
+      {hasCompetitorInsights && (
         <Section title="Competitor Insights">
-          {ai.competitor_insights.what_works && (
+          {!isEmptyValue(ai.competitor_insights.what_works) && (
             <InsightCard border="green" title="What Works" text={ai.competitor_insights.what_works} />
           )}
-          {ai.competitor_insights.what_to_steal && (
+          {!isEmptyValue(ai.competitor_insights.what_to_steal) && (
             <InsightCard border="blue" title="What to Steal" text={ai.competitor_insights.what_to_steal} />
           )}
-          {ai.competitor_insights.weaknesses && (
+          {!isEmptyValue(ai.competitor_insights.weaknesses) && (
             <InsightCard border="red" title="Weaknesses" text={ai.competitor_insights.weaknesses} />
           )}
         </Section>
