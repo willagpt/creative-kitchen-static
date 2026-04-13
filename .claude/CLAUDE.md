@@ -50,7 +50,7 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 
 - **Dev:** `npm run dev` (Vite dev server)
 - **Build:** `npm run build`
-- **Deploy:** Push to `main` -> Vercel auto-deploys
+- **Deploy:** Push to `main` → Vercel auto-deploys
 
 ## Design System
 
@@ -63,9 +63,10 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 ## Current Status
 
 - **Working:** Brand DNA extraction, prompt generation, image creation, review system, competitor ad viewer with inline video playback and Add Competitor button
-- **In Progress:** Video Analysis Engine (Phase 1 — Foundation). See `docs/video-analysis-project-spec.md`
+- **Phase 1 Complete:** Video Analysis Engine — Foundation (DB + pipeline + Railway worker + 3 edge functions). See `docs/video-analysis-project-spec.md`
+- **Next:** Phase 2 — Script Extraction (Whisper transcription + OCR)
 - **Last deployed:** 13 April 2026
-- **Edge functions:** All 17 edge functions in repo under `supabase/functions/{slug}/index.ts`. All have `verify_jwt: true`
+- **Edge functions:** 17 edge functions deployed (14 original + 3 new video analysis). All have `verify_jwt: true`
 - **generate-ad-prompt:** v27 (packaging-aware, dynamic packaging terms)
 - **brand_guidelines table:** Updated with packaging_format, packaging_specs, colour_palette, typography, tone_of_voice, photo_descriptions columns
 - **Edge function `fetch-competitor-ads`:** v6 deployed. Supports `brand_id` or `page_id`, default `start_date: 2025-12-23`, `credit_budget: 500`, DCO card explosion, rich metadata extraction, credit logging to `foreplay_credit_log`
@@ -74,9 +75,8 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 
 ## Edge Functions
 
-All 17 edge functions in repo under `supabase/functions/{slug}/index.ts`:
+17 edge functions deployed and have `verify_jwt: true`:
 
-### Original (14 functions)
 1. `fetch-competitor-ads` — v6: Fetch competitor ads from Foreplay API, support brand_id/page_id, DCO explosion, credit logging
 2. `generate-ad-prompt` — v27: Packaging-aware prompt generation with dynamic packaging terms
 3. `generate-image` — Image generation via Claude API
@@ -91,11 +91,9 @@ All 17 edge functions in repo under `supabase/functions/{slug}/index.ts`:
 12. `list-prompt-versions` — List prompt iteration history
 13. `save-prompt-version` — Save prompt version records
 14. `sync-competitor-metadata` — Sync enriched competitor ad metadata
-
-### Video Analysis (3 new functions — Apr 2026)
-15. `analyse-video` — Orchestrator: looks up competitor_ad, creates video_analyses record, calls Railway worker, computes edit metrics, stores results + shots. Requires `VIDEO_WORKER_URL` and `VIDEO_WORKER_SECRET` env vars.
-16. `list-video-analyses` — Query video_analyses with filters (status, run_id, competitor_ad_id), pagination, total count, joined competitor_ads data
-17. `get-video-analysis` — Get single analysis with all shots joined + competitor ad data
+15. `analyse-video` — v1 **(NEW)**: Orchestrator — accepts competitor_ad_id, calls Railway worker, writes to video_analyses + video_shots. Secrets: VIDEO_WORKER_URL, VIDEO_WORKER_SECRET
+16. `list-video-analyses` — v1 **(NEW)**: Query analyses with filters (status, run_id, competitor_ad_id) + pagination. Joins competitor_ads metadata
+17. `get-video-analysis` — v1 **(NEW)**: Fetch single analysis with all shots + full competitor ad context
 
 ## Video Worker (Railway Microservice)
 
@@ -103,41 +101,19 @@ Located at `video-worker/` in repo. Express + FFmpeg service for heavy video pro
 
 - **Endpoint:** `POST /process-video` — downloads video, detects shots via FFmpeg scene analysis, extracts reference frames, generates contact sheet, extracts audio
 - **Auth:** Bearer token via `WORKER_SECRET` env var
-- **Deployment:** Railway with Docker (Dockerfile in repo). Needs `WORKER_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` env vars
-- **Status:** Code built and tested locally (13 Apr 2026). Not yet deployed to Railway.
-- **Contact sheet:** Row-by-row approach (thumbnails -> hstack rows -> vstack all). Rewritten to handle 17+ shots. Needs retest on Video B/C.
+- **Deployment:** Railway with Docker (Dockerfile in repo). Project: `triumphant-dedication`, URL: `https://creative-kitchen-static-production.up.railway.app`
+- **Env vars:** `WORKER_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `PORT=3000`
+- **Status:** Deployed and verified end-to-end (13 Apr 2026). FFmpeg 5.1.8. Contact sheets tested on 17+ shot videos.
 - **Test Videos:**
   - A: Simmer `3324195914449903` — 12.7s, 8 shots, 720x900
   - B: Huel `33860239276954284` — 21.4s, 17 shots, 720x1280
   - C: Frive `1440540640941645` — 31.4s, 17 shots, 720x1280
 
-## Video Analysis Pipeline
-
-End-to-end flow for analysing competitor video ads:
-
-1. **Trigger:** Call `analyse-video` edge function with `competitor_ad_id`
-2. **Orchestrator:** Creates `video_analyses` record (status=processing), calls Railway worker
-3. **Worker:** Downloads video, runs FFmpeg scene detection, extracts frames + audio, generates contact sheet, uploads to `video-processing` bucket
-4. **Store:** Orchestrator updates `video_analyses` (status=complete, metrics), inserts `video_shots` records
-5. **(Phase 2)** Transcribe audio via Whisper, OCR frames via Claude Vision
-6. **(Phase 3)** AI analysis of script + shots + metrics
-
-Phase tracking in Asana: "Video Analysis Engine" tasks under Phase 1-6 parent tasks.
-
-## Verification Mandate
-
-After any backend fix (edge function, database migration, API change):
-1. Test the fix end-to-end using curl, SQL queries, and edge function logs
-2. Confirm the correct version is running (check logs, not just the dashboard)
-3. Only report completion after seeing correct results in the database
-4. Include evidence in your report: what you tested, what the DB shows, which version ran
-Never let the user be the first person to test your work.
-
 ## Development Rules
 
 - **GitHub is the single source of truth.** If it's not in the repo, it doesn't exist.
 - **Edge functions deploy FROM the repo.** Never deploy directly to Supabase from session code. Commit to GitHub first.
-- **No direct pushes to main** (once branching is set up). Use feature branches -> dev -> main.
+- **No direct pushes to main** (once branching is set up). Use feature branches → dev → main.
 - **Ticket-first for multi-file changes.** If a change touches >1 file, create an Asana ticket first in "Creative Kitchen — Engineering Stabilisation" project.
 - **Run the pre-session checklist** at `docs/pre-session-checklist.md` before writing any code.
 - **Update this file** at the end of every session if architecture, tables, or edge functions changed.
@@ -149,8 +125,6 @@ Never let the user be the first person to test your work.
 - Shares Supabase tables (static_*) that also appear in the creative-kitchen-video-v3 database
 - Foreplay API credits are limited (10,000 per period). Edge function has a `credit_budget` safeguard (default 500) and logs usage to `foreplay_credit_log`. Be careful with exploratory API calls.
 - Foreplay Spyder only started tracking Simmer from ~Jan 11, 2026 — no historical data before that date
-- Sandbox bash can lock up if background node processes are left running. Always use foreground or timeout-wrapped commands for testing.
-- Contact sheet generation rewritten but not yet retested on 17+ shot videos (Video B/C). Needs verification in a fresh session.
 
 ## Related Projects
 
