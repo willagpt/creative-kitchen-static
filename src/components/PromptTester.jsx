@@ -122,6 +122,7 @@ export default function PromptTester() {
   const [promoting, setPromoting] = useState(false)
   const [promoted, setPromoted] = useState(false)
   const [canvaCopied, setCanvaCopied] = useState(false)
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [canvaCopying, setCanvaCopying] = useState(false)
 
   const timerRef = useRef(null)
@@ -310,6 +311,19 @@ export default function PromptTester() {
         await saveToDB(entry)
       } catch {}
 
+      // Auto-save to Supabase so nothing is ever lost
+      try {
+        await supabase.from('gen_images').upsert([{
+          image_url: imageUrl,
+          status: 'complete',
+          aspect_ratio: ratio,
+          prompt_used: prompt.trim(),
+          variables_used: { SOURCE: 'prompt-tester', MODEL: model, RESOLUTION: resolution, TIME: totalTime },
+        }], { ignoreDuplicates: true })
+      } catch (err) {
+        console.warn('Supabase auto-save failed:', err)
+      }
+
       setHistory(prev => {
         const next = [entry, ...prev]
         // Trim old entries
@@ -355,6 +369,43 @@ export default function PromptTester() {
     setResultImage(item.dataUrl || item.url)
     setShowDetail(item)
     setStatus(item.model.split('/').pop() + ' · ' + item.ratio + ' · ' + item.resolution + ' · ' + item.time + 's')
+  }
+
+  const handleDeleteItem = async (item) => {
+    // Two-step: first click sets confirmDeleteId, second click executes
+    if (confirmDeleteId !== item.id) {
+      setConfirmDeleteId(item.id)
+      // Auto-cancel after 3 seconds if not confirmed
+      setTimeout(() => setConfirmDeleteId(prev => prev === item.id ? null : prev), 3000)
+      return
+    }
+    setConfirmDeleteId(null)
+
+    // Remove from IndexedDB
+    try { await deleteFromDB(item.id) } catch {}
+
+    // Remove from Supabase (both gen_images and static_images by URL)
+    try {
+      if (item.url) {
+        await supabase.from('gen_images').delete().eq('image_url', item.url)
+        await supabase.from('static_images').delete().eq('image_url', item.url)
+      }
+    } catch (err) {
+      console.warn('Supabase delete failed:', err)
+    }
+
+    // Remove from state
+    setHistory(prev => {
+      const next = prev.filter(h => h.id !== item.id)
+      if (selectedId === item.id) {
+        const replacement = next[0] || null
+        setSelectedId(replacement?.id || null)
+        setResultImage(replacement?.dataUrl || replacement?.url || null)
+        setShowDetail(replacement)
+      }
+      return next
+    })
+    setStatus('deleted')
   }
 
   const handleClearHistory = async () => {
@@ -684,6 +735,14 @@ export default function PromptTester() {
                     title={item.model.split('/').pop() + ' · ' + item.ratio + ' · ' + item.time + 's'}
                   >
                     <img src={item.dataUrl || item.url} alt="" />
+                    <button
+                      className="pt-thumb-delete"
+                      onClick={(e) => { e.stopPropagation(); handleDeleteItem(item) }}
+                      title={confirmDeleteId === item.id ? 'Click again to confirm delete' : 'Delete'}
+                      style={confirmDeleteId === item.id ? { background: 'var(--blush, #ff4444)', opacity: 1 } : {}}
+                    >
+                      {confirmDeleteId === item.id ? '?' : '\u00D7'}
+                    </button>
                   </div>
                 ))}
               </div>
