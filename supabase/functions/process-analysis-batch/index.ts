@@ -4,7 +4,7 @@ const SUPABASE_URL = "https://ifrxylvoufncdxyltgqt.supabase.co";
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const ANALYSE_FN_URL = `${SUPABASE_URL}/functions/v1/analyse-competitor-creatives`;
 
-// v15: fuzzy dedup in mergeBatchResults, consolidation retry
+// v16: fix cache reuse (rebuild merged fields), add auth to fn-to-fn calls
 const STEP1_BATCH_SIZE = 1;
 
 const corsHeaders = {
@@ -14,6 +14,13 @@ const corsHeaders = {
 };
 
 const sbHeaders = {
+  apikey: SUPABASE_SERVICE_KEY,
+  Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+  "Content-Type": "application/json",
+};
+
+// Headers for calling other edge functions (service key auth)
+const fnCallHeaders = {
   apikey: SUPABASE_SERVICE_KEY,
   Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
   "Content-Type": "application/json",
@@ -100,7 +107,7 @@ async function processNextStep1Batch(jobId: string): Promise<{ done: boolean; ba
   }));
 
   const res = await fetch(ANALYSE_FN_URL, {
-    method: "POST", headers: { "Content-Type": "application/json" },
+    method: "POST", headers: fnCallHeaders,
     body: JSON.stringify({ step: 1, ads }),
   });
 
@@ -172,7 +179,7 @@ async function runConsolidation(jobId: string): Promise<{ success: boolean; erro
   }));
 
   const res = await fetch(ANALYSE_FN_URL, {
-    method: "POST", headers: { "Content-Type": "application/json" },
+    method: "POST", headers: fnCallHeaders,
     body: JSON.stringify({
       step: 1.5,
       themes, personas, pillars, clusters, formats,
@@ -363,7 +370,7 @@ async function saveIntelligenceReport(jobId: string): Promise<{ success: boolean
   };
 
   const res = await fetch(ANALYSE_FN_URL, {
-    method: "POST", headers: { "Content-Type": "application/json" },
+    method: "POST", headers: fnCallHeaders,
     body: JSON.stringify({
       step: 3,
       step1_result: { adAnalyses: allAnalyses, ...merged },
@@ -460,7 +467,32 @@ Deno.serve(async (req: Request) => {
             reusedStep1++;
           }
         }
-        if (reusedStep1 > 0) await updateJob(job.id, { completed_step1: reusedStep1 });
+        if (reusedStep1 > 0) {
+          // Rebuild merged fields from cached analyses so consolidation has data
+          const cachedImages = await getJobImages(job.id, '&step1_status=eq.completed');
+          const allCachedAnalyses = cachedImages.map(img => img.step1_analysis).filter(Boolean) as Record<string, unknown>[];
+          const rebuiltThemes: unknown[] = [];
+          const rebuiltPersonas: unknown[] = [];
+          const rebuiltPillars: unknown[] = [];
+          const rebuiltClusters: unknown[] = [];
+          const rebuiltFormats: unknown[] = [];
+          for (const a of allCachedAnalyses) {
+            if (a.themes) rebuiltThemes.push(...(a.themes as unknown[]));
+            if (a.personas) rebuiltPersonas.push(...(a.personas as unknown[]));
+            if (a.creativePillars) rebuiltPillars.push(...(a.creativePillars as unknown[]));
+            if (a.visualClusters) rebuiltClusters.push(...(a.visualClusters as unknown[]));
+            if (a.creativeFormats) rebuiltFormats.push(...(a.creativeFormats as unknown[]));
+          }
+          await updateJob(job.id, {
+            completed_step1: reusedStep1,
+            merged_themes: rebuiltThemes,
+            merged_personas: rebuiltPersonas,
+            merged_pillars: rebuiltPillars,
+            merged_clusters: rebuiltClusters,
+            merged_formats: rebuiltFormats,
+          });
+          console.log(`[v16] Rebuilt merged fields from ${allCachedAnalyses.length} cached analyses: ${rebuiltThemes.length} themes, ${rebuiltPersonas.length} personas, ${rebuiltPillars.length} pillars, ${rebuiltClusters.length} clusters`);
+        }
       }
 
       const newImages = imageAds.length - reusedStep1;
