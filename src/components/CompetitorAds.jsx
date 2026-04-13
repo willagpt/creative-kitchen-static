@@ -300,7 +300,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
     brandColorMap[b.pageId] = BRAND_COLORS[i % BRAND_COLORS.length]
   })
 
-  useEffect(() => { fetchFollowedBrands().then(setFollowedBrands) }, [])
+  useEffect(() => { fetchFollowedBrands(supabaseUrl).then(setFollowedBrands) }, [])
   useEffect(() => { if (apiKey.length > 20) localStorage.setItem('metaAdLibraryToken', apiKey) }, [apiKey])
   useEffect(() => { setShowCount(GRID_PAGE) }, [typeFilter, statusFilter, sortBy, searchText, dateFrom, dateTo])
   useEffect(() => { setTopShowCount(GRID_PAGE) }, [topPercentile, topTypeFilter, topSortBy])
@@ -473,7 +473,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
       for (let i = 0; i < brandList.length; i++) {
         const brand = brandList[i]
         setTopLoadingStatus(`Loading ${brand.pageName} (${i + 1}/${brandList.length})...`)
-        const rows = await fetchAllAds(brand.pageId)
+        const rows = await fetchAllAds(brand.pageId, supabaseUrl)
         const mapped = rows.map(ad => mapDbAd(ad, brand.pageId, brand.pageName))
         allMapped = allMapped.concat(mapped)
       }
@@ -739,18 +739,18 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
     setShowCount(GRID_PAGE)
     setLoadingStatus('Loading ads...')
     try {
-      const rows = await fetchAllAds(pageId)
+      const rows = await fetchAllAds(pageId, supabaseUrl)
       if (rows.length > 0) {
         setLoadingStatus(`Processing ${rows.length} ads...`)
         const mappedAds = rows.map(ad => mapDbAd(ad, pageId, pageName))
         setAllAds(mappedAds)
         setLoadingStatus('')
-        await updateBrand(pageId, { last_fetched_at: new Date().toISOString(), total_ads: rows.length })
+        await updateBrand(pageId, { last_fetched_at: new Date().toISOString(), total_ads: rows.length }, supabaseUrl)
 
         if (pageName && /^Brand \d+$/.test(pageName)) {
           const realName = mostCommonPageName(rows)
           if (realName) {
-            await updateBrand(pageId, { page_name: realName })
+            await updateBrand(pageId, { page_name: realName }, supabaseUrl)
             setFollowedBrands(prev => prev.map(b =>
               b.pageId === pageId ? { ...b, pageName: realName, adCount: rows.length } : b
             ))
@@ -763,7 +763,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ page_id: pageId, limit: 50 }),
         })
-        const reRows = await fetchAllAds(pageId)
+        const reRows = await fetchAllAds(pageId, supabaseUrl)
         const mappedAds = reRows.map(ad => mapDbAd(ad, pageId, pageName))
         setAllAds(mappedAds)
         setLoadingStatus('')
@@ -771,7 +771,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
         if (reRows.length > 0) {
           const realName = mostCommonPageName(reRows)
           if (realName && realName !== pageName) {
-            await updateBrand(pageId, { page_name: realName, total_ads: reRows.length })
+            await updateBrand(pageId, { page_name: realName, total_ads: reRows.length }, supabaseUrl)
             setFollowedBrands(prev => prev.map(b =>
               b.pageId === pageId ? { ...b, pageName: realName, adCount: reRows.length } : b
             ))
@@ -802,11 +802,11 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
         return
       }
 
-      const resolvedName = await resolvePageName(pageId, hasKey ? apiKey : null)
+      const resolvedName = await resolvePageName(pageId, supabaseUrl, hasKey ? apiKey : null)
       const pageName = resolvedName || 'Brand ' + pageId
 
       const nb = { pageId, pageName, platforms: ['meta'], adCount: 0, lastFetchedAt: null, thumbnailUrl: null }
-      if (await saveBrand(nb)) {
+      if (await saveBrand(nb, supabaseUrl)) {
         setFollowedBrands([nb, ...followedBrands])
         setAddInput('')
         setShowAddForm(false)
@@ -822,7 +822,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
     const brandName = brand?.pageName || pageId
     if (!window.confirm(`Remove "${brandName}" from your competitor list?`)) return
     if (!window.confirm(`Are you sure? This will remove "${brandName}" and all its tracked data from your view. This cannot be undone.`)) return
-    await deleteBrand(pageId)
+    await deleteBrand(pageId, supabaseUrl)
     setFollowedBrands(followedBrands.filter(b => b.pageId !== pageId))
     if (activeBrand?.pageId === pageId) { setActiveBrand(null); setAllAds([]) }
   }
