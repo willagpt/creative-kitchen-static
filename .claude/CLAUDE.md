@@ -28,15 +28,15 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 - `competitor_ads` — ~9,900 rows of enriched competitor ads (Simmer data: Jan 11 – Apr 9, 2026). Key fields: `thumbnail_url`, `snapshot_url`, `page_id`, `page_name`, `creative_title`, `creative_body`, `start_date`, `end_date`, `is_active`, `impressions_lower`, `impressions_upper`, `days_active`, `platforms`. **New columns (Apr 2026):** `display_format` (IMAGE/VIDEO/DCO), `video_url`, `card_index`, `parent_ad_id`, `emotional_drivers`, `content_filter`, `creative_targeting`, `categories`, `persona`, `languages`, `market_target`, `niches`, `cta_type`, `link_url`. DCO ads are exploded into one row per card.
 - `followed_brands` — brands being tracked for competitor ad monitoring. Simmer: `brand_id: n68cYDEnS6D6eU4T4bLS`, `page_id: 187701838409772`
 - `foreplay_credit_log` — tracks Foreplay API credit usage per fetch call. Fields: `brand_id`, `page_id`, `credits_used`, `ads_fetched`, `credit_budget`, `start_date`, `stopped_reason`
-- `video_analyses` — **(NEW Apr 2026)** Primary record for video analysis. Fields: competitor_ad_id, run_id, video_url, duration_seconds, total_shots, total_cuts, avg_shot_duration, cuts_per_second, pacing_profile, transcript_text, ocr_text, combined_script, contact_sheet_url, ai_analysis (jsonb), status, error_message
-- `video_shots` — **(NEW Apr 2026)** Individual shot records. Fields: video_analysis_id (FK), shot_number, start_time, end_time, duration, frame_url, ocr_text, description
-- `video_analysis_runs` — **(NEW Apr 2026)** Batch analysis runs. Fields: brand_name, page_id, percentile (1/2/5/10/20), total_videos, analysed_count, status
+- `video_analyses` — **(Apr 2026)** Primary record for video analysis. Fields: competitor_ad_id, run_id, video_url, duration_seconds, total_shots, total_cuts, avg_shot_duration, cuts_per_second, pacing_profile, transcript_text, ocr_text, combined_script, contact_sheet_url, ai_analysis (jsonb), status, error_message
+- `video_shots` — **(Apr 2026)** Individual shot records. Fields: video_analysis_id (FK), shot_number, start_time, end_time, duration, frame_url, ocr_text, description
+- `video_analysis_runs` — **(Apr 2026)** Batch analysis runs. Fields: brand_name, page_id, percentile (1/2/5/10/20), total_videos, analysed_count, status
 
 ### Supabase Storage Buckets
 
 - `reference-images` — existing, public
 - `static-uploads` — existing, public
-- `video-processing` — **(NEW Apr 2026)** public, 100MB limit. Stores extracted video frames, contact sheets, and audio files. MIME types: video/mp4, video/webm, image/jpeg, image/png, audio/mpeg, audio/mp3
+- `video-processing` — **(Apr 2026)** public, 100MB limit. Stores extracted video frames, contact sheets, and audio files. MIME types: video/mp4, video/webm, image/jpeg, image/png, audio/mpeg, audio/mp3
 
 ### Workflow
 
@@ -64,10 +64,11 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 
 - **Working:** Brand DNA extraction, prompt generation, image creation, review system, competitor ad viewer with inline video playback and Add Competitor Button
 - **Phase 1 Complete:** Video Analysis Engine — Foundation (DB + pipeline + Railway worker + 3 edge functions)
-- **Phase 2 Complete:** Script Extraction — Whisper transcription + Claude Vision OCR + combined script merger. 4 new edge functions deployed.
-- **Next:** Phase 3 — AI Analysis (creative strategy breakdown using combined_script + contact sheet)
+- **Phase 2 Complete:** Script Extraction — Whisper transcription + Claude Vision OCR + combined script merger
+- **Phase 3 Complete:** AI Analysis — Creative strategy breakdown (hook, narrative arc, CTA, audience, production style, competitor insights)
+- **Next:** Phase 4 — Frontend UI for video analysis results + batch processing
 - **Last deployed:** 13 April 2026
-- **Edge functions:** 21 edge functions deployed (14 original + 3 Phase 1 video + 4 Phase 2 script extraction). All have `verify_jwt: true`
+- **Edge functions:** 22 edge functions deployed (14 original + 3 Phase 1 + 4 Phase 2 + 1 Phase 3). All have `verify_jwt: true`
 - **generate-ad-prompt:** v27 (packaging-aware, dynamic packaging terms)
 - **brand_guidelines table:** Updated with packaging_format, packaging_specs, colour_palette, typography, tone_of_voice, photo_descriptions columns
 - **Edge function `fetch-competitor-ads`:** v6 deployed. Supports `brand_id` or `page_id`, default `start_date: 2025-12-23`, `credit_budget: 500`, DCO card explosion, rich metadata extraction, credit logging to `foreplay_credit_log`
@@ -76,7 +77,7 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 
 ## Edge Functions
 
-21 edge functions deployed, all have `verify_jwt: true`:
+22 edge functions deployed, all have `verify_jwt: true`:
 
 1. `fetch-competitor-ads` — v6: Fetch competitor ads from Foreplay API, support brand_id/page_id, DCO explosion, credit logging
 2. `generate-ad-prompt` — v27: Packaging-aware prompt generation with dynamic packaging terms
@@ -95,10 +96,11 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 15. `analyse-video` — v4: Phase 1 orchestrator — accepts competitor_ad_id, calls Railway worker, writes to video_analyses + video_shots. Secrets: VIDEO_WORKER_URL, VIDEO_WORKER_SECRET
 16. `list-video-analyses` — v1: Query analyses with filters (status, run_id, competitor_ad_id) + pagination. Joins competitor_ads metadata
 17. `get-video-analysis` — v1: Fetch single analysis with all shots + full competitor ad context
-18. `transcribe-video` — v2 **(Phase 2)**: Whisper transcription with timestamped segments. Downloads audio from Storage, sends to OpenAI Whisper API, stores `[start-end] text` format in transcript_text. Secrets: OPENAI_API_KEY
-19. `ocr-video-frames` — v7 **(Phase 2)**: Claude Sonnet 4.6 Vision OCR + frame descriptions. Downloads frames, sends batches to Claude API, updates video_shots (ocr_text, description) and video_analyses (ocr_text). Retry logic for 429/529. Secrets: CLAUDE_API_KEY
-20. `merge-video-script` — v1 **(Phase 2)**: Merges transcript + OCR into unified combined_script timeline. Parses timestamped transcript, interleaves with shot descriptions, writes to video_analyses.combined_script
-21. `extract-video-script` — v1 **(Phase 2)**: Phase 2 orchestrator. Chains transcribe-video → ocr-video-frames → merge-video-script. Supports skip_transcribe, skip_ocr, ocr_model overrides
+18. `transcribe-video` — v2: Whisper transcription with timestamped segments `[start-end] text`. Secrets: OPENAI_API_KEY
+19. `ocr-video-frames` — v7: Claude Sonnet 4.6 Vision OCR + frame descriptions with retry logic. Secrets: CLAUDE_API_KEY
+20. `merge-video-script` — v1: Merges transcript + OCR into unified combined_script timeline
+21. `extract-video-script` — v2: Phase 2+3 orchestrator. Chains transcribe → OCR → merge → AI analysis. Params: skip_transcribe, skip_ocr, include_ai_analysis, ocr_model, ai_model
+22. `ai-analyse-video` — v1 **(Phase 3)**: Sends combined_script + contact sheet + ad metadata to Sonnet 4.6. Returns structured JSONB: hook type/effectiveness, narrative arc, CTA, selling points, emotional drivers, target audience, production style, pacing, competitor insights, one-line summary
 
 ## Video Worker (Railway Microservice)
 
@@ -116,7 +118,7 @@ Located at `video-worker/` in repo. Express + FFmpeg service for heavy video pro
 
 ## Video Analysis Pipeline
 
-Two-phase pipeline for competitor video ad analysis:
+Three-phase pipeline for competitor video ad analysis:
 
 ### Phase 1: Foundation (analyse-video)
 Caller: `POST /functions/v1/analyse-video` with `{competitor_ad_id}`
@@ -131,6 +133,12 @@ Caller: `POST /functions/v1/extract-video-script` with `{analysis_id}`
 1. **Transcribe** (transcribe-video): Downloads audio from Storage → Whisper API → timestamped transcript_text
 2. **OCR** (ocr-video-frames): Downloads frames → Claude Sonnet 4.6 Vision → per-shot ocr_text + description
 3. **Merge** (merge-video-script): Interleaves voiceover + visuals into combined_script timeline
+
+### Phase 3: AI Analysis (ai-analyse-video)
+Caller: `POST /functions/v1/ai-analyse-video` with `{analysis_id}` (also auto-runs from extract-video-script)
+1. Fetches combined_script + contact_sheet + competitor ad metadata
+2. Sends to Claude Sonnet 4.6 with structured analysis prompt
+3. Returns JSONB: hook (type, text, effectiveness), narrative_arc, CTA, selling_points, emotional_drivers, target_audience, production_style, pacing_analysis, competitor_insights (what_works, what_to_steal, weaknesses), one_line_summary
 
 Each step writes independently to the DB, so partial progress is preserved.
 
@@ -151,6 +159,7 @@ Each step writes independently to the DB, so partial progress is preserved.
 - Foreplay API credits are limited (10,000 per period). Edge function has a `credit_budget` safeguard (default 500) and logs usage to `foreplay_credit_log`. Be careful with exploratory API calls.
 - Foreplay Spyder only started tracking Simmer from ~Jan 11, 2026 — no historical data before that date
 - OCR with Sonnet 4.6 can take 30-40s for 8 frames — may hit edge function timeout on larger videos. Use batch_size parameter to reduce per-call frame count, or call ocr-video-frames directly with smaller batches.
+- The full extract-video-script chain (transcribe + OCR + merge + AI) takes ~80s total — the orchestrator will likely timeout before returning, but each step persists to DB independently so all data is saved.
 
 ## Related Projects
 

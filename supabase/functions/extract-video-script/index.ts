@@ -1,8 +1,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 /**
- * extract-video-script — Phase 2 orchestrator
- * Chains: transcribe-video → ocr-video-frames → merge-video-script
+ * extract-video-script — Phase 2+3 orchestrator
+ * Chains: transcribe-video → ocr-video-frames → merge-video-script → ai-analyse-video (optional)
  * 
  * Each step writes to the DB independently, so partial progress is preserved
  * even if the function hits an execution time limit.
@@ -67,8 +67,10 @@ Deno.serve(async (req: Request) => {
     const analysisId: string = body.analysis_id;
     const skipTranscribe: boolean = body.skip_transcribe || false;
     const skipOcr: boolean = body.skip_ocr || false;
+    const includeAiAnalysis: boolean = body.include_ai_analysis ?? true;
     const ocrModel: string = body.ocr_model || "";
     const ocrBatchSize: number = body.ocr_batch_size || 8;
+    const aiModel: string = body.ai_model || "";
 
     if (!analysisId) {
       return jsonResponse({ error: "analysis_id is required" }, 400);
@@ -76,7 +78,7 @@ Deno.serve(async (req: Request) => {
 
     // Verify analysis exists and is complete
     const analysisRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/video_analyses?id=eq.${analysisId}&select=id,status,transcript_text,ocr_text`,
+      `${SUPABASE_URL}/rest/v1/video_analyses?id=eq.${analysisId}&select=id,status`,
       { headers: supabaseHeaders() }
     );
     const analyses = await analysisRes.json();
@@ -140,6 +142,25 @@ Deno.serve(async (req: Request) => {
         error: mergeResult.ok ? null : mergeResult.data.error,
       },
     };
+
+    // Step 4: AI Creative Analysis (default ON)
+    if (includeAiAnalysis) {
+      const aiBody: Record<string, unknown> = { analysis_id: analysisId };
+      if (aiModel) aiBody.model = aiModel;
+      const aiResult = await callEdgeFunction("ai-analyse-video", aiBody);
+      results.steps = {
+        ...(results.steps as Record<string, unknown>),
+        ai_analysis: {
+          success: aiResult.ok,
+          model_used: aiResult.data.model_used || null,
+          one_line_summary: (aiResult.data.ai_analysis as Record<string, unknown>)?.one_line_summary || null,
+          error: aiResult.ok ? null : aiResult.data.error,
+        },
+      };
+    } else {
+      console.log("Skipping AI analysis (include_ai_analysis=false)");
+      (results.steps as Record<string, unknown>).ai_analysis = { skipped: true };
+    }
 
     const steps = results.steps as Record<string, Record<string, unknown>>;
     const allSuccess = Object.values(steps).every((s) => s.success || s.skipped);
