@@ -285,8 +285,8 @@ export function generateShareableHTML(analysis, shots) {
             .map(
               (shot) => `
             <div style="border: 1px solid #2a2a34; border-radius: 6px; overflow: hidden;">
-              <div style="display: grid; grid-template-columns: 120px 1fr; gap: 16px; padding: 16px;">
-                ${shot.frame_url ? `<img src="${shot.frame_url}" alt="Shot ${shot.shot_number}" style="width: 120px; height: 80px; object-fit: cover; border-radius: 4px; background: #0e0e11;">` : '<div style="width: 120px; height: 80px; background: #2a2a34; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #8a8a92; font-size: 12px;">No Frame</div>'}
+              <div style="display: grid; grid-template-columns: 160px 1fr; gap: 16px; padding: 16px; align-items: start;">
+                ${shot.frame_url ? `<img src="${shot.frame_url}" alt="Shot ${shot.shot_number}" style="width: 160px; height: auto; object-fit: contain; border-radius: 4px; background: #0e0e11;">` : '<div style="width: 160px; height: 100px; background: #2a2a34; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #8a8a92; font-size: 12px;">No Frame</div>'}
                 <div>
                   <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
                     <span style="font-weight: 600; color: #ffffff;">Shot ${shot.shot_number}</span>
