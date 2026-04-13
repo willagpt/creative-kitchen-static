@@ -68,9 +68,10 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 - **Phase 2 Complete:** Script Extraction — Whisper transcription + Claude Vision OCR + combined script merger
 - **Phase 3 Complete:** AI Analysis — Creative strategy breakdown (hook, narrative arc, CTA, audience, production style, competitor insights)
 - **Phase 4 Complete:** Frontend UI — VideoAnalysis component with list/detail views, Script/AI Analysis/Shots tabs, new analysis form
+- **Phase 4.5 Complete:** Shareable Export + UGC Brief — HTML report download for agency sharing, Claude-powered UGC creator brief generator (5 or 10 shots)
 - **Next:** Phase 5 — Batch processing (analyse top N videos per brand) + Compare view integration
 - **Last deployed:** 13 April 2026
-- **Edge functions:** 22 edge functions deployed (14 original + 3 Phase 1 + 4 Phase 2 + 1 Phase 3). All have `verify_jwt: true`
+- **Edge functions:** 23 edge functions deployed (14 original + 3 Phase 1 + 4 Phase 2 + 1 Phase 3 + 1 Phase 4.5). All have `verify_jwt: true`
 - **generate-ad-prompt:** v27 (packaging-aware, dynamic packaging terms)
 - **brand_guidelines table:** Updated with packaging_format, packaging_specs, colour_palette, typography, tone_of_voice, photo_descriptions columns
 - **Edge function `fetch-competitor-ads`:** v6 deployed. Supports `brand_id` or `page_id`, default `start_date: 2025-12-23`, `credit_budget: 500`, DCO card explosion, rich metadata extraction, credit logging to `foreplay_credit_log`
@@ -82,7 +83,8 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 - `src/App.jsx` — Main app with tab navigation (11 tabs)
 - `src/components/CompetitorAds.jsx` + `.css` — Competitor ad viewer with grid, filters, inline video
 - `src/components/CompareAnalyses.jsx` + `.css` — Side-by-side ad comparison
-- `src/components/VideoAnalysis.jsx` + `.css` — **(Phase 4)** Video analysis viewer: list grid with contact sheet cards, detail modal with Script/AI Analysis/Shots tabs, new analysis form. CSS prefix: `va-`
+- `src/components/VideoAnalysis.jsx` + `.css` — **(Phase 4+4.5)** Video analysis viewer: list grid with contact sheet cards, detail modal with Script/AI Analysis/Shots/UGC Brief tabs, Share Report button (HTML export), Generate UGC Brief button (5/10 shots via Claude). CSS prefix: `va-`
+- `src/lib/shareableExport.js` — **(Phase 4.5)** Generates self-contained HTML report for sharing video analysis with agencies. Includes contact sheet, metrics, AI analysis, script timeline, shot breakdown.
 - `src/components/Gallery.jsx` — Ad library grid
 - `src/components/BrandDNA.jsx` — Brand DNA editor
 - `src/components/PhotoLibrary.jsx` — Photo reference library
@@ -94,7 +96,7 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 
 ## Edge Functions
 
-22 edge functions deployed, all have `verify_jwt: true`:
+23 edge functions deployed, all have `verify_jwt: true`:
 
 1. `fetch-competitor-ads` — v6: Fetch competitor ads from Foreplay API, support brand_id/page_id, DCO explosion, credit logging
 2. `generate-ad-prompt` — v27: Packaging-aware prompt generation with dynamic packaging terms
@@ -118,6 +120,7 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 20. `merge-video-script` — v1: Merges transcript + OCR into unified combined_script timeline
 21. `extract-video-script` — v2: Phase 2+3 orchestrator. Chains transcribe → OCR → merge → AI analysis. Params: skip_transcribe, skip_ocr, include_ai_analysis, ocr_model, ai_model
 22. `ai-analyse-video` — v1 **(Phase 3)**: Sends combined_script + contact sheet + ad metadata to Sonnet 4.6. Returns structured JSONB: hook type/effectiveness, narrative arc, CTA, selling points, emotional drivers, target audience, production style, pacing, competitor insights, one-line summary
+23. `generate-ugc-brief` — v1 **(Phase 4.5)**: Generates 5 or 10-shot UGC creator briefs from video analysis insights using Claude Sonnet 4.6. Accepts analysis_id + shot_count. Returns structured JSON: concept, tone, music direction, pacing, production tips, shot-by-shot directions (framing, action, script line, text overlay, notes). Secrets: CLAUDE_API_KEY or ANTHROPIC_API_KEY
 
 ## Video Worker (Railway Microservice)
 
@@ -161,6 +164,10 @@ Caller: `POST /functions/v1/ai-analyse-video` with `{analysis_id}` (also auto-ru
 - **List view:** Card grid with contact sheet thumbnails, brand name, status badge, duration/shots/pacing metrics, one-line summary
 - **Detail view:** Modal with Script tab (color-coded voiceover vs visual), AI Analysis tab (structured insights with badges/bars/cards), Shots tab (frame grid with OCR + descriptions)
 - **New analysis form:** Enter competitor_ad_id → triggers analyse-video edge function
+
+### Phase 4.5: Shareable Export + UGC Brief Generator
+- **Share Report:** Downloads self-contained HTML file with dark theme, contact sheet, metrics bar, full AI analysis, script timeline, shot-by-shot breakdown. No server needed — generates client-side blob.
+- **UGC Brief Generator:** Sends video analysis insights to Claude Sonnet 4.6 via `generate-ugc-brief` edge function. Returns structured 5 or 10-shot creator brief with concept, tone, music direction, production tips, and per-shot directions (framing, action, script line, text overlay, notes). Rendered in new "UGC Brief" tab.
 
 Each step writes independently to the DB, so partial progress is preserved.
 

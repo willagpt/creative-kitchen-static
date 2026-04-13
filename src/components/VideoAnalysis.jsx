@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import './VideoAnalysis.css'
 import { supabaseUrl, supabaseAnonKey } from '../lib/supabase'
+import { generateShareableHTML } from '../lib/shareableExport'
 
 const fnHeaders = {
   apikey: supabaseAnonKey,
@@ -304,7 +305,68 @@ function AnalysisCard({ analysis, onClick }) {
 }
 
 function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
+  const [briefData, setBriefData] = useState(null)
+  const [briefLoading, setBriefLoading] = useState(false)
+  const [briefError, setBriefError] = useState(null)
+  const [briefShotCount, setBriefShotCount] = useState(5)
+  const [shareLoading, setShareLoading] = useState(false)
+
   if (!analysis) return null
+
+  const handleShare = async () => {
+    setShareLoading(true)
+    try {
+      // Fetch shots for the report
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/video_shots?video_analysis_id=eq.${analysis.id}&select=*&order=shot_number.asc`,
+        { headers: fnHeaders }
+      )
+      const shots = await response.json()
+      const html = generateShareableHTML(analysis, shots)
+      const blob = new Blob([html], { type: 'text/html' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `video-analysis-${analysis.brand_name || 'report'}-${new Date().toISOString().slice(0, 10)}.html`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      console.error('Share error:', e)
+    } finally {
+      setShareLoading(false)
+    }
+  }
+
+  const handleGenerateBrief = async () => {
+    setBriefLoading(true)
+    setBriefError(null)
+    try {
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/generate-ugc-brief`,
+        {
+          method: 'POST',
+          headers: fnHeaders,
+          body: JSON.stringify({
+            analysis_id: analysis.id,
+            shot_count: briefShotCount,
+            brand_name: analysis.brand_name,
+          }),
+        }
+      )
+      if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.error || 'Failed to generate brief')
+      }
+      const data = await response.json()
+      setBriefData(data.brief)
+      onTabChange('brief')
+    } catch (e) {
+      setBriefError(e.message)
+      console.error('Brief generation error:', e)
+    } finally {
+      setBriefLoading(false)
+    }
+  }
 
   return (
     <div className="va-detail-overlay">
@@ -330,6 +392,35 @@ function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
             <StatItem label="Pacing" value={analysis.pacing_profile || '—'} />
             <StatItem label="Status" value={analysis.status} />
           </div>
+
+          {/* Action buttons */}
+          <div className="va-detail-actions">
+            <button
+              className="va-btn va-btn-secondary"
+              onClick={handleShare}
+              disabled={shareLoading}
+            >
+              {shareLoading ? 'Exporting...' : 'Share Report'}
+            </button>
+            <div className="va-brief-controls">
+              <select
+                className="va-select"
+                value={briefShotCount}
+                onChange={(e) => setBriefShotCount(Number(e.target.value))}
+              >
+                <option value={5}>5 Shots</option>
+                <option value={10}>10 Shots</option>
+              </select>
+              <button
+                className="va-btn va-btn-primary"
+                onClick={handleGenerateBrief}
+                disabled={briefLoading}
+              >
+                {briefLoading ? 'Generating...' : 'Generate UGC Brief'}
+              </button>
+            </div>
+          </div>
+          {briefError && <div className="va-error-banner" style={{marginTop:'1rem'}}>{briefError}</div>}
         </div>
 
         {/* Tabs */}
@@ -352,6 +443,14 @@ function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
           >
             Shots
           </button>
+          {briefData && (
+            <button
+              className={`va-tab ${detailTab === 'brief' ? 'active' : ''}`}
+              onClick={() => onTabChange('brief')}
+            >
+              UGC Brief
+            </button>
+          )}
         </div>
 
         {/* Tab Content */}
@@ -359,6 +458,7 @@ function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
           {detailTab === 'script' && <ScriptTab analysis={analysis} />}
           {detailTab === 'analysis' && <AnalysisTab analysis={analysis} />}
           {detailTab === 'shots' && <ShotsTab analysis={analysis} />}
+          {detailTab === 'brief' && briefData && <BriefTab brief={briefData} />}
         </div>
       </div>
     </div>
@@ -628,6 +728,83 @@ function ShotsTab({ analysis }) {
           </div>
         </div>
       ))}
+    </div>
+  )
+}
+
+function BriefTab({ brief }) {
+  if (!brief) return <div className="va-tab-empty">No brief generated yet</div>
+
+  return (
+    <div className="va-analysis">
+      {/* Concept */}
+      <Section title="Creative Concept">
+        <p className="va-section-text" style={{fontSize:'1.1rem',fontWeight:600,color:'#fff'}}>{brief.concept}</p>
+        {brief.inspired_by && (
+          <p className="va-section-text" style={{fontStyle:'italic'}}>Inspired by: {brief.inspired_by}</p>
+        )}
+      </Section>
+
+      {/* Overview */}
+      <Section title="Production Overview">
+        <div className="va-style-grid">
+          {brief.target_duration && <StyleItem label="Duration" value={brief.target_duration} />}
+          {brief.tone && <StyleItem label="Tone" value={brief.tone} />}
+          {brief.music_direction && <StyleItem label="Music" value={brief.music_direction} />}
+          {brief.pacing_notes && <StyleItem label="Pacing" value={brief.pacing_notes} />}
+        </div>
+      </Section>
+
+      {/* Production Tips */}
+      {brief.production_tips && brief.production_tips.length > 0 && (
+        <Section title="Production Tips">
+          <div className="va-brief-tips">
+            {brief.production_tips.map((tip, idx) => (
+              <div key={idx} className="va-brief-tip">{tip}</div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* Shot List */}
+      <Section title={`Shot List (${brief.shots?.length || 0} shots)`}>
+        <div className="va-brief-shots">
+          {(brief.shots || []).map((shot, idx) => (
+            <div key={idx} className="va-brief-shot">
+              <div className="va-brief-shot-header">
+                <span className="va-brief-shot-number">Shot {shot.shot_number}</span>
+                <span className="va-brief-shot-duration">{shot.duration_estimate}</span>
+              </div>
+              <div className="va-brief-shot-body">
+                <div className="va-brief-shot-row">
+                  <span className="va-brief-shot-label">Framing</span>
+                  <span className="va-brief-shot-value">{shot.framing}</span>
+                </div>
+                <div className="va-brief-shot-row">
+                  <span className="va-brief-shot-label">Action</span>
+                  <span className="va-brief-shot-value">{shot.action}</span>
+                </div>
+                <div className="va-brief-shot-row">
+                  <span className="va-brief-shot-label">Script</span>
+                  <span className="va-brief-shot-value va-brief-script-line">"{shot.script_line}"</span>
+                </div>
+                {shot.text_overlay && (
+                  <div className="va-brief-shot-row">
+                    <span className="va-brief-shot-label">Text Overlay</span>
+                    <span className="va-brief-shot-value">{shot.text_overlay}</span>
+                  </div>
+                )}
+                {shot.notes && (
+                  <div className="va-brief-shot-row">
+                    <span className="va-brief-shot-label">Notes</span>
+                    <span className="va-brief-shot-value va-brief-note">{shot.notes}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
     </div>
   )
 }
