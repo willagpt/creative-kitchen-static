@@ -3,7 +3,7 @@ import './CompetitorAds.css'
 import { supabaseUrl } from '../lib/supabase'
 import {
   FOREPLAY_FN_URL, ANALYSE_FN_URL, BATCH_FN_URL,
-  sbHeaders, sbReadHeaders, GRID_PAGE, BRAND_COLORS
+  sbHeaders, sbReadHeaders, fnHeaders, GRID_PAGE, BRAND_COLORS
 } from './competitor/config'
 import {
   formatDate, formatNumber, fmtImpressions, isVideoUrl,
@@ -498,7 +498,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
       try {
         const res = await fetch(BATCH_FN_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: fnHeaders,
           body: JSON.stringify({ action: 'status', job_id: jobId }),
         })
         if (res.ok) {
@@ -529,7 +529,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
           // Call process_next to do one unit of work
           const res = await fetch(BATCH_FN_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: fnHeaders,
             body: JSON.stringify({ action: 'process_next', job_id: jobId }),
           })
 
@@ -616,7 +616,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
     try {
       const res = await fetch(BATCH_FN_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: fnHeaders,
         body: JSON.stringify({ action: 'results', job_id: jobId }),
       })
       if (!res.ok) throw new Error('Failed to load results')
@@ -692,7 +692,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
       // Create batch job via orchestrator
       const res = await fetch(BATCH_FN_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: fnHeaders,
         body: JSON.stringify({
           action: 'create',
           ads: payload,
@@ -760,7 +760,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
       } else {
         setLoadingStatus('Fetching from Foreplay...')
         await fetch(FOREPLAY_FN_URL, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: fnHeaders,
           body: JSON.stringify({ page_id: pageId, limit: 50 }),
         })
         const reRows = await fetchAllAds(pageId, supabaseUrl)

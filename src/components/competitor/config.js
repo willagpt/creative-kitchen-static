@@ -16,6 +16,13 @@ export const sbReadHeaders = {
   Authorization: `Bearer ${supabaseAnonKey}`,
 }
 
+// Headers for calling Supabase Edge Functions (auth required by gateway)
+export const fnHeaders = {
+  apikey: supabaseAnonKey,
+  Authorization: `Bearer ${supabaseAnonKey}`,
+  'Content-Type': 'application/json',
+}
+
 export const GRID_PAGE = 50
 
 export const BRAND_COLORS = [
