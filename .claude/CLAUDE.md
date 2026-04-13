@@ -30,8 +30,10 @@ src/
     Generator.jsx      # AI ad prompt generation (580 lines)
     Review.jsx         # Review generated images (300 lines)
     Launcher.jsx       # Push ads to Meta via v3 project (887 lines)
-    CompetitorAds.jsx  # Competitor ad library + analysis pipeline (2,369 lines, needs split)
-    CompareAnalyses.jsx # Cross-brand competitive comparison (1,018 lines)
+    CompetitorAds.jsx  # Competitor ad library + analysis pipeline (decomposed)
+    competitor/          # Extracted modules: config.js, utils.js, api.js, InlineVideoCard.jsx
+    CompareAnalyses.jsx # Cross-brand competitive comparison (decomposed)
+    compare/             # Extracted modules: config.js, helpers.jsx
     AdDetail.jsx       # Individual ad detail view (528 lines)
     BrandDNA.jsx       # Brand guidelines management (505 lines)
     PhotoLibrary.jsx   # Photo asset management (630 lines)
@@ -44,11 +46,12 @@ src/
 ```
 chrome-extension/
   manifest.json        # Chrome extension manifest
+  config.js             # Centralised Supabase config
   content-script.js    # Injected into Meta Ad Library pages (276 lines)
   background.js        # Service worker (205 lines)
   popup.html/js        # Extension popup
   gallery/
-    gallery.js         # Saved ads gallery (567 lines, needs refactor)
+    gallery.js         # Saved ads gallery (refactored, uses config.js)
     gallery.html/css   # Gallery UI
   supabase-edge-function/
     generate-ad-prompt.ts   # Local copy of edge function (legacy location)
@@ -193,8 +196,7 @@ npm run dev  # runs on port 3000
 
 ## Known Issues (April 13 2026)
 
-- **Oversized components:** CompetitorAds.jsx (2,369 lines), CompareAnalyses.jsx (1,018 lines), Launcher.jsx (887 lines). P2 refactoring items.
-- **Gallery.js refactor needed:** chrome-extension gallery is 567 lines and monolithic.
+- **Oversized component:** Launcher.jsx (887 lines) still needs decomposition.
 - **RLS policies needed:** foreplay_credit_log and brand_guidelines have RLS enabled but no policies yet (service_role only access currently).
 - **Vercel env vars required:** VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set in Vercel dashboard.
 - **Google Drive sync:** Local Google Drive files may not match repo. GitHub is source of truth.
