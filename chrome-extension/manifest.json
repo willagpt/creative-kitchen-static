@@ -28,8 +28,13 @@
         "https://www.facebook.com/ads/library/*",
         "https://facebook.com/ads/library/*"
       ],
-      "js": ["content-script.js"],
-      "css": ["styles/content.css"]
+      "js": [
+        "config.js",
+        "content-script.js"
+      ],
+      "css": [
+        "styles/content.css"
+      ]
     }
   ],
   "background": {

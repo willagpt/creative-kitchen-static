@@ -21,9 +21,13 @@
   const uploadBrandGuidelinesBtn = document.getElementById('upload-brand-guidelines');
   const brandGuidelinesUploadInput = document.getElementById('brand-guidelines-upload-input');
 
-  const SUPABASE_URL = 'https://ifrxylvoufncdxyltgqt.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA';
-  const EDGE_FUNCTION_URL = 'https://ifrxylvoufncdxyltgqt.supabase.co/functions/v1';
+
+
+
+
+  // Supabase config is defined in ../config.js (SUPABASE_CONFIG)
+  // This allows centralized management of API credentials
+
 
   function getConfig() {
     const storedConfig = localStorage.getItem('creativeKitchenConfig');
@@ -38,10 +42,10 @@
     const config = getConfig();
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
     };
 
-    let url = `${SUPABASE_URL}/rest/v1/${table}`;
+    let url = `${SUPABASE_CONFIG.url}/rest/v1/${table}`;
     if (options.select) url += `?select=${encodeURIComponent(options.select)}`;
     if (options.eq) {
       const eqParams = Object.entries(options.eq)
@@ -163,11 +167,11 @@
     }
 
     try {
-      const response = await fetch(`${EDGE_FUNCTION_URL}/generate-ad-prompt`, {
+      const response = await fetch(`${SUPABASE_CONFIG.edgeFunctionUrl}/generate-ad-prompt`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
         },
         body: JSON.stringify({
           template_id: templateId,
@@ -197,11 +201,11 @@
     }
 
     try {
-      const response = await fetch(`${EDGE_FUNCTION_URL}/refine-prompt`, {
+      const response = await fetch(`${SUPABASE_CONFIG.edgeFunctionUrl}/refine-prompt`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
         },
         body: JSON.stringify({
           template_id: templateId,
@@ -279,10 +283,10 @@
     formData.append('file', file);
 
     try {
-      const response = await fetch(`${SUPABASE_URL}/storage/v1/object/reference-images/${templateId}/${file.name}`, {
+      const response = await fetch(`${SUPABASE_CONFIG.url}/storage/v1/object/reference-images/${templateId}/${file.name}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
         },
         body: file,
       });
@@ -365,11 +369,11 @@
       const v1 = versions[0];
       const v2 = versions[1];
 
-      const response = await fetch(`${EDGE_FUNCTION_URL}/compare-prompts`, {
+      const response = await fetch(`${SUPABASE_CONFIG.edgeFunctionUrl}/compare-prompts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
         },
         body: JSON.stringify({
           prompt_1: v1.prompt,
@@ -391,10 +395,10 @@
     formData.append('file', imageFile);
 
     try {
-      const response = await fetch(`${EDGE_FUNCTION_URL}/extract-brand-guidelines`, {
+      const response = await fetch(`${SUPABASE_CONFIG.edgeFunctionUrl}/extract-brand-guidelines`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
         },
         body: formData,
       });
@@ -417,11 +421,11 @@
     const config = getConfig();
     
     try {
-      const response = await fetch(`${EDGE_FUNCTION_URL}/generate-variables`, {
+      const response = await fetch(`${SUPABASE_CONFIG.edgeFunctionUrl}/generate-variables`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
         },
         body: JSON.stringify({
           meal_name: mealName,
@@ -441,11 +445,11 @@
 
   async function matchReferenceImages(templateId) {
     try {
-      const response = await fetch(`${EDGE_FUNCTION_URL}/match-reference-images`, {
+      const response = await fetch(`${SUPABASE_CONFIG.edgeFunctionUrl}/match-reference-images`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
         },
         body: JSON.stringify({
           template_id: templateId,
@@ -472,11 +476,11 @@
     }
 
     try {
-      const response = await fetch(`${EDGE_FUNCTION_URL}/generate-field`, {
+      const response = await fetch(`${SUPABASE_CONFIG.edgeFunctionUrl}/generate-field`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
         },
         body: JSON.stringify({
           template_id: templateId,
