@@ -62,11 +62,12 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 
 ## Current Status
 
-- **Working:** Brand DNA extraction, prompt generation, image creation, review system, competitor ad viewer with inline video playback and Add Competitor button
-- **Phase 1 Complete:** Video Analysis Engine — Foundation (DB + pipeline + Railway worker + 3 edge functions). See `docs/video-analysis-project-spec.md`
-- **Next:** Phase 2 — Script Extraction (Whisper transcription + OCR)
+- **Working:** Brand DNA extraction, prompt generation, image creation, review system, competitor ad viewer with inline video playback and Add Competitor Button
+- **Phase 1 Complete:** Video Analysis Engine — Foundation (DB + pipeline + Railway worker + 3 edge functions)
+- **Phase 2 Complete:** Script Extraction — Whisper transcription + Claude Vision OCR + combined script merger. 4 new edge functions deployed.
+- **Next:** Phase 3 — AI Analysis (creative strategy breakdown using combined_script + contact sheet)
 - **Last deployed:** 13 April 2026
-- **Edge functions:** 17 edge functions deployed (14 original + 3 new video analysis). All have `verify_jwt: true`
+- **Edge functions:** 21 edge functions deployed (14 original + 3 Phase 1 video + 4 Phase 2 script extraction). All have `verify_jwt: true`
 - **generate-ad-prompt:** v27 (packaging-aware, dynamic packaging terms)
 - **brand_guidelines table:** Updated with packaging_format, packaging_specs, colour_palette, typography, tone_of_voice, photo_descriptions columns
 - **Edge function `fetch-competitor-ads`:** v6 deployed. Supports `brand_id` or `page_id`, default `start_date: 2025-12-23`, `credit_budget: 500`, DCO card explosion, rich metadata extraction, credit logging to `foreplay_credit_log`
@@ -75,7 +76,7 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 
 ## Edge Functions
 
-17 edge functions deployed and have `verify_jwt: true`:
+21 edge functions deployed, all have `verify_jwt: true`:
 
 1. `fetch-competitor-ads` — v6: Fetch competitor ads from Foreplay API, support brand_id/page_id, DCO explosion, credit logging
 2. `generate-ad-prompt` — v27: Packaging-aware prompt generation with dynamic packaging terms
@@ -91,9 +92,13 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 12. `list-prompt-versions` — List prompt iteration history
 13. `save-prompt-version` — Save prompt version records
 14. `sync-competitor-metadata` — Sync enriched competitor ad metadata
-15. `analyse-video` — v1 **(NEW)**: Orchestrator — accepts competitor_ad_id, calls Railway worker, writes to video_analyses + video_shots. Secrets: VIDEO_WORKER_URL, VIDEO_WORKER_SECRET
-16. `list-video-analyses` — v1 **(NEW)**: Query analyses with filters (status, run_id, competitor_ad_id) + pagination. Joins competitor_ads metadata
-17. `get-video-analysis` — v1 **(NEW)**: Fetch single analysis with all shots + full competitor ad context
+15. `analyse-video` — v4: Phase 1 orchestrator — accepts competitor_ad_id, calls Railway worker, writes to video_analyses + video_shots. Secrets: VIDEO_WORKER_URL, VIDEO_WORKER_SECRET
+16. `list-video-analyses` — v1: Query analyses with filters (status, run_id, competitor_ad_id) + pagination. Joins competitor_ads metadata
+17. `get-video-analysis` — v1: Fetch single analysis with all shots + full competitor ad context
+18. `transcribe-video` — v2 **(Phase 2)**: Whisper transcription with timestamped segments. Downloads audio from Storage, sends to OpenAI Whisper API, stores `[start-end] text` format in transcript_text. Secrets: OPENAI_API_KEY
+19. `ocr-video-frames` — v7 **(Phase 2)**: Claude Sonnet 4.6 Vision OCR + frame descriptions. Downloads frames, sends batches to Claude API, updates video_shots (ocr_text, description) and video_analyses (ocr_text). Retry logic for 429/529. Secrets: CLAUDE_API_KEY
+20. `merge-video-script` — v1 **(Phase 2)**: Merges transcript + OCR into unified combined_script timeline. Parses timestamped transcript, interleaves with shot descriptions, writes to video_analyses.combined_script
+21. `extract-video-script` — v1 **(Phase 2)**: Phase 2 orchestrator. Chains transcribe-video → ocr-video-frames → merge-video-script. Supports skip_transcribe, skip_ocr, ocr_model overrides
 
 ## Video Worker (Railway Microservice)
 
@@ -108,6 +113,26 @@ Located at `video-worker/` in repo. Express + FFmpeg service for heavy video pro
   - A: Simmer `3324195914449903` — 12.7s, 8 shots, 720x900
   - B: Huel `33860239276954284` — 21.4s, 17 shots, 720x1280
   - C: Frive `1440540640941645` — 31.4s, 17 shots, 720x1280
+
+## Video Analysis Pipeline
+
+Two-phase pipeline for competitor video ad analysis:
+
+### Phase 1: Foundation (analyse-video)
+Caller: `POST /functions/v1/analyse-video` with `{competitor_ad_id}`
+1. Looks up video_url from competitor_ads
+2. Creates video_analyses record (status: processing)
+3. Calls Railway worker for FFmpeg processing (scene detection, frame extraction, contact sheet, audio)
+4. Worker uploads frames + contact sheet + audio to Supabase Storage (`video-processing` bucket)
+5. Updates video_analyses with metrics (duration, shots, pacing) and inserts video_shots records
+
+### Phase 2: Script Extraction (extract-video-script)
+Caller: `POST /functions/v1/extract-video-script` with `{analysis_id}`
+1. **Transcribe** (transcribe-video): Downloads audio from Storage → Whisper API → timestamped transcript_text
+2. **OCR** (ocr-video-frames): Downloads frames → Claude Sonnet 4.6 Vision → per-shot ocr_text + description
+3. **Merge** (merge-video-script): Interleaves voiceover + visuals into combined_script timeline
+
+Each step writes independently to the DB, so partial progress is preserved.
 
 ## Development Rules
 
@@ -125,6 +150,7 @@ Located at `video-worker/` in repo. Express + FFmpeg service for heavy video pro
 - Shares Supabase tables (static_*) that also appear in the creative-kitchen-video-v3 database
 - Foreplay API credits are limited (10,000 per period). Edge function has a `credit_budget` safeguard (default 500) and logs usage to `foreplay_credit_log`. Be careful with exploratory API calls.
 - Foreplay Spyder only started tracking Simmer from ~Jan 11, 2026 — no historical data before that date
+- OCR with Sonnet 4.6 can take 30-40s for 8 frames — may hit edge function timeout on larger videos. Use batch_size parameter to reduce per-call frame count, or call ocr-video-frames directly with smaller batches.
 
 ## Related Projects
 
