@@ -4,7 +4,7 @@ const SUPABASE_URL = "https://ifrxylvoufncdxyltgqt.supabase.co";
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const ANALYSE_FN_URL = `${SUPABASE_URL}/functions/v1/analyse-competitor-creatives`;
 
-// v16: fix cache reuse (rebuild merged fields), add auth to fn-to-fn calls
+// v17: pass ad_analyses to consolidation when cache means themes are empty
 const STEP1_BATCH_SIZE = 1;
 
 const corsHeaders = {
@@ -165,7 +165,7 @@ async function runConsolidation(jobId: string): Promise<{ success: boolean; erro
   const formats = (job.merged_formats || []) as unknown[];
   const totalImages = (job.total_images as number) || 0;
 
-  console.log(`[v15] Pre-consolidation counts: ${themes.length} themes, ${personas.length} personas, ${pillars.length} pillars, ${clusters.length} clusters, ${formats.length} formats`);
+  console.log(`[v17] Pre-consolidation counts: ${themes.length} themes, ${personas.length} personas, ${pillars.length} pillars, ${clusters.length} clusters, ${formats.length} formats`);
 
   const allImages = await getJobImages(jobId, '&step1_status=eq.completed');
   const imageMetadata = allImages.map(img => ({
@@ -178,14 +178,30 @@ async function runConsolidation(jobId: string): Promise<{ success: boolean; erro
     display_format: img.display_format || 'IMAGE',
   }));
 
+  // v17: When themes are empty (cache hit path), pass ad_analyses so
+  // analyse-competitor-creatives can GENERATE themes from per-ad data
+  const allEmpty = themes.length === 0 && personas.length === 0 && pillars.length === 0;
+  let adAnalysesPayload: unknown[] | undefined;
+  if (allEmpty && allImages.length > 0) {
+    adAnalysesPayload = allImages
+      .map(img => img.step1_analysis)
+      .filter(Boolean) as unknown[];
+    console.log(`[v17] All merged fields empty, sending ${adAnalysesPayload.length} ad_analyses for generation`);
+  }
+
+  const consolidationBody: Record<string, unknown> = {
+    step: 1.5,
+    themes, personas, pillars, clusters, formats,
+    total_ads: totalImages,
+    image_metadata: imageMetadata,
+  };
+  if (adAnalysesPayload && adAnalysesPayload.length > 0) {
+    consolidationBody.ad_analyses = adAnalysesPayload;
+  }
+
   const res = await fetch(ANALYSE_FN_URL, {
     method: "POST", headers: fnCallHeaders,
-    body: JSON.stringify({
-      step: 1.5,
-      themes, personas, pillars, clusters, formats,
-      total_ads: totalImages,
-      image_metadata: imageMetadata,
-    }),
+    body: JSON.stringify(consolidationBody),
   });
 
   if (!res.ok) {
@@ -199,7 +215,7 @@ async function runConsolidation(jobId: string): Promise<{ success: boolean; erro
   const c = data.consolidated as Record<string, unknown>;
   if (!c) return { success: false, error: 'No consolidated data returned' };
 
-  console.log(`[v15] Post-consolidation counts: ${(c.themes as unknown[] || []).length} themes, ${(c.personas as unknown[] || []).length} personas, ${(c.creativePillars as unknown[] || []).length} pillars, ${(c.visualClusters as unknown[] || []).length} clusters`);
+  console.log(`[v17] Post-consolidation counts: ${(c.themes as unknown[] || []).length} themes, ${(c.personas as unknown[] || []).length} personas, ${(c.creativePillars as unknown[] || []).length} pillars, ${(c.visualClusters as unknown[] || []).length} clusters`);
 
   await updateJob(jobId, {
     merged_themes: c.themes || themes,
@@ -273,12 +289,12 @@ function fuzzyDedup(items: unknown[], threshold = 0.5): unknown[] {
   if (items.length <= 1) return items;
   const result: Record<string, unknown>[] = [];
   const used = new Set<number>();
-  
+
   for (let i = 0; i < items.length; i++) {
     if (used.has(i)) continue;
     let current = { ...(items[i] as Record<string, unknown>) };
     const name = (current.name as string) || '';
-    
+
     for (let j = i + 1; j < items.length; j++) {
       if (used.has(j)) continue;
       const other = items[j] as Record<string, unknown>;
@@ -401,7 +417,7 @@ Deno.serve(async (req: Request) => {
     const body = await req.json();
     const { action, job_id, ads, brands_analysed, page_ids, percentile, type_filter } = body;
 
-    console.log(`[process-analysis-batch v15] action=${action} job_id=${job_id || 'new'} service_key_len=${SUPABASE_SERVICE_KEY.length}`);
+    console.log(`[process-analysis-batch v17] action=${action} job_id=${job_id || 'new'} service_key_len=${SUPABASE_SERVICE_KEY.length}`);
 
     // === CREATE: set up job + images ===
     if (action === 'create') {
@@ -468,30 +484,10 @@ Deno.serve(async (req: Request) => {
           }
         }
         if (reusedStep1 > 0) {
-          // Rebuild merged fields from cached analyses so consolidation has data
-          const cachedImages = await getJobImages(job.id, '&step1_status=eq.completed');
-          const allCachedAnalyses = cachedImages.map(img => img.step1_analysis).filter(Boolean) as Record<string, unknown>[];
-          const rebuiltThemes: unknown[] = [];
-          const rebuiltPersonas: unknown[] = [];
-          const rebuiltPillars: unknown[] = [];
-          const rebuiltClusters: unknown[] = [];
-          const rebuiltFormats: unknown[] = [];
-          for (const a of allCachedAnalyses) {
-            if (a.themes) rebuiltThemes.push(...(a.themes as unknown[]));
-            if (a.personas) rebuiltPersonas.push(...(a.personas as unknown[]));
-            if (a.creativePillars) rebuiltPillars.push(...(a.creativePillars as unknown[]));
-            if (a.visualClusters) rebuiltClusters.push(...(a.visualClusters as unknown[]));
-            if (a.creativeFormats) rebuiltFormats.push(...(a.creativeFormats as unknown[]));
-          }
-          await updateJob(job.id, {
-            completed_step1: reusedStep1,
-            merged_themes: rebuiltThemes,
-            merged_personas: rebuiltPersonas,
-            merged_pillars: rebuiltPillars,
-            merged_clusters: rebuiltClusters,
-            merged_formats: rebuiltFormats,
-          });
-          console.log(`[v16] Rebuilt merged fields from ${allCachedAnalyses.length} cached analyses: ${rebuiltThemes.length} themes, ${rebuiltPersonas.length} personas, ${rebuiltPillars.length} pillars, ${rebuiltClusters.length} clusters`);
+          // v17: just update count. Themes/personas will be generated by consolidation
+          // using ad_analyses from cached step1_analysis data (no themes exist at image level)
+          await updateJob(job.id, { completed_step1: reusedStep1 });
+          console.log(`[v17] Reused ${reusedStep1} cached analyses. Themes will be generated during consolidation.`);
         }
       }
 
@@ -609,7 +605,7 @@ Deno.serve(async (req: Request) => {
       if (!job_id) return jsonResp({ error: 'job_id required' }, 400);
       const job = await getJob(job_id);
       if (!job) return jsonResp({ error: 'Job not found' }, 404);
-      
+
       // Re-run fuzzy dedup on existing merged data first
       const existing = {
         themes: (job.merged_themes || []) as unknown[],
@@ -625,7 +621,7 @@ Deno.serve(async (req: Request) => {
         visualClusters: existing.visualClusters,
         creativeFormats: existing.creativeFormats,
       };
-      
+
       await updateJob(job_id, {
         status: 'consolidating',
         merged_themes: redebuped.themes,
@@ -635,7 +631,7 @@ Deno.serve(async (req: Request) => {
         merged_formats: redebuped.creativeFormats,
         error_message: null,
       });
-      
+
       const consolResult = await runConsolidation(job_id);
       if (consolResult.success) {
         await updateJob(job_id, { status: 'completed' });
@@ -707,7 +703,7 @@ Deno.serve(async (req: Request) => {
 
     return jsonResp({ error: 'Unknown action. Use: create, process_next, reconsolidate, status, results, list_completed' }, 400);
   } catch (err) {
-    console.error(`[process-analysis-batch v15] Unhandled error: ${String(err)}`);
+    console.error(`[process-analysis-batch v17] Unhandled error: ${String(err)}`);
     return jsonResp({ error: String(err) }, 500);
   }
 });

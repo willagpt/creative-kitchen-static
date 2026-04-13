@@ -98,43 +98,46 @@ async function callClaude(apiKey: string, model: string, system: string, userCon
 }
 
 function parseJSON(text: string): unknown {
-  try { return JSON.parse(text); } catch {
-    const m = text.match(/\{[\s\S]*\}/);
-    if (m) return JSON.parse(m[0]);
-    return { rawResponse: text, parseError: "Could not parse JSON" };
+  try {
+    const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    return JSON.parse(cleaned);
+  } catch {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+    throw new Error("Could not parse JSON from response");
   }
 }
 
-// v23: STATIC AD FORMAT TAXONOMY
 const STATIC_FORMAT_TAXONOMY = [
-  "Product Hero — single product, clean/minimal background, product is the star",
-  "Lifestyle In-Context — product shown in a real-life setting (kitchen, table, hands holding)",
-  "Before/After Split — two panels showing a transformation or comparison",
-  "Side-by-Side Comparison — brand vs competitor or two options compared with text/bullets",
-  "Testimonial/Quote Card — customer quote or review as the main content, often with star rating",
-  "Stat/Claim Card — bold statistic or claim as hero text (e.g. '98% loved it', 'From £5.98')",
-  "Ingredient Spotlight — ingredients or nutritional info as the visual focus",
-  "Multi-Product Grid — multiple products/meals shown in a grid or collage",
-  "Meme/Trend-Jack — leverages a meme format, pop culture reference, or social trend",
-  "Text-Heavy Offer/Promo — discount, code, or promotional offer dominates the frame",
-  "Editorial/Magazine — styled like editorial photography, minimal text, aspirational",
-  "Infographic/Explainer — step-by-step, numbered process, or visual explanation",
-  "Screenshot/Social Proof — screenshot of a review, comment, tweet, or social post",
-  "UGC-Style Static — looks like a user photo, casual/authentic feel, not polished",
-  "Founder/Team Story — features a person (founder, chef, team member) with personal message",
-  "Carousel Card — single frame designed as part of a swipeable carousel series",
+  "Hero Product Shot — single hero product, studio or lifestyle setting",
+  "Multi-Product Grid — 2+ products arranged in a grid or collage",
+  "Ingredient Spread — raw ingredients laid out flat-lay style",
+  "Before/After Split — side-by-side transformation",
+  "Meal in Context — plated meal on a table, lifestyle setting",
+  "UGC-Style Photo — casual, phone-quality, authentic feel",
+  "Infographic/Stats — data-driven layout with numbers and charts",
+  "Testimonial Card — customer quote with photo or avatar",
+  "Offer/Discount Banner — price-led with bold typography",
+  "Brand Story/Mission — founder or team, values-driven",
+  "Comparison Chart — us vs. them format",
+  "Macro/Close-Up — extreme close-up of food texture",
+  "Packaging Focus — box, bag, or container as hero",
+  "Recipe/How-To — step-by-step preparation",
+  "Seasonal/Holiday — themed for specific occasion",
+  "Text-Only/Typographic — all typography, no photography",
 ];
 
-// === STEP 1: Vision analysis (unchanged from v22) ===
-async function step1VisionAnalysis(apiKey: string, ads: AdInput[]): Promise<unknown> {
-  const imageAds = ads.filter(a => !a.isVideo && a.imageUrl && !a.imageUrl.endsWith(".mp4") && !a.imageUrl.endsWith(".mov"));
-  if (imageAds.length === 0) throw new Error("No static image ads to analyse");
-  const batch = imageAds.slice(0, 15);
-  const blocks: Array<{ type: string; source?: unknown; text?: string }> = [];
+async function step1VisionAnalysis(apiKey: string, batch: AdInput[]): Promise<Record<string, unknown>> {
+  const blocks: Array<Record<string, unknown>> = [];
   for (let i = 0; i < batch.length; i++) {
     const ad = batch[i];
-    blocks.push({ type: "text", text: `--- IMAGE ${i + 1} ---\nBrand: ${ad.pageName}\nHeadline: ${ad.title}\nDays running: ${ad.daysActive}\nFormat: ${ad.displayFormat}\nBody: ${(ad.body || '').slice(0, 200)}` });
-    blocks.push({ type: "image", source: { type: "url", url: ad.imageUrl } });
+    blocks.push({
+      type: "text",
+      text: `--- AD ${i + 1} ---\nPage: ${ad.pageName}\nHeadline: ${ad.title}\nBody: ${ad.body}\nDays Active: ${ad.daysActive}\nFormat: ${ad.displayFormat}`,
+    });
+    if (ad.imageUrl && !ad.isVideo) {
+      blocks.push({ type: "image", source: { type: "url", url: ad.imageUrl } });
+    }
   }
 
   const system = `You are an expert paid social creative strategist performing PRODUCTION-LEVEL VISUAL FORENSIC analysis of competitor ad images for DTC food/meal delivery brands. Your job is to extract every detail a creative director would need to understand and recreate each ad's visual approach for a different brand.
@@ -264,7 +267,135 @@ Return JSON:
   return parseJSON(text);
 }
 
-// === STEP 1.5: Consolidate — v23: uses Sonnet for speed, hard caps, aggressive dedup instructions ===
+// === STEP 1.5 (new v24 path): Generate themes/personas/pillars from ad_analyses when cache hits ===
+async function step1_5GenerateFromAnalyses(
+  apiKey: string,
+  adAnalyses: Array<Record<string, unknown>>,
+  totalAds: number,
+  imageMetadata: unknown[]
+): Promise<Record<string, unknown>> {
+  console.log(`[v24] Generating from ${adAnalyses.length} ad analyses (cache hit)`);
+
+  // Trim ad_analyses to reduce token cost
+  const trimmedAnalyses = adAnalyses.map((analysis, idx) => ({
+    i: idx,
+    brand: analysis.brand || 'Unknown',
+    creativeFormat: analysis.creativeFormat || 'Unknown',
+    emotionalHook: analysis.emotionalHook || '',
+    visualCluster: analysis.visualCluster || 'Unclustered',
+    whyItWorksSnippet: String(analysis.whyItWorks || '').substring(0, 60),
+  }));
+
+  const system = `You are a senior creative strategist synthesizing competitive intelligence from detailed per-ad visual forensic analyses. Your job is to extract overarching themes, personas, creative pillars, visual clusters, and formats from the raw analysis data.
+
+CRITICAL HARD CAPS — YOU MUST OBEY THESE:
+- You MUST return EXACTLY 4 to 6 themes. No more than 6. No fewer than 4.
+- You MUST return EXACTLY 2 to 3 personas. No more than 3. No fewer than 2.
+- You MUST return EXACTLY 5 to 8 creative pillars. No more than 8. No fewer than 5.
+- You MUST return EXACTLY 3 to 5 visual clusters. No more than 5. No fewer than 3.
+
+GENERATION RULES:
+1. Read the per-ad analysis data carefully, particularly emotionalHook and visualCluster.
+2. Group ads by shared visual approaches, psychological triggers, and audience fit.
+3. Synthesize distinct themes (messaging patterns), personas (target audiences), pillars (core creative strategies), and clusters (visual execution approaches).
+4. Weight heavily by creativeFormat distribution — formats that appear in multiple analyses are stronger signals.
+5. Each output item must be rich, distinct, and backed by specific analysis data.
+6. Assign momentum: "dominant" (appears in 30%+ of ads), "strong" (15-30%), "emerging" (5-15%), "niche" (<5%).
+
+Return VALID JSON only. No markdown, no code fences.`;
+
+  const user = `Synthesize competitive themes, personas, and pillars from these ${totalAds} ad analyses.
+
+TRIMMED AD ANALYSES (i=index, brand, creativeFormat, emotionalHook, visualCluster, whyItWorksSnippet):
+${JSON.stringify(trimmedAnalyses, null, 1)}
+
+FULL ANALYSES (for depth reference):
+${JSON.stringify(adAnalyses.slice(0, 5), null, 1)}
+... (${Math.max(0, adAnalyses.length - 5)} more analyses)
+
+Generate this JSON with hard caps obeyed:
+{
+  "themes": [
+    {
+      "name": "concise, distinct theme name",
+      "description": "100+ words",
+      "adIndices": [],
+      "frequency": "how common",
+      "weight": 0,
+      "momentum": "dominant|strong|emerging|niche",
+      "brandCount": 0,
+      "totalDaysActive": 0,
+      "topAds": ["brief description of strongest ads"]
+    }
+  ],
+  "personas": [
+    {
+      "name": "concise persona name",
+      "description": "100+ words with demographics and psychographics",
+      "painPoints": [],
+      "adIndices": [],
+      "weight": 0,
+      "momentum": "dominant|strong|emerging|niche",
+      "brandCount": 0,
+      "totalDaysActive": 0
+    }
+  ],
+  "creativePillars": [
+    {
+      "name": "concise pillar name",
+      "description": "100+ words",
+      "whyItWorks": "100+ words",
+      "exampleAdIndices": [],
+      "weight": 0,
+      "momentum": "dominant|strong|emerging|niche",
+      "brandCount": 0,
+      "totalDaysActive": 0
+    }
+  ],
+  "visualClusters": [
+    {
+      "name": "concise cluster name",
+      "description": "200+ words",
+      "adIndices": [],
+      "count": 0,
+      "whyBrandsUseThis": "150+ words on paid social performance",
+      "weight": 0,
+      "momentum": "dominant|strong|emerging|niche",
+      "brandCount": 0,
+      "totalDaysActive": 0
+    }
+  ],
+  "creativeFormats": [
+    {
+      "name": "format name",
+      "description": "100+ words",
+      "adIndices": [],
+      "count": 0,
+      "weight": 0,
+      "momentum": "dominant|strong|emerging|niche",
+      "brandCount": 0,
+      "brands": ["brand names"],
+      "avgDaysActive": 0,
+      "maxDaysActive": 0,
+      "longevityRank": 0,
+      "totalDaysActive": 0,
+      "topAds": ["brief description of longest-running ads"]
+    }
+  ],
+  "consolidationSummary": {
+    "generatedFrom": "ad_analyses (cache hit)",
+    "keyMerges": [],
+    "dominantSignals": ["3-5 strongest signals"],
+    "emergingSignals": ["emerging patterns worth watching"],
+    "formatInsights": ["key takeaways about format longevity"]
+  }
+}`;
+
+  const text = await callClaude(apiKey, CONSOLIDATION_MODEL, system, [{ type: "text", text: user }], 8000);
+  return parseJSON(text) as Record<string, unknown>;
+}
+
+// === STEP 1.5: Consolidate — v24: uses Sonnet for speed, hard caps, aggressive dedup instructions ===
 async function step1_5Consolidate(
   apiKey: string,
   themes: unknown[],
@@ -273,9 +404,10 @@ async function step1_5Consolidate(
   clusters: unknown[],
   formats: unknown[],
   totalAds: number,
-  imageMetadata: unknown[]
+  imageMetadata: unknown[],
+  adAnalyses?: Array<Record<string, unknown>>
 ): Promise<Record<string, unknown>> {
-  console.log(`[v23] Consolidation input: ${themes.length} themes, ${personas.length} personas, ${pillars.length} pillars, ${clusters.length} clusters, ${formats.length} formats`);
+  console.log(`[v24] Consolidation input: ${themes.length} themes, ${personas.length} personas, ${pillars.length} pillars, ${clusters.length} clusters, ${formats.length} formats`);
 
   const system = `You are a senior creative strategist consolidating competitive intelligence. Multiple batches of competitor ads have been analysed independently, producing overlapping themes, personas, creative pillars, and creative formats. Your job is to AGGRESSIVELY merge duplicates and near-duplicates, producing a clean, non-overlapping, WEIGHTED set.
 
@@ -311,10 +443,23 @@ Return VALID JSON only. No markdown, no code fences.`;
     d: img.days_active || 0,
   }));
 
+  // Include trimmed ad_analyses if available
+  let adAnalysesSection = "";
+  if (adAnalyses && adAnalyses.length > 0) {
+    const trimmedAnalyses = adAnalyses.map((a, idx) => ({
+      i: idx,
+      brand: a.brand || 'Unknown',
+      cf: a.creativeFormat || 'Unknown',
+      hook: String(a.emotionalHook || '').substring(0, 40),
+      vc: a.visualCluster || 'Unclustered',
+    }));
+    adAnalysesSection = `\n\nAD ANALYSES REFERENCE (from cache hit — may have fewer items than image metadata):\n${JSON.stringify(trimmedAnalyses, null, 1)}`;
+  }
+
   const user = `Consolidate the following competitive intelligence from ${totalAds} competitor ads. Remember: OBEY THE HARD CAPS.
 
 IMAGE METADATA (i=index, b=brand, c=cluster, f=format, d=days_active):
-${JSON.stringify(trimmedMetadata)}
+${JSON.stringify(trimmedMetadata)}${adAnalysesSection}
 
 THEMES (${themes.length} — must reduce to 4-6):
 ${JSON.stringify(themes, null, 1)}
@@ -421,12 +566,12 @@ Return this JSON (sorted by weight descending within each category):
   const text = await callClaude(apiKey, CONSOLIDATION_MODEL, system, [{ type: "text", text: user }], 8000);
   const result = parseJSON(text) as Record<string, unknown>;
 
-  // v23: Validate caps and log
+  // v24: Validate caps and log
   const rThemes = (result.themes as unknown[] || []).length;
   const rPersonas = (result.personas as unknown[] || []).length;
   const rPillars = (result.creativePillars as unknown[] || []).length;
   const rClusters = (result.visualClusters as unknown[] || []).length;
-  console.log(`[v23] Consolidation output: ${rThemes} themes, ${rPersonas} personas, ${rPillars} pillars, ${rClusters} clusters`);
+  console.log(`[v24] Consolidation output: ${rThemes} themes, ${rPersonas} personas, ${rPillars} pillars, ${rClusters} clusters`);
 
   return result;
 }
@@ -446,12 +591,12 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    const { ads, brands_analysed, page_ids, percentile, type_filter, step, step1_result, themes, personas, pillars, clusters, formats, total_ads, image_metadata } = body as {
+    const { ads, brands_analysed, page_ids, percentile, type_filter, step, step1_result, themes, personas, pillars, clusters, formats, total_ads, image_metadata, ad_analyses } = body as {
       ads?: AdInput[]; brands_analysed?: string[]; page_ids?: string[];
       percentile?: number; type_filter?: string; step?: number;
       step1_result?: Record<string, unknown>;
       themes?: unknown[]; personas?: unknown[]; pillars?: unknown[]; clusters?: unknown[]; formats?: unknown[]; total_ads?: number;
-      image_metadata?: unknown[];
+      image_metadata?: unknown[]; ad_analyses?: Array<Record<string, unknown>>;
     };
 
     const apiKey = Deno.env.get("CLAUDE_API_KEY") || "";
@@ -477,24 +622,41 @@ Deno.serve(async (req: Request) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // === STEP 1.5: Consolidate — v23: Sonnet + hard caps ===
+    // === STEP 1.5: Consolidate or Generate — v24 ===
     if (step === 1.5) {
-      if (!themes && !personas && !pillars) {
-        return new Response(JSON.stringify({ error: "themes, personas, and pillars required for step 1.5" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      // Check if themes/personas/pillars are all empty
+      const themesEmpty = !themes || (Array.isArray(themes) && themes.length === 0);
+      const personasEmpty = !personas || (Array.isArray(personas) && personas.length === 0);
+      const pillarsEmpty = !pillars || (Array.isArray(pillars) && pillars.length === 0);
+      const allEmpty = themesEmpty && personasEmpty && pillarsEmpty;
+
+      // If all are empty but ad_analyses available, generate from analyses
+      if (allEmpty && ad_analyses && ad_analyses.length > 0) {
+        console.log(`[v24] Cache hit detected: generating from ${ad_analyses.length} ad_analyses`);
+        const consolidated = await step1_5GenerateFromAnalyses(apiKey, ad_analyses, total_ads || 0, image_metadata || []);
+        return new Response(JSON.stringify({ success: true, step: 1.5, consolidated, model: CONSOLIDATION_MODEL, generatedFrom: "ad_analyses" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      const consolidated = await step1_5Consolidate(
-        apiKey,
-        themes || [],
-        personas || [],
-        pillars || [],
-        clusters || [],
-        formats || [],
-        total_ads || 0,
-        image_metadata || []
-      );
-      return new Response(JSON.stringify({ success: true, step: 1.5, consolidated, model: CONSOLIDATION_MODEL }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+      // Otherwise, consolidate normally
+      if (!allEmpty || (ad_analyses && ad_analyses.length > 0)) {
+        const consolidated = await step1_5Consolidate(
+          apiKey,
+          themes || [],
+          personas || [],
+          pillars || [],
+          clusters || [],
+          formats || [],
+          total_ads || 0,
+          image_metadata || [],
+          ad_analyses
+        );
+        return new Response(JSON.stringify({ success: true, step: 1.5, consolidated, model: CONSOLIDATION_MODEL }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      return new Response(JSON.stringify({ error: "themes, personas, pillars, or ad_analyses required for step 1.5" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // === STEP 3: Save ===
@@ -520,7 +682,7 @@ Deno.serve(async (req: Request) => {
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (err) {
-    console.error(`[analyse-competitor-creatives v23] Error: ${String(err)}`);
+    console.error(`[analyse-competitor-creatives v24] Error: ${String(err)}`);
     return new Response(JSON.stringify({ error: String(err) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
