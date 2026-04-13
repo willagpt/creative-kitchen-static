@@ -1,0 +1,633 @@
+import React, { useState, useEffect } from 'react'
+import './VideoAnalysis.css'
+import { supabaseUrl, supabaseAnonKey } from '../lib/supabase'
+
+const fnHeaders = {
+  apikey: supabaseAnonKey,
+  Authorization: `Bearer ${supabaseAnonKey}`,
+  'Content-Type': 'application/json',
+}
+
+export default function VideoAnalysis() {
+  const [view, setView] = useState('list') // 'list' or 'detail'
+  const [analyses, setAnalyses] = useState([])
+  const [selectedAnalysis, setSelectedAnalysis] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [showAnalyzeForm, setShowAnalyzeForm] = useState(false)
+  const [analyzingAdId, setAnalyzingAdId] = useState('')
+  const [analyzeLoading, setAnalyzeLoading] = useState(false)
+  const [analyzeError, setAnalyzeError] = useState(null)
+  const [detailTab, setDetailTab] = useState('script') // 'script', 'analysis', 'shots'
+
+  // Fetch all analyses
+  useEffect(() => {
+    fetchAnalyses()
+  }, [])
+
+  const fetchAnalyses = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/video_analyses?select=*&order=created_at.desc`,
+        { headers: fnHeaders }
+      )
+      if (!response.ok) throw new Error('Failed to fetch analyses')
+      const data = await response.json()
+
+      // Enrich with competitor ad data
+      const enriched = await Promise.all(
+        data.map(async (analysis) => {
+          try {
+            const adRes = await fetch(
+              `${supabaseUrl}/rest/v1/competitor_ads?id=eq.${analysis.competitor_ad_id}&select=brand_name,page_name`,
+              { headers: fnHeaders }
+            )
+            const ads = await adRes.json()
+            return {
+              ...analysis,
+              brand_name: ads[0]?.brand_name || 'Unknown',
+              page_name: ads[0]?.page_name || '',
+            }
+          } catch (e) {
+            return { ...analysis, brand_name: 'Unknown', page_name: '' }
+          }
+        })
+      )
+
+      setAnalyses(enriched)
+    } catch (e) {
+      setError(e.message)
+      console.error('Fetch error:', e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleAnalyzeSubmit = async (e) => {
+    e.preventDefault()
+    if (!analyzingAdId.trim()) {
+      setAnalyzeError('Please enter a competitor ad ID')
+      return
+    }
+
+    setAnalyzeLoading(true)
+    setAnalyzeError(null)
+
+    try {
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/analyse-video`,
+        {
+          method: 'POST',
+          headers: fnHeaders,
+          body: JSON.stringify({ competitor_ad_id: analyzingAdId }),
+        }
+      )
+
+      if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.message || 'Failed to start analysis')
+      }
+
+      const result = await response.json()
+      setShowAnalyzeForm(false)
+      setAnalyzingAdId('')
+
+      // Refresh list
+      setTimeout(fetchAnalyses, 1000)
+    } catch (e) {
+      setAnalyzeError(e.message)
+      console.error('Analyze error:', e)
+    } finally {
+      setAnalyzeLoading(false)
+    }
+  }
+
+  const openDetail = (analysis) => {
+    setSelectedAnalysis(analysis)
+    setDetailTab('script')
+    setView('detail')
+  }
+
+  const closeDetail = () => {
+    setView('list')
+    setSelectedAnalysis(null)
+  }
+
+  return (
+    <div className="va-container">
+      {/* Header with action button */}
+      <div className="va-header">
+        <div>
+          <h1 className="va-title">Video Analysis</h1>
+          <p className="va-subtitle">Review AI-generated insights from competitor video ads</p>
+        </div>
+        <button
+          className="va-btn va-btn-primary"
+          onClick={() => setShowAnalyzeForm(!showAnalyzeForm)}
+        >
+          {showAnalyzeForm ? 'Cancel' : '+ Analyse New Video'}
+        </button>
+      </div>
+
+      {/* Analyze form (expanded) */}
+      {showAnalyzeForm && (
+        <div className="va-analyze-form">
+          <h2>Start New Analysis</h2>
+          <form onSubmit={handleAnalyzeSubmit}>
+            <div className="va-form-group">
+              <label htmlFor="ad-id">Competitor Ad ID</label>
+              <input
+                id="ad-id"
+                type="text"
+                placeholder="e.g., 3324195914449903"
+                value={analyzingAdId}
+                onChange={(e) => setAnalyzingAdId(e.target.value)}
+                className="va-input"
+              />
+              <p className="va-hint">Paste the ID of a video ad from the competitor ads list</p>
+            </div>
+            {analyzeError && <div className="va-error-banner">{analyzeError}</div>}
+            <div className="va-form-actions">
+              <button type="submit" className="va-btn va-btn-primary" disabled={analyzeLoading}>
+                {analyzeLoading ? 'Analysing...' : 'Start Analysis'}
+              </button>
+              <button
+                type="button"
+                className="va-btn va-btn-secondary"
+                onClick={() => setShowAnalyzeForm(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Main content area */}
+      {view === 'list' ? (
+        <ListViewContent
+          analyses={analyses}
+          loading={loading}
+          error={error}
+          onSelect={openDetail}
+          onRetry={fetchAnalyses}
+        />
+      ) : (
+        <DetailViewContent
+          analysis={selectedAnalysis}
+          detailTab={detailTab}
+          onTabChange={setDetailTab}
+          onClose={closeDetail}
+        />
+      )}
+    </div>
+  )
+}
+
+function ListViewContent({ analyses, loading, error, onSelect, onRetry }) {
+  if (loading) {
+    return (
+      <div className="va-empty-state">
+        <div className="va-spinner"></div>
+        <p>Loading analyses...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="va-empty-state">
+        <div className="va-error-icon">⚠</div>
+        <p>{error}</p>
+        <button className="va-btn va-btn-secondary" onClick={onRetry}>
+          Retry
+        </button>
+      </div>
+    )
+  }
+
+  if (analyses.length === 0) {
+    return (
+      <div className="va-empty-state">
+        <div className="va-empty-icon">📹</div>
+        <h2>No analyses yet</h2>
+        <p>Start by analyzing a video ad to see insights here</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="va-grid">
+      {analyses.map((analysis) => (
+        <AnalysisCard
+          key={analysis.id}
+          analysis={analysis}
+          onClick={() => onSelect(analysis)}
+        />
+      ))}
+    </div>
+  )
+}
+
+function AnalysisCard({ analysis, onClick }) {
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'complete':
+        return '#34d399'
+      case 'processing':
+        return '#fbbf24'
+      case 'error':
+        return '#f43f5e'
+      default:
+        return '#71717a'
+    }
+  }
+
+  return (
+    <div className="va-card" onClick={onClick}>
+      <div className="va-card-image">
+        {analysis.contact_sheet_url ? (
+          <img
+            src={analysis.contact_sheet_url}
+            alt="Contact sheet"
+            onError={(e) => {
+              e.target.style.display = 'none'
+              e.target.nextElementSibling.style.display = 'flex'
+            }}
+          />
+        ) : null}
+        <div className="va-card-placeholder" style={{ display: analysis.contact_sheet_url ? 'none' : 'flex' }}>
+          📹
+        </div>
+      </div>
+
+      <div className="va-card-content">
+        <div className="va-card-header">
+          <h3 className="va-card-title">{analysis.brand_name}</h3>
+          <div
+            className="va-status-badge"
+            style={{ borderColor: getStatusColor(analysis.status) }}
+          >
+            <span style={{ color: getStatusColor(analysis.status) }}>●</span>
+            {analysis.status}
+          </div>
+        </div>
+
+        <div className="va-card-meta">
+          {analysis.duration_seconds && (
+            <span className="va-meta-item">
+              ⏱ {analysis.duration_seconds.toFixed(1)}s
+            </span>
+          )}
+          {analysis.total_shots && (
+            <span className="va-meta-item">
+              🎬 {analysis.total_shots} shots
+            </span>
+          )}
+          {analysis.cuts_per_second && (
+            <span className="va-meta-item">
+              ✂ {analysis.cuts_per_second.toFixed(2)}/s
+            </span>
+          )}
+        </div>
+
+        {analysis.ai_analysis?.one_line_summary && (
+          <p className="va-card-summary">{analysis.ai_analysis.one_line_summary}</p>
+        )}
+
+        <button className="va-card-action">View Details →</button>
+      </div>
+    </div>
+  )
+}
+
+function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
+  if (!analysis) return null
+
+  return (
+    <div className="va-detail-overlay">
+      <div className="va-detail-panel">
+        {/* Detail Header */}
+        <div className="va-detail-header">
+          <div className="va-detail-top">
+            <button className="va-close-btn" onClick={onClose}>✕</button>
+            <h2 className="va-detail-title">{analysis.brand_name}</h2>
+          </div>
+
+          {analysis.contact_sheet_url && (
+            <div className="va-detail-hero">
+              <img src={analysis.contact_sheet_url} alt="Contact sheet" />
+            </div>
+          )}
+
+          <div className="va-detail-stats">
+            <StatItem label="Duration" value={`${analysis.duration_seconds?.toFixed(1) || '—'}s`} />
+            <StatItem label="Total Shots" value={analysis.total_shots || '—'} />
+            <StatItem label="Avg Shot" value={`${analysis.avg_shot_duration?.toFixed(2) || '—'}s`} />
+            <StatItem label="Cuts/Sec" value={analysis.cuts_per_second?.toFixed(2) || '—'} />
+            <StatItem label="Pacing" value={analysis.pacing_profile || '—'} />
+            <StatItem label="Status" value={analysis.status} />
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="va-tabs">
+          <button
+            className={`va-tab ${detailTab === 'script' ? 'active' : ''}`}
+            onClick={() => onTabChange('script')}
+          >
+            Script
+          </button>
+          <button
+            className={`va-tab ${detailTab === 'analysis' ? 'active' : ''}`}
+            onClick={() => onTabChange('analysis')}
+          >
+            AI Analysis
+          </button>
+          <button
+            className={`va-tab ${detailTab === 'shots' ? 'active' : ''}`}
+            onClick={() => onTabChange('shots')}
+          >
+            Shots
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        <div className="va-tab-content">
+          {detailTab === 'script' && <ScriptTab analysis={analysis} />}
+          {detailTab === 'analysis' && <AnalysisTab analysis={analysis} />}
+          {detailTab === 'shots' && <ShotsTab analysis={analysis} />}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function StatItem({ label, value }) {
+  return (
+    <div className="va-stat">
+      <span className="va-stat-label">{label}</span>
+      <span className="va-stat-value">{value}</span>
+    </div>
+  )
+}
+
+function ScriptTab({ analysis }) {
+  if (!analysis.combined_script) {
+    return <div className="va-tab-empty">No script data available</div>
+  }
+
+  const lines = (analysis.combined_script || '').split('\n').filter((l) => l.trim())
+
+  return (
+    <div className="va-script">
+      {lines.map((line, idx) => {
+        const isVoiceover = line.includes('VOICEOVER:')
+        const isVisual = line.includes('VISUAL:') || line.includes('TEXT ON SCREEN:')
+
+        return (
+          <div
+            key={idx}
+            className={`va-script-line ${isVoiceover ? 'voiceover' : ''} ${isVisual ? 'visual' : ''}`}
+          >
+            {line}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function AnalysisTab({ analysis }) {
+  const ai = analysis.ai_analysis || {}
+
+  return (
+    <div className="va-analysis">
+      {/* Hook */}
+      {ai.hook && (
+        <Section title="Hook">
+          <div className="va-badge-row">
+            {ai.hook.type && <Badge color="indigo">{ai.hook.type}</Badge>}
+            {ai.hook.effectiveness_score && (
+              <div className="va-score-bar">
+                <span className="va-score-label">Effectiveness</span>
+                <div className="va-bar-bg">
+                  <div
+                    className="va-bar-fill"
+                    style={{ width: `${Math.min(ai.hook.effectiveness_score * 10, 100)}%` }}
+                  ></div>
+                </div>
+                <span className="va-score-value">{ai.hook.effectiveness_score.toFixed(1)}/10</span>
+              </div>
+            )}
+          </div>
+          {ai.hook.text && <p className="va-section-text">{ai.hook.text}</p>}
+        </Section>
+      )}
+
+      {/* Narrative Arc */}
+      {ai.narrative_arc && (
+        <Section title="Narrative Arc">
+          {ai.narrative_arc.structure && (
+            <Badge color="purple">{ai.narrative_arc.structure}</Badge>
+          )}
+          {ai.narrative_arc.beats && (
+            <ol className="va-beats">
+              {ai.narrative_arc.beats.map((beat, idx) => (
+                <li key={idx}>{beat}</li>
+              ))}
+            </ol>
+          )}
+        </Section>
+      )}
+
+      {/* CTA */}
+      {ai.cta && (
+        <Section title="Call-to-Action">
+          <div className="va-badge-row">
+            {ai.cta.type && <Badge color="indigo">{ai.cta.type}</Badge>}
+            {ai.cta.placement && <Badge color="slate">{ai.cta.placement}</Badge>}
+          </div>
+          {ai.cta.text && <p className="va-section-text">{ai.cta.text}</p>}
+        </Section>
+      )}
+
+      {/* Selling Points */}
+      {ai.selling_points && ai.selling_points.length > 0 && (
+        <Section title="Selling Points">
+          <div className="va-pills">
+            {ai.selling_points.map((point, idx) => (
+              <span key={idx} className="va-pill">{point}</span>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* Emotional Drivers */}
+      {ai.emotional_drivers && ai.emotional_drivers.length > 0 && (
+        <Section title="Emotional Drivers">
+          <div className="va-emotion-pills">
+            {ai.emotional_drivers.map((driver, idx) => (
+              <span key={idx} className="va-emotion-pill">{driver}</span>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* Target Audience */}
+      {ai.target_audience && (
+        <Section title="Target Audience">
+          {ai.target_audience.description && (
+            <p className="va-section-text">{ai.target_audience.description}</p>
+          )}
+          {ai.target_audience.signals && (
+            <div className="va-pills">
+              {ai.target_audience.signals.map((signal, idx) => (
+                <span key={idx} className="va-pill">{signal}</span>
+              ))}
+            </div>
+          )}
+        </Section>
+      )}
+
+      {/* Production Style */}
+      {ai.production_style && (
+        <Section title="Production Style">
+          <div className="va-style-grid">
+            {ai.production_style.format && (
+              <StyleItem label="Format" value={ai.production_style.format} />
+            )}
+            {ai.production_style.quality && (
+              <StyleItem label="Quality" value={ai.production_style.quality} />
+            )}
+            {ai.production_style.overlays && (
+              <StyleItem label="Overlays" value={ai.production_style.overlays} />
+            )}
+            {ai.production_style.music && (
+              <StyleItem label="Music" value={ai.production_style.music} />
+            )}
+          </div>
+        </Section>
+      )}
+
+      {/* Competitor Insights */}
+      {ai.competitor_insights && (
+        <Section title="Competitor Insights">
+          {ai.competitor_insights.what_works && (
+            <InsightCard border="green" title="What Works" text={ai.competitor_insights.what_works} />
+          )}
+          {ai.competitor_insights.what_to_steal && (
+            <InsightCard border="blue" title="What to Steal" text={ai.competitor_insights.what_to_steal} />
+          )}
+          {ai.competitor_insights.weaknesses && (
+            <InsightCard border="red" title="Weaknesses" text={ai.competitor_insights.weaknesses} />
+          )}
+        </Section>
+      )}
+    </div>
+  )
+}
+
+function Section({ title, children }) {
+  return (
+    <div className="va-section">
+      <h3 className="va-section-title">{title}</h3>
+      <div className="va-section-body">{children}</div>
+    </div>
+  )
+}
+
+function Badge({ color, children }) {
+  const colors = {
+    indigo: '#6366f1',
+    purple: '#a855f7',
+    slate: '#71717a',
+  }
+  return (
+    <span className="va-badge" style={{ backgroundColor: `${colors[color] || colors.indigo}20`, borderColor: colors[color] || colors.indigo }}>
+      {children}
+    </span>
+  )
+}
+
+function StyleItem({ label, value }) {
+  return (
+    <div className="va-style-item">
+      <span className="va-style-label">{label}</span>
+      <span className="va-style-value">{value}</span>
+    </div>
+  )
+}
+
+function InsightCard({ border, title, text }) {
+  const borderColors = {
+    green: '#34d399',
+    blue: '#3b82f6',
+    red: '#f43f5e',
+  }
+  return (
+    <div className="va-insight-card" style={{ borderLeftColor: borderColors[border] }}>
+      <h4 className="va-insight-title">{title}</h4>
+      <p className="va-insight-text">{text}</p>
+    </div>
+  )
+}
+
+function ShotsTab({ analysis }) {
+  const [shots, setShots] = useState([])
+  const [shotsLoading, setShotsLoading] = useState(true)
+
+  useEffect(() => {
+    fetchShots()
+  }, [analysis.id])
+
+  const fetchShots = async () => {
+    try {
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/video_shots?video_analysis_id=eq.${analysis.id}&select=*&order=shot_number.asc`,
+        { headers: fnHeaders }
+      )
+      if (!response.ok) throw new Error('Failed to fetch shots')
+      const data = await response.json()
+      setShots(data)
+    } catch (e) {
+      console.error('Fetch shots error:', e)
+    } finally {
+      setShotsLoading(false)
+    }
+  }
+
+  if (shotsLoading) {
+    return <div className="va-tab-empty">Loading shots...</div>
+  }
+
+  if (shots.length === 0) {
+    return <div className="va-tab-empty">No shots available</div>
+  }
+
+  return (
+    <div className="va-shots-grid">
+      {shots.map((shot) => (
+        <div key={shot.id} className="va-shot-card">
+          {shot.frame_url && (
+            <img src={shot.frame_url} alt={`Shot ${shot.shot_number}`} className="va-shot-image" />
+          )}
+          <div className="va-shot-info">
+            <div className="va-shot-number">Shot {shot.shot_number}</div>
+            {shot.duration && (
+              <div className="va-shot-duration">{shot.duration.toFixed(2)}s</div>
+            )}
+            {shot.ocr_text && (
+              <p className="va-shot-ocr">{shot.ocr_text}</p>
+            )}
+            {shot.description && (
+              <p className="va-shot-desc">{shot.description}</p>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}

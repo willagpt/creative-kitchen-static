@@ -59,6 +59,7 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 - Text: white
 - Fonts: Inter (UI), JetBrains Mono (code/prompts)
 - Antialiased rendering
+- CSS class prefix: `ca-` for competitor ads, `va-` for video analysis
 
 ## Current Status
 
@@ -66,7 +67,8 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 - **Phase 1 Complete:** Video Analysis Engine — Foundation (DB + pipeline + Railway worker + 3 edge functions)
 - **Phase 2 Complete:** Script Extraction — Whisper transcription + Claude Vision OCR + combined script merger
 - **Phase 3 Complete:** AI Analysis — Creative strategy breakdown (hook, narrative arc, CTA, audience, production style, competitor insights)
-- **Next:** Phase 4 — Frontend UI for video analysis results + batch processing
+- **Phase 4 Complete:** Frontend UI — VideoAnalysis component with list/detail views, Script/AI Analysis/Shots tabs, new analysis form
+- **Next:** Phase 5 — Batch processing (analyse top N videos per brand) + Compare view integration
 - **Last deployed:** 13 April 2026
 - **Edge functions:** 22 edge functions deployed (14 original + 3 Phase 1 + 4 Phase 2 + 1 Phase 3). All have `verify_jwt: true`
 - **generate-ad-prompt:** v27 (packaging-aware, dynamic packaging terms)
@@ -74,6 +76,21 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 - **Edge function `fetch-competitor-ads`:** v6 deployed. Supports `brand_id` or `page_id`, default `start_date: 2025-12-23`, `credit_budget: 500`, DCO card explosion, rich metadata extraction, credit logging to `foreplay_credit_log`
 - **Foreplay API:** `public.api.foreplay.co`, key stored in edge function. 1 credit per ad. Simmer brand_id: `n68cYDEnS6D6eU4T4bLS`
 - **Supabase anon key:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA`
+
+## Frontend Components
+
+- `src/App.jsx` — Main app with tab navigation (11 tabs)
+- `src/components/CompetitorAds.jsx` + `.css` — Competitor ad viewer with grid, filters, inline video
+- `src/components/CompareAnalyses.jsx` + `.css` — Side-by-side ad comparison
+- `src/components/VideoAnalysis.jsx` + `.css` — **(Phase 4)** Video analysis viewer: list grid with contact sheet cards, detail modal with Script/AI Analysis/Shots tabs, new analysis form. CSS prefix: `va-`
+- `src/components/Gallery.jsx` — Ad library grid
+- `src/components/BrandDNA.jsx` — Brand DNA editor
+- `src/components/PhotoLibrary.jsx` — Photo reference library
+- `src/components/Generator.jsx` — Prompt generator
+- `src/components/Review.jsx` — Image review/rating
+- `src/components/Launcher.jsx` — Batch launcher
+- `src/components/PromptTester.jsx` — Prompt testing
+- `src/components/AdDetail.jsx` — Ad detail overlay
 
 ## Edge Functions
 
@@ -140,6 +157,11 @@ Caller: `POST /functions/v1/ai-analyse-video` with `{analysis_id}` (also auto-ru
 2. Sends to Claude Sonnet 4.6 with structured analysis prompt
 3. Returns JSONB: hook (type, text, effectiveness), narrative_arc, CTA, selling_points, emotional_drivers, target_audience, production_style, pacing_analysis, competitor_insights (what_works, what_to_steal, weaknesses), one_line_summary
 
+### Phase 4: Frontend UI (VideoAnalysis component)
+- **List view:** Card grid with contact sheet thumbnails, brand name, status badge, duration/shots/pacing metrics, one-line summary
+- **Detail view:** Modal with Script tab (color-coded voiceover vs visual), AI Analysis tab (structured insights with badges/bars/cards), Shots tab (frame grid with OCR + descriptions)
+- **New analysis form:** Enter competitor_ad_id → triggers analyse-video edge function
+
 Each step writes independently to the DB, so partial progress is preserved.
 
 ## Development Rules
@@ -174,3 +196,4 @@ Each step writes independently to the DB, so partial progress is preserved.
 - Review ratings: great, good, needs-work, slop
 - Reviewers: "claude" (AI) or "user" (human)
 - Prompt versioning for iterative improvement
+- CSS class prefixes: `ca-` (competitor ads), `va-` (video analysis)

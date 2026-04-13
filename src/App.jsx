@@ -10,9 +10,11 @@ import Review from './components/Review'
 import Launcher from './components/Launcher'
 import PromptTester from './components/PromptTester'
 import CompareAnalyses from './components/CompareAnalyses'
+import VideoAnalysis from './components/VideoAnalysis'
 
 const TABS = [
   { key: 'competitors', label: 'Competitor Ads' },
+  { key: 'video-analysis', label: 'Video Analysis' },
   { key: 'compare', label: 'Compare' },
   { key: 'gallery', label: 'Ad Library' },
   { key: 'brand', label: 'Brand DNA' },
@@ -134,6 +136,10 @@ export default function App() {
       <main className="container">
         {tab === 'competitors' && (
           <CompetitorAds onNavigate={setTab} onAdLibraryRefresh={loadAds} />
+        )}
+
+        {tab === 'video-analysis' && (
+          <VideoAnalysis />
         )}
 
         {tab === 'compare' && (
