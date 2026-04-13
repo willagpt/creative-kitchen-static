@@ -437,6 +437,7 @@ function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
                 className="va-select"
                 value={briefShotCount}
                 onChange={(e) => setBriefShotCount(Number(e.target.value))}
+                disabled={briefLoading}
               >
                 <option value={5}>5 Shots</option>
                 <option value={10}>10 Shots</option>
@@ -450,6 +451,18 @@ function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
               </button>
             </div>
           </div>
+
+          {/* Loading banner - visible when generating brief */}
+          {briefLoading && (
+            <div className="va-loading-banner">
+              <div className="va-spinner-sm"></div>
+              <div className="va-loading-banner-text">
+                <span className="va-loading-banner-title">Generating UGC Brief...</span>
+                <span className="va-loading-banner-sub">AI is crafting a {briefShotCount}-shot production brief. This usually takes 10-15 seconds.</span>
+              </div>
+            </div>
+          )}
+
           {briefError && <div className="va-error-banner" style={{marginTop:'1rem'}}>{briefError}</div>}
         </div>
 
