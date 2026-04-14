@@ -28,8 +28,8 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 - `competitor_ads` — ~9,900 rows of enriched competitor ads (Simmer data: Jan 11 – Apr 9, 2026). Key fields: `thumbnail_url`, `snapshot_url`, `page_id`, `page_name`, `creative_title`, `creative_body`, `start_date`, `end_date`, `is_active`, `impressions_lower`, `impressions_upper`, `days_active`, `platforms`. **New columns (Apr 2026):** `display_format` (IMAGE/VIDEO/DCO), `video_url`, `card_index`, `parent_ad_id`, `emotional_drivers`, `content_filter`, `creative_targeting`, `categories`, `persona`, `languages`, `market_target`, `niches`, `cta_type`, `link_url`. DCO ads are exploded into one row per card.
 - `followed_brands` — brands being tracked for competitor ad monitoring. Simmer: `brand_id: n68cYDEnS6D6eU4T4bLS`, `page_id: 187701838409772`
 - `foreplay_credit_log` — tracks Foreplay API credit usage per fetch call. Fields: `brand_id`, `page_id`, `credits_used`, `ads_fetched`, `credit_budget`, `start_date`, `stopped_reason`
-- `video_analyses` — **(NEW Apr 2026)** Primary record for video analysis. Fields: competitor_ad_id, run_id, video_url, duration_seconds, total_shots, total_cuts, avg_shot_duration, cuts_per_second, pacing_profile, transcript_text, ocr_text, combined_script, contact_sheet_url, ai_analysis (jsonb), status, error_message
-- `video_shots` — **(NEW Apr 2026)** Individual shot records. Fields: video_analysis_id (FK), shot_number, start_time, end_time, duration, frame_url, ocr_text, description
+- `video_analyses` — **(NEW Apr 2026)** Primary record for video analysis. Fields: competitor_ad_id, run_id, video_url, duration_seconds, total_shots, total_cuts, avg_shot_duration, cuts_per_second, pacing_profile, transcript_text, ocr_text, combined_script, contact_sheet_url, ai_analysis (jsonb), layout_summary (jsonb — `{"full":6,"split-2":2,"split-3":0,"other":0}`), status, error_message
+- `video_shots` — **(NEW Apr 2026)** Individual shot records. Fields: video_analysis_id (FK), shot_number, start_time, end_time, duration, frame_url, ocr_text, description, screen_layout (text — `full`|`split-2`|`split-3`|`other`, nullable, CHECK constraint)
 - `video_analysis_runs` — **(NEW Apr 2026)** Batch analysis runs. Fields: brand_name, page_id, percentile (1/2/5/10/20), total_videos, analysed_count, status
 
 ### Supabase Storage Buckets
@@ -62,12 +62,13 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 
 ## Current Status
 
-- **Working:** Brand DNA extraction, prompt generation, image creation, review system, competitor ad viewer with inline video playback and Add Competitor Button, UGC brief generation with Chefly branding and shot variations
+- **Working:** Brand DNA extraction, prompt generation, image creation, review system, competitor ad viewer with inline video playback and Add Competitor button
 - **Phase 1 Complete:** Video Analysis Engine — Foundation (DB + pipeline + Railway worker + 3 edge functions). See `docs/video-analysis-project-spec.md`
 - **Next:** Phase 2 — Script Extraction (Whisper transcription + OCR)
 - **Last deployed:** 14 April 2026
 - **Edge functions:** 18 edge functions deployed (14 original + 3 video analysis + 1 UGC brief). All have `verify_jwt: true`
-- **generate-ugc-brief:** v5 deployed. 16384 max_tokens, truncation detection, Chefly-branded, shot variations (2/3/4), compressed prompts
+- **ai-analyse-video:** v2 deployed. Layout detection — classifies each shot as full/split-2/split-3/other via Claude vision, writes screen_layout per shot + layout_summary aggregate
+- **generate-ugc-brief:** v6 deployed. 16384 max_tokens, truncation detection, Chefly-branded, shot variations (2/3/4), layout-aware prompts (split-screen/tri-screen framing)
 - **generate-ad-prompt:** v27 (packaging-aware, dynamic packaging terms)
 - **brand_guidelines table:** Updated with packaging_format, packaging_specs, colour_palette, typography, tone_of_voice, photo_descriptions columns
 - **Edge function `fetch-competitor-ads`:** v6 deployed. Supports `brand_id` or `page_id`, default `start_date: 2025-12-23`, `credit_budget: 500`, DCO card explosion, rich metadata extraction, credit logging to `foreplay_credit_log`
@@ -92,10 +93,10 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 12. `list-prompt-versions` — List prompt iteration history
 13. `save-prompt-version` — Save prompt version records
 14. `sync-competitor-metadata` — Sync enriched competitor ad metadata
-15. `analyse-video` — v1 **(NEW)**: Orchestrator — accepts competitor_ad_id, calls Railway worker, writes to video_analyses + video_shots. Secrets: VIDEO_WORKER_URL, VIDEO_WORKER_SECRET
+15. `ai-analyse-video` — v2: Layout detection — classifies each shot as full/split-2/split-3/other via Claude vision, writes screen_layout + layout_summary
 16. `list-video-analyses` — v1 **(NEW)**: Query analyses with filters (status, run_id, competitor_ad_id) + pagination. Joins competitor_ads metadata
 17. `get-video-analysis` — v1 **(NEW)**: Fetch single analysis with all shots + full competitor ad context
-18. `generate-ugc-brief` — v5 **(NEW)**: Generate Chefly UGC creator briefs from video analysis. 16384 max_tokens, shot variations (2/3/4), truncation detection. Secrets: CLAUDE_API_KEY or ANTHROPIC_API_KEY
+18. `generate-ugc-brief` — v6: Generate Chefly UGC creator briefs from video analysis. 16384 max_tokens, shot variations (2/3/4), layout-aware prompts. Secrets: CLAUDE_API_KEY or ANTHROPIC_API_KEY
 
 ## Video Worker (Railway Microservice)
 
