@@ -2,10 +2,12 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 /**
  * ai-analyse-video — Phase 3: Creative Strategy Analysis
+ * v2: Added shot_layouts classification for split-screen detection
  * 
  * Takes a completed video analysis (with combined_script + contact_sheet)
  * and sends to Claude for structured creative strategy breakdown.
  * Writes results to video_analyses.ai_analysis (JSONB).
+ * Also classifies screen layouts per shot and computes layout_summary.
  */
 
 const SUPABASE_URL = "https://ifrxylvoufncdxyltgqt.supabase.co";
@@ -61,33 +63,33 @@ Analyse this ad and return a JSON object with the following structure:
 
 {
   "hook": {
-    "type": "string — one of: question, bold-claim, problem-agitate, social-proof, curiosity-gap, product-reveal, ugc-testimonial, before-after, shock-value, direct-address",
+    "type": "string \u2014 one of: question, bold-claim, problem-agitate, social-proof, curiosity-gap, product-reveal, ugc-testimonial, before-after, shock-value, direct-address",
     "text": "the exact hook text/voiceover from the first 3 seconds",
     "effectiveness": "1-10 score with brief reasoning"
   },
   "narrative_arc": {
-    "structure": "string — one of: problem-solution, testimonial, listicle, day-in-life, unboxing, transformation, comparison, educational, emotional-story, offer-led",
+    "structure": "string \u2014 one of: problem-solution, testimonial, listicle, day-in-life, unboxing, transformation, comparison, educational, emotional-story, offer-led",
     "beats": ["array of 3-6 narrative beats describing the story progression"]
   },
   "cta": {
-    "type": "string — one of: visit-site, shop-now, learn-more, sign-up, get-offer, try-free, limited-time, social-proof-cta, none",
+    "type": "string \u2014 one of: visit-site, shop-now, learn-more, sign-up, get-offer, try-free, limited-time, social-proof-cta, none",
     "text": "exact CTA text shown/spoken",
-    "placement": "string — where in the video: end-card, mid-roll, throughout, overlay"
+    "placement": "string \u2014 where in the video: end-card, mid-roll, throughout, overlay"
   },
   "selling_points": ["array of key product/brand claims made in the ad"],
-  "emotional_drivers": ["array — e.g. convenience, aspiration, fomo, trust, health, value, community, identity"],
+  "emotional_drivers": ["array \u2014 e.g. convenience, aspiration, fomo, trust, health, value, community, identity"],
   "target_audience": {
     "primary": "brief description of who this ad targets",
-    "signals": ["array of audience signals from visuals/copy — e.g. gym setting, meal-prep language, price-conscious messaging"]
+    "signals": ["array of audience signals from visuals/copy \u2014 e.g. gym setting, meal-prep language, price-conscious messaging"]
   },
   "production_style": {
-    "format": "string — one of: ugc, studio, lifestyle, animation, mixed, talking-head, b-roll-heavy",
-    "quality": "string — one of: lo-fi, mid, polished, premium",
-    "text_overlays": "string — one of: heavy, moderate, minimal, none",
-    "music_pacing": "string — one of: upbeat, chill, dramatic, none-detected"
+    "format": "string \u2014 one of: ugc, studio, lifestyle, animation, mixed, talking-head, b-roll-heavy",
+    "quality": "string \u2014 one of: lo-fi, mid, polished, premium",
+    "text_overlays": "string \u2014 one of: heavy, moderate, minimal, none",
+    "music_pacing": "string \u2014 one of: upbeat, chill, dramatic, none-detected"
   },
   "pacing_analysis": {
-    "overall": "string — one of: fast, medium, slow",
+    "overall": "string \u2014 one of: fast, medium, slow",
     "first_3s": "description of what happens in the critical first 3 seconds",
     "rhythm": "brief description of how the pacing changes through the ad"
   },
@@ -96,10 +98,11 @@ Analyse this ad and return a JSON object with the following structure:
     "what_to_steal": ["2-3 specific techniques we could adapt for our own ads"],
     "weaknesses": ["1-3 things this ad could do better"]
   },
-  "one_line_summary": "A single sentence summarising what this ad is and why it works (or doesn't)"
+  "one_line_summary": "A single sentence summarising what this ad is and why it works (or doesn't)",
+  "shot_layouts": ["array of screen layout classifications for each shot in order (length must match total shots). Each value is one of: full (single full-frame composition), split-2 (screen divided into two panels \u2014 top/bottom or left/right), split-3 (screen divided into three panels/grid), other (unusual or unclear layout). Look at each frame in the contact sheet and classify its composition."]
 }
 
-Return ONLY the JSON object, no other text. Be specific and reference actual content from the script — don't give generic analysis.`;
+Return ONLY the JSON object, no other text. Be specific and reference actual content from the script \u2014 don't give generic analysis.`;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -267,11 +270,53 @@ Deno.serve(async (req: Request) => {
 
     console.log(`AI analysis saved for ${analysisId}`);
 
+    // 6. Update shot screen_layout values from AI classification
+    const shotLayouts: string[] = (aiAnalysis.shot_layouts as string[]) || [];
+    const layoutSummary: Record<string, number> = { full: 0, "split-2": 0, "split-3": 0, other: 0 };
+
+    if (shotLayouts.length > 0) {
+      // Fetch existing shots for this analysis
+      const shotsRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/video_shots?video_analysis_id=eq.${analysisId}&order=shot_number.asc&select=id,shot_number`,
+        { headers: supabaseHeaders() }
+      );
+      if (shotsRes.ok) {
+        const shots = await shotsRes.json();
+        for (let i = 0; i < shots.length; i++) {
+          const layout = shotLayouts[i] || "full";
+          const validLayout = ["full", "split-2", "split-3", "other"].includes(layout) ? layout : "full";
+          layoutSummary[validLayout] = (layoutSummary[validLayout] || 0) + 1;
+
+          // Update individual shot
+          await fetch(
+            `${SUPABASE_URL}/rest/v1/video_shots?id=eq.${shots[i].id}`,
+            {
+              method: "PATCH",
+              headers: supabaseHeaders(),
+              body: JSON.stringify({ screen_layout: validLayout }),
+            }
+          );
+        }
+      }
+
+      // Update analysis with layout_summary
+      await fetch(
+        `${SUPABASE_URL}/rest/v1/video_analyses?id=eq.${analysisId}`,
+        {
+          method: "PATCH",
+          headers: supabaseHeaders(),
+          body: JSON.stringify({ layout_summary: layoutSummary }),
+        }
+      );
+      console.log(`Layout summary saved: ${JSON.stringify(layoutSummary)}`);
+    }
+
     return jsonResponse({
       success: true,
       analysis_id: analysisId,
       model_used: model,
       ai_analysis: aiAnalysis,
+      layout_summary: shotLayouts.length > 0 ? layoutSummary : null,
     });
 
   } catch (err) {
