@@ -14,6 +14,7 @@ export function generateShareableHTML(analysis, shots, brief = null) {
     combined_script,
     contact_sheet_url,
     ai_analysis,
+    layout_summary,
     status,
     created_at,
     brand_name = 'Unknown',
@@ -39,7 +40,7 @@ export function generateShareableHTML(analysis, shots, brief = null) {
 
   const sanitize = (text) => {
     if (!text) return '';
-    return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;');
   };
 
   // --- Section Renderers ---
@@ -52,6 +53,18 @@ export function generateShareableHTML(analysis, shots, brief = null) {
       { label: 'Cut Every', value: cuts_per_second && cuts_per_second > 0 ? `${(1 / cuts_per_second).toFixed(1)}s` : '\u2014' },
       { label: 'Pacing Profile', value: pacing_profile ? pacing_profile.charAt(0).toUpperCase() + pacing_profile.slice(1) : '\u2014' },
     ];
+
+    // Add layout metric if splits detected
+    if (layout_summary) {
+      const parts = [];
+      if (layout_summary.full) parts.push(layout_summary.full + ' Full');
+      if (layout_summary['split-2']) parts.push(layout_summary['split-2'] + ' Split');
+      if (layout_summary['split-3']) parts.push(layout_summary['split-3'] + ' Tri');
+      if (layout_summary.other) parts.push(layout_summary.other + ' Other');
+      if (parts.length > 0) {
+        metrics.push({ label: 'Layout', value: parts.join(' / ') });
+      }
+    }
 
     return `
       <div class="metrics-row">
@@ -236,6 +249,7 @@ export function generateShareableHTML(analysis, shots, brief = null) {
           <div class="shot-header-row">
             <span class="shot-number">Shot ${shot.shot_number}</span>
             <span class="shot-timing">${formatTime(shot.start_time)} \u2013 ${formatTime(shot.end_time)} (${formatTime(shot.duration)})</span>
+            ${shot.screen_layout && shot.screen_layout !== 'full' ? `<span class="shot-layout-badge">${shot.screen_layout === 'split-2' ? '\u2b12 Split' : shot.screen_layout === 'split-3' ? '\u2b12 Tri' : shot.screen_layout}</span>` : ''}
           </div>
           <div class="shot-body">
             ${shot.frame_url ? `<img class="shot-frame" src="${shot.frame_url}" alt="Shot ${shot.shot_number}" />` : ''}
@@ -724,6 +738,18 @@ export function generateShareableHTML(analysis, shots, brief = null) {
       font-size: 0.78rem;
       color: #71717a;
       font-weight: 500;
+    }
+
+    .shot-layout-badge {
+      display: inline-block;
+      background: #ede9fe;
+      color: #6d28d9;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
     .shot-body {
