@@ -49,7 +49,7 @@ export function generateShareableHTML(analysis, shots, brief = null) {
       { label: 'Duration', value: formatTime(duration_seconds) },
       { label: 'Total Shots', value: total_shots || '\u2014' },
       { label: 'Avg Shot Length', value: formatTime(avg_shot_duration) },
-      { label: 'Cuts / Second', value: cuts_per_second ? cuts_per_second.toFixed(2) : '\u2014' },
+      { label: 'Cut Every', value: cuts_per_second && cuts_per_second > 0 ? `${(1 / cuts_per_second).toFixed(1)}s` : '\u2014' },
       { label: 'Pacing Profile', value: pacing_profile ? pacing_profile.charAt(0).toUpperCase() + pacing_profile.slice(1) : '\u2014' },
     ];
 
@@ -97,7 +97,7 @@ export function generateShareableHTML(analysis, shots, brief = null) {
             ${beats.map(beat => {
               const label = typeof beat === 'string' ? beat : (beat.name || beat.phase || '');
               const desc = typeof beat === 'object' ? (beat.description || '') : '';
-              return `<li><strong>${sanitize(label)}</strong>${desc ? ` — ${sanitize(desc)}` : ''}</li>`;
+              return `<li><strong>${sanitize(label)}</strong>${desc ? ` \u2014 ${sanitize(desc)}` : ''}</li>`;
             }).join('')}
           </ol>
         ` : ''}
