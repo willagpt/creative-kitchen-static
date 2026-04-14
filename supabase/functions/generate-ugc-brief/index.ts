@@ -1,5 +1,6 @@
 // POST /functions/v1/generate-ugc-brief
 // Generate a structured UGC creator brief from video analysis insights using Claude AI
+// v6: layout-aware prompts, split-screen framing support
 // v5: 16384 max_tokens, truncation detection, Chefly-branded, shot variations
 
 const corsHeaders = {
@@ -99,7 +100,7 @@ Deno.serve(async (req: Request) => {
     const resolvedBrand = brand_name || adContext.page_name || "the brand";
 
     // Concise system prompt to save tokens
-    const systemPrompt = `You are an expert UGC brief writer for Chefly (premium DTC meal delivery). Analyse competitor ads and create actionable, shootable briefs for Chefly's creators. Each shot MUST have exactly ${variations_per_shot} variations (A, B, C etc) — different angles/framings for a creator shot library. Output ONLY valid JSON, no markdown.`;
+    const systemPrompt = `You are an expert UGC brief writer for Chefly (premium DTC meal delivery). Analyse competitor ads and create actionable, shootable briefs for Chefly's creators. Each shot MUST have exactly ${variations_per_shot} variations (A, B, C etc) — different angles/framings for a creator shot library. For framing, consider split-screen (two panels showing before/after, comparison, or parallel action) and tri-screen layouts where the competitor used them effectively. Output ONLY valid JSON, no markdown.`;
 
     const userPrompt = `Create a ${shot_count}-shot Chefly UGC brief from this ${resolvedBrand} competitor analysis.
 
@@ -110,6 +111,7 @@ Selling points: ${toList(sellingPoints)}
 Emotional drivers: ${toList(emotionalDrivers)}
 Audience: ${targetAudience.primary || "?"}
 Style: ${productionStyle.format || "?"}, ${productionStyle.quality || "?"}
+Layout: ${analysis.layout_summary ? Object.entries(analysis.layout_summary).filter(([_,v]) => v > 0).map(([k,v]) => `${v} ${k}`).join(', ') : 'all full-screen'}
 What to steal: ${toList(competitorInsights.what_to_steal)}
 Script: ${(analysis.combined_script || "").substring(0, 800)}
 
@@ -120,7 +122,7 @@ Return this exact JSON structure:
 
 Exactly ${shot_count} shots, each with exactly ${variations_per_shot} variations. Be specific enough to film from.`;
 
-    console.log(`[v5] Generating ${shot_count}-shot brief (${variations_per_shot} vars) for analysis ${analysis_id}...`);
+    console.log(`[v6] Generating ${shot_count}-shot brief (${variations_per_shot} vars) for analysis ${analysis_id}...`);
 
     // Call Claude with generous token limit and retry
     let claudeData: any;
@@ -170,7 +172,7 @@ Exactly ${shot_count} shots, each with exactly ${variations_per_shot} variations
 
     // Check for truncation
     if (claudeData.stop_reason === "max_tokens") {
-      console.error(`[v5] TRUNCATED — stop_reason=max_tokens, usage: ${JSON.stringify(claudeData.usage)}`);
+      console.error(`[v6] TRUNCATED — stop_reason=max_tokens, usage: ${JSON.stringify(claudeData.usage)}`);
       return new Response(
         JSON.stringify({ error: "Brief generation was truncated (response too long). Try fewer shots or variations." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -186,7 +188,7 @@ Exactly ${shot_count} shots, each with exactly ${variations_per_shot} variations
     }
 
     const rawText = textContent.text;
-    console.log(`[v5] Got response: ${rawText.length} chars, stop_reason=${claudeData.stop_reason}, usage=${JSON.stringify(claudeData.usage)}`);
+    console.log(`[v6] Got response: ${rawText.length} chars, stop_reason=${claudeData.stop_reason}, usage=${JSON.stringify(claudeData.usage)}`);
 
     // Parse JSON — strip markdown fences if present
     let brief;
