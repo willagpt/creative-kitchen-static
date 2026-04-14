@@ -28,15 +28,15 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 - `competitor_ads` — ~9,900 rows of enriched competitor ads (Simmer data: Jan 11 – Apr 9, 2026). Key fields: `thumbnail_url`, `snapshot_url`, `page_id`, `page_name`, `creative_title`, `creative_body`, `start_date`, `end_date`, `is_active`, `impressions_lower`, `impressions_upper`, `days_active`, `platforms`. **New columns (Apr 2026):** `display_format` (IMAGE/VIDEO/DCO), `video_url`, `card_index`, `parent_ad_id`, `emotional_drivers`, `content_filter`, `creative_targeting`, `categories`, `persona`, `languages`, `market_target`, `niches`, `cta_type`, `link_url`. DCO ads are exploded into one row per card.
 - `followed_brands` — brands being tracked for competitor ad monitoring. Simmer: `brand_id: n68cYDEnS6D6eU4T4bLS`, `page_id: 187701838409772`
 - `foreplay_credit_log` — tracks Foreplay API credit usage per fetch call. Fields: `brand_id`, `page_id`, `credits_used`, `ads_fetched`, `credit_budget`, `start_date`, `stopped_reason`
-- `video_analyses` — **(Apr 2026)** Primary record for video analysis. Fields: competitor_ad_id, run_id, video_url, duration_seconds, total_shots, total_cuts, avg_shot_duration, cuts_per_second, pacing_profile, transcript_text, ocr_text, combined_script, contact_sheet_url, ai_analysis (jsonb), status, error_message
-- `video_shots` — **(Apr 2026)** Individual shot records. Fields: video_analysis_id (FK), shot_number, start_time, end_time, duration, frame_url, ocr_text, description
-- `video_analysis_runs` — **(Apr 2026)** Batch analysis runs. Fields: brand_name, page_id, percentile (1/2/5/10/20), total_videos, analysed_count, status
+- `video_analyses` — **(NEW Apr 2026)** Primary record for video analysis. Fields: competitor_ad_id, run_id, video_url, duration_seconds, total_shots, total_cuts, avg_shot_duration, cuts_per_second, pacing_profile, transcript_text, ocr_text, combined_script, contact_sheet_url, ai_analysis (jsonb), status, error_message
+- `video_shots` — **(NEW Apr 2026)** Individual shot records. Fields: video_analysis_id (FK), shot_number, start_time, end_time, duration, frame_url, ocr_text, description
+- `video_analysis_runs` — **(NEW Apr 2026)** Batch analysis runs. Fields: brand_name, page_id, percentile (1/2/5/10/20), total_videos, analysed_count, status
 
 ### Supabase Storage Buckets
 
 - `reference-images` — existing, public
 - `static-uploads` — existing, public
-- `video-processing` — **(Apr 2026)** public, 100MB limit. Stores extracted video frames, contact sheets, and audio files. MIME types: video/mp4, video/webm, image/jpeg, image/png, audio/mpeg, audio/mp3
+- `video-processing` — **(NEW Apr 2026)** public, 100MB limit. Stores extracted video frames, contact sheets, and audio files. MIME types: video/mp4, video/webm, image/jpeg, image/png, audio/mpeg, audio/mp3
 
 ### Workflow
 
@@ -59,44 +59,24 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 - Text: white
 - Fonts: Inter (UI), JetBrains Mono (code/prompts)
 - Antialiased rendering
-- CSS class prefix: `ca-` for competitor ads, `va-` for video analysis
 
 ## Current Status
 
-- **Working:** Brand DNA extraction, prompt generation, image creation, review system, competitor ad viewer with inline video playback and Add Competitor Button
-- **Phase 1 Complete:** Video Analysis Engine — Foundation (DB + pipeline + Railway worker + 3 edge functions)
-- **Phase 2 Complete:** Script Extraction — Whisper transcription + Claude Vision OCR + combined script merger
-- **Phase 3 Complete:** AI Analysis — Creative strategy breakdown (hook, narrative arc, CTA, audience, production style, competitor insights)
-- **Phase 4 Complete:** Frontend UI — VideoAnalysis component with list/detail views, Script/AI Analysis/Shots tabs, new analysis form
-- **Phase 4.5 Complete:** Shareable Export + UGC Brief — HTML report download for agency sharing, Claude-powered UGC creator brief generator (5 or 10 shots)
-- **Next:** Phase 5 — Batch processing (analyse top N videos per brand) + Compare view integration
-- **Last deployed:** 13 April 2026
-- **Edge functions:** 23 edge functions deployed (14 original + 3 Phase 1 + 4 Phase 2 + 1 Phase 3 + 1 Phase 4.5). All have `verify_jwt: true`
+- **Working:** Brand DNA extraction, prompt generation, image creation, review system, competitor ad viewer with inline video playback and Add Competitor Button, UGC brief generation with Chefly branding and shot variations
+- **Phase 1 Complete:** Video Analysis Engine — Foundation (DB + pipeline + Railway worker + 3 edge functions). See `docs/video-analysis-project-spec.md`
+- **Next:** Phase 2 — Script Extraction (Whisper transcription + OCR)
+- **Last deployed:** 14 April 2026
+- **Edge functions:** 18 edge functions deployed (14 original + 3 video analysis + 1 UGC brief). All have `verify_jwt: true`
+- **generate-ugc-brief:** v5 deployed. 16384 max_tokens, truncation detection, Chefly-branded, shot variations (2/3/4), compressed prompts
 - **generate-ad-prompt:** v27 (packaging-aware, dynamic packaging terms)
 - **brand_guidelines table:** Updated with packaging_format, packaging_specs, colour_palette, typography, tone_of_voice, photo_descriptions columns
 - **Edge function `fetch-competitor-ads`:** v6 deployed. Supports `brand_id` or `page_id`, default `start_date: 2025-12-23`, `credit_budget: 500`, DCO card explosion, rich metadata extraction, credit logging to `foreplay_credit_log`
 - **Foreplay API:** `public.api.foreplay.co`, key stored in edge function. 1 credit per ad. Simmer brand_id: `n68cYDEnS6D6eU4T4bLS`
 - **Supabase anon key:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA`
 
-## Frontend Components
-
-- `src/App.jsx` — Main app with tab navigation (11 tabs)
-- `src/components/CompetitorAds.jsx` + `.css` — Competitor ad viewer with grid, filters, inline video
-- `src/components/CompareAnalyses.jsx` + `.css` — Side-by-side ad comparison
-- `src/components/VideoAnalysis.jsx` + `.css` — **(Phase 4+4.5)** Video analysis viewer: list grid with contact sheet cards, detail modal with Script/AI Analysis/Shots/UGC Brief tabs, Share Report button (HTML export), Generate UGC Brief button (5/10 shots via Claude). CSS prefix: `va-`
-- `src/lib/shareableExport.js` — **(Phase 4.5)** Generates self-contained HTML report for sharing video analysis with agencies. Includes contact sheet, metrics, AI analysis, script timeline, shot breakdown.
-- `src/components/Gallery.jsx` — Ad library grid
-- `src/components/BrandDNA.jsx` — Brand DNA editor
-- `src/components/PhotoLibrary.jsx` — Photo reference library
-- `src/components/Generator.jsx` — Prompt generator
-- `src/components/Review.jsx` — Image review/rating
-- `src/components/Launcher.jsx` — Batch launcher
-- `src/components/PromptTester.jsx` — Prompt testing
-- `src/components/AdDetail.jsx` — Ad detail overlay
-
 ## Edge Functions
 
-23 edge functions deployed, all have `verify_jwt: true`:
+18 edge functions deployed and have `verify_jwt: true`:
 
 1. `fetch-competitor-ads` — v6: Fetch competitor ads from Foreplay API, support brand_id/page_id, DCO explosion, credit logging
 2. `generate-ad-prompt` — v27: Packaging-aware prompt generation with dynamic packaging terms
@@ -112,15 +92,10 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 12. `list-prompt-versions` — List prompt iteration history
 13. `save-prompt-version` — Save prompt version records
 14. `sync-competitor-metadata` — Sync enriched competitor ad metadata
-15. `analyse-video` — v4: Phase 1 orchestrator — accepts competitor_ad_id, calls Railway worker, writes to video_analyses + video_shots. Secrets: VIDEO_WORKER_URL, VIDEO_WORKER_SECRET
-16. `list-video-analyses` — v1: Query analyses with filters (status, run_id, competitor_ad_id) + pagination. Joins competitor_ads metadata
-17. `get-video-analysis` — v1: Fetch single analysis with all shots + full competitor ad context
-18. `transcribe-video` — v2: Whisper transcription with timestamped segments `[start-end] text`. Secrets: OPENAI_API_KEY
-19. `ocr-video-frames` — v7: Claude Sonnet 4.6 Vision OCR + frame descriptions with retry logic. Secrets: CLAUDE_API_KEY
-20. `merge-video-script` — v1: Merges transcript + OCR into unified combined_script timeline
-21. `extract-video-script` — v2: Phase 2+3 orchestrator. Chains transcribe → OCR → merge → AI analysis. Params: skip_transcribe, skip_ocr, include_ai_analysis, ocr_model, ai_model
-22. `ai-analyse-video` — v1 **(Phase 3)**: Sends combined_script + contact sheet + ad metadata to Sonnet 4.6. Returns structured JSONB: hook type/effectiveness, narrative arc, CTA, selling points, emotional drivers, target audience, production style, pacing, competitor insights, one-line summary
-23. `generate-ugc-brief` — v1 **(Phase 4.5)**: Generates 5 or 10-shot UGC creator briefs from video analysis insights using Claude Sonnet 4.6. Accepts analysis_id + shot_count. Returns structured JSON: concept, tone, music direction, pacing, production tips, shot-by-shot directions (framing, action, script line, text overlay, notes). Secrets: CLAUDE_API_KEY or ANTHROPIC_API_KEY
+15. `analyse-video` — v1 **(NEW)**: Orchestrator — accepts competitor_ad_id, calls Railway worker, writes to video_analyses + video_shots. Secrets: VIDEO_WORKER_URL, VIDEO_WORKER_SECRET
+16. `list-video-analyses` — v1 **(NEW)**: Query analyses with filters (status, run_id, competitor_ad_id) + pagination. Joins competitor_ads metadata
+17. `get-video-analysis` — v1 **(NEW)**: Fetch single analysis with all shots + full competitor ad context
+18. `generate-ugc-brief` — v5 **(NEW)**: Generate Chefly UGC creator briefs from video analysis. 16384 max_tokens, shot variations (2/3/4), truncation detection. Secrets: CLAUDE_API_KEY or ANTHROPIC_API_KEY
 
 ## Video Worker (Railway Microservice)
 
@@ -135,41 +110,6 @@ Located at `video-worker/` in repo. Express + FFmpeg service for heavy video pro
   - A: Simmer `3324195914449903` — 12.7s, 8 shots, 720x900
   - B: Huel `33860239276954284` — 21.4s, 17 shots, 720x1280
   - C: Frive `1440540640941645` — 31.4s, 17 shots, 720x1280
-
-## Video Analysis Pipeline
-
-Three-phase pipeline for competitor video ad analysis:
-
-### Phase 1: Foundation (analyse-video)
-Caller: `POST /functions/v1/analyse-video` with `{competitor_ad_id}`
-1. Looks up video_url from competitor_ads
-2. Creates video_analyses record (status: processing)
-3. Calls Railway worker for FFmpeg processing (scene detection, frame extraction, contact sheet, audio)
-4. Worker uploads frames + contact sheet + audio to Supabase Storage (`video-processing` bucket)
-5. Updates video_analyses with metrics (duration, shots, pacing) and inserts video_shots records
-
-### Phase 2: Script Extraction (extract-video-script)
-Caller: `POST /functions/v1/extract-video-script` with `{analysis_id}`
-1. **Transcribe** (transcribe-video): Downloads audio from Storage → Whisper API → timestamped transcript_text
-2. **OCR** (ocr-video-frames): Downloads frames → Claude Sonnet 4.6 Vision → per-shot ocr_text + description
-3. **Merge** (merge-video-script): Interleaves voiceover + visuals into combined_script timeline
-
-### Phase 3: AI Analysis (ai-analyse-video)
-Caller: `POST /functions/v1/ai-analyse-video` with `{analysis_id}` (also auto-runs from extract-video-script)
-1. Fetches combined_script + contact_sheet + competitor ad metadata
-2. Sends to Claude Sonnet 4.6 with structured analysis prompt
-3. Returns JSONB: hook (type, text, effectiveness), narrative_arc, CTA, selling_points, emotional_drivers, target_audience, production_style, pacing_analysis, competitor_insights (what_works, what_to_steal, weaknesses), one_line_summary
-
-### Phase 4: Frontend UI (VideoAnalysis component)
-- **List view:** Card grid with contact sheet thumbnails, brand name, status badge, duration/shots/pacing metrics, one-line summary
-- **Detail view:** Modal with Script tab (color-coded voiceover vs visual), AI Analysis tab (structured insights with badges/bars/cards), Shots tab (frame grid with OCR + descriptions)
-- **New analysis form:** Enter competitor_ad_id → triggers analyse-video edge function
-
-### Phase 4.5: Shareable Export + UGC Brief Generator
-- **Share Report:** Downloads self-contained HTML file with dark theme, contact sheet, metrics bar, full AI analysis, script timeline, shot-by-shot breakdown. No server needed — generates client-side blob.
-- **UGC Brief Generator:** Sends video analysis insights to Claude Sonnet 4.6 via `generate-ugc-brief` edge function. Returns structured 5 or 10-shot creator brief with concept, tone, music direction, production tips, and per-shot directions (framing, action, script line, text overlay, notes). Rendered in new "UGC Brief" tab.
-
-Each step writes independently to the DB, so partial progress is preserved.
 
 ## Development Rules
 
@@ -187,8 +127,6 @@ Each step writes independently to the DB, so partial progress is preserved.
 - Shares Supabase tables (static_*) that also appear in the creative-kitchen-video-v3 database
 - Foreplay API credits are limited (10,000 per period). Edge function has a `credit_budget` safeguard (default 500) and logs usage to `foreplay_credit_log`. Be careful with exploratory API calls.
 - Foreplay Spyder only started tracking Simmer from ~Jan 11, 2026 — no historical data before that date
-- OCR with Sonnet 4.6 can take 30-40s for 8 frames — may hit edge function timeout on larger videos. Use batch_size parameter to reduce per-call frame count, or call ocr-video-frames directly with smaller batches.
-- The full extract-video-script chain (transcribe + OCR + merge + AI) takes ~80s total — the orchestrator will likely timeout before returning, but each step persists to DB independently so all data is saved.
 
 ## Related Projects
 
@@ -203,4 +141,3 @@ Each step writes independently to the DB, so partial progress is preserved.
 - Review ratings: great, good, needs-work, slop
 - Reviewers: "claude" (AI) or "user" (human)
 - Prompt versioning for iterative improvement
-- CSS class prefixes: `ca-` (competitor ads), `va-` (video analysis)
