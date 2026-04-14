@@ -1082,6 +1082,20 @@
   min-width: 70px;
 }
 
+/* Shot Layout Badge */
+.va-shot-layout-badge {
+  display: inline-block;
+  background: rgba(109, 40, 217, 0.15);
+  color: #a78bfa;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 6px;
+}
+
 /* Scrollbar */
 .va-detail-panel::-webkit-scrollbar {
   width: 8px;
