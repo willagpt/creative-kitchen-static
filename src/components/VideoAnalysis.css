@@ -875,6 +875,49 @@
   border-color: #6366f1;
 }
 
+/* Share Menu Dropdown */
+.va-share-wrapper {
+  position: relative;
+}
+
+.va-share-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: #1a1a22;
+  border: 1px solid #2a2a34;
+  border-radius: 8px;
+  overflow: hidden;
+  min-width: 180px;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  animation: fadeIn 0.15s ease;
+}
+
+.va-share-menu-item {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  color: #e4e4e7;
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: Inter, sans-serif;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.va-share-menu-item:hover {
+  background: #6366f120;
+  color: #fff;
+}
+
+.va-share-menu-item:not(:last-child) {
+  border-bottom: 1px solid #2a2a34;
+}
+
 /* Brief Tab */
 .va-brief-export-bar {
   display: flex;
@@ -1100,5 +1143,10 @@
 
   .va-brief-controls {
     flex-wrap: wrap;
+  }
+
+  .va-detail-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
