@@ -33,6 +33,17 @@ function filterMeaningful(arr) {
   })
 }
 
+// Helper: format layout summary into readable string
+function formatLayoutSummary(layoutSummary) {
+  if (!layoutSummary) return null
+  const parts = []
+  if (layoutSummary.full) parts.push(`${layoutSummary.full} Full`)
+  if (layoutSummary['split-2']) parts.push(`${layoutSummary['split-2']} Split`)
+  if (layoutSummary['split-3']) parts.push(`${layoutSummary['split-3']} Tri`)
+  if (layoutSummary.other) parts.push(`${layoutSummary.other} Other`)
+  return parts.length > 0 ? parts.join(' / ') : null
+}
+
 // Helper: format cuts per second as "cut every Xs"
 function formatCutInterval(cutsPerSecond) {
   if (!cutsPerSecond || cutsPerSecond <= 0) return '—'
@@ -323,6 +334,11 @@ function AnalysisCard({ analysis, onClick }) {
               ✂ cut every {formatCutInterval(analysis.cuts_per_second)}
             </span>
           )}
+          {analysis.layout_summary && (analysis.layout_summary['split-2'] > 0 || analysis.layout_summary['split-3'] > 0) && (
+            <span className="va-meta-item">
+              ⬒ {formatLayoutSummary(analysis.layout_summary)}
+            </span>
+          )}
         </div>
 
         {analysis.ai_analysis?.one_line_summary && (
@@ -434,6 +450,9 @@ function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
             <StatItem label="Avg Shot Length" value={`${analysis.avg_shot_duration?.toFixed(1) || '—'}s`} />
             <StatItem label="Cut Every" value={formatCutInterval(analysis.cuts_per_second)} />
             <StatItem label="Pacing" value={analysis.pacing_profile || '—'} />
+            {analysis.layout_summary && (
+              <StatItem label="Layout" value={formatLayoutSummary(analysis.layout_summary) || '—'} />
+            )}
             <StatItem label="Status" value={analysis.status} />
           </div>
 
@@ -584,31 +603,31 @@ function AnalysisTab({ analysis }) {
 
   // Pre-check which sections have meaningful content
   const hasHook = ai.hook && (!isEmptyValue(ai.hook.type) || !isEmptyValue(ai.hook.text) || ai.hook.effectiveness_score)
-  
+
   const narrativeBeats = filterMeaningful(ai.narrative_arc?.beats || [])
   const hasNarrativeArc = ai.narrative_arc && (!isEmptyValue(ai.narrative_arc.structure) || narrativeBeats.length > 0)
-  
+
   const hasCta = ai.cta && (!isEmptyValue(ai.cta.type) || !isEmptyValue(ai.cta.text) || !isEmptyValue(ai.cta.placement))
-  
+
   const sellingPoints = filterMeaningful(ai.selling_points || [])
   const hasSellingPoints = sellingPoints.length > 0
-  
+
   const emotionalDrivers = filterMeaningful(ai.emotional_drivers || [])
   const hasEmotionalDrivers = emotionalDrivers.length > 0
-  
+
   const hasTargetAudience = ai.target_audience && (
-    !isEmptyValue(ai.target_audience.description) || 
+    !isEmptyValue(ai.target_audience.description) ||
     !isEmptyValue(ai.target_audience.primary) ||
     filterMeaningful(ai.target_audience.signals || []).length > 0
   )
-  
-  const productionStyleItems = ai.production_style ? 
+
+  const productionStyleItems = ai.production_style ?
     ['format', 'quality', 'overlays', 'music'].filter(k => !isEmptyValue(ai.production_style[k])) : []
   const hasProductionStyle = productionStyleItems.length > 0
-  
+
   const hasCompetitorInsights = ai.competitor_insights && (
-    !isEmptyValue(ai.competitor_insights.what_works) || 
-    !isEmptyValue(ai.competitor_insights.what_to_steal) || 
+    !isEmptyValue(ai.competitor_insights.what_works) ||
+    !isEmptyValue(ai.competitor_insights.what_to_steal) ||
     !isEmptyValue(ai.competitor_insights.weaknesses)
   )
 
@@ -833,7 +852,12 @@ function ShotsTab({ analysis }) {
             <img src={shot.frame_url} alt={`Shot ${shot.shot_number}`} className="va-shot-image" />
           )}
           <div className="va-shot-info">
-            <div className="va-shot-number">Shot {shot.shot_number}</div>
+            <div className="va-shot-number">
+              Shot {shot.shot_number}
+              {shot.screen_layout && shot.screen_layout !== 'full' && (
+                <span className="va-shot-layout-badge">{shot.screen_layout === 'split-2' ? '⬒ Split' : shot.screen_layout === 'split-3' ? '⬒ Tri' : shot.screen_layout}</span>
+              )}
+            </div>
             {shot.duration && (
               <div className="va-shot-duration">{shot.duration.toFixed(2)}s</div>
             )}
