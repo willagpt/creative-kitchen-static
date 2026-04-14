@@ -1,6 +1,6 @@
 // Standalone UGC brief export — generates a clean HTML document for sharing or print-to-PDF
 
-export function generateBriefHTML(brief, brandName = 'Chefly') {
+export function generateBriefHTML(brief, brandName = 'Chefly', contactSheetUrl = null) {
   const sanitize = (text) => {
     if (!text) return ''
     return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -48,6 +48,8 @@ export function generateBriefHTML(brief, brandName = 'Chefly') {
     }
     h1 { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 8px; line-height: 1.3; }
     .inspired { font-size: 14px; color: #71717a; font-style: italic; }
+    .contact-sheet { margin-bottom: 32px; border-radius: 8px; overflow: hidden; border: 1px solid #2a2a34; }
+    .contact-sheet img { width: 100%; height: auto; display: block; background: #1a1a22; }
     .overview-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 12px; margin-bottom: 32px;
@@ -85,6 +87,7 @@ export function generateBriefHTML(brief, brandName = 'Chefly') {
       .shot-value, .overview-value { color: #333; }
       .shot-label, .overview-label, .inspired { color: #666; }
       .script-line { color: #4f46e5; }
+      .contact-sheet img { max-width: 100%; }
     }
   </style>
 </head>
@@ -95,6 +98,12 @@ export function generateBriefHTML(brief, brandName = 'Chefly') {
       <h1>${sanitize(brief.concept)}</h1>
       ${brief.inspired_by ? `<p class="inspired">Inspired by: ${sanitize(brief.inspired_by)}</p>` : ''}
     </header>
+
+    ${contactSheetUrl ? `
+    <div class="contact-sheet">
+      <img src="${sanitize(contactSheetUrl)}" alt="Reference — Contact Sheet" />
+    </div>
+    ` : ''}
 
     <div class="overview-grid">
       ${brief.target_duration ? `<div class="overview-item"><div class="overview-label">Duration</div><div class="overview-value">${sanitize(brief.target_duration)}</div></div>` : ''}

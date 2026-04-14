@@ -1,66 +1,12 @@
 // POST /functions/v1/generate-ugc-brief
 // Generate a structured UGC creator brief from video analysis insights using Claude AI
-// v2: Chefly-branded, with shot variations for building creator shot libraries
+// v5: 16384 max_tokens, truncation detection, Chefly-branded, shot variations
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey",
 };
-
-async function callClaudeWithRetry(
-  apiKey: string,
-  systemPrompt: string,
-  userPrompt: string,
-  maxRetries = 2
-): Promise<string> {
-  let lastError: Error = new Error("Unknown error");
-
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 4096,
-          system: systemPrompt,
-          messages: [{ role: "user", content: userPrompt }],
-        }),
-      });
-
-      if (response.status === 429 || response.status === 529) {
-        if (attempt < maxRetries) {
-          const delayMs = Math.pow(2, attempt) * 1500;
-          console.log(`Claude API ${response.status}, retrying in ${delayMs}ms...`);
-          await new Promise((r) => setTimeout(r, delayMs));
-          continue;
-        }
-        throw new Error(`Claude API rate limited after ${maxRetries} retries`);
-      }
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Claude API error (${response.status}): ${errorText}`);
-      }
-
-      const data = await response.json();
-      const textContent = data.content?.[0];
-      if (!textContent || textContent.type !== "text") {
-        throw new Error("Invalid Claude response format");
-      }
-      return textContent.text;
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      if (attempt === maxRetries) throw lastError;
-    }
-  }
-  throw lastError;
-}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -134,7 +80,7 @@ Deno.serve(async (req: Request) => {
       if (ads?.length) adContext = ads[0];
     }
 
-    // Extract AI analysis with correct nested structure
+    // Extract AI analysis
     const ai = analysis.ai_analysis || {};
     const hook = ai.hook || {};
     const narrativeArc = ai.narrative_arc || {};
@@ -143,104 +89,109 @@ Deno.serve(async (req: Request) => {
     const targetAudience = ai.target_audience || {};
     const competitorInsights = ai.competitor_insights || {};
     const productionStyle = ai.production_style || {};
-    const whatToSteal = Array.isArray(competitorInsights.what_to_steal)
-      ? competitorInsights.what_to_steal.join("\n- ")
-      : competitorInsights.what_to_steal || "";
-    const whatWorks = Array.isArray(competitorInsights.what_works)
-      ? competitorInsights.what_works.join("\n- ")
-      : competitorInsights.what_works || "";
+
+    const toList = (val: unknown): string => {
+      if (Array.isArray(val)) return val.join(", ");
+      if (typeof val === "string") return val;
+      return "N/A";
+    };
 
     const resolvedBrand = brand_name || adContext.page_name || "the brand";
 
-    const systemPrompt = `You are an expert UGC (User Generated Content) brief writer for Chefly, a premium DTC meal delivery brand. You analyse competitor video ads and translate their insights into actionable, shootable briefs that Chefly's creators can execute.
+    // Concise system prompt to save tokens
+    const systemPrompt = `You are an expert UGC brief writer for Chefly (premium DTC meal delivery). Analyse competitor ads and create actionable, shootable briefs for Chefly's creators. Each shot MUST have exactly ${variations_per_shot} variations (A, B, C etc) — different angles/framings for a creator shot library. Output ONLY valid JSON, no markdown.`;
 
-Key principles:
-- Every brief is FOR Chefly — adapt competitor insights to Chefly's brand, voice, and products
-- Be SPECIFIC and ACTIONABLE — creators need exact shot directions, not vague concepts
-- Include precise timings and realistic framing language (handheld, close-up, POV, etc.)
-- Script lines must sound authentic and conversational — never corporate or salesy
-- Production tips must be practical and achievable with a phone camera and natural light
-- Capture the FEELING and STRUCTURE of what works, don't copy the competitor's content
-- For food brands: emphasise product beauty shots, unboxing moments, and real eating reactions
-- Each shot MUST include exactly ${variations_per_shot} VARIATIONS (labelled A, B, C, etc.) — different angles, framings, or creative approaches for the same moment, giving creators options to build a comprehensive shot library
+    const userPrompt = `Create a ${shot_count}-shot Chefly UGC brief from this ${resolvedBrand} competitor analysis.
 
-Always output valid JSON with no markdown formatting or code blocks.`;
+Video: ${analysis.duration_seconds}s, ${analysis.total_shots} shots, ${analysis.pacing_profile} pacing
+Hook: ${hook.type || "?"} — "${hook.text || ""}"
+Structure: ${narrativeArc.structure || "?"}, beats: ${toList(narrativeArc.beats)}
+Selling points: ${toList(sellingPoints)}
+Emotional drivers: ${toList(emotionalDrivers)}
+Audience: ${targetAudience.primary || "?"}
+Style: ${productionStyle.format || "?"}, ${productionStyle.quality || "?"}
+What to steal: ${toList(competitorInsights.what_to_steal)}
+Script: ${(analysis.combined_script || "").substring(0, 800)}
 
-    const variationLabels = Array.from({ length: variations_per_shot }, (_, i) => String.fromCharCode(65 + i));
-    const variationExample = variationLabels.map(label => ({
-      label,
-      framing: `Variation ${label} framing description`,
-      action: `Variation ${label} action description`,
-      notes: "What makes this variation different"
-    }));
+This brief is FOR CHEFLY, not ${resolvedBrand}. Adapt the winning formula.
 
-    const userPrompt = `Generate a ${shot_count}-shot UGC creator brief for Chefly, based on this competitor video analysis from ${resolvedBrand}.
+Return this exact JSON structure:
+{"concept":"one-line angle","inspired_by":"what inspired this","target_duration":"e.g. 15-20s","tone":"e.g. casual","music_direction":"e.g. upbeat","pacing_notes":"edit flow","production_tips":["tip1","tip2","tip3"],"shots":[{"shot_number":1,"duration_estimate":"2-3s","framing":"close-up handheld","action":"specific action","script_line":"exact words","text_overlay":"overlay or null","notes":"camera/lighting notes","variations":[{"label":"A","framing":"variation framing","action":"variation action","notes":"what differs"}]}]}
 
-**Original Video Stats:**
-- Duration: ${analysis.duration_seconds}s | Shots: ${analysis.total_shots} | Pacing: ${analysis.pacing_profile}
-- Competitor Brand: ${resolvedBrand}
-- Creative title: "${adContext.creative_title || "N/A"}"
-- Body copy: "${adContext.creative_body || "N/A"}"
+Exactly ${shot_count} shots, each with exactly ${variations_per_shot} variations. Be specific enough to film from.`;
 
-**What Made the Original Work:**
-- Hook type: ${hook.type || "unknown"} — "${hook.text || ""}"
-- Hook effectiveness: ${hook.effectiveness || "unknown"}
-- Narrative structure: ${narrativeArc.structure || "unknown"}
-- Story beats: ${(narrativeArc.beats || []).join(" → ")}
-- Selling points: ${sellingPoints.join(", ")}
-- Emotional drivers: ${emotionalDrivers.join(", ")}
-- Target audience: ${targetAudience.primary || "unknown"}
-- Audience signals: ${(targetAudience.signals || []).join("; ")}
-- Production style: ${productionStyle.format || "mixed"}, ${productionStyle.quality || "mid"} quality, ${productionStyle.music_pacing || "upbeat"} music
-- One-line summary: ${ai.one_line_summary || "N/A"}
+    console.log(`[v5] Generating ${shot_count}-shot brief (${variations_per_shot} vars) for analysis ${analysis_id}...`);
 
-**What to steal from this ad:**
-- ${whatToSteal || "N/A"}
+    // Call Claude with generous token limit and retry
+    let claudeData: any;
+    let lastError = "Unknown error";
+    for (let attempt = 0; attempt <= 2; attempt++) {
+      try {
+        const response = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": claudeApiKey,
+            "anthropic-version": "2023-06-01",
+          },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-6",
+            max_tokens: 16384,
+            system: systemPrompt,
+            messages: [{ role: "user", content: userPrompt }],
+          }),
+        });
 
-**What works in the original:**
-- ${whatWorks || "N/A"}
+        if (response.status === 429 || response.status === 529) {
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, Math.pow(2, attempt) * 1500));
+            continue;
+          }
+          throw new Error(`Rate limited after retries`);
+        }
 
-**Full Combined Script (voiceover + visuals):**
-${analysis.combined_script || "(No script available)"}
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`Claude ${response.status}: ${errText.substring(0, 200)}`);
+        }
 
----
-
-Remember: This brief is FOR CHEFLY, not for ${resolvedBrand}. Adapt the competitor's winning formula to work for Chefly's brand and products.
-
-Each shot MUST have exactly ${variations_per_shot} variations in the "variations" array.
-
-Generate a JSON object with this EXACT structure:
-{
-  "concept": "One-line creative angle for this Chefly brief",
-  "inspired_by": "What from the ${resolvedBrand} ad inspired this brief",
-  "target_duration": "e.g. 15-20 seconds",
-  "tone": "e.g. casual, energetic, authentic",
-  "music_direction": "e.g. upbeat trending audio, lo-fi chill",
-  "pacing_notes": "How the edit should flow",
-  "production_tips": ["tip1", "tip2", "tip3"],
-  "shots": [
-    {
-      "shot_number": 1,
-      "duration_estimate": "2-3 seconds",
-      "framing": "Close-up, handheld, eye-level",
-      "action": "Specific physical action the creator does",
-      "script_line": "Exact words the creator says",
-      "text_overlay": "On-screen text/emoji or null",
-      "notes": "Camera movement, lighting, energy level",
-      "variations": ${JSON.stringify(variationExample)}
+        claudeData = await response.json();
+        break;
+      } catch (error) {
+        lastError = String(error);
+        if (attempt === 2) {
+          return new Response(
+            JSON.stringify({ error: "Claude API failed", details: lastError }),
+            { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
     }
-  ]
-}
 
-The brief must have exactly ${shot_count} shots, each with exactly ${variations_per_shot} variations. Make every shot specific enough that a creator could film it from this description alone.`;
+    // Check for truncation
+    if (claudeData.stop_reason === "max_tokens") {
+      console.error(`[v5] TRUNCATED — stop_reason=max_tokens, usage: ${JSON.stringify(claudeData.usage)}`);
+      return new Response(
+        JSON.stringify({ error: "Brief generation was truncated (response too long). Try fewer shots or variations." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    console.log(`Generating ${shot_count}-shot Chefly UGC brief (${variations_per_shot} variations each) for analysis ${analysis_id}...`);
-    const claudeResponse = await callClaudeWithRetry(claudeApiKey, systemPrompt, userPrompt);
+    const textContent = claudeData.content?.[0];
+    if (!textContent || textContent.type !== "text") {
+      return new Response(
+        JSON.stringify({ error: "Invalid Claude response format" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    // Parse JSON response
+    const rawText = textContent.text;
+    console.log(`[v5] Got response: ${rawText.length} chars, stop_reason=${claudeData.stop_reason}, usage=${JSON.stringify(claudeData.usage)}`);
+
+    // Parse JSON — strip markdown fences if present
     let brief;
     try {
-      let jsonStr = claudeResponse.trim();
+      let jsonStr = rawText.trim();
       if (jsonStr.startsWith("```json")) jsonStr = jsonStr.slice(7);
       else if (jsonStr.startsWith("```")) jsonStr = jsonStr.slice(3);
       if (jsonStr.endsWith("```")) jsonStr = jsonStr.slice(0, -3);
@@ -252,10 +203,17 @@ The brief must have exactly ${shot_count} shots, each with exactly ${variations_
         throw new Error("Missing or empty shots array");
       }
     } catch (parseError) {
-      console.error("Failed to parse Claude response:", parseError);
-      console.error("Raw response:", claudeResponse.substring(0, 500));
+      console.error("Parse error:", parseError);
+      console.error("Raw (first 500):", rawText.substring(0, 500));
       return new Response(
-        JSON.stringify({ error: "Failed to parse generated brief", raw: claudeResponse.substring(0, 1000) }),
+        JSON.stringify({ 
+          error: "Failed to parse generated brief", 
+          details: String(parseError),
+          raw_preview: rawText.substring(0, 300),
+          raw_end: rawText.substring(Math.max(0, rawText.length - 200)),
+          stop_reason: claudeData.stop_reason,
+          usage: claudeData.usage
+        }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

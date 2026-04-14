@@ -342,11 +342,13 @@ function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
   const [briefShotCount, setBriefShotCount] = useState(5)
   const [briefVariations, setBriefVariations] = useState(3)
   const [shareLoading, setShareLoading] = useState(false)
+  const [showShareMenu, setShowShareMenu] = useState(false)
 
   if (!analysis) return null
 
-  const handleShare = async () => {
+  const doExportReport = async (format) => {
     setShareLoading(true)
+    setShowShareMenu(false)
     try {
       // Fetch shots for the report
       const response = await fetch(
@@ -354,14 +356,23 @@ function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
         { headers: fnHeaders }
       )
       const shots = await response.json()
-      const html = generateShareableHTML(analysis, shots)
-      const blob = new Blob([html], { type: 'text/html' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `video-analysis-${analysis.brand_name || 'report'}-${new Date().toISOString().slice(0, 10)}.html`
-      a.click()
-      URL.revokeObjectURL(url)
+      // Pass brief data so the share report includes it
+      const html = generateShareableHTML(analysis, shots, briefData || null)
+
+      if (format === 'pdf') {
+        const win = window.open('', '_blank')
+        win.document.write(html)
+        win.document.close()
+        setTimeout(() => win.print(), 600)
+      } else {
+        const blob = new Blob([html], { type: 'text/html' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `video-analysis-${analysis.brand_name || 'report'}-${new Date().toISOString().slice(0, 10)}.html`
+        a.click()
+        URL.revokeObjectURL(url)
+      }
     } catch (e) {
       console.error('Share error:', e)
     } finally {
@@ -428,13 +439,25 @@ function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
 
           {/* Action buttons */}
           <div className="va-detail-actions">
-            <button
-              className="va-btn va-btn-secondary"
-              onClick={handleShare}
-              disabled={shareLoading}
-            >
-              {shareLoading ? 'Exporting...' : 'Share Report'}
-            </button>
+            <div className="va-share-wrapper">
+              <button
+                className="va-btn va-btn-secondary"
+                onClick={() => setShowShareMenu(!showShareMenu)}
+                disabled={shareLoading}
+              >
+                {shareLoading ? 'Exporting...' : 'Share Report ▾'}
+              </button>
+              {showShareMenu && (
+                <div className="va-share-menu">
+                  <button className="va-share-menu-item" onClick={() => doExportReport('html')}>
+                    ↓ Download HTML
+                  </button>
+                  <button className="va-share-menu-item" onClick={() => doExportReport('pdf')}>
+                    ↓ Save as PDF
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="va-brief-controls">
               <select
                 className="va-select"
@@ -514,7 +537,7 @@ function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
           {detailTab === 'script' && <ScriptTab analysis={analysis} />}
           {detailTab === 'analysis' && <AnalysisTab analysis={analysis} />}
           {detailTab === 'shots' && <ShotsTab analysis={analysis} />}
-          {detailTab === 'brief' && briefData && <BriefTab brief={briefData} brandName={analysis.brand_name} />}
+          {detailTab === 'brief' && briefData && <BriefTab brief={briefData} brandName={analysis.brand_name} contactSheetUrl={analysis.contact_sheet_url} />}
         </div>
       </div>
     </div>
@@ -827,11 +850,11 @@ function ShotsTab({ analysis }) {
   )
 }
 
-function BriefTab({ brief, brandName }) {
+function BriefTab({ brief, brandName, contactSheetUrl }) {
   if (!brief) return <div className="va-tab-empty">No brief generated yet</div>
 
   const handleExportHTML = () => {
-    const html = generateBriefHTML(brief, brandName)
+    const html = generateBriefHTML(brief, brandName, contactSheetUrl)
     const blob = new Blob([html], { type: 'text/html' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -842,7 +865,7 @@ function BriefTab({ brief, brandName }) {
   }
 
   const handleExportPDF = () => {
-    const html = generateBriefHTML(brief, brandName)
+    const html = generateBriefHTML(brief, brandName, contactSheetUrl)
     const win = window.open('', '_blank')
     win.document.write(html)
     win.document.close()

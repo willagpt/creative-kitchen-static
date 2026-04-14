@@ -1,4 +1,4 @@
-export function generateShareableHTML(analysis, shots) {
+export function generateShareableHTML(analysis, shots, brief = null) {
   const {
     id,
     competitor_ad_id,
@@ -306,6 +306,82 @@ export function generateShareableHTML(analysis, shots) {
     `;
   };
 
+  // NEW: Render Chefly UGC Brief section if brief data is provided
+  const renderBriefSection = () => {
+    if (!brief) return '';
+
+    const renderBriefVariations = (variations) => {
+      if (!variations || variations.length === 0) return '';
+      return `
+        <div style="margin-top: 12px;">
+          <div style="font-size: 11px; font-weight: 600; color: #a855f7; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Variations</div>
+          ${variations.map(v => `
+            <div style="background: #131318; border: 1px solid #2a2a34; border-radius: 6px; padding: 10px 12px; margin-bottom: 6px;">
+              <div style="font-size: 11px; font-weight: 700; color: #a855f7; margin-bottom: 6px;">Variation ${sanitizeHTML(v.label)}</div>
+              <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;">
+                ${v.framing ? `<div><span style="color: #71717a; font-size: 11px; text-transform: uppercase; margin-right: 8px;">Framing</span> <span style="color: #e4e4e7;">${sanitizeHTML(v.framing)}</span></div>` : ''}
+                ${v.action ? `<div><span style="color: #71717a; font-size: 11px; text-transform: uppercase; margin-right: 8px;">Action</span> <span style="color: #e4e4e7;">${sanitizeHTML(v.action)}</span></div>` : ''}
+                ${v.notes ? `<div><span style="color: #71717a; font-size: 11px; text-transform: uppercase; margin-right: 8px;">Notes</span> <span style="color: #a0a0b0; font-style: italic;">${sanitizeHTML(v.notes)}</span></div>` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    };
+
+    return `
+    <!-- Chefly UGC Brief -->
+    <div class="section-title" style="border-bottom-color: #a855f7;">Chefly UGC Brief</div>
+    <div class="section-content">
+      <!-- Concept -->
+      <div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+        <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: #a855f7; letter-spacing: 0.5px; margin-bottom: 12px;">Creative Concept</div>
+        <p style="font-size: 18px; font-weight: 600; color: #ffffff; margin: 0 0 8px 0; line-height: 1.4;">${sanitizeHTML(brief.concept)}</p>
+        ${brief.inspired_by ? `<p style="font-size: 13px; color: #71717a; font-style: italic; margin: 0;">Inspired by: ${sanitizeHTML(brief.inspired_by)}</p>` : ''}
+      </div>
+
+      <!-- Overview Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px;">
+        ${brief.target_duration ? `<div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 14px;"><div style="font-size: 11px; color: #71717a; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Duration</div><div style="font-size: 14px; color: #e4e4e7; font-weight: 500;">${sanitizeHTML(brief.target_duration)}</div></div>` : ''}
+        ${brief.tone ? `<div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 14px;"><div style="font-size: 11px; color: #71717a; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Tone</div><div style="font-size: 14px; color: #e4e4e7; font-weight: 500;">${sanitizeHTML(brief.tone)}</div></div>` : ''}
+        ${brief.music_direction ? `<div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 14px;"><div style="font-size: 11px; color: #71717a; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Music</div><div style="font-size: 14px; color: #e4e4e7; font-weight: 500;">${sanitizeHTML(brief.music_direction)}</div></div>` : ''}
+        ${brief.pacing_notes ? `<div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 14px;"><div style="font-size: 11px; color: #71717a; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Pacing</div><div style="font-size: 14px; color: #e4e4e7; font-weight: 500;">${sanitizeHTML(brief.pacing_notes)}</div></div>` : ''}
+      </div>
+
+      <!-- Production Tips -->
+      ${brief.production_tips && brief.production_tips.length > 0 ? `
+        <div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+          <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: #a855f7; letter-spacing: 0.5px; margin-bottom: 12px;">Production Tips</div>
+          ${brief.production_tips.map(tip => `
+            <div style="padding: 10px 14px; background: #0e0e11; border-left: 3px solid #a855f7; border-radius: 4px; font-size: 13px; color: #a1a1ab; line-height: 1.5; margin-bottom: 8px;">${sanitizeHTML(tip)}</div>
+          `).join('')}
+        </div>
+      ` : ''}
+
+      <!-- Shot List -->
+      <div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+        <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: #a855f7; letter-spacing: 0.5px; margin-bottom: 20px;">Shot List (${brief.shots?.length || 0} shots)</div>
+        ${(brief.shots || []).map(shot => `
+          <div style="border: 1px solid #2a2a34; border-radius: 8px; overflow: hidden; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #131318; border-bottom: 1px solid #2a2a34;">
+              <span style="font-size: 14px; font-weight: 700; color: #a855f7; text-transform: uppercase; letter-spacing: 0.5px;">Shot ${shot.shot_number}</span>
+              <span style="font-size: 12px; font-weight: 600; color: #a855f7; background: rgba(168, 85, 247, 0.12); padding: 3px 8px; border-radius: 4px;">${sanitizeHTML(shot.duration_estimate)}</span>
+            </div>
+            <div style="padding: 14px; display: flex; flex-direction: column; gap: 8px;">
+              <div style="display: flex; gap: 12px;"><span style="min-width: 70px; font-size: 11px; font-weight: 600; color: #71717a; text-transform: uppercase;">Framing</span><span style="font-size: 14px; color: #e4e4e7;">${sanitizeHTML(shot.framing)}</span></div>
+              <div style="display: flex; gap: 12px;"><span style="min-width: 70px; font-size: 11px; font-weight: 600; color: #71717a; text-transform: uppercase;">Action</span><span style="font-size: 14px; color: #e4e4e7;">${sanitizeHTML(shot.action)}</span></div>
+              <div style="display: flex; gap: 12px;"><span style="min-width: 70px; font-size: 11px; font-weight: 600; color: #71717a; text-transform: uppercase;">Script</span><span style="font-size: 14px; color: #6366f1; font-style: italic; font-weight: 500;">"${sanitizeHTML(shot.script_line)}"</span></div>
+              ${shot.text_overlay ? `<div style="display: flex; gap: 12px;"><span style="min-width: 70px; font-size: 11px; font-weight: 600; color: #71717a; text-transform: uppercase;">Overlay</span><span style="font-size: 14px; color: #e4e4e7;">${sanitizeHTML(shot.text_overlay)}</span></div>` : ''}
+              ${shot.notes ? `<div style="display: flex; gap: 12px;"><span style="min-width: 70px; font-size: 11px; font-weight: 600; color: #71717a; text-transform: uppercase;">Notes</span><span style="font-size: 14px; color: #71717a; font-style: italic;">${sanitizeHTML(shot.notes)}</span></div>` : ''}
+              ${renderBriefVariations(shot.variations)}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    `;
+  };
+
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -435,7 +511,10 @@ export function generateShareableHTML(analysis, shots) {
         max-width: 100%;
       }
 
-      page-break-inside: avoid;
+      .section-title {
+        color: #000;
+        border-bottom-color: #4f46e5;
+      }
     }
 
     footer {
@@ -497,6 +576,9 @@ export function generateShareableHTML(analysis, shots) {
     <div class="section-content">
       ${renderShotBreakdown()}
     </div>
+
+    <!-- Chefly UGC Brief (if available) -->
+    ${renderBriefSection()}
 
     <!-- Footer -->
     <footer>
