@@ -23,9 +23,9 @@ export function generateShareableHTML(analysis, shots, brief = null) {
   const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString('en-GB', {
       year: 'numeric',
-      month: 'short',
+      month: 'long',
       day: 'numeric',
     });
   };
@@ -37,56 +37,48 @@ export function generateShareableHTML(analysis, shots, brief = null) {
     return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
   };
 
-  const sanitizeHTML = (text) => {
+  const sanitize = (text) => {
     if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   };
 
-  const renderMetricsBar = () => {
+  // --- Section Renderers ---
+
+  const renderMetricsTable = () => {
     const metrics = [
       { label: 'Duration', value: formatTime(duration_seconds) },
       { label: 'Total Shots', value: total_shots || '\u2014' },
       { label: 'Avg Shot Length', value: formatTime(avg_shot_duration) },
-      { label: 'Cuts/Second', value: cuts_per_second ? cuts_per_second.toFixed(2) : '\u2014' },
-      { label: 'Pacing', value: pacing_profile ? pacing_profile.charAt(0).toUpperCase() + pacing_profile.slice(1) : '\u2014' },
+      { label: 'Cuts / Second', value: cuts_per_second ? cuts_per_second.toFixed(2) : '\u2014' },
+      { label: 'Pacing Profile', value: pacing_profile ? pacing_profile.charAt(0).toUpperCase() + pacing_profile.slice(1) : '\u2014' },
     ];
 
     return `
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 32px;">
-        ${metrics
-          .map(
-            (m) => `
-          <div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 16px; text-align: center;">
-            <div style="font-size: 12px; color: #8a8a92; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">${sanitizeHTML(m.label)}</div>
-            <div style="font-size: 24px; font-weight: 600; color: #ffffff;">${sanitizeHTML(String(m.value))}</div>
+      <div class="metrics-row">
+        ${metrics.map(m => `
+          <div class="metric">
+            <span class="metric-value">${sanitize(String(m.value))}</span>
+            <span class="metric-label">${sanitize(m.label)}</span>
           </div>
-        `
-          )
-          .join('')}
+        `).join('')}
       </div>
     `;
   };
 
   const renderHook = () => {
     if (!ai_analysis?.hook) return '';
-    const { text, type, effectiveness } = ai_analysis.hook;
-    const effectColor =
-      effectiveness === 'high'
-        ? '#10b981'
-        : effectiveness === 'medium'
-          ? '#f59e0b'
-          : '#ef4444';
+    const { text, type, effectiveness, effectiveness_score } = ai_analysis.hook;
+    if (!text && !type) return '';
 
     return `
-      <div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-          <span style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: #6366f1; letter-spacing: 0.5px;">Hook</span>
-          <span style="font-size: 11px; background: ${effectColor}; color: white; padding: 4px 8px; border-radius: 4px; font-weight: 500;">${sanitizeHTML(type || 'Unknown')}</span>
-          <span style="font-size: 11px; color: ${effectColor}; font-weight: 500; margin-left: auto;">Effectiveness: ${sanitizeHTML(effectiveness || 'Unknown')}</span>
+      <div class="subsection">
+        <h3 class="subsection-title">Opening Hook</h3>
+        <div class="hook-meta">
+          ${type ? `<span class="tag">${sanitize(type)}</span>` : ''}
+          ${effectiveness_score ? `<span class="tag tag-score">${effectiveness_score}/10 effectiveness</span>` : ''}
+          ${effectiveness && !effectiveness_score ? `<span class="tag">${sanitize(effectiveness)} effectiveness</span>` : ''}
         </div>
-        <p style="font-size: 14px; line-height: 1.6; color: #d1d1db; margin: 0;">${sanitizeHTML(text || '\u2014')}</p>
+        ${text ? `<p class="body-text">${sanitize(text)}</p>` : ''}
       </div>
     `;
   };
@@ -94,27 +86,21 @@ export function generateShareableHTML(analysis, shots, brief = null) {
   const renderNarrativeArc = () => {
     if (!ai_analysis?.narrative_arc) return '';
     const { structure, beats } = ai_analysis.narrative_arc;
-
-    const beatHTML = beats
-      ?.map(
-        (beat) => `
-        <div style="background: #2a2a34; padding: 12px; border-radius: 6px; border-left: 3px solid #a855f7;">
-          <div style="font-size: 12px; font-weight: 600; color: #a855f7; margin-bottom: 4px;">${sanitizeHTML(beat.name || 'Unknown')}</div>
-          <div style="font-size: 13px; color: #a1a1ab;">${sanitizeHTML(beat.description || '\u2014')}</div>
-        </div>
-      `
-      )
-      .join('');
+    if (!structure && (!beats || beats.length === 0)) return '';
 
     return `
-      <div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-        <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: #6366f1; letter-spacing: 0.5px; margin-bottom: 16px;">Narrative Arc</div>
-        <div style="background: #0e0e11; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
-          <div style="font-size: 13px; color: #d1d1db;"><strong>Structure:</strong> ${sanitizeHTML(structure || '\u2014')}</div>
-        </div>
-        <div style="display: grid; gap: 12px;">
-          ${beatHTML || '<div style="color: #8a8a92;">No beats available</div>'}
-        </div>
+      <div class="subsection">
+        <h3 class="subsection-title">Narrative Arc</h3>
+        ${structure ? `<p class="body-text"><strong>Structure:</strong> ${sanitize(structure)}</p>` : ''}
+        ${beats && beats.length > 0 ? `
+          <ol class="beat-list">
+            ${beats.map(beat => {
+              const label = typeof beat === 'string' ? beat : (beat.name || beat.phase || '');
+              const desc = typeof beat === 'object' ? (beat.description || '') : '';
+              return `<li><strong>${sanitize(label)}</strong>${desc ? ` — ${sanitize(desc)}` : ''}</li>`;
+            }).join('')}
+          </ol>
+        ` : ''}
       </div>
     `;
   };
@@ -122,154 +108,121 @@ export function generateShareableHTML(analysis, shots, brief = null) {
   const renderCTA = () => {
     if (!ai_analysis?.cta) return '';
     const { text, type, placement } = ai_analysis.cta;
+    if (!text && !type) return '';
 
     return `
-      <div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-        <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: #6366f1; letter-spacing: 0.5px; margin-bottom: 12px;">Call-to-Action</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-          <div>
-            <div style="font-size: 11px; color: #8a8a92; margin-bottom: 4px;">Type</div>
-            <div style="font-size: 14px; color: #ffffff; font-weight: 500;">${sanitizeHTML(type || '\u2014')}</div>
-          </div>
-          <div>
-            <div style="font-size: 11px; color: #8a8a92; margin-bottom: 4px;">Placement</div>
-            <div style="font-size: 14px; color: #ffffff; font-weight: 500;">${sanitizeHTML(placement || '\u2014')}</div>
-          </div>
+      <div class="subsection">
+        <h3 class="subsection-title">Call-to-Action</h3>
+        <div class="hook-meta">
+          ${type ? `<span class="tag">${sanitize(type)}</span>` : ''}
+          ${placement ? `<span class="tag tag-muted">${sanitize(placement)}</span>` : ''}
         </div>
-        <p style="font-size: 14px; line-height: 1.6; color: #d1d1db; margin: 0;"><strong>Message:</strong> ${sanitizeHTML(text || '\u2014')}</p>
+        ${text ? `<p class="body-text">${sanitize(text)}</p>` : ''}
       </div>
     `;
   };
 
-  const renderPills = (title, items, colorClass = 'indigo') => {
+  const renderPillGroup = (title, items) => {
     if (!items || items.length === 0) return '';
-    const bgColor = colorClass === 'purple' ? '#a855f7' : '#6366f1';
-    const bgOpacity = 'rgba(99, 102, 241, 0.1)';
-
     return `
-      <div style="margin-bottom: 20px;">
-        <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: #8a8a92; letter-spacing: 0.5px; margin-bottom: 12px;">${sanitizeHTML(title)}</div>
-        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-          ${items
-            .map(
-              (item) => `
-            <span style="background: ${bgOpacity}; color: ${bgColor}; padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 500; border: 1px solid ${bgColor}40;">
-              ${sanitizeHTML(item)}
-            </span>
-          `
-            )
-            .join('')}
+      <div class="subsection">
+        <h3 class="subsection-title">${sanitize(title)}</h3>
+        <div class="pill-row">
+          ${items.map(item => `<span class="pill">${sanitize(item)}</span>`).join('')}
         </div>
       </div>
     `;
-  };
-
-  const renderSellingPoints = () => {
-    return renderPills('Selling Points', ai_analysis?.selling_points || [], 'indigo');
-  };
-
-  const renderEmotionalDrivers = () => {
-    return renderPills('Emotional Drivers', ai_analysis?.emotional_drivers || [], 'purple');
   };
 
   const renderTargetAudience = () => {
     if (!ai_analysis?.target_audience) return '';
-    const { primary, signals } = ai_analysis.target_audience;
+    const { primary, description, signals } = ai_analysis.target_audience;
+    if (!primary && !description) return '';
 
     return `
-      <div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-        <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: #6366f1; letter-spacing: 0.5px; margin-bottom: 12px;">Target Audience</div>
-        <div style="background: #0e0e11; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-          <div style="font-size: 13px; color: #d1d1db;"><strong>Primary:</strong> ${sanitizeHTML(primary || '\u2014')}</div>
-        </div>
-        ${signals && signals.length > 0 ? `<div style="font-size: 12px; font-weight: 500; color: #8a8a92; margin-bottom: 8px;">Signals</div><div style="display: flex; flex-wrap: wrap; gap: 6px;">${signals.map((s) => `<span style="background: #2a2a34; color: #a1a1ab; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${sanitizeHTML(s)}</span>`).join('')}</div>` : ''}
+      <div class="subsection">
+        <h3 class="subsection-title">Target Audience</h3>
+        ${primary ? `<p class="body-text"><strong>Primary:</strong> ${sanitize(primary)}</p>` : ''}
+        ${description ? `<p class="body-text">${sanitize(description)}</p>` : ''}
+        ${signals && signals.length > 0 ? `
+          <div class="pill-row" style="margin-top:8px;">
+            ${signals.map(s => `<span class="pill pill-muted">${sanitize(s)}</span>`).join('')}
+          </div>
+        ` : ''}
       </div>
     `;
   };
 
   const renderProductionStyle = () => {
     if (!ai_analysis?.production_style) return '';
-    const { format, quality, music_pacing, text_overlays } = ai_analysis.production_style;
-
-    const styleItems = [
-      { label: 'Format', value: format },
-      { label: 'Quality', value: quality },
-      { label: 'Music Pacing', value: music_pacing },
-      { label: 'Text Overlays', value: text_overlays },
-    ];
+    const ps = ai_analysis.production_style;
+    const items = [
+      { label: 'Format', value: ps.format },
+      { label: 'Quality', value: ps.quality },
+      { label: 'Music/Pacing', value: ps.music_pacing || ps.music },
+      { label: 'Text Overlays', value: ps.text_overlays || ps.overlays },
+    ].filter(i => i.value);
+    if (items.length === 0) return '';
 
     return `
-      <div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-        <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: #6366f1; letter-spacing: 0.5px; margin-bottom: 16px;">Production Style</div>
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
-          ${styleItems
-            .map(
-              (item) => `
-            <div>
-              <div style="font-size: 11px; color: #8a8a92; margin-bottom: 4px;">${sanitizeHTML(item.label)}</div>
-              <div style="font-size: 13px; color: #d1d1db; font-weight: 500;">${sanitizeHTML(item.value || '\u2014')}</div>
-            </div>
-          `
-            )
-            .join('')}
-        </div>
+      <div class="subsection">
+        <h3 class="subsection-title">Production Style</h3>
+        <table class="data-table">
+          ${items.map(i => `
+            <tr>
+              <td class="data-label">${sanitize(i.label)}</td>
+              <td class="data-value">${sanitize(i.value)}</td>
+            </tr>
+          `).join('')}
+        </table>
       </div>
     `;
   };
 
   const renderCompetitorInsights = () => {
     if (!ai_analysis?.competitor_insights) return '';
-    const { what_works, what_to_steal, weaknesses } = ai_analysis.competitor_insights;
+    const ci = ai_analysis.competitor_insights;
 
-    const renderInsightSection = (title, items, bgColor) => {
-      if (!items || items.length === 0) return '';
+    const renderInsightCol = (title, items, accentClass) => {
+      if (!items || (Array.isArray(items) && items.length === 0)) return '';
+      const list = Array.isArray(items) ? items : [items];
       return `
-        <div>
-          <div style="font-size: 12px; font-weight: 600; color: #ffffff; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid ${bgColor};">${sanitizeHTML(title)}</div>
-          <div style="display: grid; gap: 8px;">
-            ${items
-              .map(
-                (item) => `
-              <div style="background: ${bgColor}15; border-left: 3px solid ${bgColor}; padding: 10px; border-radius: 4px; font-size: 13px; color: #d1d1db; line-height: 1.5;">
-                ${sanitizeHTML(item)}
-              </div>
-            `
-              )
-              .join('')}
-          </div>
+        <div class="insight-col">
+          <h4 class="insight-heading ${accentClass}">${sanitize(title)}</h4>
+          <ul class="insight-list">
+            ${list.map(item => `<li>${sanitize(item)}</li>`).join('')}
+          </ul>
         </div>
       `;
     };
 
+    const cols = [
+      renderInsightCol('What Works', ci.what_works, 'accent-green'),
+      renderInsightCol('What to Steal', ci.what_to_steal, 'accent-amber'),
+      renderInsightCol('Weaknesses', ci.weaknesses, 'accent-red'),
+    ].filter(Boolean);
+
+    if (cols.length === 0) return '';
+
     return `
-      <div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-        <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: #6366f1; letter-spacing: 0.5px; margin-bottom: 20px;">Competitor Insights</div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-          ${renderInsightSection('What Works', what_works, '#10b981')}
-          ${renderInsightSection('What to Steal', what_to_steal, '#f59e0b')}
-          ${renderInsightSection('Weaknesses', weaknesses, '#ef4444')}
-        </div>
+      <div class="subsection">
+        <h3 class="subsection-title">Competitor Insights</h3>
+        <div class="insight-grid">${cols.join('')}</div>
       </div>
     `;
   };
 
-  const renderCombinedScript = () => {
+  const renderScript = () => {
     if (!combined_script) return '';
-
-    const lines = combined_script.split('\n').filter((line) => line.trim());
+    const lines = combined_script.split('\n').filter(l => l.trim());
     return `
-      <div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 20px; margin-bottom: 20px; overflow-x: auto;">
-        <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: #6366f1; letter-spacing: 0.5px; margin-bottom: 16px;">Combined Script</div>
-        <div style="background: #0e0e11; border-radius: 6px; padding: 16px; font-family: 'Monaco', 'Menlo', monospace; font-size: 12px; line-height: 1.8;">
-          ${lines
-            .map((line) => {
-              const isVoiceover = line.includes('VOICEOVER:');
-              const isVisual = line.includes('VISUAL:');
-              const color = isVoiceover ? '#a855f7' : isVisual ? '#6366f1' : '#a1a1ab';
-              return `<div style="color: ${color};">${sanitizeHTML(line)}</div>`;
-            })
-            .join('')}
-        </div>
+      <div class="script-block">
+        ${lines.map(line => {
+          const isVO = line.includes('VOICEOVER:');
+          const isVisual = line.includes('VISUAL:') || line.includes('TEXT ON SCREEN:');
+          const cls = isVO ? 'script-vo' : isVisual ? 'script-visual' : 'script-default';
+          return `<div class="script-line ${cls}">${sanitize(line)}</div>`;
+        }).join('')}
       </div>
     `;
   };
@@ -278,50 +231,40 @@ export function generateShareableHTML(analysis, shots, brief = null) {
     if (!shots || shots.length === 0) return '';
 
     return `
-      <div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-        <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: #6366f1; letter-spacing: 0.5px; margin-bottom: 20px;">Shot-by-Shot Breakdown</div>
-        <div style="display: grid; gap: 16px;">
-          ${shots
-            .map(
-              (shot) => `
-            <div style="border: 1px solid #2a2a34; border-radius: 6px; overflow: hidden;">
-              <div style="display: grid; grid-template-columns: 160px 1fr; gap: 16px; padding: 16px; align-items: start;">
-                ${shot.frame_url ? `<img src="${shot.frame_url}" alt="Shot ${shot.shot_number}" style="width: 160px; height: auto; object-fit: contain; border-radius: 4px; background: #0e0e11;">` : '<div style="width: 160px; height: 100px; background: #2a2a34; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #8a8a92; font-size: 12px;">No Frame</div>'}
-                <div>
-                  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-                    <span style="font-weight: 600; color: #ffffff;">Shot ${shot.shot_number}</span>
-                    <span style="font-size: 12px; background: #2a2a34; color: #a1a1ab; padding: 4px 8px; border-radius: 4px;">${formatTime(shot.duration)}</span>
-                    <span style="font-size: 11px; color: #8a8a92;">${formatTime(shot.start_time)} \u2014 ${formatTime(shot.end_time)}</span>
-                  </div>
-                  ${shot.description ? `<div style="font-size: 13px; color: #d1d1db; margin-bottom: 8px; line-height: 1.5;"><strong>Description:</strong> ${sanitizeHTML(shot.description)}</div>` : ''}
-                  ${shot.ocr_text ? `<div style="font-size: 12px; color: #a1a1ab; background: #0e0e11; padding: 8px; border-radius: 4px; border-left: 2px solid #6366f1;"><strong>OCR:</strong> ${sanitizeHTML(shot.ocr_text)}</div>` : ''}
-                </div>
-              </div>
+      ${shots.map(shot => `
+        <div class="shot-card">
+          <div class="shot-header-row">
+            <span class="shot-number">Shot ${shot.shot_number}</span>
+            <span class="shot-timing">${formatTime(shot.start_time)} \u2013 ${formatTime(shot.end_time)} (${formatTime(shot.duration)})</span>
+          </div>
+          <div class="shot-body">
+            ${shot.frame_url ? `<img class="shot-frame" src="${shot.frame_url}" alt="Shot ${shot.shot_number}" />` : ''}
+            <div class="shot-details">
+              ${shot.description ? `<p class="body-text">${sanitize(shot.description)}</p>` : ''}
+              ${shot.ocr_text ? `<p class="shot-ocr"><strong>On-screen text:</strong> ${sanitize(shot.ocr_text)}</p>` : ''}
             </div>
-          `
-            )
-            .join('')}
+          </div>
         </div>
-      </div>
+      `).join('')}
     `;
   };
 
-  // NEW: Render Chefly UGC Brief section if brief data is provided
+  // --- Brief Section (appended when brief data exists) ---
   const renderBriefSection = () => {
     if (!brief) return '';
 
-    const renderBriefVariations = (variations) => {
+    const renderVariations = (variations) => {
       if (!variations || variations.length === 0) return '';
       return `
-        <div style="margin-top: 12px;">
-          <div style="font-size: 11px; font-weight: 600; color: #a855f7; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Variations</div>
+        <div class="variations-block">
+          <span class="variations-label">Variations</span>
           ${variations.map(v => `
-            <div style="background: #131318; border: 1px solid #2a2a34; border-radius: 6px; padding: 10px 12px; margin-bottom: 6px;">
-              <div style="font-size: 11px; font-weight: 700; color: #a855f7; margin-bottom: 6px;">Variation ${sanitizeHTML(v.label)}</div>
-              <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;">
-                ${v.framing ? `<div><span style="color: #71717a; font-size: 11px; text-transform: uppercase; margin-right: 8px;">Framing</span> <span style="color: #e4e4e7;">${sanitizeHTML(v.framing)}</span></div>` : ''}
-                ${v.action ? `<div><span style="color: #71717a; font-size: 11px; text-transform: uppercase; margin-right: 8px;">Action</span> <span style="color: #e4e4e7;">${sanitizeHTML(v.action)}</span></div>` : ''}
-                ${v.notes ? `<div><span style="color: #71717a; font-size: 11px; text-transform: uppercase; margin-right: 8px;">Notes</span> <span style="color: #a0a0b0; font-style: italic;">${sanitizeHTML(v.notes)}</span></div>` : ''}
+            <div class="variation-row">
+              <span class="variation-id">${sanitize(v.label)}</span>
+              <div class="variation-details">
+                ${v.framing ? `<span><strong>Framing:</strong> ${sanitize(v.framing)}</span>` : ''}
+                ${v.action ? `<span><strong>Action:</strong> ${sanitize(v.action)}</span>` : ''}
+                ${v.notes ? `<span class="variation-note">${sanitize(v.notes)}</span>` : ''}
               </div>
             </div>
           `).join('')}
@@ -330,261 +273,857 @@ export function generateShareableHTML(analysis, shots, brief = null) {
     };
 
     return `
-    <!-- Chefly UGC Brief -->
-    <div class="section-title" style="border-bottom-color: #a855f7;">Chefly UGC Brief</div>
-    <div class="section-content">
-      <!-- Concept -->
-      <div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-        <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: #a855f7; letter-spacing: 0.5px; margin-bottom: 12px;">Creative Concept</div>
-        <p style="font-size: 18px; font-weight: 600; color: #ffffff; margin: 0 0 8px 0; line-height: 1.4;">${sanitizeHTML(brief.concept)}</p>
-        ${brief.inspired_by ? `<p style="font-size: 13px; color: #71717a; font-style: italic; margin: 0;">Inspired by: ${sanitizeHTML(brief.inspired_by)}</p>` : ''}
+      <!-- Page Break: Chefly UGC Brief -->
+      <div class="page-break"></div>
+
+      <div class="section-header brief-header">
+        <div class="section-number">04</div>
+        <div>
+          <h2 class="section-heading">Chefly UGC Brief</h2>
+          <p class="section-desc">Production-ready creator brief derived from this analysis</p>
+        </div>
       </div>
 
-      <!-- Overview Grid -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px;">
-        ${brief.target_duration ? `<div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 14px;"><div style="font-size: 11px; color: #71717a; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Duration</div><div style="font-size: 14px; color: #e4e4e7; font-weight: 500;">${sanitizeHTML(brief.target_duration)}</div></div>` : ''}
-        ${brief.tone ? `<div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 14px;"><div style="font-size: 11px; color: #71717a; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Tone</div><div style="font-size: 14px; color: #e4e4e7; font-weight: 500;">${sanitizeHTML(brief.tone)}</div></div>` : ''}
-        ${brief.music_direction ? `<div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 14px;"><div style="font-size: 11px; color: #71717a; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Music</div><div style="font-size: 14px; color: #e4e4e7; font-weight: 500;">${sanitizeHTML(brief.music_direction)}</div></div>` : ''}
-        ${brief.pacing_notes ? `<div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 14px;"><div style="font-size: 11px; color: #71717a; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Pacing</div><div style="font-size: 14px; color: #e4e4e7; font-weight: 500;">${sanitizeHTML(brief.pacing_notes)}</div></div>` : ''}
+      <div class="subsection">
+        <h3 class="subsection-title">Creative Concept</h3>
+        <p class="concept-text">${sanitize(brief.concept)}</p>
+        ${brief.inspired_by ? `<p class="inspired-text">Inspired by: ${sanitize(brief.inspired_by)}</p>` : ''}
       </div>
 
-      <!-- Production Tips -->
+      <div class="brief-overview">
+        ${brief.target_duration ? `<div class="brief-meta-item"><span class="brief-meta-label">Duration</span><span class="brief-meta-value">${sanitize(brief.target_duration)}</span></div>` : ''}
+        ${brief.tone ? `<div class="brief-meta-item"><span class="brief-meta-label">Tone</span><span class="brief-meta-value">${sanitize(brief.tone)}</span></div>` : ''}
+        ${brief.music_direction ? `<div class="brief-meta-item"><span class="brief-meta-label">Music</span><span class="brief-meta-value">${sanitize(brief.music_direction)}</span></div>` : ''}
+        ${brief.pacing_notes ? `<div class="brief-meta-item"><span class="brief-meta-label">Pacing</span><span class="brief-meta-value">${sanitize(brief.pacing_notes)}</span></div>` : ''}
+      </div>
+
       ${brief.production_tips && brief.production_tips.length > 0 ? `
-        <div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-          <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: #a855f7; letter-spacing: 0.5px; margin-bottom: 12px;">Production Tips</div>
-          ${brief.production_tips.map(tip => `
-            <div style="padding: 10px 14px; background: #0e0e11; border-left: 3px solid #a855f7; border-radius: 4px; font-size: 13px; color: #a1a1ab; line-height: 1.5; margin-bottom: 8px;">${sanitizeHTML(tip)}</div>
-          `).join('')}
+        <div class="subsection">
+          <h3 class="subsection-title">Production Tips</h3>
+          <ol class="tips-list">
+            ${brief.production_tips.map(tip => `<li>${sanitize(tip)}</li>`).join('')}
+          </ol>
         </div>
       ` : ''}
 
-      <!-- Shot List -->
-      <div style="background: #1a1a22; border: 1px solid #2a2a34; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-        <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: #a855f7; letter-spacing: 0.5px; margin-bottom: 20px;">Shot List (${brief.shots?.length || 0} shots)</div>
+      <div class="subsection">
+        <h3 class="subsection-title">Shot List (${brief.shots?.length || 0} shots)</h3>
         ${(brief.shots || []).map(shot => `
-          <div style="border: 1px solid #2a2a34; border-radius: 8px; overflow: hidden; margin-bottom: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #131318; border-bottom: 1px solid #2a2a34;">
-              <span style="font-size: 14px; font-weight: 700; color: #a855f7; text-transform: uppercase; letter-spacing: 0.5px;">Shot ${shot.shot_number}</span>
-              <span style="font-size: 12px; font-weight: 600; color: #a855f7; background: rgba(168, 85, 247, 0.12); padding: 3px 8px; border-radius: 4px;">${sanitizeHTML(shot.duration_estimate)}</span>
+          <div class="brief-shot">
+            <div class="brief-shot-head">
+              <span class="brief-shot-num">Shot ${shot.shot_number}</span>
+              <span class="brief-shot-dur">${sanitize(shot.duration_estimate)}</span>
             </div>
-            <div style="padding: 14px; display: flex; flex-direction: column; gap: 8px;">
-              <div style="display: flex; gap: 12px;"><span style="min-width: 70px; font-size: 11px; font-weight: 600; color: #71717a; text-transform: uppercase;">Framing</span><span style="font-size: 14px; color: #e4e4e7;">${sanitizeHTML(shot.framing)}</span></div>
-              <div style="display: flex; gap: 12px;"><span style="min-width: 70px; font-size: 11px; font-weight: 600; color: #71717a; text-transform: uppercase;">Action</span><span style="font-size: 14px; color: #e4e4e7;">${sanitizeHTML(shot.action)}</span></div>
-              <div style="display: flex; gap: 12px;"><span style="min-width: 70px; font-size: 11px; font-weight: 600; color: #71717a; text-transform: uppercase;">Script</span><span style="font-size: 14px; color: #6366f1; font-style: italic; font-weight: 500;">"${sanitizeHTML(shot.script_line)}"</span></div>
-              ${shot.text_overlay ? `<div style="display: flex; gap: 12px;"><span style="min-width: 70px; font-size: 11px; font-weight: 600; color: #71717a; text-transform: uppercase;">Overlay</span><span style="font-size: 14px; color: #e4e4e7;">${sanitizeHTML(shot.text_overlay)}</span></div>` : ''}
-              ${shot.notes ? `<div style="display: flex; gap: 12px;"><span style="min-width: 70px; font-size: 11px; font-weight: 600; color: #71717a; text-transform: uppercase;">Notes</span><span style="font-size: 14px; color: #71717a; font-style: italic;">${sanitizeHTML(shot.notes)}</span></div>` : ''}
-              ${renderBriefVariations(shot.variations)}
-            </div>
+            <table class="brief-shot-table">
+              <tr><td class="bst-label">Framing</td><td>${sanitize(shot.framing)}</td></tr>
+              <tr><td class="bst-label">Action</td><td>${sanitize(shot.action)}</td></tr>
+              <tr><td class="bst-label">Script</td><td class="bst-script">"${sanitize(shot.script_line)}"</td></tr>
+              ${shot.text_overlay ? `<tr><td class="bst-label">Overlay</td><td>${sanitize(shot.text_overlay)}</td></tr>` : ''}
+              ${shot.notes ? `<tr><td class="bst-label">Notes</td><td class="bst-note">${sanitize(shot.notes)}</td></tr>` : ''}
+            </table>
+            ${renderVariations(shot.variations)}
           </div>
         `).join('')}
       </div>
-    </div>
     `;
   };
+
+  // --- Assemble the full document ---
+  const reportDate = formatDate(created_at);
+  const summary = ai_analysis?.one_line_summary || '';
 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Analysis Report \u2014 ${sanitizeHTML(brand_name)}</title>
+  <title>Video Analysis \u2014 ${sanitize(brand_name)} \u2014 Chefly</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&family=Instrument+Serif&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    /* === Reset & Base === */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html {
+      font-size: 15px;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
-    html, body {
-      background: #0e0e11;
-      color: #ffffff;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: #1e1e2a;
+      background: #ffffff;
+      line-height: 1.6;
     }
 
-    .container {
-      max-width: 1200px;
+    /* === Page Container === */
+    .page {
+      max-width: 820px;
       margin: 0 auto;
-      padding: 40px 20px;
+      padding: 48px 40px;
     }
 
-    header {
+    /* === Cover / Title Block === */
+    .cover {
+      padding-bottom: 40px;
       margin-bottom: 40px;
-      padding-bottom: 32px;
-      border-bottom: 1px solid #2a2a34;
+      border-bottom: 2px solid #e8e8ec;
     }
 
-    .header-meta {
+    .cover-brand-bar {
       display: flex;
       align-items: center;
-      gap: 16px;
-      margin-bottom: 16px;
-      font-size: 12px;
-      color: #8a8a92;
+      justify-content: space-between;
+      margin-bottom: 32px;
+    }
+
+    .logo-text {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      letter-spacing: -0.02em;
+      color: #6366f1;
+    }
+
+    .cover-date {
+      font-size: 0.8rem;
+      color: #71717a;
+      font-weight: 500;
+    }
+
+    .cover-label {
+      font-size: 0.73rem;
+      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .header-meta span:not(:last-child)::after {
-      content: '\u2022';
-      margin-left: 16px;
-      color: #2a2a34;
-    }
-
-    h1 {
-      font-size: 40px;
-      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #6366f1;
       margin-bottom: 12px;
+    }
+
+    .cover-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.4rem;
+      font-weight: 700;
+      line-height: 1.15;
+      color: #111118;
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
+
+    .cover-subtitle {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.25rem;
+      color: #52525b;
+      line-height: 1.5;
+      max-width: 600px;
+    }
+
+    .cover-meta {
+      display: flex;
+      gap: 24px;
+      margin-top: 24px;
+      font-size: 0.8rem;
+      color: #71717a;
+    }
+
+    .cover-meta strong {
+      color: #3f3f46;
+    }
+
+    /* === Metrics Row === */
+    .metrics-row {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 48px;
+      background: #f4f4f5;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .metric {
+      flex: 1;
+      padding: 20px 16px;
+      text-align: center;
+      background: #fafafa;
+    }
+
+    .metric:first-child { border-radius: 10px 0 0 10px; }
+    .metric:last-child { border-radius: 0 10px 10px 0; }
+
+    .metric-value {
+      display: block;
+      font-family: 'Syne', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #111118;
       line-height: 1.2;
+      margin-bottom: 4px;
     }
 
-    .one-line-summary {
-      font-size: 16px;
-      color: #a1a1ab;
-      line-height: 1.6;
-      max-width: 800px;
+    .metric-label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #71717a;
     }
 
+    /* === Contact Sheet === */
     .contact-sheet {
-      margin-bottom: 40px;
+      margin-bottom: 48px;
       border-radius: 8px;
       overflow: hidden;
-      border: 1px solid #2a2a34;
+      border: 1px solid #e4e4e7;
     }
 
     .contact-sheet img {
       width: 100%;
       height: auto;
       display: block;
-      background: #1a1a22;
     }
 
-    .section-title {
-      font-size: 24px;
+    /* === Section Headers === */
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 32px;
+      padding-top: 8px;
+    }
+
+    .section-number {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #e4e4e7;
+      line-height: 1;
+      min-width: 48px;
+    }
+
+    .section-heading {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
       font-weight: 700;
-      margin-top: 40px;
-      margin-bottom: 24px;
-      padding-bottom: 12px;
-      border-bottom: 2px solid #6366f1;
-      color: #ffffff;
+      color: #111118;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
     }
 
-    .section-content {
-      margin-bottom: 40px;
+    .section-desc {
+      font-size: 0.87rem;
+      color: #71717a;
+      margin-top: 4px;
     }
 
-    @media (max-width: 768px) {
-      .container {
-        padding: 24px 16px;
-      }
+    .brief-header .section-number { color: #c4b5fd; }
+    .brief-header .section-heading { color: #6d28d9; }
 
-      h1 {
-        font-size: 28px;
-      }
-
-      .section-title {
-        font-size: 18px;
-      }
+    /* === Subsections === */
+    .subsection {
+      margin-bottom: 28px;
     }
 
-    @media print {
-      body {
-        background: white;
-        color: black;
-      }
-
-      .container {
-        max-width: 100%;
-        padding: 20px;
-      }
-
-      h1 {
-        color: black;
-      }
-
-      .one-line-summary {
-        color: #333;
-      }
-
-      img {
-        max-width: 100%;
-      }
-
-      .section-title {
-        color: #000;
-        border-bottom-color: #4f46e5;
-      }
+    .subsection-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6366f1;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #ededf0;
     }
 
-    footer {
-      text-align: center;
-      padding-top: 32px;
-      border-top: 1px solid #2a2a34;
-      color: #8a8a92;
-      font-size: 12px;
+    /* === Body Text === */
+    .body-text {
+      font-size: 0.93rem;
+      color: #3f3f46;
+      line-height: 1.65;
+      margin-bottom: 8px;
+    }
+
+    /* === Tags / Pills === */
+    .hook-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 0.73rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 4px 10px;
+      border-radius: 4px;
+      background: #eef2ff;
+      color: #4f46e5;
+    }
+
+    .tag-score {
+      background: #ecfdf5;
+      color: #059669;
+    }
+
+    .tag-muted {
+      background: #f4f4f5;
+      color: #52525b;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .pill {
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 5px 12px;
+      border-radius: 20px;
+      background: #f0f0ff;
+      color: #4338ca;
+      border: 1px solid #e0e0f7;
+    }
+
+    .pill-muted {
+      background: #f4f4f5;
+      color: #52525b;
+      border-color: #e4e4e7;
+    }
+
+    /* === Data Table === */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table tr { border-bottom: 1px solid #f0f0f2; }
+    .data-table tr:last-child { border-bottom: none; }
+
+    .data-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #71717a;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 8px 16px 8px 0;
+      width: 140px;
+      vertical-align: top;
+    }
+
+    .data-value {
+      font-size: 0.9rem;
+      color: #27272a;
+      padding: 8px 0;
+    }
+
+    /* === Beat List === */
+    .beat-list {
+      padding-left: 20px;
+      font-size: 0.9rem;
+      color: #3f3f46;
+      line-height: 1.7;
+    }
+
+    .beat-list li {
+      margin-bottom: 6px;
+    }
+
+    .beat-list li::marker {
+      color: #a5b4fc;
+      font-weight: 700;
+    }
+
+    /* === Insight Grid === */
+    .insight-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .insight-col { }
+
+    .insight-heading {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+      border-bottom: 2px solid currentColor;
+    }
+
+    .accent-green { color: #059669; }
+    .accent-amber { color: #d97706; }
+    .accent-red { color: #dc2626; }
+
+    .insight-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .insight-list li {
+      font-size: 0.87rem;
+      color: #3f3f46;
+      line-height: 1.55;
+      padding: 6px 0 6px 12px;
+      border-left: 2px solid #e4e4e7;
+      margin-bottom: 6px;
+    }
+
+    /* === Script Block === */
+    .script-block {
+      background: #fafafa;
+      border: 1px solid #e4e4e7;
+      border-radius: 8px;
+      padding: 20px 24px;
+      font-size: 0.85rem;
+      line-height: 1.8;
+    }
+
+    .script-line { padding: 2px 0; }
+    .script-vo { color: #6d28d9; font-weight: 500; }
+    .script-visual { color: #4f46e5; }
+    .script-default { color: #52525b; }
+
+    /* === Shot Breakdown === */
+    .shot-card {
+      border: 1px solid #e4e4e7;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      page-break-inside: avoid;
+    }
+
+    .shot-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      background: #f8f8fa;
+      border-bottom: 1px solid #e4e4e7;
+    }
+
+    .shot-number {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #4f46e5;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .shot-timing {
+      font-size: 0.78rem;
+      color: #71717a;
+      font-weight: 500;
+    }
+
+    .shot-body {
+      display: flex;
+      gap: 16px;
+      padding: 14px 16px;
+      align-items: flex-start;
+    }
+
+    .shot-frame {
+      width: 140px;
+      height: auto;
+      border-radius: 4px;
+      flex-shrink: 0;
+      border: 1px solid #e4e4e7;
+    }
+
+    .shot-details {
+      flex: 1;
+    }
+
+    .shot-ocr {
+      font-size: 0.82rem;
+      color: #6b7280;
+      margin-top: 6px;
+      padding: 6px 10px;
+      background: #f9fafb;
+      border-left: 2px solid #a5b4fc;
+      border-radius: 2px;
+    }
+
+    /* === Brief-specific Styles === */
+    .concept-text {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.4rem;
+      color: #111118;
+      line-height: 1.45;
+      margin-bottom: 8px;
+    }
+
+    .inspired-text {
+      font-size: 0.85rem;
+      color: #71717a;
+      font-style: italic;
+    }
+
+    .brief-overview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .brief-meta-item {
+      background: #faf5ff;
+      border: 1px solid #ede9fe;
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .brief-meta-label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #7c3aed;
+      margin-bottom: 4px;
+    }
+
+    .brief-meta-value {
+      display: block;
+      font-size: 0.9rem;
+      color: #3f3f46;
+      font-weight: 500;
+    }
+
+    .tips-list {
+      padding-left: 20px;
+      font-size: 0.9rem;
+      color: #3f3f46;
+      line-height: 1.65;
+    }
+
+    .tips-list li {
+      margin-bottom: 8px;
+    }
+
+    .tips-list li::marker {
+      color: #7c3aed;
+      font-weight: 700;
+    }
+
+    .brief-shot {
+      border: 1px solid #e4e4e7;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      page-break-inside: avoid;
+    }
+
+    .brief-shot-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      background: #faf5ff;
+      border-bottom: 1px solid #ede9fe;
+    }
+
+    .brief-shot-num {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #7c3aed;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .brief-shot-dur {
+      font-size: 0.78rem;
+      color: #7c3aed;
+      font-weight: 600;
+      background: #ede9fe;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .brief-shot-table {
+      width: 100%;
+      border-collapse: collapse;
+      padding: 0;
+    }
+
+    .brief-shot-table tr { border-bottom: 1px solid #f4f4f5; }
+    .brief-shot-table tr:last-child { border-bottom: none; }
+
+    .brief-shot-table td {
+      padding: 8px 16px;
+      font-size: 0.88rem;
+      color: #27272a;
+      vertical-align: top;
+    }
+
+    .bst-label {
+      font-size: 0.73rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #71717a;
+      width: 80px;
+    }
+
+    .bst-script {
+      color: #6d28d9;
+      font-style: italic;
+      font-weight: 500;
+    }
+
+    .bst-note {
+      color: #71717a;
+      font-style: italic;
+    }
+
+    .variations-block {
+      padding: 12px 16px;
+      border-top: 1px solid #f0f0f2;
+      background: #fcfcfd;
+    }
+
+    .variations-label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #7c3aed;
+      margin-bottom: 10px;
+    }
+
+    .variation-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 6px 0;
+      border-bottom: 1px solid #f4f4f5;
+      font-size: 0.85rem;
+    }
+
+    .variation-row:last-child { border-bottom: none; }
+
+    .variation-id {
+      font-weight: 700;
+      color: #7c3aed;
+      font-size: 0.78rem;
+      min-width: 20px;
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+
+    .variation-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      color: #3f3f46;
+    }
+
+    .variation-note {
+      font-style: italic;
+      color: #71717a;
+    }
+
+    /* === Footer === */
+    .report-footer {
       margin-top: 60px;
+      padding-top: 24px;
+      border-top: 2px solid #e8e8ec;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-brand {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: #6366f1;
+    }
+
+    .footer-meta {
+      font-size: 0.72rem;
+      color: #a1a1aa;
+      text-align: right;
+    }
+
+    /* === Page Break Utility === */
+    .page-break {
+      page-break-before: always;
+      height: 0;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* === Divider === */
+    .section-divider {
+      border: none;
+      border-top: 1px solid #e8e8ec;
+      margin: 48px 0 8px 0;
+    }
+
+    /* === Print Styles === */
+    @media print {
+      html { font-size: 13px; }
+
+      body {
+        background: #fff;
+        color: #1e1e2a;
+      }
+
+      .page {
+        max-width: 100%;
+        padding: 24px 20px;
+      }
+
+      .contact-sheet img,
+      .shot-frame {
+        max-width: 100%;
+      }
+
+      .metrics-row {
+        border: 1px solid #ddd;
+      }
+
+      .metric {
+        background: #f9f9fb;
+      }
+
+      .shot-card,
+      .brief-shot {
+        page-break-inside: avoid;
+      }
+
+      .page-break {
+        page-break-before: always;
+      }
+
+      .section-header {
+        page-break-after: avoid;
+      }
+
+      .subsection {
+        page-break-inside: avoid;
+      }
+
+      .report-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 8px 24px;
+        border-top: 1px solid #ddd;
+        background: #fff;
+        font-size: 0.65rem;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .page { padding: 24px 16px; }
+      .cover-title { font-size: 1.8rem; }
+      .metrics-row { flex-wrap: wrap; }
+      .metric { flex: 1 0 45%; }
+      .shot-body { flex-direction: column; }
+      .shot-frame { width: 100%; }
+      .insight-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Header -->
-    <header>
-      <div class="header-meta">
-        <span>${sanitizeHTML(brand_name)}</span>
-        <span>${formatDate(created_at)}</span>
-        <span style="text-transform: capitalize;">${sanitizeHTML(status || 'Complete')}</span>
+  <div class="page">
+
+    <!-- ===== COVER ===== -->
+    <div class="cover">
+      <div class="cover-brand-bar">
+        <span class="logo-text">Chefly</span>
+        <span class="cover-date">${reportDate}</span>
       </div>
-      <h1>Video Analysis Report</h1>
-      <p class="one-line-summary">${sanitizeHTML(ai_analysis?.one_line_summary || 'Video analysis report for competitor ad creative.')}</p>
-    </header>
-
-    <!-- Contact Sheet -->
-    ${
-      contact_sheet_url
-        ? `<div class="contact-sheet"><img src="${contact_sheet_url}" alt="Contact Sheet" /></div>`
-        : ''
-    }
-
-    <!-- Metrics Bar -->
-    <div class="section-content">
-      ${renderMetricsBar()}
+      <div class="cover-label">Video Analysis Report</div>
+      <h1 class="cover-title">${sanitize(brand_name)} \u2014 Competitor Creative Analysis</h1>
+      ${summary ? `<p class="cover-subtitle">${sanitize(summary)}</p>` : ''}
+      <div class="cover-meta">
+        <span><strong>Brand:</strong> ${sanitize(brand_name)}</span>
+        ${page_name && page_name !== 'Unknown' ? `<span><strong>Page:</strong> ${sanitize(page_name)}</span>` : ''}
+        <span><strong>Status:</strong> ${sanitize(status || 'Complete')}</span>
+      </div>
     </div>
 
-    <!-- AI Analysis -->
-    <div class="section-title">Creative Analysis</div>
-    <div class="section-content">
-      ${renderHook()}
-      ${renderNarrativeArc()}
-      ${renderCTA()}
-      ${renderSellingPoints()}
-      ${renderEmotionalDrivers()}
-      ${renderTargetAudience()}
-      ${renderProductionStyle()}
-      ${renderCompetitorInsights()}
+    <!-- ===== KEY METRICS ===== -->
+    ${renderMetricsTable()}
+
+    <!-- ===== CONTACT SHEET ===== -->
+    ${contact_sheet_url ? `
+      <div class="contact-sheet">
+        <img src="${contact_sheet_url}" alt="Contact Sheet \u2014 Visual Timeline" />
+      </div>
+    ` : ''}
+
+    <!-- ===== SECTION 1: CREATIVE ANALYSIS ===== -->
+    <div class="section-header">
+      <div class="section-number">01</div>
+      <div>
+        <h2 class="section-heading">Creative Analysis</h2>
+        <p class="section-desc">AI-generated insights on hook, narrative, audience, and production</p>
+      </div>
     </div>
 
-    <!-- Combined Script -->
-    <div class="section-title">Script Timeline</div>
-    <div class="section-content">
-      ${renderCombinedScript()}
+    ${renderHook()}
+    ${renderNarrativeArc()}
+    ${renderCTA()}
+    ${renderPillGroup('Selling Points', ai_analysis?.selling_points)}
+    ${renderPillGroup('Emotional Drivers', ai_analysis?.emotional_drivers)}
+    ${renderTargetAudience()}
+    ${renderProductionStyle()}
+    ${renderCompetitorInsights()}
+
+    <!-- ===== SECTION 2: SCRIPT ===== -->
+    <hr class="section-divider" />
+    <div class="section-header">
+      <div class="section-number">02</div>
+      <div>
+        <h2 class="section-heading">Script Timeline</h2>
+        <p class="section-desc">Combined voiceover, visual cues, and on-screen text</p>
+      </div>
     </div>
 
-    <!-- Shot Breakdown -->
-    <div class="section-title">Shot Analysis</div>
-    <div class="section-content">
-      ${renderShotBreakdown()}
+    ${renderScript()}
+
+    <!-- ===== SECTION 3: SHOT BREAKDOWN ===== -->
+    <div class="page-break"></div>
+    <div class="section-header">
+      <div class="section-number">03</div>
+      <div>
+        <h2 class="section-heading">Shot-by-Shot Breakdown</h2>
+        <p class="section-desc">${total_shots || 0} shots analysed with reference frames</p>
+      </div>
     </div>
 
-    <!-- Chefly UGC Brief (if available) -->
+    ${renderShotBreakdown()}
+
+    <!-- ===== SECTION 4: CHEFLY BRIEF (optional) ===== -->
     ${renderBriefSection()}
 
-    <!-- Footer -->
-    <footer>
-      <p>Generated by Creative Kitchen \u2014 Big Tasty Productions</p>
-      <p style="margin-top: 8px; color: #6a6a72;">Report ID: ${sanitizeHTML(id || 'N/A')} \u2022 Analysis ID: ${sanitizeHTML(competitor_ad_id || 'N/A')}</p>
-    </footer>
+    <!-- ===== FOOTER ===== -->
+    <div class="report-footer">
+      <span class="footer-brand">Chefly \u2014 Big Tasty Productions</span>
+      <div class="footer-meta">
+        Report ID: ${sanitize(id || 'N/A')}<br>
+        Generated ${formatDate(new Date().toISOString())}
+      </div>
+    </div>
+
   </div>
 </body>
 </html>`;
