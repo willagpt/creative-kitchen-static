@@ -307,6 +307,17 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
   })
 
   useEffect(() => { fetchFollowedBrands(supabaseUrl).then(setFollowedBrands) }, [])
+
+  // Pre-fetch which competitor ads have already been video-analysed
+  useEffect(() => {
+    fetch(`${supabaseUrl}/rest/v1/video_analyses?status=in.(complete,processing)&select=competitor_ad_id`, { headers: sbReadHeaders })
+      .then(r => r.ok ? r.json() : [])
+      .then(rows => {
+        const ids = new Set(rows.map(r => r.competitor_ad_id).filter(Boolean))
+        if (ids.size > 0) setAnalysedAdIds(ids)
+      })
+      .catch(() => {})
+  }, [])
   useEffect(() => { if (apiKey.length > 20) localStorage.setItem('metaAdLibraryToken', apiKey) }, [apiKey])
   useEffect(() => { setShowCount(GRID_PAGE) }, [typeFilter, statusFilter, sortBy, searchText, dateFrom, dateTo])
   useEffect(() => { setTopShowCount(GRID_PAGE) }, [topPercentile, topTypeFilter, topSortBy])
@@ -1165,6 +1176,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
             </span>
             <span className="ca-tag days">{ad.daysActive}d</span>
             <span className={`ca-tag status-${ad.status}`}>{ad.status}</span>
+            {isAlreadyAnalysed && <span className="ca-tag ca-tag-analysed">✓ Analysed</span>}
           </div>
           {showBrandTag && (
             <div className="ca-card-velocity">

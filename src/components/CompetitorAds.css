@@ -563,6 +563,7 @@
 .ca-tag.days { background: rgba(251, 191, 36, 0.12); color: #fbbf24; }
 .ca-tag.status-active { background: rgba(34, 197, 94, 0.12); color: #4ade80; }
 .ca-tag.status-ended { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+.ca-tag.ca-tag-analysed { background: rgba(147, 51, 234, 0.15); color: #c084fc; }
 
 /* ── Load More ── */
 .ca-load-more {
