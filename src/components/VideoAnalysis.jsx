@@ -84,14 +84,18 @@ export default function VideoAnalysis() {
         data.map(async (analysis) => {
           try {
             const adRes = await fetch(
-              `${supabaseUrl}/rest/v1/competitor_ads?id=eq.${analysis.competitor_ad_id}&select=brand_name,page_name`,
+              `${supabaseUrl}/rest/v1/competitor_ads?id=eq.${analysis.competitor_ad_id}&select=page_name,page_id`,
               { headers: fnHeaders }
             )
             const ads = await adRes.json()
+            const pageName = ads[0]?.page_name || 'Unknown'
+            // Build a descriptive name: brand + hook type or pacing
+            const hookType = analysis.ai_analysis?.hook_type || analysis.ai_analysis?.hook_framework
+            const hookLabel = hookType ? ` — ${hookType.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}` : ''
             return {
               ...analysis,
-              brand_name: ads[0]?.brand_name || 'Unknown',
-              page_name: ads[0]?.page_name || '',
+              brand_name: pageName + hookLabel,
+              page_name: pageName,
             }
           } catch (e) {
             return { ...analysis, brand_name: 'Unknown', page_name: '' }
