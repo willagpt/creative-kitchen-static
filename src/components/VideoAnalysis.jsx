@@ -62,6 +62,7 @@ export default function VideoAnalysis() {
   const [analyzeLoading, setAnalyzeLoading] = useState(false)
   const [analyzeError, setAnalyzeError] = useState(null)
   const [detailTab, setDetailTab] = useState('script') // 'script', 'analysis', 'shots'
+  const [deletingId, setDeletingId] = useState(null)
 
   // Fetch all analyses
   useEffect(() => {
@@ -151,6 +152,36 @@ export default function VideoAnalysis() {
     }
   }
 
+  const handleDeleteAnalysis = async (analysisId) => {
+    if (!window.confirm('Delete this video analysis? This cannot be undone.')) return
+    setDeletingId(analysisId)
+    try {
+      // Delete related video_shots first
+      await fetch(
+        `${supabaseUrl}/rest/v1/video_shots?video_analysis_id=eq.${analysisId}`,
+        { method: 'DELETE', headers: fnHeaders }
+      )
+      // Delete the analysis itself
+      const res = await fetch(
+        `${supabaseUrl}/rest/v1/video_analyses?id=eq.${analysisId}`,
+        { method: 'DELETE', headers: fnHeaders }
+      )
+      if (!res.ok) throw new Error('Failed to delete analysis')
+      // Remove from local state
+      setAnalyses(prev => prev.filter(a => a.id !== analysisId))
+      // If we were viewing the deleted one, go back to list
+      if (selectedAnalysis?.id === analysisId) {
+        setView('list')
+        setSelectedAnalysis(null)
+      }
+    } catch (e) {
+      console.error('Delete error:', e)
+      alert('Failed to delete analysis: ' + e.message)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   const openDetail = (analysis) => {
     setSelectedAnalysis(analysis)
     setDetailTab('script')
@@ -220,6 +251,8 @@ export default function VideoAnalysis() {
           error={error}
           onSelect={openDetail}
           onRetry={fetchAnalyses}
+          onDelete={handleDeleteAnalysis}
+          deletingId={deletingId}
         />
       ) : (
         <DetailViewContent
@@ -227,13 +260,15 @@ export default function VideoAnalysis() {
           detailTab={detailTab}
           onTabChange={setDetailTab}
           onClose={closeDetail}
+          onDelete={handleDeleteAnalysis}
+          deletingId={deletingId}
         />
       )}
     </div>
   )
 }
 
-function ListViewContent({ analyses, loading, error, onSelect, onRetry }) {
+function ListViewContent({ analyses, loading, error, onSelect, onRetry, onDelete, deletingId }) {
   if (loading) {
     return (
       <div className="va-empty-state">
@@ -272,13 +307,15 @@ function ListViewContent({ analyses, loading, error, onSelect, onRetry }) {
           key={analysis.id}
           analysis={analysis}
           onClick={() => onSelect(analysis)}
+          onDelete={onDelete}
+          isDeleting={deletingId === analysis.id}
         />
       ))}
     </div>
   )
 }
 
-function AnalysisCard({ analysis, onClick }) {
+function AnalysisCard({ analysis, onClick, onDelete, isDeleting }) {
   const getStatusColor = (status) => {
     switch (status) {
       case 'complete':
@@ -349,13 +386,25 @@ function AnalysisCard({ analysis, onClick }) {
           <p className="va-card-summary">{analysis.ai_analysis.one_line_summary}</p>
         )}
 
-        <button className="va-card-action">View Details →</button>
+        <div className="va-card-actions">
+          <button className="va-card-action">View Details →</button>
+          <button
+            className="va-card-delete"
+            disabled={isDeleting}
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete(analysis.id)
+            }}
+          >
+            {isDeleting ? 'Deleting...' : 'Delete'}
+          </button>
+        </div>
       </div>
     </div>
   )
 }
 
-function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
+function DetailViewContent({ analysis, detailTab, onTabChange, onClose, onDelete, deletingId }) {
   const [briefData, setBriefData] = useState(null)
   const [briefLoading, setBriefLoading] = useState(false)
   const [briefError, setBriefError] = useState(null)
@@ -440,6 +489,13 @@ function DetailViewContent({ analysis, detailTab, onTabChange, onClose }) {
           <div className="va-detail-top">
             <button className="va-close-btn" onClick={onClose}>✕</button>
             <h2 className="va-detail-title">{analysis.brand_name}</h2>
+            <button
+              className="va-detail-delete-btn"
+              disabled={deletingId === analysis.id}
+              onClick={() => onDelete(analysis.id)}
+            >
+              {deletingId === analysis.id ? 'Deleting...' : 'Delete'}
+            </button>
           </div>
 
           {analysis.contact_sheet_url && (
