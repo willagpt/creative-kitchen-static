@@ -1364,6 +1364,20 @@
 }
 .ca-bulk-clear-btn:hover { background: rgba(255,255,255,0.08); }
 
+.ca-bulk-progress {
+  display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
+}
+.ca-bulk-progress-bar {
+  flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden;
+}
+.ca-bulk-progress-fill {
+  height: 100%; background: #8b5cf6; border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.ca-bulk-progress-text {
+  font-size: 12px; color: #a1a1aa; white-space: nowrap;
+}
+
 /* Video analysis notification banner */
 .ca-video-notice {
   display: flex; align-items: center; justify-content: space-between;

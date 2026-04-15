@@ -82,6 +82,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
   const [selectedVideoIds, setSelectedVideoIds] = useState(new Set())  // bulk selection checkboxes
   const [analysedAdIds, setAnalysedAdIds] = useState(new Set())        // already-analysed dedup cache
   const [videoAnalysisNotice, setVideoAnalysisNotice] = useState(null) // { type: 'success'|'error', message }
+  const [bulkProgress, setBulkProgress] = useState(null) // { done: N, total: N, failed: N }
 
   const hasKey = apiKey.length > 20
 
@@ -1005,7 +1006,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
     }
   }
 
-  // Bulk analyse selected videos (concurrency limit of 2)
+  // Bulk analyse selected videos (sequential to avoid edge function overload)
   async function handleBulkAnalyse() {
     const selectedAds = topFiltered.filter(a => selectedVideoIds.has(a.adId) && a.isVideo && a.hasMedia)
     if (selectedAds.length === 0) return
@@ -1027,36 +1028,62 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
     }
 
     const skipMsg = skipped > 0 ? ` (${skipped} already analysed, skipped)` : ''
-    setVideoAnalysisNotice({ type: 'success', message: `Queued ${toAnalyse.length} video(s) for analysis${skipMsg}. Results will appear in Video Analysis tab.` })
+    setVideoAnalysisNotice({ type: 'success', message: `Analysing ${toAnalyse.length} video(s)${skipMsg}. This runs in the background.` })
     setTimeout(() => setVideoAnalysisNotice(null), 5000)
     setSelectedVideoIds(new Set())
 
-    // Process with concurrency limit of 2 (Phase 1 + Phase 2+3 per video)
-    const concurrency = 2
-    let i = 0
-    async function runNext() {
-      if (i >= toAnalyse.length) return
-      const ad = toAnalyse[i++]
+    // Process sequentially to avoid overloading edge functions.
+    // Each video: Phase 1 (~20s) then Phase 2+3 (~60-90s) = ~2 min per video.
+    const progress = { done: 0, total: toAnalyse.length, failed: 0 }
+    setBulkProgress({ ...progress })
+
+    for (const ad of toAnalyse) {
       setAnalysingAdIds(prev => new Set([...prev, ad.adId]))
       try {
-        // Phase 1: shot extraction
+        // Phase 1: shot extraction via video worker
         const res = await fetch(`${supabaseUrl}/functions/v1/analyse-video`, {
           method: 'POST',
           headers: fnHeaders,
           body: JSON.stringify({ competitor_ad_id: ad.adId }),
         })
-        if (res.ok) {
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}))
+          // 409 = already exists, treat as success
+          if (res.status === 409 && err.existing_analysis_id) {
+            await runPipelineSteps(err.existing_analysis_id)
+            setAnalysedAdIds(prev => new Set([...prev, ad.adId]))
+          } else {
+            console.error(`Phase 1 failed for ${ad.adId}: ${res.status}`, err)
+            progress.failed++
+          }
+        } else {
           const data = await res.json()
-          // Phase 2+3: pipeline steps called directly from frontend
-          if (data.analysis_id) await runPipelineSteps(data.analysis_id)
-          setAnalysedAdIds(prev => new Set([...prev, ad.adId]))
+          if (data.analysis_id) {
+            // Phase 2+3: pipeline steps called directly from frontend
+            await runPipelineSteps(data.analysis_id)
+            setAnalysedAdIds(prev => new Set([...prev, ad.adId]))
+          } else {
+            console.error(`No analysis_id returned for ${ad.adId}`)
+            progress.failed++
+          }
         }
-      } catch { /* silent */ }
+      } catch (e) {
+        console.error(`Bulk analysis error for ${ad.adId}:`, e)
+        progress.failed++
+      }
       setAnalysingAdIds(prev => { const s = new Set(prev); s.delete(ad.adId); return s })
-      await runNext()
+      progress.done++
+      setBulkProgress({ ...progress })
     }
-    const workers = Array.from({ length: Math.min(concurrency, toAnalyse.length) }, () => runNext())
-    await Promise.allSettled(workers)
+
+    // Show final result
+    const failMsg = progress.failed > 0 ? `. ${progress.failed} failed.` : ''
+    setVideoAnalysisNotice({
+      type: progress.failed > 0 ? 'error' : 'success',
+      message: `Bulk analysis complete: ${progress.done - progress.failed}/${progress.total} videos analysed${failMsg}`
+    })
+    setTimeout(() => setVideoAnalysisNotice(null), 8000)
+    setBulkProgress(null)
   }
 
   // Toggle video selection for bulk
@@ -2170,6 +2197,16 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
                             </button>
                             <button className="ca-bulk-clear-btn" onClick={() => setSelectedVideoIds(new Set())} title="Clear selection">&times;</button>
                           </>
+                        )}
+                        {bulkProgress && (
+                          <div className="ca-bulk-progress">
+                            <div className="ca-bulk-progress-bar">
+                              <div className="ca-bulk-progress-fill" style={{ width: `${(bulkProgress.done / bulkProgress.total) * 100}%` }} />
+                            </div>
+                            <span className="ca-bulk-progress-text">
+                              {bulkProgress.done}/{bulkProgress.total} analysed{bulkProgress.failed > 0 ? ` (${bulkProgress.failed} failed)` : ''}
+                            </span>
+                          </div>
                         )}
                       </div>
                     )

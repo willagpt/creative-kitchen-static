@@ -2,7 +2,6 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const SUPABASE_URL = "https://ifrxylvoufncdxyltgqt.supabase.co";
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA";
 const VIDEO_WORKER_URL = Deno.env.get("VIDEO_WORKER_URL") || "";
 const VIDEO_WORKER_SECRET = Deno.env.get("VIDEO_WORKER_SECRET") || "";
 
@@ -218,41 +217,11 @@ Deno.serve(async (req: Request) => {
       await insertShots(analysisId, workerResult.shots);
     }
 
-    console.log(`Phase 1 complete: ${analysisId}. Chaining Phase 2+3 (direct pipeline steps)...`);
+    console.log(`Phase 1 complete: ${analysisId}. Pipeline steps (Phase 2+3) are handled by the frontend.`);
 
-    // 8. Chain Phase 2+3: call each step directly with anon key
-    //    (service-role-to-service-role relay between edge functions is unreliable)
-    const pipelineHeaders = {
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      "Content-Type": "application/json",
-      apikey: SUPABASE_ANON_KEY,
-    };
-    const pipelineSteps = ["transcribe-video", "ocr-video-frames", "merge-video-script", "ai-analyse-video"];
-    const pipelineResults: Record<string, unknown> = {};
-
-    for (const step of pipelineSteps) {
-      try {
-        console.log(`Running pipeline step: ${step}`);
-        const stepRes = await fetch(`${SUPABASE_URL}/functions/v1/${step}`, {
-          method: "POST",
-          headers: pipelineHeaders,
-          body: JSON.stringify({ analysis_id: analysisId }),
-        });
-        const stepData = await stepRes.json();
-        pipelineResults[step] = { ok: stepRes.ok, status: stepRes.status, data: stepData };
-        if (!stepRes.ok) {
-          console.error(`${step} returned ${stepRes.status}:`, stepData.error || stepData);
-        } else {
-          console.log(`${step} completed successfully`);
-        }
-      } catch (stepErr) {
-        console.error(`${step} failed: ${stepErr}`);
-        pipelineResults[step] = { ok: false, error: String(stepErr) };
-      }
-    }
-
-    const allOk = Object.values(pipelineResults).every((r: unknown) => (r as Record<string, unknown>).ok);
-    console.log(`Pipeline ${allOk ? 'fully complete' : 'partially failed'} for ${analysisId}`);
+    // Phase 2+3 (transcribe, OCR, merge, AI) are called directly by the frontend
+    // after this response returns. This keeps the edge function fast (~20-30s)
+    // and avoids Supabase execution time limits that cause bulk analysis to drop videos.
 
     return jsonResponse({
       success: true,
@@ -269,8 +238,6 @@ Deno.serve(async (req: Request) => {
       contact_sheet_url: workerResult.contact_sheet_url || null,
       audio_url: workerResult.audio_url || null,
       shots_inserted: workerResult.shots?.length || 0,
-      pipeline: pipelineResults,
-      pipeline_complete: allOk,
     });
 
   } catch (err) {
