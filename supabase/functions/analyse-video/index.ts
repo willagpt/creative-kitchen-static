@@ -217,7 +217,35 @@ Deno.serve(async (req: Request) => {
       await insertShots(analysisId, workerResult.shots);
     }
 
-    console.log(`Analysis complete: ${analysisId}`);
+    console.log(`Phase 1 complete: ${analysisId}. Chaining Phase 2+3 (extract-video-script)...`);
+
+    // 8. Chain Phase 2+3: transcription, OCR, script merge, AI creative analysis
+    let scriptResult: Record<string, unknown> | null = null;
+    try {
+      const scriptRes = await fetch(
+        `${SUPABASE_URL}/functions/v1/extract-video-script`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            analysis_id: analysisId,
+            include_ai_analysis: true,
+          }),
+        }
+      );
+      scriptResult = await scriptRes.json();
+      if (!scriptRes.ok) {
+        console.error(`extract-video-script returned ${scriptRes.status}:`, scriptResult);
+      } else {
+        console.log(`Full pipeline complete for ${analysisId}`);
+      }
+    } catch (chainErr) {
+      console.error(`extract-video-script chain error: ${chainErr}`);
+      // Phase 1 data is already saved, so we return partial success
+    }
 
     return jsonResponse({
       success: true,
@@ -234,6 +262,7 @@ Deno.serve(async (req: Request) => {
       contact_sheet_url: workerResult.contact_sheet_url || null,
       audio_url: workerResult.audio_url || null,
       shots_inserted: workerResult.shots?.length || 0,
+      script_extraction: scriptResult || { skipped: true, reason: "chain call failed" },
     });
 
   } catch (err) {
