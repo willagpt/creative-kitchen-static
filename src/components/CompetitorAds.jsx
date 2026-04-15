@@ -1031,7 +1031,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
   function toggleVideoSelection(adId) {
     setSelectedVideoIds(prev => {
       const next = new Set(prev)
-      if (next.has(adId)) { next.delete(adId) } else if (next.size < 10) { next.add(adId) }
+      if (next.has(adId)) { next.delete(adId) } else if (next.size < 20) { next.add(adId) }
       return next
     })
   }
