@@ -77,6 +77,12 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
   const [historyLoading, setHistoryLoading] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
 
+  // ── Video Analysis from Top Performers ──
+  const [analysingAdIds, setAnalysingAdIds] = useState(new Set())     // in-flight video analyses
+  const [selectedVideoIds, setSelectedVideoIds] = useState(new Set())  // bulk selection checkboxes
+  const [analysedAdIds, setAnalysedAdIds] = useState(new Set())        // already-analysed dedup cache
+  const [videoAnalysisNotice, setVideoAnalysisNotice] = useState(null) // { type: 'success'|'error', message }
+
   const hasKey = apiKey.length > 20
 
   // Copy full prompt to clipboard
@@ -902,6 +908,123 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
     })
   }
 
+  // ── Video Analysis helpers ──
+
+  // Check if a video has already been analysed (dedup guard)
+  async function checkVideoAnalysed(adId) {
+    if (analysedAdIds.has(adId)) return true
+    try {
+      const res = await fetch(
+        `${supabaseUrl}/rest/v1/video_analyses?competitor_ad_id=eq.${adId}&select=id,status&limit=1`,
+        { headers: sbReadHeaders }
+      )
+      if (!res.ok) return false
+      const rows = await res.json()
+      if (rows.length > 0 && (rows[0].status === 'complete' || rows[0].status === 'processing')) {
+        setAnalysedAdIds(prev => new Set([...prev, adId]))
+        return rows[0].status // 'complete' or 'processing'
+      }
+      return false
+    } catch { return false }
+  }
+
+  // Trigger video analysis for a single ad
+  async function handleAnalyseVideo(ad) {
+    if (analysingAdIds.has(ad.adId)) return
+
+    // Dedup check
+    const existing = await checkVideoAnalysed(ad.adId)
+    if (existing === 'processing') {
+      setVideoAnalysisNotice({ type: 'info', message: `"${ad.adName || ad.adId}" is already being analysed.` })
+      setTimeout(() => setVideoAnalysisNotice(null), 4000)
+      return
+    }
+    if (existing === 'complete') {
+      setVideoAnalysisNotice({ type: 'info', message: `"${ad.adName || ad.adId}" was already analysed. Check the Video Analysis tab for results.` })
+      setTimeout(() => setVideoAnalysisNotice(null), 5000)
+      return
+    }
+
+    setAnalysingAdIds(prev => new Set([...prev, ad.adId]))
+    setVideoAnalysisNotice({ type: 'success', message: `Queued "${ad.adName || ad.adId}" for video analysis...` })
+    setTimeout(() => setVideoAnalysisNotice(null), 3000)
+
+    try {
+      const res = await fetch(`${supabaseUrl}/functions/v1/analyse-video`, {
+        method: 'POST',
+        headers: fnHeaders,
+        body: JSON.stringify({ competitor_ad_id: ad.adId }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.message || 'Failed to start analysis')
+      }
+      setAnalysedAdIds(prev => new Set([...prev, ad.adId]))
+    } catch (e) {
+      setVideoAnalysisNotice({ type: 'error', message: `Analysis failed: ${e.message}` })
+      setTimeout(() => setVideoAnalysisNotice(null), 5000)
+    } finally {
+      setAnalysingAdIds(prev => { const s = new Set(prev); s.delete(ad.adId); return s })
+    }
+  }
+
+  // Bulk analyse selected videos (concurrency limit of 2)
+  async function handleBulkAnalyse() {
+    const selectedAds = topFiltered.filter(a => selectedVideoIds.has(a.adId) && a.isVideo && a.hasMedia)
+    if (selectedAds.length === 0) return
+
+    // Pre-check for already analysed
+    const toAnalyse = []
+    let skipped = 0
+    for (const ad of selectedAds) {
+      const existing = await checkVideoAnalysed(ad.adId)
+      if (existing) { skipped++; continue }
+      toAnalyse.push(ad)
+    }
+
+    if (toAnalyse.length === 0) {
+      setVideoAnalysisNotice({ type: 'info', message: `All ${skipped} selected video(s) already analysed. Check Video Analysis tab.` })
+      setTimeout(() => setVideoAnalysisNotice(null), 4000)
+      setSelectedVideoIds(new Set())
+      return
+    }
+
+    const skipMsg = skipped > 0 ? ` (${skipped} already analysed, skipped)` : ''
+    setVideoAnalysisNotice({ type: 'success', message: `Queued ${toAnalyse.length} video(s) for analysis${skipMsg}. Results will appear in Video Analysis tab.` })
+    setTimeout(() => setVideoAnalysisNotice(null), 5000)
+    setSelectedVideoIds(new Set())
+
+    // Process with concurrency limit of 2
+    const concurrency = 2
+    let i = 0
+    async function runNext() {
+      if (i >= toAnalyse.length) return
+      const ad = toAnalyse[i++]
+      setAnalysingAdIds(prev => new Set([...prev, ad.adId]))
+      try {
+        const res = await fetch(`${supabaseUrl}/functions/v1/analyse-video`, {
+          method: 'POST',
+          headers: fnHeaders,
+          body: JSON.stringify({ competitor_ad_id: ad.adId }),
+        })
+        if (res.ok) setAnalysedAdIds(prev => new Set([...prev, ad.adId]))
+      } catch { /* silent */ }
+      setAnalysingAdIds(prev => { const s = new Set(prev); s.delete(ad.adId); return s })
+      await runNext()
+    }
+    const workers = Array.from({ length: Math.min(concurrency, toAnalyse.length) }, () => runNext())
+    await Promise.allSettled(workers)
+  }
+
+  // Toggle video selection for bulk
+  function toggleVideoSelection(adId) {
+    setSelectedVideoIds(prev => {
+      const next = new Set(prev)
+      if (next.has(adId)) { next.delete(adId) } else if (next.size < 5) { next.add(adId) }
+      return next
+    })
+  }
+
   function renderAdCard(ad, showBrandTag = false) {
     const brandColor = brandColorMap[ad.pageId]
     // Inline carousel: get unique image variants
@@ -929,9 +1052,23 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
       setCardVariantIdx(prev => ({ ...prev, [ad.adId]: (safeIdx + 1) % uniqueVars.length }))
     }
 
+    const isAnalysing = analysingAdIds.has(ad.adId)
+    const isAlreadyAnalysed = analysedAdIds.has(ad.adId)
+    const isSelected = selectedVideoIds.has(ad.adId)
+
     return (
-      <div key={ad.adId + '-' + (ad.cardIndex || '')} className="ca-card">
+      <div key={ad.adId + '-' + (ad.cardIndex || '')} className={`ca-card ${isAnalysing ? 'ca-card-analysing' : ''}`}>
         <div className="ca-card-media">
+          {/* Video analysis checkbox (Top Performers video cards only) */}
+          {showBrandTag && ad.isVideo && ad.hasMedia && (
+            <label className="ca-card-checkbox" onClick={e => e.stopPropagation()}>
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => toggleVideoSelection(ad.adId)}
+              />
+            </label>
+          )}
           {ad.isVideo && ad.mediaUrl ? (
             <InlineVideoCard src={ad.videoUrl || ad.mediaUrl} onClick={(e) => openModal(ad, e)} />
           ) : ad.isVideo ? (
@@ -969,7 +1106,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
               </div>
             </>
           )}
-          {/* Add to library button */}
+          {/* Add to library button (images only) */}
           {!ad.isVideo && displayUrl && (
             <button
               className={`ca-card-add-lib ${isInQueue ? 'added' : ''}`}
@@ -980,6 +1117,23 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
                 <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg> Added</>
               ) : (
                 <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add</>
+              )}
+            </button>
+          )}
+          {/* Analyse Video button (video cards in Top Performers only) */}
+          {showBrandTag && ad.isVideo && ad.hasMedia && (
+            <button
+              className={`ca-card-analyse-btn ${isAlreadyAnalysed ? 'analysed' : ''} ${isAnalysing ? 'loading' : ''}`}
+              onClick={(e) => { e.stopPropagation(); handleAnalyseVideo(ad) }}
+              disabled={isAnalysing}
+              title={isAlreadyAnalysed ? 'Already analysed' : isAnalysing ? 'Analysing...' : 'Analyse this video with AI'}
+            >
+              {isAnalysing ? (
+                <><span className="ca-spin-sm"></span> Analysing</>
+              ) : isAlreadyAnalysed ? (
+                <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg> Analysed</>
+              ) : (
+                <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.5 4h-5L7 7H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Analyse</>
               )}
             </button>
           )}
@@ -1935,6 +2089,26 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
                       })}
                     </div>
                   </div>
+                  {/* Video analysis notification banner */}
+                  {videoAnalysisNotice && (
+                    <div className={`ca-video-notice ca-video-notice-${videoAnalysisNotice.type}`}>
+                      <span>{videoAnalysisNotice.message}</span>
+                      <button onClick={() => setVideoAnalysisNotice(null)}>&times;</button>
+                    </div>
+                  )}
+
+                  {/* Bulk video analysis toolbar */}
+                  {selectedVideoIds.size > 0 && (
+                    <div className="ca-bulk-toolbar">
+                      <span className="ca-bulk-count">{selectedVideoIds.size} video{selectedVideoIds.size !== 1 ? 's' : ''} selected</span>
+                      <button className="ca-bulk-analyse-btn" onClick={handleBulkAnalyse}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.5 4h-5L7 7H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                        Analyse {selectedVideoIds.size} Video{selectedVideoIds.size !== 1 ? 's' : ''}
+                      </button>
+                      <button className="ca-bulk-clear-btn" onClick={() => setSelectedVideoIds(new Set())} title="Clear selection">&times;</button>
+                    </div>
+                  )}
+
                   <div className="ca-grid">
                     {topPageAds.map(ad => renderAdCard(ad, true))}
                   </div>
