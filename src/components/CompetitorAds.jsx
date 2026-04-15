@@ -940,6 +940,24 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
   }
 
   // Trigger video analysis for a single ad
+  // Run Phase 2+3 pipeline steps directly from frontend (transcribe, OCR, merge, AI)
+  // This bypasses unreliable edge-function-to-edge-function relay
+  async function runPipelineSteps(analysisId) {
+    const steps = ['transcribe-video', 'ocr-video-frames', 'merge-video-script', 'ai-analyse-video']
+    for (const step of steps) {
+      try {
+        const r = await fetch(`${supabaseUrl}/functions/v1/${step}`, {
+          method: 'POST',
+          headers: fnHeaders,
+          body: JSON.stringify({ analysis_id: analysisId }),
+        })
+        if (!r.ok) console.warn(`Pipeline step ${step} returned ${r.status}`)
+      } catch (e) {
+        console.warn(`Pipeline step ${step} failed:`, e)
+      }
+    }
+  }
+
   async function handleAnalyseVideo(ad) {
     if (analysingAdIds.has(ad.adId)) return
 
@@ -957,10 +975,11 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
     }
 
     setAnalysingAdIds(prev => new Set([...prev, ad.adId]))
-    setVideoAnalysisNotice({ type: 'success', message: `Queued "${ad.adName || ad.adId}" for video analysis...` })
-    setTimeout(() => setVideoAnalysisNotice(null), 3000)
+    setVideoAnalysisNotice({ type: 'success', message: `Analysing "${ad.adName || ad.adId}"... this takes 1-2 minutes.` })
+    setTimeout(() => setVideoAnalysisNotice(null), 5000)
 
     try {
+      // Phase 1: shot extraction via video worker
       const res = await fetch(`${supabaseUrl}/functions/v1/analyse-video`, {
         method: 'POST',
         headers: fnHeaders,
@@ -968,8 +987,15 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err.message || 'Failed to start analysis')
+        throw new Error(err.error || err.message || 'Failed to start analysis')
       }
+      const data = await res.json()
+      const analysisId = data.analysis_id
+      if (!analysisId) throw new Error('No analysis_id returned')
+
+      // Phase 2+3: transcribe, OCR, merge script, AI analysis (called directly from frontend)
+      await runPipelineSteps(analysisId)
+
       setAnalysedAdIds(prev => new Set([...prev, ad.adId]))
     } catch (e) {
       setVideoAnalysisNotice({ type: 'error', message: `Analysis failed: ${e.message}` })
@@ -1005,7 +1031,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
     setTimeout(() => setVideoAnalysisNotice(null), 5000)
     setSelectedVideoIds(new Set())
 
-    // Process with concurrency limit of 2
+    // Process with concurrency limit of 2 (Phase 1 + Phase 2+3 per video)
     const concurrency = 2
     let i = 0
     async function runNext() {
@@ -1013,12 +1039,18 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
       const ad = toAnalyse[i++]
       setAnalysingAdIds(prev => new Set([...prev, ad.adId]))
       try {
+        // Phase 1: shot extraction
         const res = await fetch(`${supabaseUrl}/functions/v1/analyse-video`, {
           method: 'POST',
           headers: fnHeaders,
           body: JSON.stringify({ competitor_ad_id: ad.adId }),
         })
-        if (res.ok) setAnalysedAdIds(prev => new Set([...prev, ad.adId]))
+        if (res.ok) {
+          const data = await res.json()
+          // Phase 2+3: pipeline steps called directly from frontend
+          if (data.analysis_id) await runPipelineSteps(data.analysis_id)
+          setAnalysedAdIds(prev => new Set([...prev, ad.adId]))
+        }
       } catch { /* silent */ }
       setAnalysingAdIds(prev => { const s = new Set(prev); s.delete(ad.adId); return s })
       await runNext()
