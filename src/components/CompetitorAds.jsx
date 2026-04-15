@@ -1031,7 +1031,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
   function toggleVideoSelection(adId) {
     setSelectedVideoIds(prev => {
       const next = new Set(prev)
-      if (next.has(adId)) { next.delete(adId) } else if (next.size < 5) { next.add(adId) }
+      if (next.has(adId)) { next.delete(adId) } else if (next.size < 10) { next.add(adId) }
       return next
     })
   }
@@ -1391,6 +1391,12 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
                     : `Select brands and click Analyse to find top performing ads`
                   }
                 </span>
+                {analysedAdIds.size >= 3 && (
+                  <a className="ca-playbook-btn" href="/creative-playbook.html" target="_blank" rel="noopener noreferrer" title="View Creative Playbook">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+                    Creative Playbook
+                  </a>
+                )}
               </div>
 
               {topAds.length > 0 && (

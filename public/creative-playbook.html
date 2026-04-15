@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creative Playbook — Freebird / Chefly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,300;9..144,600;9..144,800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf9f7;--surface:#fff;--surface-alt:#f4f2ee;--ink:#1a1714;--ink-2:#5c564d;--ink-3:#8a8279;
+  --accent:#b44d1e;--accent-light:#f4e6dc;--accent-dark:#8a3710;
+  --green:#2d6a4f;--green-light:#d8f3dc;
+  --blue:#1d4e89;--blue-light:#d0e2f4;
+  --purple:#6b21a8;--purple-light:#ede9fe;
+  --amber:#92400e;--amber-light:#fef3c7;
+  --radius:6px;--shadow:0 1px 3px rgba(26,23,20,.08);
+  --font-display:'Fraunces',Georgia,serif;--font-body:'DM Sans',system-ui,sans-serif;
+}
+html{font-size:15px;scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:600;line-height:1.25}
+
+/* ── Layout ── */
+.page{max-width:1200px;margin:0 auto;padding:2rem 1.5rem 4rem}
+.page-header{padding:3rem 0 2rem;border-bottom:1px solid #e8e4de;margin-bottom:2.5rem}
+.page-header h1{font-size:2.4rem;font-weight:800;letter-spacing:-.03em;color:var(--ink)}
+.page-header p{font-size:1.05rem;color:var(--ink-2);margin-top:.5rem;max-width:640px}
+
+/* ── Nav Tabs ── */
+.nav-tabs{display:flex;gap:.25rem;border-bottom:2px solid #e8e4de;margin-bottom:2.5rem;overflow-x:auto}
+.nav-tab{padding:.65rem 1.2rem;font-family:var(--font-body);font-size:.85rem;font-weight:500;color:var(--ink-3);
+  background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .15s,border-color .15s}
+.nav-tab:hover{color:var(--ink)}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
+
+/* ── Section ── */
+.section{display:none}
+.section.active{display:block}
+.section-title{font-size:1.6rem;font-weight:700;margin-bottom:.4rem}
+.section-sub{color:var(--ink-2);margin-bottom:2rem;max-width:600px}
+
+/* ── Pattern Cards ── */
+.pattern-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.25rem;margin-bottom:2.5rem}
+.pattern-card{background:var(--surface);border:1px solid #e8e4de;border-radius:var(--radius);padding:1.5rem;position:relative;transition:box-shadow .2s}
+.pattern-card:hover{box-shadow:0 4px 16px rgba(26,23,20,.08)}
+.pattern-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.2rem .55rem;border-radius:3px;display:inline-block;margin-bottom:.75rem}
+.label-hook{background:var(--accent-light);color:var(--accent-dark)}
+.label-structure{background:var(--blue-light);color:var(--blue)}
+.label-emotion{background:var(--purple-light);color:var(--purple)}
+.label-production{background:var(--green-light);color:var(--green)}
+.label-cta{background:var(--amber-light);color:var(--amber)}
+.pattern-card h3{font-size:1.1rem;margin-bottom:.5rem}
+.pattern-card p{color:var(--ink-2);font-size:.9rem;line-height:1.55}
+.pattern-evidence{margin-top:.75rem;padding-top:.75rem;border-top:1px solid #eee}
+.pattern-evidence span{font-size:.78rem;color:var(--ink-3);display:inline-block;margin-right:.75rem}
+.pattern-evidence strong{color:var(--ink);font-weight:600}
+
+/* ── Brand Playbook ── */
+.brand-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.25rem;margin-bottom:2rem}
+.brand-card{background:var(--surface);border:1px solid #e8e4de;border-radius:var(--radius);overflow:hidden}
+.brand-card-header{padding:1.25rem 1.5rem;border-bottom:1px solid #eee}
+.brand-card-header h3{font-size:1.15rem;margin-bottom:.15rem}
+.brand-card-header .meta{font-size:.8rem;color:var(--ink-3)}
+.brand-card-body{padding:1.25rem 1.5rem}
+.brand-stat{display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid #f4f2ee;font-size:.88rem}
+.brand-stat:last-child{border-bottom:none}
+.brand-stat .label{color:var(--ink-3)}
+.brand-stat .value{font-weight:600}
+
+/* ── Shot List ── */
+.track-toggle{display:flex;gap:.25rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.track-btn{padding:.5rem 1rem;border-radius:20px;border:1px solid #ddd;background:var(--surface);font-family:var(--font-body);font-size:.82rem;font-weight:500;cursor:pointer;transition:all .15s}
+.track-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.track-btn:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+
+.shot-table{width:100%;border-collapse:collapse;font-size:.88rem;margin-bottom:2rem}
+.shot-table th{text-align:left;padding:.6rem .75rem;border-bottom:2px solid #e8e4de;font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.shot-table td{padding:.65rem .75rem;border-bottom:1px solid #f0ede8;vertical-align:top}
+.shot-table tr:hover td{background:var(--surface-alt)}
+.shot-table .priority-high{color:var(--accent);font-weight:700}
+.shot-table .priority-med{color:var(--amber);font-weight:600}
+.shot-table .priority-low{color:var(--ink-3)}
+.shot-table .tag{display:inline-block;padding:.1rem .4rem;border-radius:3px;font-size:.72rem;font-weight:600;margin-right:.25rem}
+.tag-hook{background:var(--accent-light);color:var(--accent-dark)}
+.tag-body{background:var(--blue-light);color:var(--blue)}
+.tag-cta{background:var(--green-light);color:var(--green)}
+.tag-proof{background:var(--purple-light);color:var(--purple)}
+
+/* ── Insight Callouts ── */
+.insight-row{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:2rem}
+.insight-box{background:var(--surface);border-left:3px solid var(--accent);padding:1.25rem 1.5rem;border-radius:0 var(--radius) var(--radius) 0;box-shadow:var(--shadow)}
+.insight-box h4{font-size:.95rem;margin-bottom:.35rem}
+.insight-box p{font-size:.88rem;color:var(--ink-2);line-height:1.55}
+
+/* ── Summary Table ── */
+.summary-table{width:100%;border-collapse:collapse;margin-bottom:2rem;font-size:.88rem}
+.summary-table th{text-align:left;padding:.55rem .75rem;background:var(--surface-alt);border-bottom:1px solid #e8e4de;font-weight:600;font-size:.8rem}
+.summary-table td{padding:.55rem .75rem;border-bottom:1px solid #f0ede8}
+
+/* ── Responsive ── */
+@media(max-width:700px){
+  .page-header h1{font-size:1.7rem}
+  .pattern-grid,.brand-grid,.insight-row{grid-template-columns:1fr}
+  .shot-table{font-size:.8rem}
+  .shot-table th,.shot-table td{padding:.45rem .5rem}
+}
+
+/* ── Print ── */
+@media print{
+  .nav-tabs,.track-toggle{display:none}
+  .section{display:block!important;page-break-before:always}
+  .page{max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="page-header">
+    <h1>Creative Playbook</h1>
+    <p>Cross-brand pattern library, brand playbooks, and production shot lists built from 6 top-performing competitor video ads (47 to 68 days active).</p>
+  </header>
+
+  <nav class="nav-tabs" id="tabs">
+    <button class="nav-tab active" data-tab="patterns">Cross-Brand Patterns</button>
+    <button class="nav-tab" data-tab="brands">Brand Playbooks</button>
+    <button class="nav-tab" data-tab="shots">Chefly Shot Lists</button>
+    <button class="nav-tab" data-tab="data">Raw Data</button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- LAYER 1: CROSS-BRAND PATTERNS                   -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section active" id="patterns">
+    <h2 class="section-title">Cross-Brand Patterns</h2>
+    <p class="section-sub">Recurring structures, hooks, and emotional levers found across all 6 top performers. These are what's working in the UK meal prep category right now.</p>
+
+    <h4 style="font-family:var(--font-display);margin-bottom:1rem;font-size:1.1rem">Hook Frameworks</h4>
+    <div class="pattern-grid">
+      <div class="pattern-card">
+        <span class="pattern-label label-hook">Hook</span>
+        <h3>UGC Testimonial Open</h3>
+        <p>Creator speaks directly to camera with a personal recommendation or habit statement. No brand mention in the first 2 seconds. Builds trust before selling.</p>
+        <div class="pattern-evidence">
+          <span>Used by: <strong>Frive (Sophie), Simmer</strong></span>
+          <span>Days active: <strong>50, 68</strong></span>
+        </div>
+      </div>
+      <div class="pattern-card">
+        <span class="pattern-label label-hook">Hook</span>
+        <h3>Problem Agitate</h3>
+        <p>Opens with the audience's pain point (training demands, time poverty, bad food quality) then positions the product as the obvious fix. Works best with a credible messenger.</p>
+        <div class="pattern-evidence">
+          <span>Used by: <strong>_heidilong (athlete)</strong></span>
+          <span>Days active: <strong>47</strong></span>
+        </div>
+      </div>
+      <div class="pattern-card">
+        <span class="pattern-label label-hook">Hook</span>
+        <h3>Bold Statistic / Claim</h3>
+        <p>"50% of the average diet is ultra-processed." Leading with a surprising data point that disrupts scrolling. Works especially well when the viewer already cares about the topic.</p>
+        <div class="pattern-evidence">
+          <span>Used by: <strong>_heidilong (UPF ad)</strong></span>
+          <span>Days active: <strong>51</strong></span>
+        </div>
+      </div>
+      <div class="pattern-card">
+        <span class="pattern-label label-hook">Hook</span>
+        <h3>Curiosity Gap / Interview</h3>
+        <p>"What's one hill you'll absolutely die on when it comes to food?" Poses a question the viewer must stay to hear answered. Podcast/interview aesthetic lends authenticity.</p>
+        <div class="pattern-evidence">
+          <span>Used by: <strong>Frive (founder)</strong></span>
+          <span>Days active: <strong>51</strong></span>
+        </div>
+      </div>
+      <div class="pattern-card">
+        <span class="pattern-label label-hook">Hook</span>
+        <h3>Before/After Transformation</h3>
+        <p>Opens with a specific, measurable result ("gained 7kg in 8 months"). The number gives credibility. The journey gives the viewer something to aspire to.</p>
+        <div class="pattern-evidence">
+          <span>Used by: <strong>Scott Thomas</strong></span>
+          <span>Days active: <strong>51</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <h4 style="font-family:var(--font-display);margin-bottom:1rem;font-size:1.1rem">Narrative Structures</h4>
+    <div class="pattern-grid">
+      <div class="pattern-card">
+        <span class="pattern-label label-structure">Structure</span>
+        <h3>Credential → Proof → Offer</h3>
+        <p>Establish the speaker's authority (athlete, nutritionist, founder), demonstrate the product through B-roll, then close with a percentage-off offer. The dominant structure across all 6 ads. Every single one follows this arc.</p>
+        <div class="pattern-evidence">
+          <span>Frequency: <strong>6/6 ads</strong></span>
+        </div>
+      </div>
+      <div class="pattern-card">
+        <span class="pattern-label label-structure">Structure</span>
+        <h3>Category Contrast</h3>
+        <p>Position the product against an inferior alternative (supermarket ready meals, UPF-laden food). Visual contrast (split screen, supermarket aisle shots) makes the gap visceral. Used in 3 of 6 ads.</p>
+        <div class="pattern-evidence">
+          <span>Frequency: <strong>3/6 ads</strong></span>
+          <span>Brands: <strong>Frive, _heidilong</strong></span>
+        </div>
+      </div>
+      <div class="pattern-card">
+        <span class="pattern-label label-structure">Structure</span>
+        <h3>Benefit Stacking</h3>
+        <p>Rapid-fire claim layering: "nutritionist approved, macro balanced, 100% natural, high protein." Usually placed mid-video as a text overlay burst. Present in 5 of 6 ads.</p>
+        <div class="pattern-evidence">
+          <span>Frequency: <strong>5/6 ads</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <h4 style="font-family:var(--font-display);margin-bottom:1rem;font-size:1.1rem">Emotional Levers</h4>
+    <div class="pattern-grid">
+      <div class="pattern-card">
+        <span class="pattern-label label-emotion">Emotion</span>
+        <h3>Trust (6/6)</h3>
+        <p>Every ad leads with a trust mechanism: nutritionist credentials, Olympic athlete endorsement, founder transparency, specific transformation stats. Trust is the table-stakes emotion in this category.</p>
+      </div>
+      <div class="pattern-card">
+        <span class="pattern-label label-emotion">Emotion</span>
+        <h3>Aspiration (6/6)</h3>
+        <p>Every ad sells a version of the viewer's future self: fitter, healthier, more disciplined. The product is framed as a tool for becoming, not just eating.</p>
+      </div>
+      <div class="pattern-card">
+        <span class="pattern-label label-emotion">Emotion</span>
+        <h3>Convenience (5/6)</h3>
+        <p>Time-saving is the second most common sell. "7 hours a week saved," microwave shots, no-thinking-required messaging. Appeals to the busy professional who wants results without kitchen time.</p>
+      </div>
+      <div class="pattern-card">
+        <span class="pattern-label label-emotion">Emotion</span>
+        <h3>Health Anxiety / Fear of Compromise (3/6)</h3>
+        <p>UPF messaging, seed oil avoidance, "no better than supermarket ready meals" framing. This is category-specific fear that works well with the health-conscious audience who reads labels.</p>
+      </div>
+    </div>
+
+    <h4 style="font-family:var(--font-display);margin-bottom:1rem;font-size:1.1rem">Production Observations</h4>
+    <div class="insight-row">
+      <div class="insight-box">
+        <h4>Lo-Fi Wins</h4>
+        <p>All 6 ads use UGC or UGC-style production. No polished studio work. Phone cameras, natural lighting, real locations (gyms, kitchens, offices, waterfront). The "roughness" is the feature, not the bug.</p>
+      </div>
+      <div class="insight-box">
+        <h4>Full-Frame Dominance</h4>
+        <p>85 of 86 total shots are full-frame. Split screens appear in only 2 ads (5 shots total). These top performers keep it simple: one subject, one frame, no complexity.</p>
+      </div>
+    </div>
+    <div class="insight-row">
+      <div class="insight-box">
+        <h4>Medium Pacing is the Sweet Spot</h4>
+        <p>5 of 6 ads use medium pacing (roughly 1.5 to 2.5 seconds per shot). Only 1 ad (Frive founder) runs slow. Fast-paced editing is absent from the top performers entirely.</p>
+      </div>
+      <div class="insight-box">
+        <h4>Duration: 12 to 37 Seconds</h4>
+        <p>Wide range, but the two highest-activity ads (Simmer at 68 days, Scott Thomas at 51 days) sit at opposite ends. Length matters less than hook quality and narrative tightness.</p>
+      </div>
+    </div>
+    <div class="insight-row">
+      <div class="insight-box">
+        <h4>CTA Pattern: Offer-Led Close</h4>
+        <p>5 of 6 ads end with a percentage-off offer (40% or 50% off first order/week). The discount is always the final frame. Only the Frive founder ad skips the in-video discount entirely.</p>
+      </div>
+      <div class="insight-box">
+        <h4>Key Weakness to Exploit</h4>
+        <p>Brand name mispronunciation appears in 3 of 4 Frive ads ("Thrive" instead of "Frive"). This is a real vulnerability: Chefly's name is phonetically unambiguous. Lean into it.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- LAYER 2: BRAND PLAYBOOKS                        -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="brands">
+    <h2 class="section-title">Brand Playbooks</h2>
+    <p class="section-sub">What each competitor does well, what they miss, and what Chefly can steal or counter.</p>
+
+    <div class="brand-grid">
+      <!-- Frive -->
+      <div class="brand-card">
+        <div class="brand-card-header">
+          <h3>Frive</h3>
+          <div class="meta">2 ads analysed · 50 to 51 days active</div>
+        </div>
+        <div class="brand-card-body">
+          <div class="brand-stat"><span class="label">Hook types</span><span class="value">Testimonial, Curiosity gap</span></div>
+          <div class="brand-stat"><span class="label">Key angle</span><span class="value">100% natural, no UPFs</span></div>
+          <div class="brand-stat"><span class="label">Messenger</span><span class="value">Nutritionist, Founder</span></div>
+          <div class="brand-stat"><span class="label">Emotional driver</span><span class="value">Trust, health, identity</span></div>
+          <div class="brand-stat"><span class="label">Weakness</span><span class="value">Late brand hooks, no in-video offer on founder ad</span></div>
+          <div class="brand-stat"><span class="label">Steal for Chefly</span><span class="value">Nutritionist authority format, interview-style founder content</span></div>
+        </div>
+      </div>
+
+      <!-- _heidilong (Frive ambassador) -->
+      <div class="brand-card">
+        <div class="brand-card-header">
+          <h3>_heidilong (Frive Ambassador)</h3>
+          <div class="meta">2 ads analysed · 47 to 51 days active</div>
+        </div>
+        <div class="brand-card-body">
+          <div class="brand-stat"><span class="label">Hook types</span><span class="value">Problem-agitate, Bold statistic</span></div>
+          <div class="brand-stat"><span class="label">Key angle</span><span class="value">Elite athlete fuel, UPF education</span></div>
+          <div class="brand-stat"><span class="label">Messenger</span><span class="value">Olympic rower / health MSc</span></div>
+          <div class="brand-stat"><span class="label">Emotional driver</span><span class="value">Aspiration, health anxiety, trust</span></div>
+          <div class="brand-stat"><span class="label">Weakness</span><span class="value">Brand mispronounced, lo-fi food visuals</span></div>
+          <div class="brand-stat"><span class="label">Steal for Chefly</span><span class="value">Split-screen UPF contrast, credential + stat hook combo</span></div>
+        </div>
+      </div>
+
+      <!-- Scott Thomas -->
+      <div class="brand-card">
+        <div class="brand-card-header">
+          <h3>Scott Thomas (Frive Influencer)</h3>
+          <div class="meta">1 ad analysed · 51 days active</div>
+        </div>
+        <div class="brand-card-body">
+          <div class="brand-stat"><span class="label">Hook type</span><span class="value">Before/after transformation</span></div>
+          <div class="brand-stat"><span class="label">Key angle</span><span class="value">Body recomp results + time saving</span></div>
+          <div class="brand-stat"><span class="label">Messenger</span><span class="value">Reality TV influencer</span></div>
+          <div class="brand-stat"><span class="label">Emotional driver</span><span class="value">Aspiration, convenience, FOMO</span></div>
+          <div class="brand-stat"><span class="label">Weakness</span><span class="value">Niche bulking audience, brand mispronounced</span></div>
+          <div class="brand-stat"><span class="label">Steal for Chefly</span><span class="value">Specific number hook ("7kg in 8 months"), honest struggle framing</span></div>
+        </div>
+      </div>
+
+      <!-- Simmer -->
+      <div class="brand-card">
+        <div class="brand-card-header">
+          <h3>Simmer</h3>
+          <div class="meta">1 ad analysed · 68 days active (longest runner)</div>
+        </div>
+        <div class="brand-card-body">
+          <div class="brand-stat"><span class="label">Hook type</span><span class="value">UGC testimonial</span></div>
+          <div class="brand-stat"><span class="label">Key angle</span><span class="value">Protein-first, physique proof</span></div>
+          <div class="brand-stat"><span class="label">Messenger</span><span class="value">Fit male UGC creator</span></div>
+          <div class="brand-stat"><span class="label">Emotional driver</span><span class="value">Aspiration, FOMO, trust</span></div>
+          <div class="brand-stat"><span class="label">Weakness</span><span class="value">Sound-dependent CTA, narrow male audience</span></div>
+          <div class="brand-stat"><span class="label">Steal for Chefly</span><span class="value">Social proof milestone card ("1M meals sold"), shirtless transformation shot, short-form pacing (12s)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <h4 style="font-family:var(--font-display);margin:2rem 0 1rem;font-size:1.1rem">Competitive Gap Map</h4>
+    <table class="summary-table">
+      <thead>
+        <tr><th>Gap</th><th>What Competitors Do</th><th>Chefly Opportunity</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Female audience</strong></td>
+          <td>Only 1 of 6 ads features a female protagonist. Messaging skews heavily male, gym, bulking.</td>
+          <td>Female-led content is massively underserved. Lifestyle, convenience, and wellness angles for women could differentiate immediately.</td>
+        </tr>
+        <tr>
+          <td><strong>Food visually</strong></td>
+          <td>Every ad shows the container, not the food. No appetite appeal, no steam, no close-ups of ingredients.</td>
+          <td>High-quality food B-roll would stand out. "This is what's actually inside" as a content angle.</td>
+        </tr>
+        <tr>
+          <td><strong>Brand pronunciation</strong></td>
+          <td>Frive's name is mispronounced as "Thrive" in 3 of 4 ads.</td>
+          <td>Chefly is unambiguous. Lean into name recognition and repetition.</td>
+        </tr>
+        <tr>
+          <td><strong>Variety / menu</strong></td>
+          <td>No ad shows more than 2 to 3 different meals. Range is never the selling point.</td>
+          <td>If Chefly has a larger or more interesting menu, "choice overload" content could work: fridge pulls, weekly rotations, "what I ate this week."</td>
+        </tr>
+        <tr>
+          <td><strong>Professional production</strong></td>
+          <td>All 6 ads are lo-fi UGC. No one in the category is investing in polished video.</td>
+          <td>A production company shoot would be genuinely novel. One high-production hero video could anchor the brand above the UGC noise.</td>
+        </tr>
+        <tr>
+          <td><strong>Taste / enjoyment</strong></td>
+          <td>Zero ads focus on taste. It's all macros, protein, and health claims.</td>
+          <td>"Actually delicious" positioning. Reaction shots, taste tests, flavour descriptions. Emotional rather than rational.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- LAYER 3: CHEFLY SHOT LISTS                      -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="shots">
+    <h2 class="section-title">Chefly Shot Lists</h2>
+    <p class="section-sub">Specific content briefs organised by production track. Each shot is tagged with the pattern it exploits and prioritised by expected impact.</p>
+
+    <div class="track-toggle" id="trackToggle">
+      <button class="track-btn active" data-track="internal">Internal (Phone + Tripod)</button>
+      <button class="track-btn" data-track="production">Production Company</button>
+      <button class="track-btn" data-track="ugc">UGC (Creator-Led)</button>
+    </div>
+
+    <!-- INTERNAL -->
+    <div class="track-section active" id="track-internal">
+      <table class="shot-table">
+        <thead><tr><th>#</th><th>Shot / Content Piece</th><th>Type</th><th>Pattern Source</th><th>Priority</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><strong>"What I actually ate this week on Chefly"</strong> — 7 meals shown in rapid succession, each held up to camera with name overlay. Close on "and I didn't cook once."</td><td><span class="tag tag-hook">Hook</span><span class="tag tag-body">Body</span></td><td>UGC testimonial + Benefit stacking</td><td class="priority-high">P1</td><td>Fills the "variety" gap. Film on any delivery day. 15 to 20s.</td></tr>
+          <tr><td>2</td><td><strong>Fridge pull</strong> — Camera starts on closed fridge. Hand opens it to reveal a full shelf of Chefly containers. "This is what organised eating looks like."</td><td><span class="tag tag-hook">Hook</span></td><td>UGC testimonial / Bold claim</td><td class="priority-high">P1</td><td>Trending TikTok format. Can be repurposed as a static image too.</td></tr>
+          <tr><td>3</td><td><strong>Microwave timer</strong> — Real-time 90s microwave cook. Split-screen with someone spending 45 min in a kitchen. Text: "Same macros. Different time investment."</td><td><span class="tag tag-body">Body</span><span class="tag tag-proof">Proof</span></td><td>Convenience emotion + Category contrast</td><td class="priority-high">P1</td><td>Uses the split-screen format from _heidilong. Needs kitchen location.</td></tr>
+          <tr><td>4</td><td><strong>Ingredient flip</strong> — Pick up a supermarket ready meal, flip to ingredients list (long), then pick up a Chefly meal (short list). "Read the label."</td><td><span class="tag tag-hook">Hook</span><span class="tag tag-proof">Proof</span></td><td>Category contrast + Health anxiety</td><td class="priority-med">P2</td><td>Directly stolen from Frive's supermarket aisle contrast. Make it more confrontational.</td></tr>
+          <tr><td>5</td><td><strong>Macro scan</strong> — Open MyFitnessPal, scan a Chefly barcode, show the macro split. "Every meal, already in the app."</td><td><span class="tag tag-proof">Proof</span></td><td>Benefit stacking</td><td class="priority-med">P2</td><td>No competitor shows this. Quick trust-builder for the fitness audience.</td></tr>
+          <tr><td>6</td><td><strong>Desk lunch B-roll</strong> — Office setting, someone unwraps and eats Chefly at their desk. No voiceover, just ASMR + text overlays with benefit claims.</td><td><span class="tag tag-body">Body</span></td><td>Convenience + Lifestyle integration</td><td class="priority-med">P2</td><td>Fills the "professional" audience gap. Can be filmed in any office.</td></tr>
+          <tr><td>7</td><td><strong>Unboxing</strong> — Delivery arrives, unbox on kitchen counter, show each meal. React genuinely to the variety. End with "link in bio."</td><td><span class="tag tag-body">Body</span><span class="tag tag-cta">CTA</span></td><td>UGC testimonial + Social proof</td><td class="priority-low">P3</td><td>Standard format but essential for library. Every competitor has one.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PRODUCTION COMPANY -->
+    <div class="track-section" id="track-production" style="display:none">
+      <table class="shot-table">
+        <thead><tr><th>#</th><th>Shot / Content Piece</th><th>Type</th><th>Pattern Source</th><th>Priority</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><strong>Hero Brand Film (30s)</strong> — Cinematic food prep sequence: steam rising, ingredients being chopped, sauce being poured. Cut to real people eating in real locations. Close on Chefly branding + offer. No voiceover, just music + text.</td><td><span class="tag tag-hook">Hook</span><span class="tag tag-body">Body</span><span class="tag tag-cta">CTA</span></td><td>Competitive gap: no one has polished production</td><td class="priority-high">P1</td><td>This is the differentiator. One hero video that sets Chefly apart from the sea of UGC.</td></tr>
+          <tr><td>2</td><td><strong>Kitchen-to-Container</strong> — Follow one meal from raw ingredients through the kitchen to being sealed in a container and delivered. Time-lapse + macro shots. "From chef's hands to your microwave."</td><td><span class="tag tag-body">Body</span><span class="tag tag-proof">Proof</span></td><td>Trust + Quality contrast</td><td class="priority-high">P1</td><td>Fills the "what's actually inside" gap. Requires kitchen access.</td></tr>
+          <tr><td>3</td><td><strong>Ingredient Closeups Library</strong> — Shoot a bank of 20 to 30 slow-motion ingredient clips: herbs falling, oil drizzling, vegetables being sliced, spices hitting a pan. These become reusable B-roll for all future ads.</td><td><span class="tag tag-body">Body</span></td><td>Food visual gap</td><td class="priority-high">P1</td><td>Most valuable long-term asset. Reusable across dozens of ads.</td></tr>
+          <tr><td>4</td><td><strong>Taste Test Series</strong> — Film 5 to 8 people trying Chefly for the first time. Capture genuine reactions. Edit into a rapid-cut montage with meal names as lower thirds.</td><td><span class="tag tag-proof">Proof</span><span class="tag tag-hook">Hook</span></td><td>Competitive gap: no one sells on taste</td><td class="priority-med">P2</td><td>Can also be cut into individual vertical clips for organic social.</td></tr>
+          <tr><td>5</td><td><strong>Chef Profile</strong> — 60s piece on whoever develops the recipes. Their background, philosophy, what makes Chefly different. Interview format with kitchen B-roll.</td><td><span class="tag tag-body">Body</span><span class="tag tag-proof">Proof</span></td><td>Founder interview (Frive) adapted for chef angle</td><td class="priority-med">P2</td><td>Builds the "faces behind the food" trust layer that competitors use with founders.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- UGC -->
+    <div class="track-section" id="track-ugc" style="display:none">
+      <table class="shot-table">
+        <thead><tr><th>#</th><th>Shot / Content Piece</th><th>Type</th><th>Pattern Source</th><th>Priority</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><strong>Female fitness creator: "My week on Chefly"</strong> — 7-day diary format. Each day shows a different meal + a gym clip. Focus on convenience and how it fits her routine. End with genuine recommendation + offer code.</td><td><span class="tag tag-hook">Hook</span><span class="tag tag-body">Body</span><span class="tag tag-cta">CTA</span></td><td>UGC testimonial + Audience gap (female)</td><td class="priority-high">P1</td><td>Top priority. Only 1 of 6 competitor ads features a woman. Massive whitespace.</td></tr>
+          <tr><td>2</td><td><strong>Busy professional: "How I save 5 hours a week"</strong> — Office worker or parent shows their before (takeaway receipts, sad desk lunch) and after (Chefly meals, macro tracking, saved time). Numbers-led hook.</td><td><span class="tag tag-hook">Hook</span><span class="tag tag-proof">Proof</span></td><td>Before/after + Convenience</td><td class="priority-high">P1</td><td>Scott Thomas format adapted for non-gym audience. Broader appeal.</td></tr>
+          <tr><td>3</td><td><strong>Nutritionist explainer: "Why I recommend Chefly"</strong> — Podcast-style talking head. Nutritionist explains what they look for in a meal prep service and why Chefly ticks the boxes. B-roll of meals throughout.</td><td><span class="tag tag-proof">Proof</span><span class="tag tag-body">Body</span></td><td>Frive nutritionist format (direct steal)</td><td class="priority-high">P1</td><td>Most proven format in the dataset (Frive's Sophie ad: 50 days active). Find a credentialled nutritionist.</td></tr>
+          <tr><td>4</td><td><strong>Couple / housemate: "We switched to Chefly"</strong> — Two people discussing the switch, trading off talking points. One handles taste, the other handles convenience. Natural, unscripted feel.</td><td><span class="tag tag-hook">Hook</span><span class="tag tag-body">Body</span></td><td>UGC testimonial (novel duo format)</td><td class="priority-med">P2</td><td>No competitor uses a duo format. Differentiation through format novelty.</td></tr>
+          <tr><td>5</td><td><strong>Gym bro transformation: "30 days on Chefly"</strong> — Daily check-in format, weigh-ins, meal tracking. Focus on "the easiest cut/bulk I've ever done." End with progress photos + offer.</td><td><span class="tag tag-hook">Hook</span><span class="tag tag-proof">Proof</span><span class="tag tag-cta">CTA</span></td><td>Before/after (Scott Thomas) + FOMO</td><td class="priority-med">P2</td><td>Proven format but requires 30-day lead time. Brief creator early.</td></tr>
+          <tr><td>6</td><td><strong>Taste reaction: "I didn't expect meal prep to taste like this"</strong> — Genuine first-bite reaction. Compare to previous meal prep experiences. Short, punchy (10 to 15s).</td><td><span class="tag tag-hook">Hook</span></td><td>Competitive gap: taste</td><td class="priority-med">P2</td><td>Can commission multiple creators cheaply. The hook writes itself.</td></tr>
+          <tr><td>7</td><td><strong>Student budget: "Chefly vs cooking from scratch (cost breakdown)"</strong> — Calculator on screen, breaking down cost per meal including time value. "When you factor in your time, Chefly costs less."</td><td><span class="tag tag-proof">Proof</span></td><td>Bold claim + Category contrast</td><td class="priority-low">P3</td><td>Value angle that no competitor touches. Good for a younger demographic.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- LAYER 4: RAW DATA                               -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="section" id="data">
+    <h2 class="section-title">Raw Analysis Data</h2>
+    <p class="section-sub">The 6 video analyses that informed this playbook. All from the Frive ecosystem and Simmer, the top performers in the UK meal prep category.</p>
+
+    <table class="summary-table">
+      <thead>
+        <tr><th>Brand</th><th>Hook Type</th><th>Duration</th><th>Pacing</th><th>Days Active</th><th>Shots</th><th>CTA</th><th>Emotional Drivers</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>_heidilong</td><td>Problem-agitate</td><td>19.7s</td><td>Medium</td><td>47</td><td>12</td><td>40% off</td><td>Aspiration, trust, health</td></tr>
+        <tr><td>Frive (Sophie)</td><td>UGC testimonial</td><td>31.4s</td><td>Medium</td><td>50</td><td>17</td><td>Shop now</td><td>Trust, health, identity</td></tr>
+        <tr><td>Frive (Founder)</td><td>Curiosity gap</td><td>28.1s</td><td>Slow</td><td>51</td><td>9</td><td>GET OFFER</td><td>Trust, health, conviction</td></tr>
+        <tr><td>Scott Thomas</td><td>Before/after</td><td>37.5s</td><td>Medium</td><td>51</td><td>25</td><td>40% off</td><td>Aspiration, convenience, FOMO</td></tr>
+        <tr><td>_heidilong</td><td>Bold claim</td><td>24.9s</td><td>Medium</td><td>51</td><td>14</td><td>40% off</td><td>Health, trust, fear</td></tr>
+        <tr><td>Simmer</td><td>UGC testimonial</td><td>12.7s</td><td>Medium</td><td>68</td><td>8</td><td>50% off</td><td>Aspiration, FOMO, trust</td></tr>
+      </tbody>
+    </table>
+
+    <h4 style="font-family:var(--font-display);margin:2rem 0 1rem;font-size:1.1rem">Hook Text (Verbatim)</h4>
+    <table class="summary-table">
+      <thead><tr><th>Brand</th><th>Opening Line</th></tr></thead>
+      <tbody>
+        <tr><td>_heidilong</td><td>"When you're pushing yourself through sessions like these, your food has to work just as hard."</td></tr>
+        <tr><td>Frive (Sophie)</td><td>"If I could recommend one thing for someone watching this, it would be to eat more whole foods."</td></tr>
+        <tr><td>Frive (Founder)</td><td>"What's one hill that you will absolutely die on when it comes to food?"</td></tr>
+        <tr><td>Scott Thomas</td><td>"With the help of Thrive, I've managed to gain over 7kg in the last 8 months."</td></tr>
+        <tr><td>_heidilong</td><td>"50% of the average diet contains ultra-processed foods. But what are they?"</td></tr>
+        <tr><td>Simmer</td><td>"These are my go-to lunches and dinners during the week."</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+// Tab navigation
+document.getElementById('tabs').addEventListener('click', e => {
+  const btn = e.target.closest('.nav-tab');
+  if (!btn) return;
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(btn.dataset.tab).classList.add('active');
+});
+
+// Track toggle
+document.getElementById('trackToggle').addEventListener('click', e => {
+  const btn = e.target.closest('.track-btn');
+  if (!btn) return;
+  document.querySelectorAll('.track-btn').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.track-section').forEach(s => s.style.display = 'none');
+  btn.classList.add('active');
+  document.getElementById('track-' + btn.dataset.track).style.display = 'block';
+});
+</script>
+</body>
+</html>
