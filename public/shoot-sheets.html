@@ -136,11 +136,13 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.2}
   .section-divider-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.15em;margin-bottom:3mm}
   .section-divider-title{font-family:var(--font-display);font-size:28px;font-weight:800;letter-spacing:-.02em;color:var(--ink);margin-bottom:4mm}
   .section-divider-desc{font-size:9.5px;color:var(--ink-2);max-width:300px;line-height:1.6;margin-bottom:6mm}
-  .section-divider-list{text-align:left;width:260px;margin:0 auto}
-  .section-divider-list-item{display:flex;align-items:baseline;gap:2mm;padding:1.5mm 0;font-size:8px;color:var(--ink-2);border-bottom:1px dotted var(--border)}
-  .section-divider-list-item .sd-num{font-family:var(--font-display);font-weight:700;min-width:14px;color:var(--ink-3)}
-  .section-divider-list-item .sd-title{font-weight:600;color:var(--ink)}
-  .section-divider-list-item .sd-pri{margin-left:auto;font-size:7px;color:var(--ink-4)}
+  .section-divider-table{width:auto;min-width:340px;max-width:440px;margin:0 auto;border-collapse:collapse;text-align:left}
+  .section-divider-table th{font-size:5.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);padding:1.5mm 2mm;border-bottom:1.5px solid var(--ink)}
+  .section-divider-table td{font-size:8px;padding:1.5mm 2mm;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.4}
+  .section-divider-table td:first-child{font-family:var(--font-display);font-weight:700;color:var(--ink-3);width:16px}
+  .section-divider-table .sd-concept{font-weight:600;color:var(--ink)}
+  .section-divider-table .sd-vars{font-size:7px;color:var(--ink-3);padding-top:.5mm}
+  .section-divider-table .sd-pri{font-size:7px;color:var(--ink-4);text-align:right;white-space:nowrap;width:20px}
 
   .sheet-view{display:block!important;page-break-after:always}
   .sheet-view:last-child{page-break-after:auto}
@@ -789,19 +791,45 @@ function render(data) {
         Studio: 'High-production brand content requiring a production partner. Cinematic quality that elevates your brand above the feed.',
         UGC: 'Creator-led content briefs with 3 variations per concept. Hand directly to creators with talking points, visual direction, and shot-by-shot structure.'
       };
+      // Build table rows: group UGC by concept (3 vars each), flat list for others
+      let tableRows = '';
+      if (t.key === 'UGC') {
+        // Group into concepts of 3
+        const concepts = [];
+        for (let ci = 0; ci < trackSheets.length; ci += 3) {
+          concepts.push(trackSheets.slice(ci, ci + 3));
+        }
+        tableRows = `<tr><th>#</th><th>Concept</th><th>Variations</th><th>Sheets</th><th></th></tr>` +
+          concepts.map((group, gi) => {
+            const base = group[0].title.split(' / ')[0].replace(/"/g, '');
+            const vars = group.map(s => {
+              const parts = s.title.split(' / ');
+              return parts.length > 1 ? parts[1] : '';
+            }).join(', ');
+            return `<tr>
+              <td>${String(gi + 1).padStart(2, '0')}</td>
+              <td><span class="sd-concept">${base}</span><div class="sd-vars">${vars}</div></td>
+              <td style="text-align:center">${group.length}</td>
+              <td class="sd-pri">${group[0].priority}</td>
+            </tr>`;
+          }).join('');
+      } else {
+        tableRows = `<tr><th>#</th><th>Sheet</th><th>Duration</th><th></th></tr>` +
+          trackSheets.map((s, i) => `<tr>
+            <td>${String(i + 1).padStart(2, '0')}</td>
+            <td><span class="sd-concept">${s.title}</span></td>
+            <td style="font-size:7px;color:var(--ink-3)">${s.duration}</td>
+            <td class="sd-pri">${s.priority}</td>
+          </tr>`).join('');
+      }
+
       return `
         <div class="section-divider">
           <div class="section-divider-num" style="color:${t.dot}">0${ti + 1}</div>
           <div class="section-divider-label" style="color:${t.dot}">Track ${ti + 1} of 3</div>
           <div class="section-divider-title">${t.key}</div>
           <div class="section-divider-desc">${descriptions[t.key]}</div>
-          <div class="section-divider-list">
-            ${trackSheets.map((s, i) => `<div class="section-divider-list-item">
-              <span class="sd-num">${String(i + 1).padStart(2, '0')}</span>
-              <span class="sd-title">${s.title}</span>
-              <span class="sd-pri">${s.priority}</span>
-            </div>`).join('')}
-          </div>
+          <table class="section-divider-table">${tableRows}</table>
         </div>
         ${trackSheets.map(s => renderSheet(s, sheets.indexOf(s))).join('')}
       `;
