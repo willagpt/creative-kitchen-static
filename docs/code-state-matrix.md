@@ -1,7 +1,7 @@
 # Creative Kitchen Static — Code State Matrix
 
-**Generated:** 16 April 2026
-**Previous revision:** 12 April 2026
+**Generated:** 16 April 2026 (updated post-JWT fix)
+**Previous revision:** 16 April 2026 (morning), 12 April 2026
 **Purpose:** Single source of truth for what's deployed to Supabase, what's in GitHub, and known discrepancies.
 
 ---
@@ -11,6 +11,7 @@
 **Live count in Supabase:** 24 functions
 **Directories in `supabase/functions/` on main:** 24
 **Repo ↔ Supabase alignment:** 100% (every deployed function has a matching source directory)
+**JWT posture:** 24 of 24 enforce `verify_jwt: true`.
 
 | # | Function | Deployed Version | In GitHub | verify_jwt | Notes |
 |---|---|---|---|---|---|
@@ -24,11 +25,11 @@
 | 8 | seed-advertisers | v4 | ✅ | ✅ | Bootstrap advertiser seed data |
 | 9 | extract-ad-thumbnails | v9 | ✅ | ✅ | Extracts images from ad HTML snapshots |
 | 10 | fetch-competitor-ads | v12 | ✅ | ✅ | Foreplay API ingestion + credit budgeting, DCO explosion |
-| 11 | **analyse-competitor-creatives** | **v31** | ✅ | ❌ | ⚠️ **JWT disabled — regression.** Remediation ticket: [1214111066075066](https://app.asana.com/1/5717506944667/project/1214024873723525/task/1214111066075066) |
+| 11 | analyse-competitor-creatives | v32 | ✅ | ✅ | JWT re-enabled 16 Apr (was v31 with verify_jwt: false). Caller `process-analysis-batch` sends service-role key, verified non-breaking. |
 | 12 | vision-model-test | v5 | ✅ | ✅ | Standalone visual forensic analysis test |
 | 13 | process-analysis-batch | v24 | ✅ | ✅ | Batch orchestrator for vision analysis |
 | 14 | generate-shot-sequence | v5 | ✅ | ✅ | Food photography shot sequence generator |
-| 15 | **debug-auth** | **v4** | ✅ | ❌ | ⚠️ **JWT disabled — diagnostic function.** Remediation ticket: [1214101220983182](https://app.asana.com/1/5717506944667/project/1214024873723525/task/1214101220983182) (harden or retire) |
+| 15 | debug-auth | v5 | ✅ | ✅ | JWT re-enabled 16 Apr (was v4 with verify_jwt: false). Scheduled for retirement in Phase 2. |
 | 16 | analyse-video | v4 | ✅ | ✅ | Orchestrator — calls Railway worker, writes video_analyses + video_shots |
 | 17 | list-video-analyses | v4 | ✅ | ✅ | Query analyses with filters + pagination |
 | 18 | get-video-analysis | v4 | ✅ | ✅ | Fetch single analysis with shots + competitor ad context |
@@ -39,11 +40,9 @@
 | 23 | ai-analyse-video | v2 | ✅ | ✅ | Layout detection — classifies shots as full/split-2/split-3/other |
 | 24 | generate-ugc-brief | v6 | ✅ | ✅ | Chefly UGC creator briefs, 16384 max_tokens, layout-aware prompts |
 
-**JWT posture:** 22 of 24 enforce `verify_jwt: true`. Two functions (analyse-competitor-creatives, debug-auth) currently run without JWT. Both have open remediation tickets in the engineering project and are tracked below under "Open Issues".
-
 **Phantom entry removed:** Previous versions of `.claude/CLAUDE.md` referenced `sync-competitor-metadata` as a deployed function. This function is not present in Supabase and has no source directory in the repo. It has been removed from the canonical function list.
 
-**Critical rule:** Do NOT deploy edge functions directly to Supabase. Always commit to GitHub first, then deploy from the repo. The 12 Apr 2026 backfill pass plus this 16 Apr re-verification confirms the rule is now being honoured for every function currently live.
+**Critical rule:** Do NOT deploy edge functions directly to Supabase. Always commit to GitHub first, then deploy from the repo. The 12 Apr 2026 backfill pass plus the 16 Apr re-verification confirms the rule is being honoured for every function currently live.
 
 ---
 
@@ -54,6 +53,7 @@
 | `brand_guidelines.packaging_format` column exists | ✅ | Column in use by `generate-ad-prompt` v29 for dynamic packaging terms |
 | Hardcoded sleeve examples removed from `generate-ad-prompt` system prompt | ✅ | Confirmed Apr 13 during Phase 1 close; no regression in v29 |
 | All 24 functions sourced from repo | ✅ | 1:1 directory ↔ slug mapping verified 16 Apr |
+| All 24 functions enforce verify_jwt | ✅ | Confirmed via list_edge_functions 16 Apr (post-fix) |
 
 ---
 
@@ -148,13 +148,12 @@ Test videos confirmed: Simmer (12.7s / 8 shots), Huel (21.4s / 17 shots), Frive 
 
 | # | Issue | Severity | Tracking |
 |---|---|---|---|
-| 1 | `analyse-competitor-creatives` has verify_jwt disabled | High | Asana [1214111066075066](https://app.asana.com/1/5717506944667/project/1214024873723525/task/1214111066075066) |
-| 2 | `debug-auth` has verify_jwt disabled | High | Asana [1214101220983182](https://app.asana.com/1/5717506944667/project/1214024873723525/task/1214101220983182) |
-| 3 | Duplicate CompetitorAds.jsx in src/ vs src/components/ | Medium | Phase 3 cleanup |
-| 4 | `src/components/CompetitorAds.jsx` is 122 KB monolith | Medium | Phase 3 |
-| 5 | Chrome extension ships stale copies of generate-ad-prompt.ts and templatize-prompt.ts | Medium | Phase 3 cleanup |
-| 6 | `src/lib/supabase.js` and `supabase-v3.js` both present | Low | Phase 3 |
-| 7 | `chrome-extension/gallery/gallery.js` is 1,960-line monolith | Medium | Phase 3 |
+| 1 | Duplicate CompetitorAds.jsx in src/ vs src/components/ | Medium | Phase 3 cleanup |
+| 2 | `src/components/CompetitorAds.jsx` is 122 KB monolith | Medium | Phase 3 |
+| 3 | Chrome extension ships stale copies of generate-ad-prompt.ts and templatize-prompt.ts | Medium | Phase 3 cleanup |
+| 4 | `src/lib/supabase.js` and `supabase-v3.js` both present | Low | Phase 3 |
+| 5 | `chrome-extension/gallery/gallery.js` is 1,960-line monolith | Medium | Phase 3 |
+| 6 | `debug-auth` function still exists (diagnostic only) | Low | Scheduled for retirement in Phase 2 |
 
 ---
 
@@ -162,11 +161,13 @@ Test videos confirmed: Simmer (12.7s / 8 shots), Huel (21.4s / 17 shots), Frive 
 
 | # | Issue | Resolution |
 |---|---|---|
-| A | 13 of 14 edge functions had no JWT auth (12 Apr state) | 22 of 24 now enforce verify_jwt; 2 tracked exceptions have remediation tickets |
+| A | 13 of 14 edge functions had no JWT auth (12 Apr state) | All 24 deployed functions now enforce verify_jwt: true (16 Apr post-fix) |
 | B | Edge functions deployed to Supabase without source in repo | 100% alignment as of 16 Apr — every deployed slug has a matching `supabase/functions/<slug>/` directory on main |
 | C | `brand_guidelines` table missing `packaging_format` column | Column added; `generate-ad-prompt` v29 consumes it |
 | D | `generate-ad-prompt` system prompt hardcoded sleeve examples | Removed in v25+; no regression in v29 |
 | E | `sync-competitor-metadata` documented as deployed | Phantom entry — neither deployed nor in repo. Removed from CLAUDE.md |
+| F | `analyse-competitor-creatives` verify_jwt regression | Redeployed as v32 with verify_jwt: true (16 Apr). Asana [1214111066075066](https://app.asana.com/1/5717506944667/project/1214024873723525/task/1214111066075066) closed. |
+| G | `debug-auth` verify_jwt regression | Redeployed as v5 with verify_jwt: true + retirement note in source (16 Apr). Asana [1214101220983182](https://app.asana.com/1/5717506944667/project/1214024873723525/task/1214101220983182) closed. |
 
 ---
 
@@ -178,3 +179,4 @@ Test videos confirmed: Simmer (12.7s / 8 shots), Huel (21.4s / 17 shots), Frive 
 4. **Every multi-file change gets a ticket first** in the engineering project. Write what, why, and what could break.
 5. **Pre-session checklist.** Verify deployed versions match repo before starting work.
 6. **Any new edge function** must be committed to `supabase/functions/<slug>/index.ts` in the same PR that deploys it.
+7. **verify_jwt: true is the default.** Never deploy a function with verify_jwt: false without an open ticket explaining why and a dated remediation plan.
