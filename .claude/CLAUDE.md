@@ -86,7 +86,7 @@ CI workflow `ci.yml` runs `npm run build` on pushes and PRs to `main` and `devel
 - **generate-ad-prompt:** v29 (packaging-aware, dynamic packaging terms).
 - **fetch-competitor-ads:** v12 (brand_id/page_id, DCO explosion, credit logging to `foreplay_credit_log`, default `start_date: 2025-12-23`, `credit_budget: 500`).
 - **analyse-competitor-creatives:** v32 (JWT re-enabled 16 Apr).
-- **debug-auth:** v5 (JWT re-enabled 16 Apr, scheduled for retirement).
+- **debug-auth:** v6 (soft-retired 16 Apr, returns HTTP 410 Gone; hard-delete tracked in Asana).
 - **ai-analyse-video:** v2 (layout detection via Claude vision).
 - **generate-ugc-brief:** v6 (16384 max_tokens, shot variations 2/3/4, layout-aware prompts).
 - **brand_guidelines table:** packaging_format, packaging_specs, colour_palette, typography, tone_of_voice, photo_descriptions columns live.
@@ -131,7 +131,7 @@ CI workflow `ci.yml` runs `npm run build` on pushes and PRs to `main` and `devel
 
 **Diagnostics:**
 
-24. `debug-auth` — v5. Diagnostic endpoint. JWT re-enabled 16 Apr; scheduled for retirement in Phase 2.
+24. `debug-auth` — v6. **Soft-retired 16 Apr.** Returns HTTP 410 Gone with a retirement notice. Source stays in the repo until callers confirmed gone; then hard-deleted.
 
 **Alignment:** Every deployed slug has a matching `supabase/functions/<slug>/index.ts` directory on `main` (verified 16 Apr). A previous CLAUDE.md revision listed `sync-competitor-metadata` as deployed; that entry was incorrect and has been removed.
 
@@ -170,7 +170,7 @@ Located at `video-worker/` in repo. Express + FFmpeg service for heavy video pro
 - Foreplay API credits are limited (10,000 per period). Edge function has a `credit_budget` safeguard (default 500) and logs usage to `foreplay_credit_log`. Be careful with exploratory API calls.
 - Foreplay Spyder only started tracking Simmer from ~Jan 11, 2026, no historical data before that date.
 - Duplicate `CompetitorAds.jsx` exists in `src/` and `src/components/`. The `src/` copy is stale; Phase 3 cleanup.
-- `debug-auth` is a diagnostic function and should be retired during Phase 2.
+- `debug-auth` is soft-retired (returns 410 Gone) as of 16 Apr. Hard-delete once caller logs confirm no traffic for 7 days, tracked in the Asana engineering project.
 
 ## Related Projects
 
