@@ -3,16 +3,21 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 const SUPABASE_URL = "https://ifrxylvoufncdxyltgqt.supabase.co";
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
+// Bumped by commit, read back via `X-Function-Version` response header to
+// verify a deploy has actually landed. See docs/branching-and-ci.md.
+const FUNCTION_VERSION = "list-video-analyses@1.1.0";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Expose-Headers": "X-Function-Version",
 };
 
 function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data, null, 2), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders, "Content-Type": "application/json", "X-Function-Version": FUNCTION_VERSION },
   });
 }
 
