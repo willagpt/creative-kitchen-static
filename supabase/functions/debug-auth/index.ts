@@ -1,5 +1,10 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
+// Diagnostic-only function. verify_jwt: true means callers must present a valid
+// JWT (service_role key or user token) in Authorization: Bearer. This prevents
+// the function from leaking service-key prefixes to unauthenticated callers.
+// Scheduled for retirement in Phase 2.
+
 Deno.serve(async (req: Request) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
