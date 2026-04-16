@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shoot Sheets / Creative Kitchen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf9f7;--surface:#fff;--surface-alt:#f4f2ee;--surface-warm:#f9f5f0;
+  --ink:#1a1714;--ink-2:#5c564d;--ink-3:#8a8279;--ink-4:#b0a99e;
+  --accent:#b44d1e;--accent-light:#f4e6dc;--accent-dark:#8a3710;
+  --green:#2d6a4f;--green-light:#d8f3dc;
+  --blue:#1d4e89;--blue-light:#d0e2f4;
+  --purple:#6b21a8;--purple-light:#ede9fe;
+  --amber:#92400e;--amber-light:#fef3c7;
+  --border:#e8e4de;--border-light:#f0ece6;
+  --radius:4px;--radius-lg:6px;
+  --shadow-sm:0 1px 2px rgba(26,23,20,.05);
+  --font-display:'Fraunces',Georgia,serif;--font-body:'DM Sans',system-ui,sans-serif;
+}
+html{font-size:14px;scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.2}
+
+.page{max-width:1100px;margin:0 auto;padding:0 clamp(1rem,3vw,2rem) 3rem}
+
+/* Top bar */
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:.9rem 0;border-bottom:1px solid var(--border)}
+.topbar-brand{font-family:var(--font-display);font-size:.9rem;font-weight:700;color:var(--accent-dark)}
+.topbar-actions{display:flex;gap:.4rem;align-items:center}
+.btn{padding:.4rem .9rem;font-family:var(--font-body);font-size:.72rem;font-weight:600;border-radius:var(--radius);cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;border:1.5px solid var(--border);background:var(--surface);color:var(--ink-2)}
+.btn:hover{border-color:var(--ink-3);color:var(--ink)}
+.btn-primary{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+
+/* Hub index */
+.hub{padding:clamp(2rem,5vw,3.5rem) 0 2rem}
+.hub h1{font-size:clamp(1.6rem,3.5vw,2.2rem);font-weight:800;letter-spacing:-.03em;margin-bottom:.4rem}
+.hub-sub{font-size:.88rem;color:var(--ink-2);max-width:520px;margin-bottom:2rem}
+
+/* Track groups */
+.track-group{margin-bottom:2rem}
+.track-group-header{display:flex;align-items:center;gap:.6rem;margin-bottom:.75rem}
+.track-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.track-group-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2)}
+.track-group-count{font-size:.68rem;color:var(--ink-4)}
+
+/* Sheet index cards */
+.sheet-index{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.6rem}
+.sheet-card{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);cursor:pointer;transition:all .15s}
+.sheet-card:hover{border-color:var(--accent);box-shadow:var(--shadow-sm)}
+.sheet-card.active{border-color:var(--accent);background:var(--accent-light)}
+.sheet-card-num{font-family:var(--font-display);font-size:1.1rem;font-weight:800;color:var(--ink-3);min-width:1.8rem}
+.sheet-card.active .sheet-card-num{color:var(--accent)}
+.sheet-card-info{flex:1;min-width:0}
+.sheet-card-title{font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sheet-card-meta{font-size:.68rem;color:var(--ink-3)}
+.sheet-card-arrow{font-size:.8rem;color:var(--ink-4);transition:color .15s}
+.sheet-card:hover .sheet-card-arrow{color:var(--accent)}
+
+/* Sheet view */
+.sheet-view{display:none;padding-top:1.5rem}
+.sheet-view.active{display:block}
+
+/* Sheet header */
+.sheet-head{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:1rem;padding-bottom:1rem;border-bottom:2px solid var(--ink);flex-wrap:wrap}
+.sheet-head-left{flex:1}
+.sheet-head-track{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;margin-bottom:.3rem}
+.sheet-head-title{font-size:clamp(1.1rem,2.5vw,1.5rem);font-weight:800;letter-spacing:-.02em;margin-bottom:.2rem}
+.sheet-head-concept{font-size:.82rem;color:var(--ink-2);max-width:500px;line-height:1.5}
+.sheet-head-right{display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;font-size:.72rem;color:var(--ink-3);flex-shrink:0}
+.sheet-head-right strong{color:var(--ink);font-weight:600}
+
+/* THE GRID */
+.shoot-grid{width:100%;border-collapse:collapse;border:2px solid var(--ink);font-size:.78rem}
+.shoot-grid th{background:var(--ink);color:var(--bg);font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.5rem .5rem;text-align:left;white-space:nowrap;position:sticky;top:0}
+.shoot-grid th:first-child{width:28px;text-align:center}
+.shoot-grid th:nth-child(2){width:28px;text-align:center}
+.shoot-grid td{padding:.5rem .5rem;border:1px solid var(--border);vertical-align:top;line-height:1.45}
+.shoot-grid tr:nth-child(even) td{background:var(--surface-alt)}
+.shoot-grid tr:hover td{background:var(--accent-glow,rgba(180,77,30,.06))}
+/* Checkbox column */
+.shoot-grid td:first-child{text-align:center;width:28px;vertical-align:middle}
+.shoot-grid td:first-child input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+/* Shot # */
+.shoot-grid td:nth-child(2){text-align:center;font-family:var(--font-display);font-weight:700;color:var(--accent);width:28px}
+/* Action */
+.shoot-grid td:nth-child(3){font-weight:500;min-width:180px}
+.shoot-grid td:nth-child(3) strong{display:block;font-weight:700;color:var(--ink);font-size:.8rem}
+/* Duration */
+.shoot-grid .col-dur{width:55px;text-align:center;font-family:var(--font-display);font-weight:600;white-space:nowrap}
+/* Other columns */
+.shoot-grid .col-sm{font-size:.74rem;color:var(--ink-2)}
+
+/* Section divider row */
+.shoot-grid .section-row td{background:var(--surface-warm)!important;font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);padding:.4rem .5rem;border-top:2px solid var(--ink)}
+
+/* Sheet footer */
+.sheet-foot{margin-top:1rem;padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;font-size:.78rem}
+.sheet-foot-item label{display:block;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin-bottom:.15rem}
+.sheet-foot-item span{color:var(--ink)}
+
+/* Print */
+@page{size:A4 landscape;margin:12mm 14mm 16mm 14mm}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  html{font-size:8.5px}
+  body{background:#fff}
+  .topbar,.hub,.no-print{display:none!important}
+  .page{max-width:none;padding:0}
+  .sheet-view{display:block!important;page-break-after:always}
+  .sheet-view:last-child{page-break-after:auto}
+  .sheet-head{margin-bottom:3mm;padding-bottom:2mm}
+  .sheet-head-track{font-size:6px}
+  .sheet-head-title{font-size:14px}
+  .sheet-head-concept{font-size:7.5px}
+  .sheet-head-right{font-size:6.5px}
+  .shoot-grid{font-size:7px;border-width:1.5px}
+  .shoot-grid th{font-size:5.5px;padding:2mm 1.5mm}
+  .shoot-grid td{padding:1.8mm 1.5mm;line-height:1.35}
+  .shoot-grid td:first-child input[type=checkbox]{width:10px;height:10px}
+  .shoot-grid td:nth-child(3) strong{font-size:7.5px}
+  .shoot-grid .col-dur{font-size:7px}
+  .shoot-grid .col-sm{font-size:6.5px}
+  .sheet-foot{padding:2.5mm;gap:2mm;margin-top:2mm}
+  .sheet-foot-item label{font-size:5px}
+  .sheet-foot-item span{font-size:7px}
+  .sheet-foot::after{content:'Confidential. Prepared by Creative Kitchen.';grid-column:1/-1;font-size:6px;color:#8a8279;text-align:right;padding-top:1mm}
+}
+</style>
+</head>
+<body>
+<div class="page" id="app">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:1.5rem">
+    <h2 style="font-family:var(--font-display);font-size:1.4rem;color:var(--ink-2)">Building shoot sheets</h2>
+    <div><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse .8s infinite alternate"></span> <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse .8s infinite alternate;animation-delay:.15s"></span> <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse .8s infinite alternate;animation-delay:.3s"></span></div>
+  </div>
+</div>
+<style>@keyframes pulse{0%{opacity:.2;transform:scale(.8)}100%{opacity:1;transform:scale(1.1)}}</style>
+
+<script>
+const SB_URL = 'https://ifrxylvoufncdxyltgqt.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA';
+const HEADERS = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` };
+
+async function fetchData() {
+  const analysesRes = await fetch(`${SB_URL}/rest/v1/video_analyses?status=eq.complete&select=*&order=created_at.desc`, { headers: HEADERS });
+  const analyses = await analysesRes.json();
+  const adIds = [...new Set(analyses.map(a => a.competitor_ad_id).filter(Boolean))];
+  let ads = [];
+  if (adIds.length > 0) {
+    const idsParam = `(${adIds.map(id => `"${id}"`).join(',')})`;
+    const adsRes = await fetch(`${SB_URL}/rest/v1/competitor_ads?id=in.${idsParam}&select=id,page_name,page_id`, { headers: HEADERS });
+    ads = await adsRes.json();
+  }
+  return { analyses, ads };
+}
+
+function getStats(analyses, ads) {
+  const adMap = {};
+  ads.forEach(a => { adMap[a.id] = a; });
+  analyses.forEach(an => { an.ad = adMap[an.competitor_ad_id] || {}; });
+  const pageIds = new Set();
+  analyses.forEach(an => { if (an.ad.page_id) pageIds.add(an.ad.page_id); });
+  return { totalVids: analyses.length, totalBrands: pageIds.size };
+}
+
+// ── Grid row helper ──
+function R(action, frame, dur, audio, talent, props, notes) {
+  return { action, frame, dur, audio, talent, props, notes };
+}
+function sectionRow(label) {
+  return { section: label };
+}
+
+// ── Build all shoot sheets ──
+function buildSheets(stats) {
+  const sheets = [];
+  const tv = stats.totalVids;
+  const tb = stats.totalBrands;
+
+  // ═══════════ INTERNAL ═══════════
+  sheets.push({
+    id: 'int-1', track: 'Internal', trackColor: 'var(--accent)', trackBg: 'var(--accent-light)',
+    title: 'Weekly Meal Showcase', concept: '7 meals held to camera in fast succession. "And I didn\'t cook once." Fills the variety gap, repurposable as stills.',
+    duration: '15 to 20s', format: '9:16 vertical', priority: 'P1', location: 'Kitchen counter', talent: 'Team member (hands only)',
+    rows: [
+      R('Container 1 held to camera, label visible', 'Straight-on, chest height', '2s', 'Music (upbeat)', 'Hands only', 'Branded container + meal', 'Name overlay added in post'),
+      R('Container 2 held to camera', 'Same angle, same position', '2s', 'Continuous music', 'Hands only', 'Different meal', 'Keep hand position identical'),
+      R('Container 3 held to camera', 'Same', '2s', '', '', 'Different meal', ''),
+      R('Container 4 held to camera', 'Same', '2s', '', '', 'Different meal', ''),
+      R('Container 5 held to camera', 'Same', '2s', '', '', 'Different meal', ''),
+      R('Container 6 held to camera', 'Same', '2s', '', '', 'Different meal', ''),
+      R('Container 7 held to camera', 'Same', '2s', '', '', 'Different meal', ''),
+      R('Text card: "And I didn\'t cook once."', 'Same or black bg', '3s', 'Music out', '', '', 'Add CTA + offer code'),
+    ]
+  });
+
+  sheets.push({
+    id: 'int-2', track: 'Internal', trackColor: 'var(--accent)', trackBg: 'var(--accent-light)',
+    title: 'Fridge Pull Reveal', concept: 'Closed fridge opens to reveal organised containers. "This is what organised eating looks like." Works as video hook and static image.',
+    duration: '8 to 12s', format: '9:16 vertical', priority: 'P1', location: 'Kitchen (any)', talent: 'One person (hand only)',
+    rows: [
+      R('Closed fridge, hand reaches for handle', 'Straight-on, chest height, phone on tripod', '1.5s', 'Silence or subtle buildup', 'Hand only', 'Clean fridge exterior', 'Clean fridge of distracting items first'),
+      R('Fridge door swings open, reveal full shelf', 'Same angle, don\'t move camera', '3s', 'Satisfying sound effect on open', '', 'Containers label-forward, colourful meals visible', 'Fridge light provides natural reveal'),
+      R('Hold on the organised shelf', 'Same', '2s', 'Music drops in', '', '', 'Text overlay: "This is what organised eating looks like."'),
+      R('Close-up: pull one container out', 'Slight zoom or step closer', '2s', '', 'Hand pulls container', 'One hero meal', 'Show the brand clearly'),
+      R('End card: CTA', 'Black bg or freeze frame', '2s', 'Music out', '', '', 'Offer code + "link in bio"'),
+    ]
+  });
+
+  sheets.push({
+    id: 'int-3', track: 'Internal', trackColor: 'var(--accent)', trackBg: 'var(--accent-light)',
+    title: 'Microwave Timer vs Cooking', concept: 'Split-screen: 90s microwave on one side, 45 min cooking from scratch on the other. "Same macros. Different time investment."',
+    duration: '15 to 25s', format: '9:16 vertical', priority: 'P1', location: 'Kitchen', talent: 'None (hands only both sides)',
+    rows: [
+      sectionRow('Film separately, combine in CapCut'),
+      R('SIDE A: Container goes into microwave, door shuts', 'Close on microwave, straight-on', '2s', 'Microwave beep', 'Hand only', 'Container + microwave', 'Film this first'),
+      R('SIDE A: Timer counting down from 1:30', 'Same angle, hold steady', '4s sped up', 'Microwave hum', '', '', 'Speed up to match Side B length'),
+      R('SIDE A: Ding. Door opens. Meal steaming.', 'Same', '2s', 'Ding sound', 'Hand removes meal', 'Steaming container', ''),
+      sectionRow('Side B: cooking from scratch'),
+      R('SIDE B: Supermarket shopping (bags on counter)', 'Kitchen counter, overhead', '2s', '', 'Hands unpacking', 'Shopping bags, raw ingredients', 'Time-lapse at 8x'),
+      R('SIDE B: Chopping vegetables', 'Overhead', '3s', 'Chopping sounds', 'Hands chopping', 'Cutting board, knife, veg', 'Time-lapse continues'),
+      R('SIDE B: Cooking on hob', 'Side angle', '3s', 'Sizzle', '', 'Pan, hob, steam', ''),
+      R('SIDE B: Washing up', 'Side angle of sink', '2s', 'Water sounds', 'Hands washing', 'Pile of dishes', 'The punchline'),
+      sectionRow('Combined edit'),
+      R('Split-screen: both side by side, time synced', '', '', '', '', '', 'Align so microwave finishes while cooking is still going'),
+      R('Text overlay: "Same macros. Different time investment."', 'Full frame', '3s', 'Music sting', '', '', 'Show price per meal at end'),
+    ]
+  });
+
+  sheets.push({
+    id: 'int-4', track: 'Internal', trackColor: 'var(--accent)', trackBg: 'var(--accent-light)',
+    title: 'Ingredient Label Flip', concept: 'Supermarket ready meal label (long, chemical) vs your label (short, clean). "Read the label." High pattern-interrupt.',
+    duration: '10 to 15s', format: '9:16 vertical', priority: 'P2', location: 'Any clean surface', talent: 'Hands only',
+    rows: [
+      R('Hold supermarket ready meal, front label visible', 'Top-down or straight-on, clean bg', '1.5s', 'Silence', 'One hand', 'Tesco/Sainsbury\'s "Healthy" ready meal', 'Choose one with a long ingredients list'),
+      R('Flip to back, zoom on ingredients list', 'Close-up, must be legible', '3s', 'Subtle tension sound', '', '', 'Hold steady so viewer can read'),
+      R('Put it down. Pick up your container.', 'Same angle, same background', '1s', '', 'Same hand', 'Branded container', 'Smooth swap, no jump cut'),
+      R('Flip to back, zoom on short ingredients list', 'Close-up, legible', '3s', 'Resolution sound/music', '', '', 'Text overlay: "Read the label."'),
+      R('End: container front-facing, CTA', 'Same', '2s', '', '', '', 'Offer code overlay'),
+    ]
+  });
+
+  sheets.push({
+    id: 'int-5', track: 'Internal', trackColor: 'var(--accent)', trackBg: 'var(--accent-light)',
+    title: 'Macro Barcode Scan', concept: 'Scan barcode in MyFitnessPal, show clean macro split. "Every meal, already in the app." No competitor does this.',
+    duration: '10 to 15s', format: '9:16 vertical', priority: 'P2', location: 'Any', talent: 'Hand + phone screen',
+    rows: [
+      R('Screen recording: open MyFitnessPal, tap barcode scan', 'Screen capture (phone built-in recorder)', '2s', 'UI tap sounds', '', 'Phone with MFP installed', 'Test scan works before recording'),
+      R('Aim phone at container barcode, scan', 'Over-shoulder angle showing phone + container', '2s', 'Scan beep', 'Hands holding phone + container', 'Branded container with barcode', ''),
+      R('Macro split appears on screen: protein, carbs, fat, cals', 'Screen recording, hold steady', '3s', 'Subtle positive ding', '', '', 'Pause here so numbers are readable'),
+      R('Text overlay: "Every meal, already in the app."', 'Full screen or overlay on recording', '3s', '', '', '', 'CTA + offer code'),
+    ]
+  });
+
+  sheets.push({
+    id: 'int-6', track: 'Internal', trackColor: 'var(--accent)', trackBg: 'var(--accent-light)',
+    title: 'Desk Lunch B-roll', concept: 'Silent-optimised: someone eating at a desk, text overlays with benefit claims. Targets the professional audience.',
+    duration: '12 to 18s', format: '9:16 vertical', priority: 'P2', location: 'Office or home desk', talent: 'One person (face optional)',
+    rows: [
+      R('Container placed on desk next to laptop/keyboard', 'Slightly overhead, angled down', '2s', 'No VO. Music only or ASMR.', 'Person at desk', 'Branded container, laptop, desk setup', 'Desk must be tidy'),
+      R('Peel lid off. Steam rises.', 'Same angle, closer', '2s', 'Peel/steam sound (subtle)', '', '', 'Text overlay: "50g protein"'),
+      R('First forkful lifted from container', 'Close-up on food', '2s', '', '', 'Fork', 'Text overlay: "450 cals"'),
+      R('Eating, casual, looking at laptop', 'Medium, includes face or just hands', '3s', '', '', '', 'Text overlay: "90 seconds to make"'),
+      R('Container label visible, meal name shown', 'Close-up', '2s', '', '', '', 'Text overlay: price per meal'),
+      R('Back to eating, satisfied', 'Medium', '2s', 'Music fades', '', '', 'CTA overlay'),
+    ]
+  });
+
+  sheets.push({
+    id: 'int-7', track: 'Internal', trackColor: 'var(--accent)', trackBg: 'var(--accent-light)',
+    title: 'Delivery Day Unboxing', concept: 'Standard unboxing. Film every delivery day for variation. Table stakes content, essential for library.',
+    duration: '20 to 30s', format: '9:16 vertical', priority: 'P3', location: 'Kitchen counter', talent: 'Anyone, face to camera',
+    rows: [
+      R('Delivery box on doorstep or counter', 'Medium shot', '2s', 'Doorbell sound (optional)', 'Person receiving', 'Delivery box (branded)', ''),
+      R('Open outer packaging', 'Same or overhead', '3s', 'Unwrapping sounds', '', '', 'Show brand/insulation'),
+      R('Pull out first container, hold to camera', 'Medium, label readable', '3s', 'Music starts', '', 'Container 1', 'Genuine reaction: "Ooh, [meal name]"'),
+      R('Pull out containers 2, 3, 4', 'Same angle', '2s each', '', '', 'Containers 2 to 4', 'Quick succession, name each one'),
+      R('Lay all meals out on counter', 'Overhead shot', '3s', '', '', 'All containers visible', 'The full spread is the hero shot'),
+      R('Pick up favourite, genuine reaction', 'Medium, face visible', '3s', '', '', 'One container', '"This one\'s my favourite"'),
+      R('CTA: offer code, link in bio', 'Same or text card', '3s', 'Music out', '', '', 'End with code on screen'),
+    ]
+  });
+
+  // ═══════════ STUDIO ═══════════
+  sheets.push({
+    id: 'stu-1', track: 'Studio', trackColor: 'var(--blue)', trackBg: 'var(--blue-light)',
+    title: 'Hero Brand Film', concept: 'Cinematic food prep sequence. Steam, colour, texture, motion. Real people eating in real locations. THE differentiator. No competitor has polished production.',
+    duration: '25 to 30s', format: '9:16 primary, 1:1, 4:5', priority: 'P1', location: 'Professional kitchen + 3 lifestyle locations', talent: 'Chef + 3 lifestyle talent',
+    rows: [
+      sectionRow('Kitchen prep sequence'),
+      R('Macro: fresh ingredients on wooden board. Pull focus herbs to protein.', 'Macro, 50mm f/1.4, shallow depth', '2s', 'Foley: subtle ambient', 'Chef (hands)', 'Wooden board, herbs, protein, vegetables', 'Warm backlight, 3800K to 4500K'),
+      R('Overhead: chef slicing vegetables. Fast, confident knife work.', 'Overhead rig, 35mm', '1.5s', 'Foley: knife on board', 'Chef (hands + arms)', 'Cutting board, knife, vegetables', 'Shallow depth of field'),
+      R('Side angle: sauce poured into hot pan. Steam rising.', 'Side, 50mm, backlit', '2s', 'Foley: sizzle, pour', 'Chef (hands)', 'Pan, sauce, hob', 'Backlight catches steam. Money shot.'),
+      R('Close-up: spices hit hot oil. Sizzle and pop.', '100mm macro, 120fps slow-mo', '1.5s', 'Foley: sizzle (enhanced)', '', 'Spices, oil, pan', 'SLOW MOTION. Dramatic.'),
+      R('Overhead: meal plated into branded container. Precise.', 'Overhead, 35mm', '2s', 'Foley: subtle', 'Chef (hands)', 'Container, plated food', 'Keep it clean, precise, deliberate'),
+      R('Close-up: container sealed with branded lid. Snap sound.', 'Side angle, 50mm', '1s', 'Foley: satisfying snap/click', 'Chef (hands)', 'Container + lid', 'The seal = the transition point'),
+      sectionRow('Lifestyle eating sequence'),
+      R('Match cut: sealed container becomes someone opening it at desk', 'Medium, 35mm', '1s', 'Music starts here', 'Office talent', 'Container at desk', 'The match cut is critical. Plan in pre-pro.'),
+      R('Professional at desk: first bite. Genuine reaction.', 'Medium, 35mm, natural office light', '2s', 'Music continuous', 'Office talent (28 to 35)', 'Container, fork, desk setup', 'Smart-casual wardrobe. No eye contact with camera.'),
+      R('Gym-goer post-workout: eating from container.', 'Medium, 35mm', '1.5s', '', 'Gym talent (athletic)', 'Container, gym setting visible', 'Branded gym wear if available. Post-workout sweat.'),
+      R('Parent at kitchen counter. Child visible in background.', 'Medium, 35mm, warm home light', '1.5s', '', 'Parent (30 to 40) + child bg', 'Container, home kitchen', 'Casual home clothes. Documentary style.'),
+      sectionRow('End card'),
+      R('Product hero shot: container centred, brand visible.', 'Straight-on or slight angle, 50mm', '3s', 'Music resolves', '', 'Hero container + brand elements', 'Text overlay in post: offer + CTA'),
+    ]
+  });
+
+  sheets.push({
+    id: 'stu-2', track: 'Studio', trackColor: 'var(--blue)', trackBg: 'var(--blue-light)',
+    title: 'Kitchen-to-Container Journey', concept: 'Follow one meal from raw ingredients to delivery. Full supply chain in 25s. Addresses the biggest trust gap in the category.',
+    duration: '20 to 25s', format: '9:16, 1:1, 4:5', priority: 'P1', location: 'Professional kitchen + home', talent: 'Chef + delivery recipient (hands only)',
+    rows: [
+      R('Wide: raw ingredients laid out on stainless prep table', 'Wide, tripod, slightly overhead', '2s', 'Ambient kitchen', 'Chef hand enters, picks up pepper', 'Full ingredient set for one meal', ''),
+      R('Time-lapse: chopping, marinating, portioning', 'Overhead rig, tripod, 4x speed', '3s', 'Time-lapse whoosh or music', 'Chef working', 'Cutting boards, bowls, ingredients', 'Camera locked off. Speed up 4x in post.'),
+      R('Close-up: food cooking in oven/pan/grill. Steam, colour change.', 'Side, 50mm, real time', '2s', 'Foley: sizzle, oven hum', '', 'Commercial cooking equipment', 'Capture the colour change moment'),
+      R('Chef portions meal into container. Precision.', 'Overhead', '2s', 'Foley: subtle', 'Chef hands', 'Container + serving tools', 'Make it look artful, not industrial'),
+      R('Extreme close-up: nutritional label applied to container', '100mm macro', '1.5s', 'Subtle label stick sound', 'Hands applying', 'Label (accurate macros), container', 'Focus rack: label blurry to sharp'),
+      R('Container sealed. Camera pulls back to reveal full tray.', 'Starts close, slider pulls back', '2s', 'Music builds', '', 'Full tray of sealed containers', 'Slider move. Reveals scale.'),
+      R('Meals placed into insulated delivery box. Branded sticker.', 'Medium', '1.5s', '', 'Hands packing', 'Insulated box, stickers, containers', ''),
+      R('Box on doorstep. Hand picks it up, brings inside.', 'Low angle at door, then follow inside', '2s', 'Door open, footsteps', 'Recipient (hands/arms)', 'Delivery box on doorstep', 'Warm shift in colour temp (kitchen to home)'),
+      R('Fridge opens, meals placed inside. Neat, colourful rows.', 'Straight-on at fridge level', '2s', 'Fridge open, containers placed', 'Hands', 'Fridge + containers', 'The payoff shot: organised, beautiful'),
+      R('Text overlay: "From chef\'s hands to your microwave in 90 seconds."', 'Hold on fridge or black card', '3s', 'Music resolves', '', '', 'Add offer + CTA in post'),
+    ]
+  });
+
+  sheets.push({
+    id: 'stu-3', track: 'Studio', trackColor: 'var(--blue)', trackBg: 'var(--blue-light)',
+    title: 'B-roll Ingredient Library', concept: '20 to 30 slow-motion ingredient clips, 3 to 5s each. Most valuable long-term asset: reusable for 12+ months across ads, social, website.',
+    duration: '3 to 5s per clip', format: '16:9 master (crop in post)', priority: 'P1', location: 'Kitchen studio setup', talent: 'Chef (hands only)',
+    rows: [
+      sectionRow('Dark setup (black slate/board)'),
+      R('Fresh herbs (basil, coriander) torn and scattered', 'Overhead, 100mm macro, 120fps', '4s', 'Capture wild: leaf rustle', 'Hands tearing', 'Herbs, black slate', 'SLOW MOTION. Backlight.'),
+      R('Olive oil drizzle into hot pan', 'Side angle, 50mm, 120fps', '4s', 'Capture wild: sizzle', 'Hand pouring', 'Oil bottle, hot pan', 'Backlight catches the oil stream'),
+      R('Spices hitting hot oil (colour bloom)', 'Overhead, 100mm, 120fps', '3s', 'Capture wild: sizzle/pop', 'Hand sprinkling', 'Spices, pan with oil', 'The colour bloom is the moment'),
+      R('Egg cracked into pan (whites spreading)', 'Side angle, 100mm, 240fps', '4s', 'Capture wild: crack, sizzle', 'Hands cracking', 'Egg, pan', 'ULTRA SLOW-MO for the spread'),
+      R('Pepper grinder in action (particles falling)', 'Side, 100mm, 120fps', '3s', 'Capture wild: grinding', 'Hands', 'Pepper grinder', 'Backlight catches particles'),
+      sectionRow('Light setup (marble/wood board)'),
+      R('Vegetables being julienned (side angle)', 'Side, 50mm f/1.4, 120fps', '4s', 'Capture wild: knife on board', 'Chef hands', 'Knife, board, vegetables', 'Shallow depth, speed = confidence'),
+      R('Cherry tomatoes halved (juice spreading)', 'Overhead, 100mm, 120fps', '3s', 'Capture wild: slice', 'Hands with knife', 'Tomatoes, marble board', ''),
+      R('Chicken breast sliced (cross-section reveal)', 'Side, 50mm', '3s', '', 'Hands', 'Cooked chicken, board', 'Show the juicy interior'),
+      R('Avocado sliced and fanned', 'Overhead, 100mm', '3s', '', 'Hands', 'Avocado, board', ''),
+      R('Lemon squeezed over food (juice drops)', '45 degree, 100mm, 240fps', '4s', '', 'Hand squeezing', 'Lemon, plate of food', 'ULTRA SLOW-MO for droplets'),
+      sectionRow('Action shots'),
+      R('Sauce ladled over a dish (slow pour, steam)', 'Side, 50mm, 120fps', '4s', 'Capture wild: pour', 'Hands with ladle', 'Ladle, plate, sauce', 'Backlight on steam'),
+      R('Noodles lifted with tongs (steam rising)', 'Side, 50mm, 120fps', '4s', '', 'Hands with tongs', 'Noodles, bowl, tongs', ''),
+      R('Pan toss (low angle, dramatic)', 'Low angle looking up, 35mm, 120fps', '3s', 'Capture wild: whoosh', 'Chef', 'Pan, food in motion', 'May need multiple takes'),
+      R('Bubbling sauce in pan (top-down)', 'Overhead, 100mm, 120fps', '4s', '', '', 'Pan, sauce', 'Hypnotic. Let it bubble.'),
+      R('Green beans dropped into water (splash)', 'Side, 100mm, 240fps', '3s', 'Capture wild: splash', 'Hand dropping', 'Beans, pot of water', 'ULTRA SLOW-MO'),
+      sectionRow('Product shots'),
+      R('Steam rising from open branded container (backlit)', 'Side, 50mm, 120fps', '4s', '', '', 'Branded container, fresh meal', 'Strong backlight. Hero steam.'),
+      R('Finished meal placed on table (hero angle)', '45 degree, 50mm', '3s', '', 'Hands placing', 'Container on table/board', 'This is the "beauty shot" for ads'),
+      R('Hands peeling garlic or ginger (macro)', '100mm macro, 120fps', '3s', '', 'Hands', 'Garlic or ginger', ''),
+      R('Fresh salmon fillet on cutting board', 'Overhead, 100mm', '3s', '', '', 'Salmon, board', 'Spray with water first for freshness'),
+    ]
+  });
+
+  sheets.push({
+    id: 'stu-4', track: 'Studio', trackColor: 'var(--blue)', trackBg: 'var(--blue-light)',
+    title: 'Taste Test Series', concept: '6 to 8 people trying meals for the first time. Genuine reactions. The taste gap is the biggest weakness across all competitors.',
+    duration: '20 to 30s (montage)', format: '9:16, 1:1', priority: 'P2', location: 'Clean, bright studio or kitchen', talent: '6 to 8 real people (NOT actors)',
+    rows: [
+      sectionRow('Per taster (repeat for each of 6 to 8 people)'),
+      R('Wide: taster seated, closed container in front', 'Wide, 35mm, clean background', '1s', 'Ambient', 'Taster seated', 'Sealed container, table', 'White or light wood background'),
+      R('Medium: taster opens container, initial visual reaction', 'Medium, 50mm, Camera A (face)', '1.5s', '', '', 'Container being opened', 'Camera B simultaneously on food'),
+      R('Close-up face: FIRST BITE. Hold for genuine reaction.', '85mm f/1.8, Camera A, tight on face', '2 to 3s', 'Dip music', '', '', 'THIS IS THE MONEY SHOT. Do not cut early.'),
+      R('Close-up food: fork/spoon with food, mid-bite', '50mm, Camera B', '1s', '', '', 'Fork with food', 'Intercut with face reaction'),
+      R('Medium: unprompted comment. Keep rolling.', '50mm, Camera A', '3 to 5s', '', '', '', 'Do NOT prompt. Let them talk naturally.'),
+      R('Score card: taster writes 1 to 10 and holds up', 'Medium', '2s', '', '', 'Score card + pen', 'Optional but adds format structure'),
+      sectionRow('Montage edit'),
+      R('Rapid-cut: best 2s from each taster\'s first bite', '', '12 to 16s total', 'Music: upbeat, building', 'All tasters cut together', '', 'Meal names as lower thirds'),
+      R('End card: "X out of X said they\'d reorder."', 'Text card or last taster freeze', '3s', 'Music resolves', '', '', 'Offer code + CTA'),
+    ]
+  });
+
+  sheets.push({
+    id: 'stu-5', track: 'Studio', trackColor: 'var(--blue)', trackBg: 'var(--blue-light)',
+    title: 'Chef Profile Interview', concept: '60s piece on the person behind the recipes. Background, philosophy, what makes these meals different. Builds trust layer no competitor has.',
+    duration: '60s hero + 30s + 15s cuts', format: '9:16, 1:1, 16:9', priority: 'P2', location: 'Kitchen + interview setup', talent: 'Head chef / recipe developer',
+    rows: [
+      sectionRow('Interview setup'),
+      R('10 min pre-interview conversation OFF camera', '', '', '', 'Chef + interviewer', '', 'Relax them. Build rapport. Do NOT skip this.'),
+      R('Camera check: framing, focus, audio levels', '85mm f/1.8, slightly off-centre', '', 'Lapel mic check', '', 'Background: kitchen shelves, equipment (blurred)', 'Key light 45 degrees, hair light, soft fill'),
+      sectionRow('Interview questions (film 15 to 20 mins, edit to 60s)'),
+      R('"Tell me about your background with food."', 'Interview frame, Camera A', '8 to 10s in edit', 'Lapel mic', 'Chef talking', '', 'Intercut with B-roll from Shot 01/03'),
+      R('"What do you believe about food?"', 'Same', '10 to 15s in edit', '', '', '', 'This is the philosophy section'),
+      R('"How does every recipe start?"', 'Same', '10 to 12s in edit', '', '', '', 'Intercut with kitchen B-roll of process'),
+      R('"What makes these meals different?"', 'Same', '10 to 12s in edit', '', '', '', 'The key selling section. Let them talk.'),
+      sectionRow('Closing shots'),
+      R('Chef plating a meal, looks up briefly', 'Medium, kitchen, 35mm', '5s', 'Music fades in', 'Chef working', 'Container, food', 'Text: "Meet the chef behind your meals."'),
+      R('End card: name, title, brand', 'Text card or super over chef shot', '3s', 'Music out', '', '', 'CTA + offer code'),
+    ]
+  });
+
+  // ═══════════ UGC ═══════════
+  const ugcConcepts = [
+    {
+      id: 'ugc-1', title: 'Female Fitness: "My Week on [Brand]"', priority: 'P1',
+      concept: '7-day diary. Biggest audience whitespace: female fitness creators are virtually absent from the competitive set.',
+      duration: '30 to 45s', format: '9:16',
+      variations: [
+        { name: 'A: Gym/lifting creator (22 to 28)', rows: [
+          R('Day 1: Unboxing on kitchen counter. Genuine first reaction.', 'Kitchen, natural light, phone on tripod', '5s', 'Talking to camera', 'Creator', 'Delivery box + containers', 'Hook: "I tracked everything I ate for a week using [brand]"'),
+          R('Day 1: First taste of first meal. Hold genuine reaction.', 'Same kitchen setup', '3s', '', '', 'Open container, fork', 'Don\'t fake it. Real reaction only.'),
+          R('Day 2 to 3: One meal shown + gym clip (lifting)', 'Kitchen + gym (phone propped)', '3s each', 'Brief VO per day', '', 'Container + gym setting', 'Show MyFitnessPal macro screenshot'),
+          R('Day 4 to 5: One meal shown + gym clip', 'Same', '3s each', '', '', '', 'Brief comment on energy/recovery'),
+          R('Day 6: Post-workout eating from container', 'Gym or kitchen, post-workout', '3s', '', '', 'Container', '"The easiest week of nutrition I\'ve ever had"'),
+          R('Day 7: Wrap-up to camera. Performance/energy reflections.', 'Kitchen or living room', '5s', 'Talking to camera', '', '', '"I didn\'t have to think about food once"'),
+          R('CTA: discount code on screen + "link in bio"', 'Same', '3s', '', '', '', 'Code clearly visible for 3s'),
+        ]},
+        { name: 'B: Yoga/wellness creator (25 to 35)', rows: [
+          R('Day 1: Morning routine context, unboxing on counter', 'Kitchen, soft morning light', '5s', 'Talking to camera', 'Creator', 'Delivery box', 'Hook: "I\'m not a meal prep person but I tried [brand] for a week"'),
+          R('Day 1: Opens first container, genuine reaction', 'Same', '3s', '', '', 'Container', 'Focus on ingredient quality, NOT macros'),
+          R('Day 3: Mid-week check-in while eating lunch', 'Kitchen or living room', '4s', 'Talking to camera', '', 'Container, table', '"The ingredients are actually clean"'),
+          R('Day 5: Yoga/workout clip + post-practice meal', 'Studio/home + kitchen', '4s', 'Brief VO', '', '', 'Compare to previous failed meal prep'),
+          R('Day 7: Honest review over breakfast', 'Kitchen, natural light', '5s', 'Talking to camera', '', 'Container', 'What surprised them, what they\'d change'),
+          R('CTA: code + "I\'ll leave the link"', 'Same', '3s', '', '', '', ''),
+        ]},
+        { name: 'C: Running/outdoor creator (28 to 38)', rows: [
+          R('Pre-run morning: grab container from fridge, eat, go', 'Kitchen, early light, fast pace', '4s', 'Talking to camera', 'Creator in running kit', 'Container from fridge', 'Hook: "I run 40 miles a week. This is how I fuel it."'),
+          R('Running clip + VO about past nutrition failures', 'Outdoor, running', '4s', 'VO over running footage', '', '', '"I used to bonk by mile 8 because I ate rubbish"'),
+          R('Post-run: eating at kitchen counter, sweaty, genuine', 'Kitchen, natural light', '4s', 'Talking to camera', '', 'Container, running watch visible', 'The hunger context amplifies taste reaction'),
+          R('Meal 2 of the day: show the volume for high-cal needs', 'Kitchen', '3s', 'Brief VO', '', 'Multiple containers', '"I need 2,500 cals. I don\'t have time to cook that."'),
+          R('End of week reflection: recovery, energy', 'Relaxed setting', '5s', 'Talking to camera', '', '', '"My recovery has been noticeably better"'),
+          R('CTA: code + "honestly just try it for a week"', 'Same', '3s', '', '', '', ''),
+        ]},
+      ]
+    },
+    {
+      id: 'ugc-2', title: 'Busy Professional: "How I Save 5 Hours"', priority: 'P1',
+      concept: 'Before/after format. Numbers-led hook. Broadens reach beyond fitness to time-poor professionals.',
+      duration: '25 to 35s', format: '9:16',
+      variations: [
+        { name: 'A: Office worker (28 to 38)', rows: [
+          R('Quick montage: supermarket queue, chopping, washing up, Deliveroo receipts', 'Various locations, handheld', '4s', 'Stressful/hectic music', 'Creator', 'Shopping bags, kitchen mess, phone', 'Hook: "I calculated my food time. 7 hours a week."'),
+          R('Cut to: "Now I just do this." Open fridge full of containers.', 'Kitchen, fridge reveal', '3s', 'Music shift: calm', '', 'Fridge with containers', 'The contrast is the punchline'),
+          R('Eating at desk, tracking on phone', 'Office/desk', '3s', '', '', 'Container, phone, laptop', '"And it\'s actually healthy"'),
+          R('"I get home at 6 and my evening is free."', 'Home, relaxed setting', '4s', 'Talking to camera', '', '', 'Show the lifestyle benefit, not just the food'),
+          R('Show bank statement: takeaway spend vs this', 'Phone screen close-up', '3s', '', '', 'Phone', 'Blur amounts if needed. Point is comparative.'),
+          R('CTA: "Try it for a week. Do the maths yourself." + code', 'To camera', '3s', '', '', '', ''),
+        ]},
+        { name: 'B: WFH freelancer (25 to 35)', rows: [
+          R('Home office: eating crisps at desk, looking guilty', 'Desk/office setup', '2s', '', 'Creator at desk', 'Crisps, laptop', 'Hook: "WFH means I eat rubbish or cook for an hour"'),
+          R('Cut to: microwave timer, container ready in 90s', 'Kitchen, close on microwave', '3s', '', '', 'Container, microwave', 'Show the timer clearly'),
+          R('Eating a proper meal at desk, productive', 'Same desk, different energy', '3s', 'Talking to camera', '', 'Container, fork', '"I used to lose my entire lunch break"'),
+          R('Evening: cooking for fun, not obligation', 'Kitchen, evening light', '3s', '', '', 'Cooking something by choice', '"Now I cook because I want to, not because I have to"'),
+          R('CTA: code + "my afternoons are so much more productive"', 'To camera', '3s', '', '', '', ''),
+        ]},
+        { name: 'C: Shift worker / NHS (26 to 35)', rows: [
+          R('Getting ready for shift, grabbing containers from fridge', 'Home, early morning', '3s', '', 'Creator in scrubs/uniform', 'Containers, bag', 'Hook: "I do 12-hour shifts. I used to eat vending machine food."'),
+          R('At work: eating a proper meal during break', 'Break room or staff area', '3s', '', '', 'Container, work setting', '"My colleagues keep asking what I\'m eating"'),
+          R('Back home: too tired to cook, meal already there', 'Home, clearly tired', '3s', 'Talking to camera', '', 'Container from fridge', '"I actually have energy at the end of my shift now"'),
+          R('CTA: "If you do shifts, you need this." + code', 'To camera', '3s', '', '', '', ''),
+        ]},
+      ]
+    },
+    {
+      id: 'ugc-3', title: 'Expert Endorsement: "Why I Recommend [Brand]"', priority: 'P1',
+      concept: 'Authority/credentialled expert. Expert formats run longest (40+ days) in the competitive dataset. Highest ROI per creative.',
+      duration: '30 to 40s', format: '9:16',
+      variations: [
+        { name: 'A: Registered Dietitian', rows: [
+          R('Podcast-style setup. Introduce credentials (briefly).', 'Ring light, clean bg, slightly off-centre', '4s', 'Talking to camera', 'RD, 30 to 45', 'Clean background', 'Hook: "As a registered dietitian, here\'s what I look for."'),
+          R('Hold up container: "First I check the ingredients list."', 'Same', '3s', '', '', 'Container (label visible)', 'Turn to show label'),
+          R('Show label: "Short list. Recognisable ingredients."', 'Close-up on label, then back to face', '3s', '', '', '', ''),
+          R('"The macro split is accurate. I\'ve checked."', 'Same talking-head setup', '3s', '', '', '', 'Professional credibility statement'),
+          R('Eating: "And yes, it actually tastes good."', 'Same, eating from container', '3s', '', '', 'Container, fork', 'The human moment after the expert bit'),
+          R('CTA: "I recommend this to my clients." + code', 'Same', '3s', '', '', '', ''),
+        ]},
+        { name: 'B: Personal Trainer', rows: [
+          R('Gym setting. Between clients or end of day.', 'Gym, natural, phone propped', '3s', 'Talking to camera', 'PT, 25 to 40, cert visible', 'Gym setting', 'Hook: "I put all my clients on meal prep. Here\'s the one I trust."'),
+          R('"Most companies get protein right but ingredients are rubbish"', 'Same', '4s', '', '', '', 'Show label comparison vs supermarket'),
+          R('Show the label side-by-side with supermarket meal', 'Close-up', '3s', '', '', 'Both products', ''),
+          R('"Clients who use this see results faster. Compliance goes up."', 'Back to talking head', '4s', '', '', '', 'Frame as professional, not personal'),
+          R('CTA: "Tell them I sent you." + code', 'Same', '3s', '', '', '', ''),
+        ]},
+        { name: 'C: Sports Nutritionist', rows: [
+          R('Professional setting. Office or kitchen.', 'Clean, well-lit', '3s', 'Talking to camera', 'Sports nutritionist, 28 to 45', '', 'Hook: "I\'ve worked with professional athletes. Here\'s what they eat off camp."'),
+          R('"Meal prep is the single biggest lever for body composition."', 'Same', '4s', '', '', '', 'Technical authority'),
+          R('Break down macro split of a specific meal (on screen)', 'Close-up on container + phone/label', '4s', '', '', 'Container + phone', '"This is what a properly formulated meal looks like"'),
+          R('Eating: "And it doesn\'t taste like cardboard."', 'Same, eating', '3s', '', '', '', 'Humanises the expert'),
+          R('CTA: "Link in bio. Use my code." + code', 'Same', '3s', '', '', '', ''),
+        ]},
+      ]
+    },
+    {
+      id: 'ugc-4', title: 'Duo Format: "We Switched to [Brand]"', priority: 'P2',
+      concept: 'Two-person format. Zero competitors use it. Format novelty = pattern interrupt in the feed.',
+      duration: '25 to 35s', format: '9:16',
+      variations: [
+        { name: 'A: Couple (mixed fitness levels)', rows: [
+          R('Kitchen: both opening containers. One checks macros, other just eats.', 'Kitchen, phone propped wide enough for both', '4s', 'Both talking', 'Couple, 25 to 35', 'Containers, kitchen', 'Hook: "My partner is a gym bro. I am not."'),
+          R('"He likes it because [macros]. I like it because [convenience]."', 'Same', '4s', '', '', '', 'Let them genuinely disagree on reasons'),
+          R('Playful argument about best meal. Genuine banter.', 'Same', '4s', '', '', '', 'Do NOT script the banter'),
+          R('Agreement: "But we both agree on one thing: neither of us cooks now."', 'Same', '3s', '', '', '', 'The convergence moment'),
+          R('CTA: shared code', 'Same', '3s', '', '', '', '"We both have codes." Or one shared.'),
+        ]},
+        { name: 'B: Flatmates (22 to 30)', rows: [
+          R('Kitchen counter: both eating different meals', 'Kitchen, wide shot', '3s', 'Both talking', 'Two friends', 'Different containers', 'Hook: "We used to argue about cooking. Problem solved."'),
+          R('"I was sceptical but the Thai green curry changed my mind"', 'Same', '4s', '', '', '', 'Genuine taste endorsement'),
+          R('"We save 6 hours a week between us"', 'Same', '3s', '', '', '', 'The practical benefit'),
+          R('Show the fridge: labelled containers, organised', 'Open fridge', '3s', '', '', 'Full fridge', 'Visual proof'),
+          R('CTA: "Honestly just try it." + code', 'Same', '3s', '', '', '', ''),
+        ]},
+        { name: 'C: Parent + teenager', rows: [
+          R('Parent intro: "My teenager is the fussiest eater alive."', 'Kitchen, parent to camera', '3s', '', 'Parent (35 to 45)', '', 'Hook: fussy eater challenge'),
+          R('Teen\'s first reaction: suspicion, then surprise', 'Kitchen, teen tries meal', '4s', '', 'Teen (15 to 18)', 'Container', 'Do NOT coach the teen. Genuine only.'),
+          R('Both eating. Compare notes. Genuine conversation.', 'Same', '4s', 'Both talking', 'Both', 'Containers', ''),
+          R('"Even [teen] admits it\'s better than my cooking."', 'Parent to camera', '3s', '', '', '', 'The relatable parent payoff'),
+          R('CTA: "If my teenager likes it, yours will too." + code', 'Same', '3s', '', '', '', ''),
+        ]},
+      ]
+    },
+    {
+      id: 'ugc-5', title: '30-Day Transformation', priority: 'P2',
+      concept: 'Daily check-in diary. Transformation content = highest-impact proof in the dataset. Requires 30-day lead time.',
+      duration: '30 to 45s', format: '9:16',
+      variations: [
+        { name: 'A: Male cutting phase', rows: [
+          R('Day 1: Weigh-in, progress photo, starting stats', 'Bathroom/mirror + kitchen', '3s', 'Talking to camera', 'Male, 25 to 35, intermediate', 'Scale, mirror', 'Hook: "30 days. Only [brand] meals. Here\'s what happened."'),
+          R('Week 1 montage: meals + gym + tracking screenshots', 'Various', '5s', 'Music', '', 'Containers, gym, phone', 'MFP screenshots add credibility'),
+          R('Week 2 mid-point: "The easiest cut I\'ve ever done"', 'To camera', '4s', '', '', '', 'The ease comparison to past cuts'),
+          R('Week 3 to 4: gym PBs, energy levels, how they feel', 'Gym + kitchen', '5s', '', '', '', 'Focus on performance not just aesthetics'),
+          R('Day 30: final weigh-in, progress photo, side-by-side', 'Same location as Day 1', '5s', '', '', 'Scale, mirror', 'Split-screen with Day 1'),
+          R('CTA: progress photos on screen + code + link', 'To camera or graphic', '3s', '', '', '', ''),
+        ]},
+        { name: 'B: Female recomp (NOT weight loss framing)', rows: [
+          R('Day 1: Measurements, gym benchmarks', 'Gym + home', '3s', 'Talking to camera', 'Female, 25 to 35, fitness-focused', '', 'Hook: "What does consistent nutrition actually do? 30 days."'),
+          R('Week 1 to 2: meals, gym clips, energy commentary', 'Various', '6s', 'Music + brief VO', '', '', '"I have more energy at 5pm than I used to at 9am"'),
+          R('Week 3: genuine meal taste reactions', 'Kitchen', '4s', '', '', 'Containers', 'Show variety of meals tried'),
+          R('Day 30: benchmark comparison, how she feels, the numbers', 'Gym + to camera', '5s', '', '', '', 'Frame as performance, NOT weight'),
+          R('CTA: "Try it for 30 days. See what happens." + code', 'To camera', '3s', '', '', '', ''),
+        ]},
+        { name: 'C: Bulking / hard gainer', rows: [
+          R('Day 1: "I need 3,200 cals and I HATE cooking."', 'Kitchen, to camera', '3s', '', 'Male, 20 to 30, lean build', '', 'Hook: the hard gainer struggle'),
+          R('Show the daily volume: multiple containers', 'Kitchen counter', '3s', '', '', '4 to 5 containers', '"This is what 3,200 cals of good food looks like"'),
+          R('Week 1 to 3: gym clips with progressive overload, new PRs', 'Gym', '6s', 'Music', '', '', 'Show the numbers going up'),
+          R('Day 30: scale + mirror. "I gained 2kg of lean mass."', 'Same location as Day 1', '4s', '', '', 'Scale', 'The payoff'),
+          R('CTA: "If you struggle to eat enough, this is it." + code', 'To camera', '3s', '', '', '', ''),
+        ]},
+      ]
+    },
+    {
+      id: 'ugc-6', title: 'First-Bite Taste Reaction', priority: 'P2',
+      concept: 'Short, punchy, hook-optimised. The taste gap is the most consistent weakness across all brands.',
+      duration: '10 to 15s', format: '9:16',
+      variations: [
+        { name: 'A: Sceptic convert', rows: [
+          R('Open container with visible scepticism', 'Kitchen, to camera', '2s', 'Talking to camera', 'Anyone, 22 to 35, expressive', 'Container', 'Hook: "Meal prep that tastes good? I\'ll believe it when I try it."'),
+          R('First bite: genuine surprise reaction', 'Same', '3s', '', '', 'Fork, food', 'THE key moment. Don\'t cut early.'),
+          R('"OK wait. This is actually really good?"', 'Same', '2s', '', '', '', 'Genuine words only'),
+          R('Quick shot of label: meal name + macros', 'Close-up on container', '2s', '', '', '', ''),
+          R('CTA: "Link in bio" (brief)', 'To camera', '2s', '', '', '', 'Keep total under 15s'),
+        ]},
+        { name: 'B: Foodie/home cook', rows: [
+          R('Show the food close-up (make it look appealing)', 'Overhead or 45 degree on food', '2s', '', 'Food lover, 25 to 40', 'Container', 'Hook: "I\'ve tried every meal prep company. They all taste like cardboard. Except..."'),
+          R('First bite: eyebrows up', 'To camera, medium shot', '3s', '', '', '', ''),
+          R('"The lemongrass in this is actually real"', 'Same', '3s', '', '', '', 'Name specific flavours'),
+          R('Eating more while describing flavours', 'Same', '3s', '', '', '', 'The foodie credibility makes endorsement stronger'),
+          R('CTA: "I\'m ordering more." + code', 'To camera', '2s', '', '', '', ''),
+        ]},
+        { name: 'C: Post-workout hunger', rows: [
+          R('Just walked through door, gym kit, sweaty', 'Home, front door or kitchen', '2s', '', 'Anyone, 20 to 30, post-workout', '', 'Hook: "Post-workout and STARVING."'),
+          R('Microwave: 90 seconds. Timer visible.', 'Close on microwave', '2s', '', '', 'Container in microwave', 'Speed up if needed'),
+          R('First massive bite: relief + genuine enjoyment', 'Kitchen, to camera', '3s', '', '', 'Container, fork', '"Why does this taste so good right now?"'),
+          R('CTA: "90 seconds. That\'s it." + code', 'To camera', '2s', '', '', '', ''),
+        ]},
+      ]
+    },
+    {
+      id: 'ugc-7', title: 'Student Budget: Cost Breakdown', priority: 'P3',
+      concept: 'Calculator on screen. Factor in time at minimum wage. The value angle has zero competition in the dataset.',
+      duration: '20 to 30s', format: '9:16',
+      variations: [
+        { name: 'A: University student', rows: [
+          R('Calculator or notes app on screen', 'Screen recording + face cam', '2s', 'Talking to camera', 'Student, 19 to 23', 'Phone', 'Hook: "Everyone says meal prep is expensive. Let me do the maths."'),
+          R('"Supermarket shop: this much. Time cooking: X hours at min wage: this much."', 'Screen showing calculation', '5s', '', '', '', 'Make numbers visible and honest'),
+          R('"Total real cost of cooking: this. [Brand] cost: this."', 'Same', '4s', '', '', '', 'Include time at minimum wage'),
+          R('"When you factor in your time, it\'s actually cheaper."', 'To camera', '3s', '', '', '', 'The revelation moment'),
+          R('CTA: student discount code', 'To camera', '3s', '', '', '', '"Do the maths yourself."'),
+        ]},
+        { name: 'B: Graduate in first job', rows: [
+          R('Show Deliveroo order history (blur prices if needed)', 'Phone screen', '3s', '', '22 to 26, first real job', 'Phone', 'Hook: "I can\'t cook and I\'m spending a fortune on Deliveroo."'),
+          R('"Last month I spent this much on takeaways."', 'To camera or screen', '3s', '', '', '', ''),
+          R('"[Brand] for the same period: this much. AND it\'s healthy."', 'Screen comparison', '4s', '', '', '', 'The comparison is devastating'),
+          R('"I feel like I\'ve finally figured out food."', 'To camera', '3s', '', '', '', 'The adulting angle'),
+          R('CTA: "Stop ordering Deliveroo." + code', 'To camera', '3s', '', '', '', ''),
+        ]},
+        { name: 'C: Current meal prepper', rows: [
+          R('Sunday routine time-lapse: shopping, chopping, cooking, cleaning', 'Kitchen, overhead/side, sped up', '4s', '', '25 to 35, meal prep veteran', 'Groceries, kitchen tools', 'Hook: "I used to batch cook every Sunday. Let me tell you what that costs."'),
+          R('"4 hours of my weekend. Gone. Every week."', 'To camera', '3s', '', '', '', ''),
+          R('"I switched to [brand] and got my Sundays back."', 'To camera, visibly relaxed', '3s', '', '', 'Container', 'Show a Sunday: relaxing instead of cooking'),
+          R('"Same macros. Better taste. Less stress."', 'To camera', '3s', '', '', '', ''),
+          R('CTA: "Get your Sundays back." + code', 'To camera', '3s', '', '', '', ''),
+        ]},
+      ]
+    },
+  ];
+
+  // Build UGC sheets: one sheet per variation
+  ugcConcepts.forEach(c => {
+    c.variations.forEach((v, vi) => {
+      sheets.push({
+        id: `${c.id}-${String.fromCharCode(97+vi)}`,
+        track: 'UGC',
+        trackColor: 'var(--green)',
+        trackBg: 'var(--green-light)',
+        title: `${c.title} / ${v.name}`,
+        concept: c.concept,
+        duration: c.duration,
+        format: c.format,
+        priority: c.priority,
+        location: 'Creator\'s own environment',
+        talent: v.name.split(':').pop().trim(),
+        rows: v.rows,
+      });
+    });
+  });
+
+  return sheets;
+}
+
+function renderSheet(s, idx) {
+  let tbody = '';
+  let shotNum = 0;
+  s.rows.forEach(r => {
+    if (r.section) {
+      tbody += `<tr class="section-row"><td colspan="9">${r.section}</td></tr>`;
+    } else {
+      shotNum++;
+      tbody += `<tr>
+        <td><input type="checkbox"></td>
+        <td>${shotNum}</td>
+        <td><strong>${(r.action || '').split('.')[0]}</strong>${r.action.includes('.') ? '<br>' + r.action.split('.').slice(1).join('.').trim() : ''}</td>
+        <td class="col-sm">${r.frame || ''}</td>
+        <td class="col-dur">${r.dur || ''}</td>
+        <td class="col-sm">${r.audio || ''}</td>
+        <td class="col-sm">${r.talent || ''}</td>
+        <td class="col-sm">${r.props || ''}</td>
+        <td class="col-sm">${r.notes || ''}</td>
+      </tr>`;
+    }
+  });
+
+  return `<div class="sheet-view" id="sheet-${s.id}" data-idx="${idx}">
+    <div class="sheet-head">
+      <div class="sheet-head-left">
+        <div class="sheet-head-track" style="color:${s.trackColor}">${s.track} / ${s.priority}</div>
+        <div class="sheet-head-title">${s.title}</div>
+        <div class="sheet-head-concept">${s.concept}</div>
+      </div>
+      <div class="sheet-head-right">
+        <div><strong>Duration:</strong> ${s.duration}</div>
+        <div><strong>Format:</strong> ${s.format}</div>
+        ${s.location ? `<div><strong>Location:</strong> ${s.location}</div>` : ''}
+        ${s.talent ? `<div><strong>Talent:</strong> ${s.talent}</div>` : ''}
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="shoot-grid">
+        <thead><tr><th>&#10003;</th><th>#</th><th>Action / Description</th><th>Frame / Angle</th><th>Dur</th><th>Audio / Sound</th><th>Talent</th><th>Props / Set</th><th>Notes</th></tr></thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function render(data) {
+  const complete = data.analyses.filter(a => a.ai_analysis && a.transcript_text);
+  if (!complete.length) { document.getElementById('app').innerHTML = '<p>No data</p>'; return; }
+  const stats = getStats(complete, data.ads);
+  const sheets = buildSheets(stats);
+  const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const tracks = [
+    { key: 'Internal', color: 'var(--accent)', dot: '#b44d1e' },
+    { key: 'Studio', color: 'var(--blue)', dot: '#1d4e89' },
+    { key: 'UGC', color: 'var(--green)', dot: '#2d6a4f' },
+  ];
+
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="topbar no-print">
+      <div class="topbar-brand">Creative Kitchen</div>
+      <div class="topbar-actions">
+        <a href="creative-playbook.html" class="btn">&#8592; Playbook</a>
+        <button class="btn" id="btnPrintOne" style="display:none" onclick="printCurrent()">Print This Sheet</button>
+        <button class="btn btn-primary" onclick="printAll()">Print All Sheets</button>
+      </div>
+    </div>
+
+    <div class="hub no-print" id="hub">
+      <h1>Shoot Sheets</h1>
+      <p class="hub-sub">${sheets.length} production-ready shoot sheets across 3 tracks. Each sheet is a step-by-step table grid you can print, tick off on set, and hand to anyone. Based on ${stats.totalVids} analysed competitor videos.</p>
+
+      ${tracks.map(t => {
+        const trackSheets = sheets.filter(s => s.track === t.key);
+        return `<div class="track-group">
+          <div class="track-group-header">
+            <div class="track-dot" style="background:${t.dot}"></div>
+            <div class="track-group-title" style="color:${t.color}">${t.key}</div>
+            <div class="track-group-count">${trackSheets.length} sheets</div>
+          </div>
+          <div class="sheet-index">
+            ${trackSheets.map((s, i) => {
+              const globalIdx = sheets.indexOf(s);
+              return `<div class="sheet-card" data-sheet="${s.id}" onclick="showSheet('${s.id}')">
+                <div class="sheet-card-num">${String(i + 1).padStart(2, '0')}</div>
+                <div class="sheet-card-info">
+                  <div class="sheet-card-title">${s.title}</div>
+                  <div class="sheet-card-meta">${s.priority} / ${s.duration}</div>
+                </div>
+                <div class="sheet-card-arrow">&#8594;</div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    ${sheets.map((s, i) => renderSheet(s, i)).join('')}
+  `;
+}
+
+let currentSheet = null;
+
+function showSheet(id) {
+  document.querySelectorAll('.sheet-view').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sheet-card').forEach(c => c.classList.remove('active'));
+  const el = document.getElementById('sheet-' + id);
+  if (el) {
+    el.classList.add('active');
+    currentSheet = id;
+    document.getElementById('btnPrintOne').style.display = '';
+    const card = document.querySelector(`.sheet-card[data-sheet="${id}"]`);
+    if (card) card.classList.add('active');
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function printCurrent() {
+  if (!currentSheet) return;
+  // Hide all sheets except current, print, restore
+  const allSheets = document.querySelectorAll('.sheet-view');
+  const states = [];
+  allSheets.forEach(s => {
+    states.push(s.style.display);
+    if (s.id !== 'sheet-' + currentSheet) s.style.display = 'none';
+    else s.style.display = 'block';
+  });
+  window.print();
+  allSheets.forEach((s, i) => s.style.display = states[i]);
+}
+
+function printAll() {
+  // Show all sheets for print
+  document.querySelectorAll('.sheet-view').forEach(s => s.style.display = 'block');
+  window.print();
+  // Restore: only show current (or none)
+  document.querySelectorAll('.sheet-view').forEach(s => {
+    s.style.display = '';
+    if (currentSheet && s.id === 'sheet-' + currentSheet) s.classList.add('active');
+  });
+}
+
+(async () => {
+  try { render(await fetchData()); }
+  catch (err) { document.getElementById('app').innerHTML = `<p>Error: ${err.message}</p>`; }
+})();
+</script>
+</body>
+</html>
