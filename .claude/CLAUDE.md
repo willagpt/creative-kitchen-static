@@ -69,11 +69,13 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 
 - **Working:** Brand DNA extraction, prompt generation, image creation, review system, competitor ad viewer with inline video playback and Add Competitor button, Video Analysis Engine (Railway worker + 8 video edge functions), layout-aware UGC brief generation.
 - **Phase 1 Complete:** Video Analysis Engine — Foundation (DB + pipeline + Railway worker + video edge functions). See `docs/video-analysis-project-spec.md`.
-- **Phase 1 re-verification complete (16 Apr):** 24 deployed edge functions all have matching source in `supabase/functions/`. 22 of 24 enforce `verify_jwt: true`; 2 known exceptions are tracked (see Known Issues).
-- **Next:** Phase 2 — Script Extraction (Whisper transcription + OCR) and Organic Intelligence (IG + YouTube ingestion).
-- **Last deployed:** 14 April 2026.
+- **Phase 1 re-verification complete (16 Apr):** 24 deployed edge functions all have matching source in `supabase/functions/`. All 24 enforce `verify_jwt: true`. Both former JWT regressions (analyse-competitor-creatives, debug-auth) closed same day.
+- **Next:** Phase 2 — Script Extraction (Whisper transcription + OCR), Phase 2 engineering (branching + CI), and Organic Intelligence (IG + YouTube ingestion).
+- **Last deployed:** 16 April 2026.
 - **generate-ad-prompt:** v29 (packaging-aware, dynamic packaging terms).
 - **fetch-competitor-ads:** v12 (brand_id/page_id, DCO explosion, credit logging to `foreplay_credit_log`, default `start_date: 2025-12-23`, `credit_budget: 500`).
+- **analyse-competitor-creatives:** v32 (JWT re-enabled 16 Apr).
+- **debug-auth:** v5 (JWT re-enabled 16 Apr, scheduled for retirement).
 - **ai-analyse-video:** v2 (layout detection via Claude vision).
 - **generate-ugc-brief:** v6 (16384 max_tokens, shot variations 2/3/4, layout-aware prompts).
 - **brand_guidelines table:** packaging_format, packaging_specs, colour_palette, typography, tone_of_voice, photo_descriptions columns live.
@@ -82,7 +84,7 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 
 ## Edge Functions
 
-**24 edge functions deployed.** 22 enforce `verify_jwt: true`. Two exceptions are tracked (see Known Issues).
+**24 edge functions deployed.** All 24 enforce `verify_jwt: true` (verified via list_edge_functions on 16 Apr post-fix).
 
 **Prompt / brand / image tooling:**
 
@@ -100,7 +102,7 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 9. `fetch-competitor-ads` — v12. Foreplay API ingestion with credit budgeting and DCO card explosion.
 10. `seed-advertisers` — v4. Bootstrap advertiser seed data.
 11. `extract-ad-thumbnails` — v9. Extracts images from ad HTML snapshots.
-12. `analyse-competitor-creatives` — v31. Multi-step AI visual analysis pipeline. **⚠️ verify_jwt disabled — see Known Issues.**
+12. `analyse-competitor-creatives` — v32. Multi-step AI visual analysis pipeline. JWT re-enabled 16 Apr.
 13. `vision-model-test` — v5. Standalone visual forensic analysis test.
 14. `process-analysis-batch` — v24. Batch orchestrator for vision analysis.
 
@@ -118,7 +120,7 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 
 **Diagnostics:**
 
-24. `debug-auth` — v4. Diagnostic endpoint. **⚠️ verify_jwt disabled — see Known Issues.**
+24. `debug-auth` — v5. Diagnostic endpoint. JWT re-enabled 16 Apr; scheduled for retirement in Phase 2.
 
 **Alignment:** Every deployed slug has a matching `supabase/functions/<slug>/index.ts` directory on `main` (verified 16 Apr). A previous CLAUDE.md revision listed `sync-competitor-metadata` as deployed; that entry was incorrect and has been removed.
 
@@ -143,6 +145,7 @@ Located at `video-worker/` in repo. Express + FFmpeg service for heavy video pro
 - **GitHub is the single source of truth.** If it's not in the repo, it doesn't exist.
 - **Edge functions deploy FROM the repo.** Never deploy directly to Supabase from session code. Commit to GitHub first.
 - **Every deployed slug must have a matching `supabase/functions/<slug>/index.ts`.** Re-verified 16 Apr; now 1:1.
+- **verify_jwt: true is the default.** Never deploy a function with verify_jwt: false without an open ticket explaining why and a dated remediation plan.
 - **No direct pushes to main** (once branching is set up). Use feature branches → dev → main.
 - **Ticket-first for multi-file changes.** If a change touches more than one file, create an Asana ticket first in the engineering project (see Related Projects below).
 - **Run the pre-session checklist** at `docs/pre-session-checklist.md` before writing any code.
@@ -150,14 +153,13 @@ Located at `video-worker/` in repo. Express + FFmpeg service for heavy video pro
 
 ## Known Issues
 
-- **JWT regression: `analyse-competitor-creatives` v31 has `verify_jwt: false`.** Tracked under Asana task [1214111066075066](https://app.asana.com/1/5717506944667/project/1214024873723525/task/1214111066075066). Needs re-enabling without breaking the batch flow.
-- **JWT regression: `debug-auth` v4 has `verify_jwt: false`.** Tracked under Asana task [1214101220983182](https://app.asana.com/1/5717506944667/project/1214024873723525/task/1214101220983182). Options: harden + re-enable JWT, or retire after diagnostics finish.
 - Facebook snapshot URLs (`snapshot_url` in `competitor_ads`) may be blocked by Facebook's CSP when rendered in iframes, needs live verification. If blocked, consider server-side screenshotting as fallback.
 - Local `src/` directory may be empty, code has been pushed directly to GitHub via MCP in previous sessions. Always check GitHub for the source of truth.
 - Shares Supabase tables (static_*) that also appear in the creative-kitchen-video-v3 database.
 - Foreplay API credits are limited (10,000 per period). Edge function has a `credit_budget` safeguard (default 500) and logs usage to `foreplay_credit_log`. Be careful with exploratory API calls.
 - Foreplay Spyder only started tracking Simmer from ~Jan 11, 2026, no historical data before that date.
 - Duplicate `CompetitorAds.jsx` exists in `src/` and `src/components/`. The `src/` copy is stale; Phase 3 cleanup.
+- `debug-auth` is a diagnostic function and should be retired during Phase 2.
 
 ## Related Projects
 
