@@ -310,7 +310,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
   useEffect(() => { fetchFollowedBrands(supabaseUrl).then(setFollowedBrands) }, [])
 
   // Pre-fetch which competitor ads have already been video-analysed
-  useEffect(() => {
+  function refreshAnalysedIds() {
     fetch(`${supabaseUrl}/rest/v1/video_analyses?status=in.(complete,processing)&select=competitor_ad_id`, { headers: sbReadHeaders })
       .then(r => r.ok ? r.json() : [])
       .then(rows => {
@@ -318,7 +318,8 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
         if (ids.size > 0) setAnalysedAdIds(ids)
       })
       .catch(() => {})
-  }, [])
+  }
+  useEffect(() => { refreshAnalysedIds() }, [])
   useEffect(() => { if (apiKey.length > 20) localStorage.setItem('metaAdLibraryToken', apiKey) }, [apiKey])
   useEffect(() => { setShowCount(GRID_PAGE) }, [typeFilter, statusFilter, sortBy, searchText, dateFrom, dateTo])
   useEffect(() => { setTopShowCount(GRID_PAGE) }, [topPercentile, topTypeFilter, topSortBy])
@@ -1034,7 +1035,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
 
     // Process sequentially to avoid overloading edge functions.
     // Each video: Phase 1 (~20s) then Phase 2+3 (~60-90s) = ~2 min per video.
-    const progress = { done: 0, total: toAnalyse.length, failed: 0 }
+    const progress = { done: 0, total: toAnalyse.length, failed: 0, skipped }
     setBulkProgress({ ...progress })
 
     for (const ad of toAnalyse) {
@@ -1084,6 +1085,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
     })
     setTimeout(() => setVideoAnalysisNotice(null), 8000)
     setBulkProgress(null)
+    refreshAnalysedIds()
   }
 
   // Toggle video selection for bulk
@@ -2204,7 +2206,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
                               <div className="ca-bulk-progress-fill" style={{ width: `${(bulkProgress.done / bulkProgress.total) * 100}%` }} />
                             </div>
                             <span className="ca-bulk-progress-text">
-                              {bulkProgress.done}/{bulkProgress.total} analysed{bulkProgress.failed > 0 ? ` (${bulkProgress.failed} failed)` : ''}
+                              {bulkProgress.done}/{bulkProgress.total} analysed{bulkProgress.skipped > 0 ? ` (${bulkProgress.skipped} skipped)` : ''}{bulkProgress.failed > 0 ? ` (${bulkProgress.failed} failed)` : ''}
                             </span>
                           </div>
                         )}
