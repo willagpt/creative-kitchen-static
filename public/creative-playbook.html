@@ -348,19 +348,45 @@ async function fetchData() {
 function buildBrandMap(analyses, ads) {
   const adMap = {};
   ads.forEach(a => { adMap[a.id] = a; });
-  const brandMap = {};
-  let colorIdx = 0;
+
+  // Group by page_id so UGC creators roll up under their parent brand
+  const pageIdGroups = {};
   analyses.forEach(an => {
     if (!an.ai_analysis) return;
     const ad = adMap[an.competitor_ad_id] || {};
-    const brand = ad.page_name || 'Unknown';
-    if (!brandMap[brand]) {
-      brandMap[brand] = { name: brand, color: BRAND_COLORS[colorIdx % BRAND_COLORS.length], analyses: [], pageId: ad.page_id };
-      colorIdx++;
-    }
-    brandMap[brand].analyses.push({ ...an, ad });
+    const pid = ad.page_id || 'unknown';
+    if (!pageIdGroups[pid]) pageIdGroups[pid] = { pageNames: {}, analyses: [] };
+    const pn = ad.page_name || 'Unknown';
+    pageIdGroups[pid].pageNames[pn] = (pageIdGroups[pid].pageNames[pn] || 0) + 1;
+    pageIdGroups[pid].analyses.push({ ...an, ad });
+  });
+
+  // For each page_id group, pick the most common page_name as the brand name
+  const brandMap = {};
+  let colorIdx = 0;
+  Object.entries(pageIdGroups).forEach(([pid, group]) => {
+    const sorted = Object.entries(group.pageNames).sort((a, b) => b[1] - a[1]);
+    const brandName = sorted[0][0];
+    const creators = sorted.slice(1).map(([name, count]) => ({ name, count }));
+    brandMap[brandName] = {
+      name: brandName,
+      color: BRAND_COLORS[colorIdx % BRAND_COLORS.length],
+      analyses: group.analyses,
+      pageId: pid,
+      creators: creators
+    };
+    colorIdx++;
   });
   return brandMap;
+}
+
+// Reverse-lookup: given any page_name, return the parent brand name
+function resolveParentBrand(pageName, brandMap) {
+  if (brandMap[pageName]) return pageName;
+  for (const [brandName, brand] of Object.entries(brandMap)) {
+    if (brand.creators.some(c => c.name === pageName)) return brandName;
+  }
+  return pageName;
 }
 
 function countPattern(analyses, field, subfield) {
@@ -388,7 +414,7 @@ function formatLabel(s) {
 
 function pctOf(count, total) { return total > 0 ? Math.round((count / total) * 100) : 0; }
 
-function getBrandsUsing(analyses, field, subfield, value) {
+function getBrandsUsing(analyses, field, subfield, value, brandMap) {
   const brands = new Set();
   analyses.forEach(an => {
     const ai = an.ai_analysis;
@@ -396,10 +422,12 @@ function getBrandsUsing(analyses, field, subfield, value) {
     let val = subfield ? (ai[field] || {})[subfield] : ai[field];
     if (Array.isArray(val)) {
       if (val.some(v => (typeof v === 'string' ? v : '').toLowerCase().trim() === value)) {
-        brands.add(an.ad?.page_name || 'Unknown');
+        const pn = an.ad?.page_name || 'Unknown';
+        brands.add(brandMap ? resolveParentBrand(pn, brandMap) : pn);
       }
     } else if (typeof val === 'string' && val.toLowerCase().trim() === value) {
-      brands.add(an.ad?.page_name || 'Unknown');
+      const pn = an.ad?.page_name || 'Unknown';
+      brands.add(brandMap ? resolveParentBrand(pn, brandMap) : pn);
     }
   });
   return [...brands];
@@ -489,8 +517,9 @@ function render(data) {
               ${brands.map(b => {
                 const avgD = b.analyses.reduce((s,a) => s + (a.duration_seconds||0), 0) / b.analyses.length;
                 const avgS = b.analyses.reduce((s,a) => s + (a.total_shots||0), 0) / b.analyses.length;
+                const creatorNote = b.creators && b.creators.length > 0 ? ` <span style="font-size:.72rem;color:var(--ink-3)">(incl. ${b.creators.length} UGC creator${b.creators.length > 1 ? 's' : ''})</span>` : '';
                 return `<tr>
-                  <td><span class="brand-dot" style="background:${b.color.dot}"></span><span class="brand-name">${b.name}</span></td>
+                  <td><span class="brand-dot" style="background:${b.color.dot}"></span><span class="brand-name">${b.name}</span>${creatorNote}</td>
                   <td>${b.analyses.length}</td>
                   <td>${avgD.toFixed(1)}s</td>
                   <td>${avgS.toFixed(0)}</td>
@@ -541,7 +570,7 @@ function render(data) {
       <h3 style="font-family:var(--font-display);font-size:1.05rem;margin-bottom:1rem">Hook Strategies</h3>
       ${hookTypes.slice(0, 6).map(([name, count]) => {
         const pct = pctOf(count, totalVideos);
-        const usingBrands = getBrandsUsing(complete, 'hook', 'type', name);
+        const usingBrands = getBrandsUsing(complete, 'hook', 'type', name, brandMap);
         return `<div class="pattern-row">
           <div class="pattern-label-col" style="background:var(--accent-light)">
             <div class="pattern-category" style="color:var(--accent-dark)">Hook Type</div>
@@ -605,7 +634,10 @@ function render(data) {
         });
         return `<div class="brand-card">
           <div class="brand-card-header" style="background:${b.color.bg}">
-            <div class="brand-card-title" style="color:${b.color.text}">${b.name}</div>
+            <div>
+              <div class="brand-card-title" style="color:${b.color.text}">${b.name}</div>
+              ${b.creators && b.creators.length > 0 ? `<div style="font-size:.72rem;color:${b.color.text};opacity:.7;margin-top:.25rem">Includes UGC creators: ${b.creators.map(c => c.name).join(', ')}</div>` : ''}
+            </div>
             <div class="brand-card-badges">
               ${hooks.slice(0,2).map(([h]) => `<span class="brand-card-badge" style="background:rgba(255,255,255,.7);color:${b.color.text}">${formatLabel(h)}</span>`).join('')}
               ${arcs.slice(0,1).map(([a]) => `<span class="brand-card-badge" style="background:rgba(255,255,255,.7);color:${b.color.text}">${formatLabel(a)}</span>`).join('')}
@@ -672,8 +704,10 @@ function render(data) {
             ${complete.map(an => {
               const ai = an.ai_analysis || {};
               const ad = ads.find(a => a.id === an.competitor_ad_id) || {};
+              const parentBrand = resolveParentBrand(ad.page_name || 'Unknown', brandMap);
+              const isCreator = parentBrand !== (ad.page_name || 'Unknown');
               return `<tr>
-                <td><strong>${ad.page_name || 'Unknown'}</strong></td>
+                <td><strong>${parentBrand}</strong>${isCreator ? `<br><span style="font-size:.72rem;color:var(--ink-3)">via ${ad.page_name}</span>` : ''}</td>
                 <td>${formatLabel(ai.hook?.type || 'N/A')}</td>
                 <td class="hook-text">"${(ai.hook?.text || '').slice(0, 80)}${(ai.hook?.text || '').length > 80 ? '...' : ''}"</td>
                 <td>${(an.duration_seconds || 0).toFixed(1)}s</td>
@@ -693,8 +727,9 @@ function render(data) {
         const ai = an.ai_analysis || {};
         const ad = ads.find(a => a.id === an.competitor_ad_id) || {};
         if (!ai.one_line_summary) return '';
+        const parentBrand = resolveParentBrand(ad.page_name || 'Unknown', brandMap);
         return `<div style="padding:.65rem 0;border-bottom:1px solid var(--border-light)">
-          <strong style="font-size:.82rem">${ad.page_name || 'Unknown'}</strong>
+          <strong style="font-size:.82rem">${parentBrand}</strong>
           <span style="font-size:.82rem;color:var(--ink-2);margin-left:.5rem">${ai.one_line_summary}</span>
         </div>`;
       }).join('')}
@@ -747,9 +782,9 @@ function renderStrategySection(analyses, brandMap, hookTypes, narrativeArcs, emo
 
   // Gather top steals and top hooks for reference
   const topBrands2 = brands.slice(0, 2).map(b => b.name).join(' and ');
-  const beforeAfterBrands = getBrandsUsing(analyses, 'hook', 'type', 'before-after');
-  const testimonialBrands = getBrandsUsing(analyses, 'hook', 'type', 'ugc-testimonial');
-  const curiosityBrands = getBrandsUsing(analyses, 'hook', 'type', 'curiosity-gap');
+  const beforeAfterBrands = getBrandsUsing(analyses, 'hook', 'type', 'before-after', brandMap);
+  const testimonialBrands = getBrandsUsing(analyses, 'hook', 'type', 'ugc-testimonial', brandMap);
+  const curiosityBrands = getBrandsUsing(analyses, 'hook', 'type', 'curiosity-gap', brandMap);
 
   function shotRow(num, title, desc, types, source, priority, notes) {
     const tagMap = { hook: 'tag-hook', body: 'tag-body', proof: 'tag-proof', cta: 'tag-cta' };
@@ -798,7 +833,7 @@ function renderStrategySection(analyses, brandMap, hookTypes, narrativeArcs, emo
           'Microwave timer (split-screen)',
           'Real-time 90s microwave cook on one side. Someone spending 45 min cooking from scratch on the other. Text: "Same macros. Different time investment." End with price per meal.',
           ['body', 'proof'],
-          'Convenience emotion + Category contrast. Split-screen format appears in ' + (getBrandsUsing(analyses, 'production_style', 'format', 'mixed').join(', ') || 'multiple brands'),
+          'Convenience emotion + Category contrast. Split-screen format appears in ' + (getBrandsUsing(analyses, 'production_style', 'format', 'mixed', brandMap).join(', ') || 'multiple brands'),
           'P1',
           'Needs kitchen location. Strong pattern-interrupt. The time-saving claim is the most underleveraged selling point in the dataset.'
         )}
