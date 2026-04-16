@@ -55,7 +55,18 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 
 - **Dev:** `npm run dev` (Vite dev server)
 - **Build:** `npm run build`
-- **Deploy:** Push to `main` → Vercel auto-deploys
+- **Deploy:** Push to `main` → Vercel auto-deploys production and `deploy-edge-functions.yml` redeploys any changed Supabase function.
+
+## Branching and CI
+
+See `docs/branching-and-ci.md` for the full flow. Quick summary:
+
+- `main` → production (Vercel prod + edge function deploys)
+- `develop` → integration (Vercel preview per push)
+- `feature/<scope>` → off `develop`, PR into `develop`
+- `hotfix/<scope>` → off `main`, PR into `main`, rebase `develop` after
+
+CI workflow `ci.yml` runs `npm run build` on pushes and PRs to `main` and `develop`. Every PR must be green before merging. Edge-function deploys fire only from `main`. Branch protection rules are pending a user-side GitHub UI pass (tracked in Asana).
 
 ## Design System
 
@@ -146,7 +157,7 @@ Located at `video-worker/` in repo. Express + FFmpeg service for heavy video pro
 - **Edge functions deploy FROM the repo.** Never deploy directly to Supabase from session code. Commit to GitHub first.
 - **Every deployed slug must have a matching `supabase/functions/<slug>/index.ts`.** Re-verified 16 Apr; now 1:1.
 - **verify_jwt: true is the default.** Never deploy a function with verify_jwt: false without an open ticket explaining why and a dated remediation plan.
-- **No direct pushes to main** (once branching is set up). Use feature branches → dev → main.
+- **No direct pushes to main.** Use `feature/<scope>` → PR to `develop` → PR to `main`. Hotfixes PR direct to `main`, then rebase `develop`. See `docs/branching-and-ci.md`.
 - **Ticket-first for multi-file changes.** If a change touches more than one file, create an Asana ticket first in the engineering project (see Related Projects below).
 - **Run the pre-session checklist** at `docs/pre-session-checklist.md` before writing any code.
 - **Update this file** at the end of every session if architecture, tables, or edge functions changed.
