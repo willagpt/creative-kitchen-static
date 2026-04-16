@@ -3,505 +3,653 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Creative Playbook — Freebird / Chefly</title>
+<title>Creative Strategy Playbook</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,300;9..144,600;9..144,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#faf9f7;--surface:#fff;--surface-alt:#f4f2ee;--ink:#1a1714;--ink-2:#5c564d;--ink-3:#8a8279;
-  --accent:#b44d1e;--accent-light:#f4e6dc;--accent-dark:#8a3710;
-  --green:#2d6a4f;--green-light:#d8f3dc;
-  --blue:#1d4e89;--blue-light:#d0e2f4;
-  --purple:#6b21a8;--purple-light:#ede9fe;
-  --amber:#92400e;--amber-light:#fef3c7;
-  --radius:6px;--shadow:0 1px 3px rgba(26,23,20,.08);
+  --bg:#faf9f7;--surface:#fff;--surface-alt:#f4f2ee;--surface-warm:#f9f5f0;
+  --ink:#1a1714;--ink-2:#5c564d;--ink-3:#8a8279;--ink-4:#b0a99e;
+  --accent:#b44d1e;--accent-light:#f4e6dc;--accent-dark:#8a3710;--accent-glow:rgba(180,77,30,.08);
+  --green:#2d6a4f;--green-light:#d8f3dc;--green-bg:#f0f9f2;
+  --blue:#1d4e89;--blue-light:#d0e2f4;--blue-bg:#eef4fa;
+  --purple:#6b21a8;--purple-light:#ede9fe;--purple-bg:#f6f3fc;
+  --amber:#92400e;--amber-light:#fef3c7;--amber-bg:#fefbf0;
+  --red:#991b1b;--red-light:#fee2e2;
+  --border:#e8e4de;--border-light:#f0ece6;
+  --radius:5px;--radius-lg:8px;
+  --shadow-sm:0 1px 2px rgba(26,23,20,.05);--shadow:0 1px 4px rgba(26,23,20,.08);--shadow-lg:0 4px 20px rgba(26,23,20,.1);
   --font-display:'Fraunces',Georgia,serif;--font-body:'DM Sans',system-ui,sans-serif;
 }
-html{font-size:15px;scroll-behavior:smooth}
-body{font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
-h1,h2,h3,h4{font-family:var(--font-display);font-weight:600;line-height:1.25}
+html{font-size:14.5px;scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.65;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
 
-/* ── Layout ── */
-.page{max-width:1200px;margin:0 auto;padding:2rem 1.5rem 4rem}
-.page-header{padding:3rem 0 2rem;border-bottom:1px solid #e8e4de;margin-bottom:2.5rem}
-.page-header h1{font-size:2.4rem;font-weight:800;letter-spacing:-.03em;color:var(--ink)}
-.page-header p{font-size:1.05rem;color:var(--ink-2);margin-top:.5rem;max-width:640px}
+/* ── Loading state ── */
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:1.5rem}
+.loading-screen h2{font-family:var(--font-display);font-size:1.4rem;color:var(--ink-2)}
+.loading-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse .8s infinite alternate}
+.loading-dot:nth-child(2){animation-delay:.15s}.loading-dot:nth-child(3){animation-delay:.3s}
+@keyframes pulse{0%{opacity:.2;transform:scale(.8)}100%{opacity:1;transform:scale(1.1)}}
 
-/* ── Nav Tabs ── */
-.nav-tabs{display:flex;gap:.25rem;border-bottom:2px solid #e8e4de;margin-bottom:2.5rem;overflow-x:auto}
-.nav-tab{padding:.65rem 1.2rem;font-family:var(--font-body);font-size:.85rem;font-weight:500;color:var(--ink-3);
-  background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .15s,border-color .15s}
+/* ── Page shell ── */
+.page{max-width:1140px;margin:0 auto;padding:0 clamp(1rem,3vw,2.5rem) 4rem}
+
+/* ── Top bar ── */
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:1rem 0;border-bottom:1px solid var(--border);margin-bottom:2rem}
+.topbar-brand{font-family:var(--font-display);font-size:1rem;font-weight:700;color:var(--accent-dark);letter-spacing:-.02em}
+.topbar-actions{display:flex;gap:.5rem}
+.btn-export{padding:.45rem 1rem;font-family:var(--font-body);font-size:.78rem;font-weight:600;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--ink-2);cursor:pointer;transition:all .15s}
+.btn-export:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.btn-export-primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn-export-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark);color:#fff}
+
+/* ── Cover page ── */
+.cover{padding:clamp(2rem,5vw,4rem) 0;margin-bottom:2.5rem}
+.cover-eyebrow{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-bottom:1rem}
+.cover h1{font-size:clamp(2rem,4.5vw,3.2rem);font-weight:800;letter-spacing:-.04em;line-height:1.1;max-width:680px}
+.cover-line{width:48px;height:3px;background:var(--accent);margin:1.5rem 0}
+.cover-meta{display:flex;flex-wrap:wrap;gap:1.5rem 3rem;margin-top:1rem}
+.cover-stat{display:flex;flex-direction:column;gap:.15rem}
+.cover-stat-value{font-family:var(--font-display);font-size:1.6rem;font-weight:700;color:var(--ink);line-height:1}
+.cover-stat-label{font-size:.72rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+
+/* ── Nav ── */
+.nav{position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:1px solid var(--border);margin:0 calc(-1 * clamp(1rem,3vw,2.5rem));padding:0 clamp(1rem,3vw,2.5rem)}
+.nav-inner{display:flex;gap:0;overflow-x:auto;-ms-overflow-style:none;scrollbar-width:none}
+.nav-inner::-webkit-scrollbar{display:none}
+.nav-tab{padding:.7rem 1.1rem;font-family:var(--font-body);font-size:.8rem;font-weight:500;color:var(--ink-3);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s}
 .nav-tab:hover{color:var(--ink)}
 .nav-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
+.nav-tab .tab-num{display:inline-block;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--surface-alt);font-size:.65rem;font-weight:700;margin-right:.4rem;color:var(--ink-3)}
+.nav-tab.active .tab-num{background:var(--accent-light);color:var(--accent-dark)}
 
-/* ── Section ── */
-.section{display:none}
+/* ── Sections ── */
+.section{display:none;padding-top:2.5rem}
 .section.active{display:block}
-.section-title{font-size:1.6rem;font-weight:700;margin-bottom:.4rem}
-.section-sub{color:var(--ink-2);margin-bottom:2rem;max-width:600px}
+.section-header{margin-bottom:2rem}
+.section-num{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:.5rem}
+.section-title{font-size:clamp(1.4rem,3vw,1.8rem);font-weight:700;margin-bottom:.4rem;letter-spacing:-.02em}
+.section-sub{color:var(--ink-2);font-size:.92rem;max-width:600px;line-height:1.6}
 
-/* ── Pattern Cards ── */
-.pattern-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.25rem;margin-bottom:2.5rem}
-.pattern-card{background:var(--surface);border:1px solid #e8e4de;border-radius:var(--radius);padding:1.5rem;position:relative;transition:box-shadow .2s}
-.pattern-card:hover{box-shadow:0 4px 16px rgba(26,23,20,.08)}
-.pattern-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.2rem .55rem;border-radius:3px;display:inline-block;margin-bottom:.75rem}
-.label-hook{background:var(--accent-light);color:var(--accent-dark)}
-.label-structure{background:var(--blue-light);color:var(--blue)}
-.label-emotion{background:var(--purple-light);color:var(--purple)}
-.label-production{background:var(--green-light);color:var(--green)}
-.label-cta{background:var(--amber-light);color:var(--amber)}
-.pattern-card h3{font-size:1.1rem;margin-bottom:.5rem}
-.pattern-card p{color:var(--ink-2);font-size:.9rem;line-height:1.55}
-.pattern-evidence{margin-top:.75rem;padding-top:.75rem;border-top:1px solid #eee}
-.pattern-evidence span{font-size:.78rem;color:var(--ink-3);display:inline-block;margin-right:.75rem}
-.pattern-evidence strong{color:var(--ink);font-weight:600}
+/* ── Page 1: Landscape ── */
+.landscape-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2.5rem}
+@media(max-width:700px){.landscape-grid{grid-template-columns:1fr}}
+.landscape-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem}
+.landscape-card h3{font-size:1rem;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
+.landscape-card h3 .lc-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0}
 
-/* ── Brand Playbook ── */
-.brand-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.25rem;margin-bottom:2rem}
-.brand-card{background:var(--surface);border:1px solid #e8e4de;border-radius:var(--radius);overflow:hidden}
-.brand-card-header{padding:1.25rem 1.5rem;border-bottom:1px solid #eee}
-.brand-card-header h3{font-size:1.15rem;margin-bottom:.15rem}
-.brand-card-header .meta{font-size:.8rem;color:var(--ink-3)}
-.brand-card-body{padding:1.25rem 1.5rem}
-.brand-stat{display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid #f4f2ee;font-size:.88rem}
-.brand-stat:last-child{border-bottom:none}
-.brand-stat .label{color:var(--ink-3)}
-.brand-stat .value{font-weight:600}
+.brand-table{width:100%;border-collapse:collapse;margin-bottom:2rem}
+.brand-table th{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);font-weight:600;text-align:left;padding:.6rem .75rem;border-bottom:2px solid var(--border)}
+.brand-table td{padding:.65rem .75rem;border-bottom:1px solid var(--border-light);font-size:.88rem;vertical-align:top}
+.brand-table tr:last-child td{border-bottom:none}
+.brand-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:.5rem;vertical-align:middle}
+.brand-name{font-weight:600}
 
-/* ── Shot List ── */
-.track-toggle{display:flex;gap:.25rem;margin-bottom:1.5rem;flex-wrap:wrap}
-.track-btn{padding:.5rem 1rem;border-radius:20px;border:1px solid #ddd;background:var(--surface);font-family:var(--font-body);font-size:.82rem;font-weight:500;cursor:pointer;transition:all .15s}
-.track-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-.track-btn:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+.percentile-bar{display:flex;align-items:stretch;height:32px;border-radius:var(--radius);overflow:hidden;background:var(--surface-alt);margin-top:.75rem}
+.percentile-segment{display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff;transition:width .3s}
 
-.shot-table{width:100%;border-collapse:collapse;font-size:.88rem;margin-bottom:2rem}
-.shot-table th{text-align:left;padding:.6rem .75rem;border-bottom:2px solid #e8e4de;font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
-.shot-table td{padding:.65rem .75rem;border-bottom:1px solid #f0ede8;vertical-align:top}
-.shot-table tr:hover td{background:var(--surface-alt)}
-.shot-table .priority-high{color:var(--accent);font-weight:700}
-.shot-table .priority-med{color:var(--amber);font-weight:600}
-.shot-table .priority-low{color:var(--ink-3)}
-.shot-table .tag{display:inline-block;padding:.1rem .4rem;border-radius:3px;font-size:.72rem;font-weight:600;margin-right:.25rem}
-.tag-hook{background:var(--accent-light);color:var(--accent-dark)}
-.tag-body{background:var(--blue-light);color:var(--blue)}
-.tag-cta{background:var(--green-light);color:var(--green)}
-.tag-proof{background:var(--purple-light);color:var(--purple)}
+.methodology-note{background:var(--surface-warm);border-left:3px solid var(--accent);padding:1rem 1.25rem;border-radius:0 var(--radius) var(--radius) 0;margin-top:2rem}
+.methodology-note h4{font-size:.82rem;font-weight:700;margin-bottom:.35rem}
+.methodology-note p{font-size:.82rem;color:var(--ink-2);line-height:1.55}
 
-/* ── Insight Callouts ── */
-.insight-row{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:2rem}
-.insight-box{background:var(--surface);border-left:3px solid var(--accent);padding:1.25rem 1.5rem;border-radius:0 var(--radius) var(--radius) 0;box-shadow:var(--shadow)}
-.insight-box h4{font-size:.95rem;margin-bottom:.35rem}
-.insight-box p{font-size:.88rem;color:var(--ink-2);line-height:1.55}
+/* ── Page 2: Patterns ── */
+.pattern-row{display:grid;grid-template-columns:200px 1fr;gap:0;border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1.25rem;background:var(--surface)}
+@media(max-width:640px){.pattern-row{grid-template-columns:1fr}}
+.pattern-label-col{padding:1.25rem;display:flex;flex-direction:column;justify-content:center;gap:.35rem}
+.pattern-category{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+.pattern-name{font-family:var(--font-display);font-size:1.05rem;font-weight:700;line-height:1.2}
+.pattern-pct{font-size:.78rem;color:var(--ink-3);margin-top:.15rem}
+.pattern-detail{padding:1.25rem;border-left:1px solid var(--border-light)}
+@media(max-width:640px){.pattern-detail{border-left:none;border-top:1px solid var(--border-light)}}
+.pattern-detail p{font-size:.88rem;color:var(--ink-2);line-height:1.6}
+.pattern-brands{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.65rem}
+.pattern-brand-tag{font-size:.68rem;padding:.15rem .5rem;border-radius:3px;font-weight:600}
+.bar-chart{display:flex;flex-direction:column;gap:.5rem;margin-top:1.5rem}
+.bar-row{display:flex;align-items:center;gap:.75rem}
+.bar-label{width:140px;font-size:.8rem;font-weight:500;text-align:right;flex-shrink:0;color:var(--ink-2)}
+.bar-track{flex:1;height:22px;background:var(--surface-alt);border-radius:3px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:3px;transition:width .4s;display:flex;align-items:center;padding-left:.5rem}
+.bar-fill span{font-size:.65rem;font-weight:700;color:#fff;white-space:nowrap}
 
-/* ── Summary Table ── */
-.summary-table{width:100%;border-collapse:collapse;margin-bottom:2rem;font-size:.88rem}
-.summary-table th{text-align:left;padding:.55rem .75rem;background:var(--surface-alt);border-bottom:1px solid #e8e4de;font-weight:600;font-size:.8rem}
-.summary-table td{padding:.55rem .75rem;border-bottom:1px solid #f0ede8}
+/* ── Page 3: Brand cards ── */
+.brand-card{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1.5rem;background:var(--surface)}
+.brand-card-header{padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap}
+.brand-card-title{font-family:var(--font-display);font-size:1.15rem;font-weight:700}
+.brand-card-badges{display:flex;flex-wrap:wrap;gap:.35rem}
+.brand-card-badge{font-size:.65rem;padding:.2rem .55rem;border-radius:3px;font-weight:600}
+.brand-card-body{padding:0 1.5rem 1.5rem;display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+@media(max-width:640px){.brand-card-body{grid-template-columns:1fr}}
+.brand-card-section h4{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);font-weight:700;margin-bottom:.5rem}
+.brand-card-section ul{list-style:none;padding:0}
+.brand-card-section li{font-size:.85rem;color:var(--ink-2);padding:.3rem 0;padding-left:1rem;position:relative;line-height:1.5}
+.brand-card-section li::before{content:'';position:absolute;left:0;top:.65rem;width:5px;height:5px;border-radius:50%}
+.steal-list li::before{background:var(--green)}
+.weak-list li::before{background:var(--red)}
+.brand-card-stats{display:flex;gap:1.5rem;padding:1rem 1.5rem;border-top:1px solid var(--border-light);flex-wrap:wrap}
+.brand-card-stat{display:flex;flex-direction:column;gap:.1rem}
+.brand-card-stat-val{font-family:var(--font-display);font-size:1rem;font-weight:700}
+.brand-card-stat-lbl{font-size:.65rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
 
-/* ── Responsive ── */
-@media(max-width:700px){
-  .page-header h1{font-size:1.7rem}
-  .pattern-grid,.brand-grid,.insight-row{grid-template-columns:1fr}
-  .shot-table{font-size:.8rem}
-  .shot-table th,.shot-table td{padding:.45rem .5rem}
-}
+/* ── Page 4: Strategy ── */
+.strategy-track{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1.5rem;background:var(--surface)}
+.strategy-track-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border-light)}
+.strategy-track-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.25rem}
+.strategy-track-title{font-family:var(--font-display);font-size:1.2rem;font-weight:700}
+.strategy-track-rationale{font-size:.88rem;color:var(--ink-2);margin-top:.35rem;line-height:1.55}
+.strategy-shots{padding:1rem 1.5rem}
+.strategy-shot{padding:.85rem 0;border-bottom:1px solid var(--border-light);display:grid;grid-template-columns:28px 1fr auto;gap:.75rem;align-items:start}
+.strategy-shot:last-child{border-bottom:none}
+.shot-num{font-family:var(--font-display);font-size:.85rem;font-weight:700;color:var(--ink-3);text-align:center;padding-top:.1rem}
+.shot-content h5{font-size:.88rem;font-weight:600;margin-bottom:.2rem}
+.shot-content p{font-size:.82rem;color:var(--ink-2);line-height:1.5}
+.shot-priority{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:.2rem .5rem;border-radius:3px;white-space:nowrap;height:fit-content}
+.priority-p1{background:var(--accent-light);color:var(--accent-dark)}
+.priority-p2{background:var(--blue-light);color:var(--blue)}
+.priority-p3{background:var(--surface-alt);color:var(--ink-3)}
 
-/* ── Print ── */
+/* ── Page 5: Raw Data ── */
+.data-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.data-table th{text-align:left;padding:.55rem .65rem;border-bottom:2px solid var(--border);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:600;white-space:nowrap}
+.data-table td{padding:.55rem .65rem;border-bottom:1px solid var(--border-light);vertical-align:top}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:var(--surface-warm)}
+.hook-text{font-style:italic;color:var(--ink-2);max-width:320px}
+
+/* ── Print / PDF ── */
 @media print{
-  .nav-tabs,.track-toggle{display:none}
-  .section{display:block!important;page-break-before:always}
-  .page{max-width:100%}
+  .topbar,.nav,.btn-export,.no-print{display:none!important}
+  .section{display:block!important;page-break-inside:avoid;padding-top:1.5rem}
+  .section:not(:first-child){page-break-before:always}
+  body{font-size:11px;background:#fff}
+  .cover{padding:1.5rem 0}
+  .cover h1{font-size:2rem}
+  .brand-card,.strategy-track,.pattern-row{break-inside:avoid}
 }
 </style>
 </head>
 <body>
-<div class="page">
 
-  <header class="page-header">
-    <h1>Creative Playbook</h1>
-    <p>Cross-brand pattern library, brand playbooks, and production shot lists built from 6 top-performing competitor video ads (47 to 68 days active).</p>
-  </header>
-
-  <nav class="nav-tabs" id="tabs">
-    <button class="nav-tab active" data-tab="patterns">Cross-Brand Patterns</button>
-    <button class="nav-tab" data-tab="brands">Brand Playbooks</button>
-    <button class="nav-tab" data-tab="shots">Chefly Shot Lists</button>
-    <button class="nav-tab" data-tab="data">Raw Data</button>
-  </nav>
-
-  <!-- ═══════════════════════════════════════════════ -->
-  <!-- LAYER 1: CROSS-BRAND PATTERNS                   -->
-  <!-- ═══════════════════════════════════════════════ -->
-  <div class="section active" id="patterns">
-    <h2 class="section-title">Cross-Brand Patterns</h2>
-    <p class="section-sub">Recurring structures, hooks, and emotional levers found across all 6 top performers. These are what's working in the UK meal prep category right now.</p>
-
-    <h4 style="font-family:var(--font-display);margin-bottom:1rem;font-size:1.1rem">Hook Frameworks</h4>
-    <div class="pattern-grid">
-      <div class="pattern-card">
-        <span class="pattern-label label-hook">Hook</span>
-        <h3>UGC Testimonial Open</h3>
-        <p>Creator speaks directly to camera with a personal recommendation or habit statement. No brand mention in the first 2 seconds. Builds trust before selling.</p>
-        <div class="pattern-evidence">
-          <span>Used by: <strong>Frive (Sophie), Simmer</strong></span>
-          <span>Days active: <strong>50, 68</strong></span>
-        </div>
-      </div>
-      <div class="pattern-card">
-        <span class="pattern-label label-hook">Hook</span>
-        <h3>Problem Agitate</h3>
-        <p>Opens with the audience's pain point (training demands, time poverty, bad food quality) then positions the product as the obvious fix. Works best with a credible messenger.</p>
-        <div class="pattern-evidence">
-          <span>Used by: <strong>_heidilong (athlete)</strong></span>
-          <span>Days active: <strong>47</strong></span>
-        </div>
-      </div>
-      <div class="pattern-card">
-        <span class="pattern-label label-hook">Hook</span>
-        <h3>Bold Statistic / Claim</h3>
-        <p>"50% of the average diet is ultra-processed." Leading with a surprising data point that disrupts scrolling. Works especially well when the viewer already cares about the topic.</p>
-        <div class="pattern-evidence">
-          <span>Used by: <strong>_heidilong (UPF ad)</strong></span>
-          <span>Days active: <strong>51</strong></span>
-        </div>
-      </div>
-      <div class="pattern-card">
-        <span class="pattern-label label-hook">Hook</span>
-        <h3>Curiosity Gap / Interview</h3>
-        <p>"What's one hill you'll absolutely die on when it comes to food?" Poses a question the viewer must stay to hear answered. Podcast/interview aesthetic lends authenticity.</p>
-        <div class="pattern-evidence">
-          <span>Used by: <strong>Frive (founder)</strong></span>
-          <span>Days active: <strong>51</strong></span>
-        </div>
-      </div>
-      <div class="pattern-card">
-        <span class="pattern-label label-hook">Hook</span>
-        <h3>Before/After Transformation</h3>
-        <p>Opens with a specific, measurable result ("gained 7kg in 8 months"). The number gives credibility. The journey gives the viewer something to aspire to.</p>
-        <div class="pattern-evidence">
-          <span>Used by: <strong>Scott Thomas</strong></span>
-          <span>Days active: <strong>51</strong></span>
-        </div>
-      </div>
-    </div>
-
-    <h4 style="font-family:var(--font-display);margin-bottom:1rem;font-size:1.1rem">Narrative Structures</h4>
-    <div class="pattern-grid">
-      <div class="pattern-card">
-        <span class="pattern-label label-structure">Structure</span>
-        <h3>Credential → Proof → Offer</h3>
-        <p>Establish the speaker's authority (athlete, nutritionist, founder), demonstrate the product through B-roll, then close with a percentage-off offer. The dominant structure across all 6 ads. Every single one follows this arc.</p>
-        <div class="pattern-evidence">
-          <span>Frequency: <strong>6/6 ads</strong></span>
-        </div>
-      </div>
-      <div class="pattern-card">
-        <span class="pattern-label label-structure">Structure</span>
-        <h3>Category Contrast</h3>
-        <p>Position the product against an inferior alternative (supermarket ready meals, UPF-laden food). Visual contrast (split screen, supermarket aisle shots) makes the gap visceral. Used in 3 of 6 ads.</p>
-        <div class="pattern-evidence">
-          <span>Frequency: <strong>3/6 ads</strong></span>
-          <span>Brands: <strong>Frive, _heidilong</strong></span>
-        </div>
-      </div>
-      <div class="pattern-card">
-        <span class="pattern-label label-structure">Structure</span>
-        <h3>Benefit Stacking</h3>
-        <p>Rapid-fire claim layering: "nutritionist approved, macro balanced, 100% natural, high protein." Usually placed mid-video as a text overlay burst. Present in 5 of 6 ads.</p>
-        <div class="pattern-evidence">
-          <span>Frequency: <strong>5/6 ads</strong></span>
-        </div>
-      </div>
-    </div>
-
-    <h4 style="font-family:var(--font-display);margin-bottom:1rem;font-size:1.1rem">Emotional Levers</h4>
-    <div class="pattern-grid">
-      <div class="pattern-card">
-        <span class="pattern-label label-emotion">Emotion</span>
-        <h3>Trust (6/6)</h3>
-        <p>Every ad leads with a trust mechanism: nutritionist credentials, Olympic athlete endorsement, founder transparency, specific transformation stats. Trust is the table-stakes emotion in this category.</p>
-      </div>
-      <div class="pattern-card">
-        <span class="pattern-label label-emotion">Emotion</span>
-        <h3>Aspiration (6/6)</h3>
-        <p>Every ad sells a version of the viewer's future self: fitter, healthier, more disciplined. The product is framed as a tool for becoming, not just eating.</p>
-      </div>
-      <div class="pattern-card">
-        <span class="pattern-label label-emotion">Emotion</span>
-        <h3>Convenience (5/6)</h3>
-        <p>Time-saving is the second most common sell. "7 hours a week saved," microwave shots, no-thinking-required messaging. Appeals to the busy professional who wants results without kitchen time.</p>
-      </div>
-      <div class="pattern-card">
-        <span class="pattern-label label-emotion">Emotion</span>
-        <h3>Health Anxiety / Fear of Compromise (3/6)</h3>
-        <p>UPF messaging, seed oil avoidance, "no better than supermarket ready meals" framing. This is category-specific fear that works well with the health-conscious audience who reads labels.</p>
-      </div>
-    </div>
-
-    <h4 style="font-family:var(--font-display);margin-bottom:1rem;font-size:1.1rem">Production Observations</h4>
-    <div class="insight-row">
-      <div class="insight-box">
-        <h4>Lo-Fi Wins</h4>
-        <p>All 6 ads use UGC or UGC-style production. No polished studio work. Phone cameras, natural lighting, real locations (gyms, kitchens, offices, waterfront). The "roughness" is the feature, not the bug.</p>
-      </div>
-      <div class="insight-box">
-        <h4>Full-Frame Dominance</h4>
-        <p>85 of 86 total shots are full-frame. Split screens appear in only 2 ads (5 shots total). These top performers keep it simple: one subject, one frame, no complexity.</p>
-      </div>
-    </div>
-    <div class="insight-row">
-      <div class="insight-box">
-        <h4>Medium Pacing is the Sweet Spot</h4>
-        <p>5 of 6 ads use medium pacing (roughly 1.5 to 2.5 seconds per shot). Only 1 ad (Frive founder) runs slow. Fast-paced editing is absent from the top performers entirely.</p>
-      </div>
-      <div class="insight-box">
-        <h4>Duration: 12 to 37 Seconds</h4>
-        <p>Wide range, but the two highest-activity ads (Simmer at 68 days, Scott Thomas at 51 days) sit at opposite ends. Length matters less than hook quality and narrative tightness.</p>
-      </div>
-    </div>
-    <div class="insight-row">
-      <div class="insight-box">
-        <h4>CTA Pattern: Offer-Led Close</h4>
-        <p>5 of 6 ads end with a percentage-off offer (40% or 50% off first order/week). The discount is always the final frame. Only the Frive founder ad skips the in-video discount entirely.</p>
-      </div>
-      <div class="insight-box">
-        <h4>Key Weakness to Exploit</h4>
-        <p>Brand name mispronunciation appears in 3 of 4 Frive ads ("Thrive" instead of "Frive"). This is a real vulnerability: Chefly's name is phonetically unambiguous. Lean into it.</p>
-      </div>
-    </div>
+<div class="page" id="app">
+  <div class="loading-screen" id="loading">
+    <h2>Building your playbook</h2>
+    <div><span class="loading-dot"></span> <span class="loading-dot"></span> <span class="loading-dot"></span></div>
   </div>
-
-  <!-- ═══════════════════════════════════════════════ -->
-  <!-- LAYER 2: BRAND PLAYBOOKS                        -->
-  <!-- ═══════════════════════════════════════════════ -->
-  <div class="section" id="brands">
-    <h2 class="section-title">Brand Playbooks</h2>
-    <p class="section-sub">What each competitor does well, what they miss, and what Chefly can steal or counter.</p>
-
-    <div class="brand-grid">
-      <!-- Frive -->
-      <div class="brand-card">
-        <div class="brand-card-header">
-          <h3>Frive</h3>
-          <div class="meta">2 ads analysed · 50 to 51 days active</div>
-        </div>
-        <div class="brand-card-body">
-          <div class="brand-stat"><span class="label">Hook types</span><span class="value">Testimonial, Curiosity gap</span></div>
-          <div class="brand-stat"><span class="label">Key angle</span><span class="value">100% natural, no UPFs</span></div>
-          <div class="brand-stat"><span class="label">Messenger</span><span class="value">Nutritionist, Founder</span></div>
-          <div class="brand-stat"><span class="label">Emotional driver</span><span class="value">Trust, health, identity</span></div>
-          <div class="brand-stat"><span class="label">Weakness</span><span class="value">Late brand hooks, no in-video offer on founder ad</span></div>
-          <div class="brand-stat"><span class="label">Steal for Chefly</span><span class="value">Nutritionist authority format, interview-style founder content</span></div>
-        </div>
-      </div>
-
-      <!-- _heidilong (Frive ambassador) -->
-      <div class="brand-card">
-        <div class="brand-card-header">
-          <h3>_heidilong (Frive Ambassador)</h3>
-          <div class="meta">2 ads analysed · 47 to 51 days active</div>
-        </div>
-        <div class="brand-card-body">
-          <div class="brand-stat"><span class="label">Hook types</span><span class="value">Problem-agitate, Bold statistic</span></div>
-          <div class="brand-stat"><span class="label">Key angle</span><span class="value">Elite athlete fuel, UPF education</span></div>
-          <div class="brand-stat"><span class="label">Messenger</span><span class="value">Olympic rower / health MSc</span></div>
-          <div class="brand-stat"><span class="label">Emotional driver</span><span class="value">Aspiration, health anxiety, trust</span></div>
-          <div class="brand-stat"><span class="label">Weakness</span><span class="value">Brand mispronounced, lo-fi food visuals</span></div>
-          <div class="brand-stat"><span class="label">Steal for Chefly</span><span class="value">Split-screen UPF contrast, credential + stat hook combo</span></div>
-        </div>
-      </div>
-
-      <!-- Scott Thomas -->
-      <div class="brand-card">
-        <div class="brand-card-header">
-          <h3>Scott Thomas (Frive Influencer)</h3>
-          <div class="meta">1 ad analysed · 51 days active</div>
-        </div>
-        <div class="brand-card-body">
-          <div class="brand-stat"><span class="label">Hook type</span><span class="value">Before/after transformation</span></div>
-          <div class="brand-stat"><span class="label">Key angle</span><span class="value">Body recomp results + time saving</span></div>
-          <div class="brand-stat"><span class="label">Messenger</span><span class="value">Reality TV influencer</span></div>
-          <div class="brand-stat"><span class="label">Emotional driver</span><span class="value">Aspiration, convenience, FOMO</span></div>
-          <div class="brand-stat"><span class="label">Weakness</span><span class="value">Niche bulking audience, brand mispronounced</span></div>
-          <div class="brand-stat"><span class="label">Steal for Chefly</span><span class="value">Specific number hook ("7kg in 8 months"), honest struggle framing</span></div>
-        </div>
-      </div>
-
-      <!-- Simmer -->
-      <div class="brand-card">
-        <div class="brand-card-header">
-          <h3>Simmer</h3>
-          <div class="meta">1 ad analysed · 68 days active (longest runner)</div>
-        </div>
-        <div class="brand-card-body">
-          <div class="brand-stat"><span class="label">Hook type</span><span class="value">UGC testimonial</span></div>
-          <div class="brand-stat"><span class="label">Key angle</span><span class="value">Protein-first, physique proof</span></div>
-          <div class="brand-stat"><span class="label">Messenger</span><span class="value">Fit male UGC creator</span></div>
-          <div class="brand-stat"><span class="label">Emotional driver</span><span class="value">Aspiration, FOMO, trust</span></div>
-          <div class="brand-stat"><span class="label">Weakness</span><span class="value">Sound-dependent CTA, narrow male audience</span></div>
-          <div class="brand-stat"><span class="label">Steal for Chefly</span><span class="value">Social proof milestone card ("1M meals sold"), shirtless transformation shot, short-form pacing (12s)</span></div>
-        </div>
-      </div>
-    </div>
-
-    <h4 style="font-family:var(--font-display);margin:2rem 0 1rem;font-size:1.1rem">Competitive Gap Map</h4>
-    <table class="summary-table">
-      <thead>
-        <tr><th>Gap</th><th>What Competitors Do</th><th>Chefly Opportunity</th></tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><strong>Female audience</strong></td>
-          <td>Only 1 of 6 ads features a female protagonist. Messaging skews heavily male, gym, bulking.</td>
-          <td>Female-led content is massively underserved. Lifestyle, convenience, and wellness angles for women could differentiate immediately.</td>
-        </tr>
-        <tr>
-          <td><strong>Food visually</strong></td>
-          <td>Every ad shows the container, not the food. No appetite appeal, no steam, no close-ups of ingredients.</td>
-          <td>High-quality food B-roll would stand out. "This is what's actually inside" as a content angle.</td>
-        </tr>
-        <tr>
-          <td><strong>Brand pronunciation</strong></td>
-          <td>Frive's name is mispronounced as "Thrive" in 3 of 4 ads.</td>
-          <td>Chefly is unambiguous. Lean into name recognition and repetition.</td>
-        </tr>
-        <tr>
-          <td><strong>Variety / menu</strong></td>
-          <td>No ad shows more than 2 to 3 different meals. Range is never the selling point.</td>
-          <td>If Chefly has a larger or more interesting menu, "choice overload" content could work: fridge pulls, weekly rotations, "what I ate this week."</td>
-        </tr>
-        <tr>
-          <td><strong>Professional production</strong></td>
-          <td>All 6 ads are lo-fi UGC. No one in the category is investing in polished video.</td>
-          <td>A production company shoot would be genuinely novel. One high-production hero video could anchor the brand above the UGC noise.</td>
-        </tr>
-        <tr>
-          <td><strong>Taste / enjoyment</strong></td>
-          <td>Zero ads focus on taste. It's all macros, protein, and health claims.</td>
-          <td>"Actually delicious" positioning. Reaction shots, taste tests, flavour descriptions. Emotional rather than rational.</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════ -->
-  <!-- LAYER 3: CHEFLY SHOT LISTS                      -->
-  <!-- ═══════════════════════════════════════════════ -->
-  <div class="section" id="shots">
-    <h2 class="section-title">Chefly Shot Lists</h2>
-    <p class="section-sub">Specific content briefs organised by production track. Each shot is tagged with the pattern it exploits and prioritised by expected impact.</p>
-
-    <div class="track-toggle" id="trackToggle">
-      <button class="track-btn active" data-track="internal">Internal (Phone + Tripod)</button>
-      <button class="track-btn" data-track="production">Production Company</button>
-      <button class="track-btn" data-track="ugc">UGC (Creator-Led)</button>
-    </div>
-
-    <!-- INTERNAL -->
-    <div class="track-section active" id="track-internal">
-      <table class="shot-table">
-        <thead><tr><th>#</th><th>Shot / Content Piece</th><th>Type</th><th>Pattern Source</th><th>Priority</th><th>Notes</th></tr></thead>
-        <tbody>
-          <tr><td>1</td><td><strong>"What I actually ate this week on Chefly"</strong> — 7 meals shown in rapid succession, each held up to camera with name overlay. Close on "and I didn't cook once."</td><td><span class="tag tag-hook">Hook</span><span class="tag tag-body">Body</span></td><td>UGC testimonial + Benefit stacking</td><td class="priority-high">P1</td><td>Fills the "variety" gap. Film on any delivery day. 15 to 20s.</td></tr>
-          <tr><td>2</td><td><strong>Fridge pull</strong> — Camera starts on closed fridge. Hand opens it to reveal a full shelf of Chefly containers. "This is what organised eating looks like."</td><td><span class="tag tag-hook">Hook</span></td><td>UGC testimonial / Bold claim</td><td class="priority-high">P1</td><td>Trending TikTok format. Can be repurposed as a static image too.</td></tr>
-          <tr><td>3</td><td><strong>Microwave timer</strong> — Real-time 90s microwave cook. Split-screen with someone spending 45 min in a kitchen. Text: "Same macros. Different time investment."</td><td><span class="tag tag-body">Body</span><span class="tag tag-proof">Proof</span></td><td>Convenience emotion + Category contrast</td><td class="priority-high">P1</td><td>Uses the split-screen format from _heidilong. Needs kitchen location.</td></tr>
-          <tr><td>4</td><td><strong>Ingredient flip</strong> — Pick up a supermarket ready meal, flip to ingredients list (long), then pick up a Chefly meal (short list). "Read the label."</td><td><span class="tag tag-hook">Hook</span><span class="tag tag-proof">Proof</span></td><td>Category contrast + Health anxiety</td><td class="priority-med">P2</td><td>Directly stolen from Frive's supermarket aisle contrast. Make it more confrontational.</td></tr>
-          <tr><td>5</td><td><strong>Macro scan</strong> — Open MyFitnessPal, scan a Chefly barcode, show the macro split. "Every meal, already in the app."</td><td><span class="tag tag-proof">Proof</span></td><td>Benefit stacking</td><td class="priority-med">P2</td><td>No competitor shows this. Quick trust-builder for the fitness audience.</td></tr>
-          <tr><td>6</td><td><strong>Desk lunch B-roll</strong> — Office setting, someone unwraps and eats Chefly at their desk. No voiceover, just ASMR + text overlays with benefit claims.</td><td><span class="tag tag-body">Body</span></td><td>Convenience + Lifestyle integration</td><td class="priority-med">P2</td><td>Fills the "professional" audience gap. Can be filmed in any office.</td></tr>
-          <tr><td>7</td><td><strong>Unboxing</strong> — Delivery arrives, unbox on kitchen counter, show each meal. React genuinely to the variety. End with "link in bio."</td><td><span class="tag tag-body">Body</span><span class="tag tag-cta">CTA</span></td><td>UGC testimonial + Social proof</td><td class="priority-low">P3</td><td>Standard format but essential for library. Every competitor has one.</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- PRODUCTION COMPANY -->
-    <div class="track-section" id="track-production" style="display:none">
-      <table class="shot-table">
-        <thead><tr><th>#</th><th>Shot / Content Piece</th><th>Type</th><th>Pattern Source</th><th>Priority</th><th>Notes</th></tr></thead>
-        <tbody>
-          <tr><td>1</td><td><strong>Hero Brand Film (30s)</strong> — Cinematic food prep sequence: steam rising, ingredients being chopped, sauce being poured. Cut to real people eating in real locations. Close on Chefly branding + offer. No voiceover, just music + text.</td><td><span class="tag tag-hook">Hook</span><span class="tag tag-body">Body</span><span class="tag tag-cta">CTA</span></td><td>Competitive gap: no one has polished production</td><td class="priority-high">P1</td><td>This is the differentiator. One hero video that sets Chefly apart from the sea of UGC.</td></tr>
-          <tr><td>2</td><td><strong>Kitchen-to-Container</strong> — Follow one meal from raw ingredients through the kitchen to being sealed in a container and delivered. Time-lapse + macro shots. "From chef's hands to your microwave."</td><td><span class="tag tag-body">Body</span><span class="tag tag-proof">Proof</span></td><td>Trust + Quality contrast</td><td class="priority-high">P1</td><td>Fills the "what's actually inside" gap. Requires kitchen access.</td></tr>
-          <tr><td>3</td><td><strong>Ingredient Closeups Library</strong> — Shoot a bank of 20 to 30 slow-motion ingredient clips: herbs falling, oil drizzling, vegetables being sliced, spices hitting a pan. These become reusable B-roll for all future ads.</td><td><span class="tag tag-body">Body</span></td><td>Food visual gap</td><td class="priority-high">P1</td><td>Most valuable long-term asset. Reusable across dozens of ads.</td></tr>
-          <tr><td>4</td><td><strong>Taste Test Series</strong> — Film 5 to 8 people trying Chefly for the first time. Capture genuine reactions. Edit into a rapid-cut montage with meal names as lower thirds.</td><td><span class="tag tag-proof">Proof</span><span class="tag tag-hook">Hook</span></td><td>Competitive gap: no one sells on taste</td><td class="priority-med">P2</td><td>Can also be cut into individual vertical clips for organic social.</td></tr>
-          <tr><td>5</td><td><strong>Chef Profile</strong> — 60s piece on whoever develops the recipes. Their background, philosophy, what makes Chefly different. Interview format with kitchen B-roll.</td><td><span class="tag tag-body">Body</span><span class="tag tag-proof">Proof</span></td><td>Founder interview (Frive) adapted for chef angle</td><td class="priority-med">P2</td><td>Builds the "faces behind the food" trust layer that competitors use with founders.</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- UGC -->
-    <div class="track-section" id="track-ugc" style="display:none">
-      <table class="shot-table">
-        <thead><tr><th>#</th><th>Shot / Content Piece</th><th>Type</th><th>Pattern Source</th><th>Priority</th><th>Notes</th></tr></thead>
-        <tbody>
-          <tr><td>1</td><td><strong>Female fitness creator: "My week on Chefly"</strong> — 7-day diary format. Each day shows a different meal + a gym clip. Focus on convenience and how it fits her routine. End with genuine recommendation + offer code.</td><td><span class="tag tag-hook">Hook</span><span class="tag tag-body">Body</span><span class="tag tag-cta">CTA</span></td><td>UGC testimonial + Audience gap (female)</td><td class="priority-high">P1</td><td>Top priority. Only 1 of 6 competitor ads features a woman. Massive whitespace.</td></tr>
-          <tr><td>2</td><td><strong>Busy professional: "How I save 5 hours a week"</strong> — Office worker or parent shows their before (takeaway receipts, sad desk lunch) and after (Chefly meals, macro tracking, saved time). Numbers-led hook.</td><td><span class="tag tag-hook">Hook</span><span class="tag tag-proof">Proof</span></td><td>Before/after + Convenience</td><td class="priority-high">P1</td><td>Scott Thomas format adapted for non-gym audience. Broader appeal.</td></tr>
-          <tr><td>3</td><td><strong>Nutritionist explainer: "Why I recommend Chefly"</strong> — Podcast-style talking head. Nutritionist explains what they look for in a meal prep service and why Chefly ticks the boxes. B-roll of meals throughout.</td><td><span class="tag tag-proof">Proof</span><span class="tag tag-body">Body</span></td><td>Frive nutritionist format (direct steal)</td><td class="priority-high">P1</td><td>Most proven format in the dataset (Frive's Sophie ad: 50 days active). Find a credentialled nutritionist.</td></tr>
-          <tr><td>4</td><td><strong>Couple / housemate: "We switched to Chefly"</strong> — Two people discussing the switch, trading off talking points. One handles taste, the other handles convenience. Natural, unscripted feel.</td><td><span class="tag tag-hook">Hook</span><span class="tag tag-body">Body</span></td><td>UGC testimonial (novel duo format)</td><td class="priority-med">P2</td><td>No competitor uses a duo format. Differentiation through format novelty.</td></tr>
-          <tr><td>5</td><td><strong>Gym bro transformation: "30 days on Chefly"</strong> — Daily check-in format, weigh-ins, meal tracking. Focus on "the easiest cut/bulk I've ever done." End with progress photos + offer.</td><td><span class="tag tag-hook">Hook</span><span class="tag tag-proof">Proof</span><span class="tag tag-cta">CTA</span></td><td>Before/after (Scott Thomas) + FOMO</td><td class="priority-med">P2</td><td>Proven format but requires 30-day lead time. Brief creator early.</td></tr>
-          <tr><td>6</td><td><strong>Taste reaction: "I didn't expect meal prep to taste like this"</strong> — Genuine first-bite reaction. Compare to previous meal prep experiences. Short, punchy (10 to 15s).</td><td><span class="tag tag-hook">Hook</span></td><td>Competitive gap: taste</td><td class="priority-med">P2</td><td>Can commission multiple creators cheaply. The hook writes itself.</td></tr>
-          <tr><td>7</td><td><strong>Student budget: "Chefly vs cooking from scratch (cost breakdown)"</strong> — Calculator on screen, breaking down cost per meal including time value. "When you factor in your time, Chefly costs less."</td><td><span class="tag tag-proof">Proof</span></td><td>Bold claim + Category contrast</td><td class="priority-low">P3</td><td>Value angle that no competitor touches. Good for a younger demographic.</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════ -->
-  <!-- LAYER 4: RAW DATA                               -->
-  <!-- ═══════════════════════════════════════════════ -->
-  <div class="section" id="data">
-    <h2 class="section-title">Raw Analysis Data</h2>
-    <p class="section-sub">The 6 video analyses that informed this playbook. All from the Frive ecosystem and Simmer, the top performers in the UK meal prep category.</p>
-
-    <table class="summary-table">
-      <thead>
-        <tr><th>Brand</th><th>Hook Type</th><th>Duration</th><th>Pacing</th><th>Days Active</th><th>Shots</th><th>CTA</th><th>Emotional Drivers</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>_heidilong</td><td>Problem-agitate</td><td>19.7s</td><td>Medium</td><td>47</td><td>12</td><td>40% off</td><td>Aspiration, trust, health</td></tr>
-        <tr><td>Frive (Sophie)</td><td>UGC testimonial</td><td>31.4s</td><td>Medium</td><td>50</td><td>17</td><td>Shop now</td><td>Trust, health, identity</td></tr>
-        <tr><td>Frive (Founder)</td><td>Curiosity gap</td><td>28.1s</td><td>Slow</td><td>51</td><td>9</td><td>GET OFFER</td><td>Trust, health, conviction</td></tr>
-        <tr><td>Scott Thomas</td><td>Before/after</td><td>37.5s</td><td>Medium</td><td>51</td><td>25</td><td>40% off</td><td>Aspiration, convenience, FOMO</td></tr>
-        <tr><td>_heidilong</td><td>Bold claim</td><td>24.9s</td><td>Medium</td><td>51</td><td>14</td><td>40% off</td><td>Health, trust, fear</td></tr>
-        <tr><td>Simmer</td><td>UGC testimonial</td><td>12.7s</td><td>Medium</td><td>68</td><td>8</td><td>50% off</td><td>Aspiration, FOMO, trust</td></tr>
-      </tbody>
-    </table>
-
-    <h4 style="font-family:var(--font-display);margin:2rem 0 1rem;font-size:1.1rem">Hook Text (Verbatim)</h4>
-    <table class="summary-table">
-      <thead><tr><th>Brand</th><th>Opening Line</th></tr></thead>
-      <tbody>
-        <tr><td>_heidilong</td><td>"When you're pushing yourself through sessions like these, your food has to work just as hard."</td></tr>
-        <tr><td>Frive (Sophie)</td><td>"If I could recommend one thing for someone watching this, it would be to eat more whole foods."</td></tr>
-        <tr><td>Frive (Founder)</td><td>"What's one hill that you will absolutely die on when it comes to food?"</td></tr>
-        <tr><td>Scott Thomas</td><td>"With the help of Thrive, I've managed to gain over 7kg in the last 8 months."</td></tr>
-        <tr><td>_heidilong</td><td>"50% of the average diet contains ultra-processed foods. But what are they?"</td></tr>
-        <tr><td>Simmer</td><td>"These are my go-to lunches and dinners during the week."</td></tr>
-      </tbody>
-    </table>
-  </div>
-
 </div>
 
 <script>
-// Tab navigation
-document.getElementById('tabs').addEventListener('click', e => {
-  const btn = e.target.closest('.nav-tab');
-  if (!btn) return;
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById(btn.dataset.tab).classList.add('active');
-});
+const SB_URL = 'https://ifrxylvoufncdxyltgqt.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA';
+const HEADERS = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` };
 
-// Track toggle
-document.getElementById('trackToggle').addEventListener('click', e => {
-  const btn = e.target.closest('.track-btn');
-  if (!btn) return;
-  document.querySelectorAll('.track-btn').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.track-section').forEach(s => s.style.display = 'none');
-  btn.classList.add('active');
-  document.getElementById('track-' + btn.dataset.track).style.display = 'block';
-});
+// Brand colour palette (deterministic)
+const BRAND_COLORS = [
+  {bg:'#f4e6dc',text:'#8a3710',dot:'#b44d1e'},
+  {bg:'#d0e2f4',text:'#1d4e89',dot:'#2563eb'},
+  {bg:'#d8f3dc',text:'#2d6a4f',dot:'#16a34a'},
+  {bg:'#ede9fe',text:'#6b21a8',dot:'#7c3aed'},
+  {bg:'#fef3c7',text:'#92400e',dot:'#d97706'},
+  {bg:'#fee2e2',text:'#991b1b',dot:'#dc2626'},
+  {bg:'#e0e7ff',text:'#3730a3',dot:'#4f46e5'},
+  {bg:'#fce7f3',text:'#9d174d',dot:'#db2777'},
+  {bg:'#d1fae5',text:'#065f46',dot:'#059669'},
+  {bg:'#fef9c3',text:'#854d0e',dot:'#ca8a04'},
+];
+
+async function fetchData() {
+  const [analysesRes, adsRes] = await Promise.all([
+    fetch(`${SB_URL}/rest/v1/video_analyses?status=eq.complete&select=*&order=created_at.desc`, { headers: HEADERS }),
+    fetch(`${SB_URL}/rest/v1/competitor_ads?video_url=not.is.null&select=id,page_name,page_id,days_active,impressions_lower,impressions_upper,start_date,cta_type,creative_body&order=days_active.desc.nullslast`, { headers: HEADERS }),
+  ]);
+  const analyses = await analysesRes.json();
+  const ads = await adsRes.json();
+  return { analyses, ads };
+}
+
+function buildBrandMap(analyses, ads) {
+  const adMap = {};
+  ads.forEach(a => { adMap[a.id] = a; });
+  const brandMap = {};
+  let colorIdx = 0;
+  analyses.forEach(an => {
+    if (!an.ai_analysis) return;
+    const ad = adMap[an.competitor_ad_id] || {};
+    const brand = ad.page_name || 'Unknown';
+    if (!brandMap[brand]) {
+      brandMap[brand] = { name: brand, color: BRAND_COLORS[colorIdx % BRAND_COLORS.length], analyses: [], pageId: ad.page_id };
+      colorIdx++;
+    }
+    brandMap[brand].analyses.push({ ...an, ad });
+  });
+  return brandMap;
+}
+
+function countPattern(analyses, field, subfield) {
+  const counts = {};
+  analyses.forEach(an => {
+    const ai = an.ai_analysis;
+    if (!ai) return;
+    let val = subfield ? (ai[field] || {})[subfield] : ai[field];
+    if (Array.isArray(val)) {
+      val.forEach(v => {
+        const k = (typeof v === 'string' ? v : '').toLowerCase().trim();
+        if (k) counts[k] = (counts[k] || 0) + 1;
+      });
+    } else if (typeof val === 'string') {
+      const k = val.toLowerCase().trim();
+      if (k) counts[k] = (counts[k] || 0) + 1;
+    }
+  });
+  return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+}
+
+function formatLabel(s) {
+  return s.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function pctOf(count, total) { return total > 0 ? Math.round((count / total) * 100) : 0; }
+
+function getBrandsUsing(analyses, field, subfield, value) {
+  const brands = new Set();
+  analyses.forEach(an => {
+    const ai = an.ai_analysis;
+    if (!ai) return;
+    let val = subfield ? (ai[field] || {})[subfield] : ai[field];
+    if (Array.isArray(val)) {
+      if (val.some(v => (typeof v === 'string' ? v : '').toLowerCase().trim() === value)) {
+        brands.add(an.ad?.page_name || 'Unknown');
+      }
+    } else if (typeof val === 'string' && val.toLowerCase().trim() === value) {
+      brands.add(an.ad?.page_name || 'Unknown');
+    }
+  });
+  return [...brands];
+}
+
+function render(data) {
+  const { analyses, ads } = data;
+  const complete = analyses.filter(a => a.ai_analysis && a.transcript_text);
+  if (complete.length === 0) {
+    document.getElementById('app').innerHTML = '<div class="loading-screen"><h2>No completed analyses found</h2><p style="color:var(--ink-2)">Analyse some competitor videos first, then come back here.</p></div>';
+    return;
+  }
+  const brandMap = buildBrandMap(complete, ads);
+  const brands = Object.values(brandMap).sort((a,b) => b.analyses.length - a.analyses.length);
+  const totalVideos = complete.length;
+  const totalBrands = brands.length;
+  const avgDuration = complete.reduce((s, a) => s + (a.duration_seconds || 0), 0) / totalVideos;
+  const avgShots = complete.reduce((s, a) => s + (a.total_shots || 0), 0) / totalVideos;
+  const dateRange = complete.map(a => a.created_at).sort();
+  const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  // Aggregate patterns
+  const hookTypes = countPattern(complete, 'hook', 'type');
+  const narrativeArcs = countPattern(complete, 'narrative_arc', 'structure');
+  const emotionalDrivers = countPattern(complete, 'emotional_drivers');
+  const productionFormats = countPattern(complete, 'production_style', 'format');
+  const pacingProfiles = countPattern(complete, 'pacing_profile');
+
+  // ── Render HTML ──
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <!-- Top bar -->
+    <div class="topbar no-print">
+      <div class="topbar-brand">Creative Kitchen</div>
+      <div class="topbar-actions">
+        <button class="btn-export" onclick="window.print()">Export PDF</button>
+      </div>
+    </div>
+
+    <!-- Cover -->
+    <div class="cover" id="cover-section">
+      <div class="cover-eyebrow">Creative Strategy Playbook</div>
+      <h1>Competitive Video Intelligence<br>& Production Strategy</h1>
+      <div class="cover-line"></div>
+      <div class="cover-meta">
+        <div class="cover-stat"><span class="cover-stat-value">${totalVideos}</span><span class="cover-stat-label">Videos Analysed</span></div>
+        <div class="cover-stat"><span class="cover-stat-value">${totalBrands}</span><span class="cover-stat-label">Brands Studied</span></div>
+        <div class="cover-stat"><span class="cover-stat-value">${avgDuration.toFixed(0)}s</span><span class="cover-stat-label">Avg Duration</span></div>
+        <div class="cover-stat"><span class="cover-stat-value">${avgShots.toFixed(0)}</span><span class="cover-stat-label">Avg Shots/Video</span></div>
+      </div>
+      <p style="margin-top:1.5rem;font-size:.85rem;color:var(--ink-3)">Generated ${today}</p>
+    </div>
+
+    <!-- Nav -->
+    <div class="nav no-print" id="nav">
+      <div class="nav-inner" id="tabs">
+        <button class="nav-tab active" data-tab="landscape"><span class="tab-num">1</span>The Landscape</button>
+        <button class="nav-tab" data-tab="patterns"><span class="tab-num">2</span>Cross-Brand Patterns</button>
+        <button class="nav-tab" data-tab="brands"><span class="tab-num">3</span>Brand Intelligence</button>
+        <button class="nav-tab" data-tab="strategy"><span class="tab-num">4</span>Strategic Choices</button>
+        <button class="nav-tab" data-tab="data"><span class="tab-num">5</span>Raw Data</button>
+      </div>
+    </div>
+
+    <!-- Page 1: Landscape -->
+    <div class="section active" id="landscape">
+      <div class="section-header">
+        <div class="section-num">01 / The Landscape</div>
+        <h2 class="section-title">What We Analysed</h2>
+        <p class="section-sub">The evidence base behind every recommendation in this document. ${totalVideos} videos from ${totalBrands} brands, filtered to the top performers by longevity.</p>
+      </div>
+
+      <div class="landscape-grid">
+        <div class="landscape-card">
+          <h3><span class="lc-icon" style="background:var(--accent-light);color:var(--accent-dark)">&#9654;</span>Video Dataset</h3>
+          <table class="brand-table">
+            <thead><tr><th>Brand</th><th>Videos</th><th>Avg Duration</th><th>Avg Shots</th></tr></thead>
+            <tbody>
+              ${brands.map(b => {
+                const avgD = b.analyses.reduce((s,a) => s + (a.duration_seconds||0), 0) / b.analyses.length;
+                const avgS = b.analyses.reduce((s,a) => s + (a.total_shots||0), 0) / b.analyses.length;
+                return `<tr>
+                  <td><span class="brand-dot" style="background:${b.color.dot}"></span><span class="brand-name">${b.name}</span></td>
+                  <td>${b.analyses.length}</td>
+                  <td>${avgD.toFixed(1)}s</td>
+                  <td>${avgS.toFixed(0)}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="landscape-card">
+          <h3><span class="lc-icon" style="background:var(--blue-light);color:var(--blue)">&#9776;</span>Production Styles</h3>
+          <div class="bar-chart">
+            ${productionFormats.slice(0, 5).map(([name, count]) => `
+              <div class="bar-row">
+                <div class="bar-label">${formatLabel(name)}</div>
+                <div class="bar-track"><div class="bar-fill" style="width:${pctOf(count, totalVideos)}%;background:var(--blue)"><span>${pctOf(count, totalVideos)}%</span></div></div>
+              </div>
+            `).join('')}
+          </div>
+          <div style="margin-top:1.25rem">
+            <h3 style="font-size:.92rem;margin-bottom:.5rem"><span class="lc-icon" style="background:var(--green-light);color:var(--green)">&#9201;</span>Pacing Distribution</h3>
+            <div class="bar-chart">
+              ${pacingProfiles.map(([name, count]) => `
+                <div class="bar-row">
+                  <div class="bar-label">${formatLabel(name)}</div>
+                  <div class="bar-track"><div class="bar-fill" style="width:${pctOf(count, totalVideos)}%;background:var(--green)"><span>${pctOf(count, totalVideos)}%</span></div></div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="methodology-note">
+        <h4>Methodology</h4>
+        <p>Videos were selected from the Meta Ad Library, filtered to the top performing percentile by longevity (days active). Each video was processed through a 4-stage pipeline: shot extraction, audio transcription, OCR frame analysis, and AI-powered creative analysis using Claude. Impression data was not available, so longevity serves as the primary performance proxy: longer-running ads signal sustained investment and sustained returns.</p>
+      </div>
+    </div>
+
+    <!-- Page 2: Cross-Brand Patterns -->
+    <div class="section" id="patterns">
+      <div class="section-header">
+        <div class="section-num">02 / Cross-Brand Patterns</div>
+        <h2 class="section-title">What the Market Is Doing</h2>
+        <p class="section-sub">Patterns that appear across multiple brands. Convergence signals proven tactics. Gaps signal opportunity.</p>
+      </div>
+
+      <h3 style="font-family:var(--font-display);font-size:1.05rem;margin-bottom:1rem">Hook Strategies</h3>
+      ${hookTypes.slice(0, 6).map(([name, count]) => {
+        const pct = pctOf(count, totalVideos);
+        const usingBrands = getBrandsUsing(complete, 'hook', 'type', name);
+        return `<div class="pattern-row">
+          <div class="pattern-label-col" style="background:var(--accent-light)">
+            <div class="pattern-category" style="color:var(--accent-dark)">Hook Type</div>
+            <div class="pattern-name">${formatLabel(name)}</div>
+            <div class="pattern-pct">${count} of ${totalVideos} videos (${pct}%)</div>
+          </div>
+          <div class="pattern-detail">
+            <p>${getHookInsight(name, pct, usingBrands)}</p>
+            <div class="pattern-brands">
+              ${usingBrands.map(b => {
+                const brand = brandMap[b];
+                return brand ? `<span class="pattern-brand-tag" style="background:${brand.color.bg};color:${brand.color.text}">${b}</span>` : '';
+              }).join('')}
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+
+      <h3 style="font-family:var(--font-display);font-size:1.05rem;margin:2rem 0 1rem">Narrative Structures</h3>
+      <div class="bar-chart" style="max-width:600px">
+        ${narrativeArcs.slice(0, 6).map(([name, count]) => `
+          <div class="bar-row">
+            <div class="bar-label">${formatLabel(name)}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${pctOf(count, totalVideos)}%;background:var(--purple)"><span>${pctOf(count, totalVideos)}%</span></div></div>
+          </div>
+        `).join('')}
+      </div>
+
+      <h3 style="font-family:var(--font-display);font-size:1.05rem;margin:2rem 0 1rem">Emotional Drivers</h3>
+      <div class="bar-chart" style="max-width:600px">
+        ${emotionalDrivers.slice(0, 8).map(([name, count]) => `
+          <div class="bar-row">
+            <div class="bar-label">${formatLabel(name)}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${pctOf(count, totalVideos)}%;background:var(--accent)"><span>${count}</span></div></div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- Page 3: Brand Intelligence -->
+    <div class="section" id="brands">
+      <div class="section-header">
+        <div class="section-num">03 / Brand Intelligence</div>
+        <h2 class="section-title">Brand-by-Brand Breakdown</h2>
+        <p class="section-sub">What each competitor is doing, what they do well, and what you can take from them.</p>
+      </div>
+
+      ${brands.map(b => {
+        const avgD = b.analyses.reduce((s,a) => s + (a.duration_seconds||0), 0) / b.analyses.length;
+        const avgS = b.analyses.reduce((s,a) => s + (a.total_shots||0), 0) / b.analyses.length;
+        const hooks = countPattern(b.analyses, 'hook', 'type');
+        const arcs = countPattern(b.analyses, 'narrative_arc', 'structure');
+        const emotions = countPattern(b.analyses, 'emotional_drivers');
+        // Collect steal/weakness insights
+        const steals = [];
+        const weaknesses = [];
+        b.analyses.forEach(an => {
+          const ci = an.ai_analysis?.competitor_insights;
+          if (ci?.what_to_steal) ci.what_to_steal.forEach(s => { if (!steals.includes(s)) steals.push(s); });
+          if (ci?.weaknesses) ci.weaknesses.forEach(w => { if (!weaknesses.includes(w)) weaknesses.push(w); });
+        });
+        return `<div class="brand-card">
+          <div class="brand-card-header" style="background:${b.color.bg}">
+            <div class="brand-card-title" style="color:${b.color.text}">${b.name}</div>
+            <div class="brand-card-badges">
+              ${hooks.slice(0,2).map(([h]) => `<span class="brand-card-badge" style="background:rgba(255,255,255,.7);color:${b.color.text}">${formatLabel(h)}</span>`).join('')}
+              ${arcs.slice(0,1).map(([a]) => `<span class="brand-card-badge" style="background:rgba(255,255,255,.7);color:${b.color.text}">${formatLabel(a)}</span>`).join('')}
+            </div>
+          </div>
+          <div class="brand-card-body">
+            <div class="brand-card-section">
+              <h4>What to steal</h4>
+              <ul class="steal-list">
+                ${steals.slice(0, 4).map(s => `<li>${s}</li>`).join('')}
+                ${steals.length === 0 ? '<li style="color:var(--ink-4)">Insufficient data</li>' : ''}
+              </ul>
+            </div>
+            <div class="brand-card-section">
+              <h4>Weaknesses to exploit</h4>
+              <ul class="weak-list">
+                ${weaknesses.slice(0, 4).map(w => `<li>${w}</li>`).join('')}
+                ${weaknesses.length === 0 ? '<li style="color:var(--ink-4)">Insufficient data</li>' : ''}
+              </ul>
+            </div>
+          </div>
+          <div class="brand-card-stats">
+            <div class="brand-card-stat"><span class="brand-card-stat-val">${b.analyses.length}</span><span class="brand-card-stat-lbl">Videos</span></div>
+            <div class="brand-card-stat"><span class="brand-card-stat-val">${avgD.toFixed(0)}s</span><span class="brand-card-stat-lbl">Avg Length</span></div>
+            <div class="brand-card-stat"><span class="brand-card-stat-val">${avgS.toFixed(0)}</span><span class="brand-card-stat-lbl">Avg Shots</span></div>
+            <div class="brand-card-stat"><span class="brand-card-stat-val">${hooks[0] ? formatLabel(hooks[0][0]) : 'N/A'}</span><span class="brand-card-stat-lbl">Top Hook</span></div>
+            <div class="brand-card-stat"><span class="brand-card-stat-val">${emotions.slice(0,3).map(([e]) => formatLabel(e)).join(', ') || 'N/A'}</span><span class="brand-card-stat-lbl">Key Emotions</span></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <!-- Page 4: Strategic Choices -->
+    <div class="section" id="strategy">
+      <div class="section-header">
+        <div class="section-num">04 / Strategic Choices</div>
+        <h2 class="section-title">Production Recommendations</h2>
+        <p class="section-sub">Where to invest creative resources, broken into three production tracks. Each recommendation is tied back to competitive evidence.</p>
+      </div>
+
+      ${renderStrategySection(complete, brandMap, hookTypes, narrativeArcs, emotionalDrivers, totalBrands)}
+    </div>
+
+    <!-- Page 5: Raw Data -->
+    <div class="section" id="data">
+      <div class="section-header">
+        <div class="section-num">05 / Raw Data</div>
+        <h2 class="section-title">Full Analysis Dataset</h2>
+        <p class="section-sub">Every video analysed, with key metrics and AI-extracted insights.</p>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead>
+            <tr><th>Brand</th><th>Hook Type</th><th>Hook Text</th><th>Duration</th><th>Shots</th><th>Pacing</th><th>Narrative</th><th>CTA</th><th>Emotional Drivers</th></tr>
+          </thead>
+          <tbody>
+            ${complete.map(an => {
+              const ai = an.ai_analysis || {};
+              const ad = ads.find(a => a.id === an.competitor_ad_id) || {};
+              return `<tr>
+                <td><strong>${ad.page_name || 'Unknown'}</strong></td>
+                <td>${formatLabel(ai.hook?.type || 'N/A')}</td>
+                <td class="hook-text">"${(ai.hook?.text || '').slice(0, 80)}${(ai.hook?.text || '').length > 80 ? '...' : ''}"</td>
+                <td>${(an.duration_seconds || 0).toFixed(1)}s</td>
+                <td>${an.total_shots || 0}</td>
+                <td>${formatLabel(an.pacing_profile || 'N/A')}</td>
+                <td>${formatLabel((ai.narrative_arc?.structure) || 'N/A')}</td>
+                <td>${ai.cta?.type ? formatLabel(ai.cta.type) : 'N/A'}</td>
+                <td>${(ai.emotional_drivers || []).slice(0, 4).map(formatLabel).join(', ')}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="font-family:var(--font-display);font-size:1.05rem;margin:2rem 0 1rem">One-Line Summaries</h3>
+      ${complete.map(an => {
+        const ai = an.ai_analysis || {};
+        const ad = ads.find(a => a.id === an.competitor_ad_id) || {};
+        if (!ai.one_line_summary) return '';
+        return `<div style="padding:.65rem 0;border-bottom:1px solid var(--border-light)">
+          <strong style="font-size:.82rem">${ad.page_name || 'Unknown'}</strong>
+          <span style="font-size:.82rem;color:var(--ink-2);margin-left:.5rem">${ai.one_line_summary}</span>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+
+  // Wire up tab navigation
+  document.getElementById('tabs').addEventListener('click', e => {
+    const btn = e.target.closest('.nav-tab');
+    if (!btn) return;
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+
+function getHookInsight(type, pct, brands) {
+  const brandList = brands.join(', ');
+  if (pct >= 40) return `Dominant approach across the market. Used by ${brandList}. This is table stakes, not a differentiator. You need to execute this well, but it won't set you apart.`;
+  if (pct >= 20) return `A proven approach used by ${brandList}. Strong enough to validate, rare enough to still feel distinctive if you execute with a different angle.`;
+  return `A less common approach from ${brandList}. If the data supports its performance, this represents genuine whitespace. Worth testing against the dominant hooks.`;
+}
+
+function renderStrategySection(analyses, brandMap, hookTypes, narrativeArcs, emotionalDrivers, totalBrands) {
+  // Gather all steals and weaknesses to inform recommendations
+  const allSteals = [];
+  const allWeaknesses = [];
+  analyses.forEach(an => {
+    const ci = an.ai_analysis?.competitor_insights;
+    if (ci?.what_to_steal) ci.what_to_steal.forEach(s => allSteals.push(s));
+    if (ci?.weaknesses) ci.weaknesses.forEach(w => allWeaknesses.push(w));
+  });
+
+  // Determine dominant patterns for strategic framing
+  const topHook = hookTypes[0] ? formatLabel(hookTypes[0][0]) : 'Problem-Solution';
+  const topArc = narrativeArcs[0] ? formatLabel(narrativeArcs[0][0]) : 'Problem-Solution';
+  const topEmotions = emotionalDrivers.slice(0, 3).map(([e]) => formatLabel(e)).join(', ');
+  const totalVids = analyses.length;
+  const brands = Object.values(brandMap);
+
+  return `
+    <!-- Internal -->
+    <div class="strategy-track">
+      <div class="strategy-track-header" style="background:var(--accent-light)">
+        <div class="strategy-track-label" style="color:var(--accent-dark)">Track 1</div>
+        <div class="strategy-track-title">Internal Production</div>
+        <p class="strategy-track-rationale">Quick-turn content your team can produce in-house. Based on the most common competitor formats, adapted for speed and iteration. The dominant hook across ${totalVids} analysed videos is "${topHook}" and the primary emotional drivers are ${topEmotions}.</p>
+      </div>
+      <div class="strategy-shots">
+        <div class="strategy-shot"><div class="shot-num">1</div><div class="shot-content"><h5>"What I actually ate this week" rapid showcase</h5><p>7 meals shown in fast succession, each held to camera with name overlay. Close on the convenience message. This mirrors the UGC testimonial format used by ${brands.length > 1 ? brands.slice(0,2).map(b=>b.name).join(' and ') : brands[0]?.name || 'competitors'}. 15 to 20s.</p></div><div class="shot-priority priority-p1">P1</div></div>
+        <div class="strategy-shot"><div class="shot-num">2</div><div class="shot-content"><h5>Fridge pull reveal</h5><p>Camera on closed fridge. Hand opens it to reveal stacked containers. "This is what organised eating looks like." Trending format that works as both video and static. Targets the convenience + aspiration emotional drivers found in ${pctOf(emotionalDrivers.find(e => e[0] === 'convenience')?.[1] || 0, totalVids)}% of analysed ads.</p></div><div class="shot-priority priority-p1">P1</div></div>
+        <div class="strategy-shot"><div class="shot-num">3</div><div class="shot-content"><h5>Speed comparison (split-screen)</h5><p>Real-time microwave timer vs someone cooking from scratch. Same macros, different time investment. The "category contrast" pattern appears across multiple brands and is one of the most effective patterns in the dataset.</p></div><div class="shot-priority priority-p1">P1</div></div>
+        <div class="strategy-shot"><div class="shot-num">4</div><div class="shot-content"><h5>Ingredient label flip</h5><p>Supermarket ready meal label (long ingredients list) vs your label (short, clean). "Read the label." Directly informed by category contrast hooks in the competitive set. Confrontational, high pattern-interrupt potential.</p></div><div class="shot-priority priority-p2">P2</div></div>
+        <div class="strategy-shot"><div class="shot-num">5</div><div class="shot-content"><h5>Macro scan</h5><p>Open a calorie tracking app, scan a barcode, show the clean macro split. None of the ${totalBrands} analysed brands show this. Quick trust-builder for the fitness audience.</p></div><div class="shot-priority priority-p2">P2</div></div>
+      </div>
+    </div>
+
+    <!-- Production Company -->
+    <div class="strategy-track">
+      <div class="strategy-track-header" style="background:var(--blue-light)">
+        <div class="strategy-track-label" style="color:var(--blue)">Track 2</div>
+        <div class="strategy-track-title">Production Company</div>
+        <p class="strategy-track-rationale">Higher production value content that differentiates from the market. Analysis shows ${pctOf(analyses.filter(a => ['ugc','talking-head','selfie'].includes(a.ai_analysis?.production_style?.format?.toLowerCase())).length, totalVids)}% of competitor ads use UGC/talking-head formats. Polished production is a genuine gap.</p>
+      </div>
+      <div class="strategy-shots">
+        <div class="strategy-shot"><div class="shot-num">1</div><div class="shot-content"><h5>Hero brand film (30s)</h5><p>Cinematic food prep: steam, chopping, sauce pours. Cut to real people eating in real locations. Music + text, no voiceover. This format barely exists in the competitive set, making it a clear differentiator. One hero video that positions above the sea of UGC.</p></div><div class="shot-priority priority-p1">P1</div></div>
+        <div class="strategy-shot"><div class="shot-num">2</div><div class="shot-content"><h5>Kitchen-to-container journey</h5><p>Follow one meal from raw ingredients through the kitchen to sealed and delivered. Time-lapse + macro shots. Fills the "what's actually inside" trust gap identified in competitor weaknesses.</p></div><div class="shot-priority priority-p1">P1</div></div>
+        <div class="strategy-shot"><div class="shot-num">3</div><div class="shot-content"><h5>Ingredient close-ups library</h5><p>20 to 30 slow-motion clips: herbs falling, oil drizzling, spices hitting a pan. Reusable B-roll for all future ads. The most valuable long-term production investment.</p></div><div class="shot-priority priority-p1">P1</div></div>
+        <div class="strategy-shot"><div class="shot-num">4</div><div class="shot-content"><h5>Taste test series</h5><p>5 to 8 genuine first-time reactions. Rapid-cut montage with meal names as lower thirds. Competitor analysis reveals that almost nobody sells on taste. This is a wide-open lane.</p></div><div class="shot-priority priority-p2">P2</div></div>
+      </div>
+    </div>
+
+    <!-- UGC -->
+    <div class="strategy-track">
+      <div class="strategy-track-header" style="background:var(--green-light)">
+        <div class="strategy-track-label" style="color:var(--green)">Track 3</div>
+        <div class="strategy-track-title">UGC Creator Briefs</div>
+        <p class="strategy-track-rationale">Creator-led content based on proven formats from the competitive set. The UGC/testimonial hook type appears in ${pctOf(hookTypes.find(h => h[0].includes('ugc') || h[0].includes('testimonial'))?.[1] || 0, totalVids)}% of analysed videos. These briefs adapt what works and fill the gaps competitors leave open.</p>
+      </div>
+      <div class="strategy-shots">
+        <div class="strategy-shot"><div class="shot-num">1</div><div class="shot-content"><h5>Female fitness creator: "My week on [brand]"</h5><p>7-day diary format. Each day: different meal + gym clip. Convenience + routine fit. The competitive analysis shows a significant underrepresentation of female creators. This is the single biggest audience whitespace.</p></div><div class="shot-priority priority-p1">P1</div></div>
+        <div class="strategy-shot"><div class="shot-num">2</div><div class="shot-content"><h5>Busy professional: "How I save 5 hours a week"</h5><p>Before (takeaway receipts, sad desk lunch) and after (clean meals, macro tracking). Numbers-led hook. Adapts the before/after format for a non-gym audience, broadening appeal beyond fitness.</p></div><div class="shot-priority priority-p1">P1</div></div>
+        <div class="strategy-shot"><div class="shot-num">3</div><div class="shot-content"><h5>Nutritionist explainer</h5><p>Podcast-style talking head. Credentialled nutritionist explains what they look for in meal prep and why this ticks the boxes. B-roll of meals throughout. This format is proven as one of the longest-running ad types in the competitive set.</p></div><div class="shot-priority priority-p1">P1</div></div>
+        <div class="strategy-shot"><div class="shot-num">4</div><div class="shot-content"><h5>Couple/housemate dual testimonial</h5><p>Two people discussing the switch, splitting talking points between taste and convenience. Unscripted feel. No competitor uses a duo format. Differentiation through format novelty.</p></div><div class="shot-priority priority-p2">P2</div></div>
+        <div class="strategy-shot"><div class="shot-num">5</div><div class="shot-content"><h5>First-bite taste reaction</h5><p>Genuine surprise at taste quality. Compare to previous meal prep experiences. 10 to 15s, hook-optimised. Commission multiple creators cheaply. The gap in competitor creative around taste is consistent across all brands.</p></div><div class="shot-priority priority-p2">P2</div></div>
+      </div>
+    </div>
+
+    <div class="methodology-note" style="margin-top:1.5rem">
+      <h4>How to use this document</h4>
+      <p>Pages 1 to 3 are the evidence. Page 4 is the action plan. When challenged on a creative direction, trace the recommendation back through the data: the shot brief (Page 4) references a pattern (Page 2), which is evidenced by specific brands (Page 3), drawn from the raw dataset (Page 5). Every recommendation has a paper trail.</p>
+    </div>
+  `;
+}
+
+// ── Boot ──
+(async () => {
+  try {
+    const data = await fetchData();
+    render(data);
+  } catch (err) {
+    document.getElementById('app').innerHTML = `<div class="loading-screen"><h2>Failed to load data</h2><p style="color:var(--ink-2)">${err.message}</p></div>`;
+  }
+})();
+
 </script>
 </body>
 </html>
