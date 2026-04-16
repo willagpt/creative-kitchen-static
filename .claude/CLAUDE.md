@@ -2,11 +2,14 @@
 
 AI-powered static ad image generator for Willa Ltd, branded as "Big Tasty Productions". Generates marketing images from brand DNA analysis, with AI prompt iteration and a review/rating system. Part of the Marketing suite in Willa HQ.
 
+This repo is also the home of the Video Analysis Engine (Railway worker + Supabase edge function pipeline) and the in-flight Organic Intelligence feature (IG + YouTube organic post monitoring). The broader engineering backlog lives in the Asana project linked at the bottom of this file.
+
 ## Tech Stack
 
 - **Framework:** Vite + React
 - **Database:** Supabase project `ifrxylvoufncdxyltgqt` (URL: `https://ifrxylvoufncdxyltgqt.supabase.co`)
 - **Hosting:** Vercel (personal account: jameseatcheflycos-projects)
+- **Video pipeline:** Railway (`creative-kitchen-static-production.up.railway.app`, project `triumphant-dedication`)
 - **Fonts:** Plus Jakarta Sans, Syne, Instrument Serif (Google Fonts)
 - **Repo:** github.com/willagpt/creative-kitchen-static
 
@@ -16,7 +19,7 @@ https://creative-kitchen-static.vercel.app
 
 ## Architecture
 
-Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product info), generates AI image prompts across templates, creates images, and tracks reviews/ratings.
+Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product info), generates AI image prompts across templates, creates images, and tracks reviews/ratings. Extended to ingest competitor ads from Foreplay, analyse competitor videos through a Railway worker, and (in progress) ingest organic posts from Instagram and YouTube.
 
 ### Supabase Tables
 
@@ -25,18 +28,20 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 - `static_reviews` — review ratings by claude or user. Ratings: great, good, needs-work, slop. 46+ reviews
 - `static_prompt_versions` — prompt iteration history (32+ versions). Tracks template_id, version, prompt text, image_url, brand_dna_snapshot
 - `brand_guidelines` — brand identity data. Fields: packaging_format, packaging_specs, colour_palette, typography, tone_of_voice, photo_descriptions
-- `competitor_ads` — ~9,900 rows of enriched competitor ads (Simmer data: Jan 11 – Apr 9, 2026). Key fields: `thumbnail_url`, `snapshot_url`, `page_id`, `page_name`, `creative_title`, `creative_body`, `start_date`, `end_date`, `is_active`, `impressions_lower`, `impressions_upper`, `days_active`, `platforms`. **New columns (Apr 2026):** `display_format` (IMAGE/VIDEO/DCO), `video_url`, `card_index`, `parent_ad_id`, `emotional_drivers`, `content_filter`, `creative_targeting`, `categories`, `persona`, `languages`, `market_target`, `niches`, `cta_type`, `link_url`. DCO ads are exploded into one row per card.
+- `competitor_ads` — ~9,900 rows of enriched competitor ads (Simmer data: Jan 11 – Apr 9, 2026). Key fields: `thumbnail_url`, `snapshot_url`, `page_id`, `page_name`, `creative_title`, `creative_body`, `start_date`, `end_date`, `is_active`, `impressions_lower`, `impressions_upper`, `days_active`, `platforms`. **Apr 2026 columns:** `display_format` (IMAGE/VIDEO/DCO), `video_url`, `card_index`, `parent_ad_id`, `emotional_drivers`, `content_filter`, `creative_targeting`, `categories`, `persona`, `languages`, `market_target`, `niches`, `cta_type`, `link_url`. DCO ads are exploded into one row per card.
 - `followed_brands` — brands being tracked for competitor ad monitoring. Simmer: `brand_id: n68cYDEnS6D6eU4T4bLS`, `page_id: 187701838409772`
 - `foreplay_credit_log` — tracks Foreplay API credit usage per fetch call. Fields: `brand_id`, `page_id`, `credits_used`, `ads_fetched`, `credit_budget`, `start_date`, `stopped_reason`
-- `video_analyses` — **(NEW Apr 2026)** Primary record for video analysis. Fields: competitor_ad_id, run_id, video_url, duration_seconds, total_shots, total_cuts, avg_shot_duration, cuts_per_second, pacing_profile, transcript_text, ocr_text, combined_script, contact_sheet_url, ai_analysis (jsonb), layout_summary (jsonb — `{"full":6,"split-2":2,"split-3":0,"other":0}`), status, error_message
-- `video_shots` — **(NEW Apr 2026)** Individual shot records. Fields: video_analysis_id (FK), shot_number, start_time, end_time, duration, frame_url, ocr_text, description, screen_layout (text — `full`|`split-2`|`split-3`|`other`, nullable, CHECK constraint)
-- `video_analysis_runs` — **(NEW Apr 2026)** Batch analysis runs. Fields: brand_name, page_id, percentile (1/2/5/10/20), total_videos, analysed_count, status
+- `video_analyses` — Primary record for video analysis. Fields: competitor_ad_id, run_id, video_url, duration_seconds, total_shots, total_cuts, avg_shot_duration, cuts_per_second, pacing_profile, transcript_text, ocr_text, combined_script, contact_sheet_url, ai_analysis (jsonb), layout_summary (jsonb, e.g. `{"full":6,"split-2":2,"split-3":0,"other":0}`), status, error_message
+- `video_shots` — Individual shot records. Fields: video_analysis_id (FK), shot_number, start_time, end_time, duration, frame_url, ocr_text, description, screen_layout (text: `full` | `split-2` | `split-3` | `other`, nullable, CHECK constraint)
+- `video_analysis_runs` — Batch analysis runs. Fields: brand_name, page_id, percentile (1/2/5/10/20), total_videos, analysed_count, status
+
+**Planned (Organic Intelligence phase):** `followed_organic_accounts`, `organic_posts`, `organic_post_metrics`, `organic_fetch_log`. `video_analyses` will gain `organic_post_id` + `source_kind` columns with a CHECK constraint so the same pipeline serves ad and organic inputs. Specification lives under the Organic Intel milestones in the Asana project.
 
 ### Supabase Storage Buckets
 
 - `reference-images` — existing, public
 - `static-uploads` — existing, public
-- `video-processing` — **(NEW Apr 2026)** public, 100MB limit. Stores extracted video frames, contact sheets, and audio files. MIME types: video/mp4, video/webm, image/jpeg, image/png, audio/mpeg, audio/mp3
+- `video-processing` — public, 100 MB limit. Stores extracted video frames, contact sheets, and audio files. MIME types: video/mp4, video/webm, image/jpeg, image/png, audio/mpeg, audio/mp3
 
 ### Workflow
 
@@ -60,80 +65,105 @@ Vite + React SPA with dark theme. Analyses brand DNA (colours, style, product in
 - Fonts: Inter (UI), JetBrains Mono (code/prompts)
 - Antialiased rendering
 
-## Current Status
+## Current Status (16 April 2026)
 
-- **Working:** Brand DNA extraction, prompt generation, image creation, review system, competitor ad viewer with inline video playback and Add Competitor button
-- **Phase 1 Complete:** Video Analysis Engine — Foundation (DB + pipeline + Railway worker + 3 edge functions). See `docs/video-analysis-project-spec.md`
-- **Next:** Phase 2 — Script Extraction (Whisper transcription + OCR)
-- **Last deployed:** 14 April 2026
-- **Edge functions:** 18 edge functions deployed (14 original + 3 video analysis + 1 UGC brief). All have `verify_jwt: true`
-- **ai-analyse-video:** v2 deployed. Layout detection — classifies each shot as full/split-2/split-3/other via Claude vision, writes screen_layout per shot + layout_summary aggregate
-- **generate-ugc-brief:** v6 deployed. 16384 max_tokens, truncation detection, Chefly-branded, shot variations (2/3/4), layout-aware prompts (split-screen/tri-screen framing)
-- **generate-ad-prompt:** v27 (packaging-aware, dynamic packaging terms)
-- **brand_guidelines table:** Updated with packaging_format, packaging_specs, colour_palette, typography, tone_of_voice, photo_descriptions columns
-- **Edge function `fetch-competitor-ads`:** v6 deployed. Supports `brand_id` or `page_id`, default `start_date: 2025-12-23`, `credit_budget: 500`, DCO card explosion, rich metadata extraction, credit logging to `foreplay_credit_log`
-- **Foreplay API:** `public.api.foreplay.co`, key stored in edge function. 1 credit per ad. Simmer brand_id: `n68cYDEnS6D6eU4T4bLS`
+- **Working:** Brand DNA extraction, prompt generation, image creation, review system, competitor ad viewer with inline video playback and Add Competitor button, Video Analysis Engine (Railway worker + 8 video edge functions), layout-aware UGC brief generation.
+- **Phase 1 Complete:** Video Analysis Engine — Foundation (DB + pipeline + Railway worker + video edge functions). See `docs/video-analysis-project-spec.md`.
+- **Phase 1 re-verification complete (16 Apr):** 24 deployed edge functions all have matching source in `supabase/functions/`. 22 of 24 enforce `verify_jwt: true`; 2 known exceptions are tracked (see Known Issues).
+- **Next:** Phase 2 — Script Extraction (Whisper transcription + OCR) and Organic Intelligence (IG + YouTube ingestion).
+- **Last deployed:** 14 April 2026.
+- **generate-ad-prompt:** v29 (packaging-aware, dynamic packaging terms).
+- **fetch-competitor-ads:** v12 (brand_id/page_id, DCO explosion, credit logging to `foreplay_credit_log`, default `start_date: 2025-12-23`, `credit_budget: 500`).
+- **ai-analyse-video:** v2 (layout detection via Claude vision).
+- **generate-ugc-brief:** v6 (16384 max_tokens, shot variations 2/3/4, layout-aware prompts).
+- **brand_guidelines table:** packaging_format, packaging_specs, colour_palette, typography, tone_of_voice, photo_descriptions columns live.
+- **Foreplay API:** `public.api.foreplay.co`, key stored in edge function. 1 credit per ad. Simmer brand_id: `n68cYDEnS6D6eU4T4bLS`.
 - **Supabase anon key:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA`
 
 ## Edge Functions
 
-18 edge functions deployed and have `verify_jwt: true`:
+**24 edge functions deployed.** 22 enforce `verify_jwt: true`. Two exceptions are tracked (see Known Issues).
 
-1. `fetch-competitor-ads` — v6: Fetch competitor ads from Foreplay API, support brand_id/page_id, DCO explosion, credit logging
-2. `generate-ad-prompt` — v27: Packaging-aware prompt generation with dynamic packaging terms
-3. `generate-image` — Image generation via Claude API
-4. `list-reviews` — Fetch reviews for images
-5. `save-review` — Save image reviews and ratings
-6. `get-brand-guidelines` — Fetch brand_guidelines table data
-7. `create-static-run` — Create brand DNA generation run
-8. `list-static-runs` — List all static runs
-9. `get-static-run` — Get specific run details
-10. `list-static-images` — List generated images with filters
-11. `save-static-image` — Save generated image records
-12. `list-prompt-versions` — List prompt iteration history
-13. `save-prompt-version` — Save prompt version records
-14. `sync-competitor-metadata` — Sync enriched competitor ad metadata
-15. `ai-analyse-video` — v2: Layout detection — classifies each shot as full/split-2/split-3/other via Claude vision, writes screen_layout + layout_summary
-16. `list-video-analyses` — v1 **(NEW)**: Query analyses with filters (status, run_id, competitor_ad_id) + pagination. Joins competitor_ads metadata
-17. `get-video-analysis` — v1 **(NEW)**: Fetch single analysis with all shots + full competitor ad context
-18. `generate-ugc-brief` — v6: Generate Chefly UGC creator briefs from video analysis. 16384 max_tokens, shot variations (2/3/4), layout-aware prompts. Secrets: CLAUDE_API_KEY or ANTHROPIC_API_KEY
+**Prompt / brand / image tooling:**
+
+1. `generate-ad-prompt` — v29. Packaging-aware prompt engine with dynamic packaging terms.
+2. `refine-prompt` — v6. Surgical prompt editing.
+3. `templatize-prompt` — v7. Converts prompts into reusable templates.
+4. `compare-prompts` — v5. Visual diff between two prompts.
+5. `generate-variables` — v9. Meal-specific creative variables.
+6. `extract-brand-guidelines` — v8. Parses brand docs into structured JSON.
+7. `describe-photo` — v11. Photo library descriptions via Claude.
+8. `generate-shot-sequence` — v5. Food photography shot sequence generator.
+
+**Ad library / competitor analysis:**
+
+9. `fetch-competitor-ads` — v12. Foreplay API ingestion with credit budgeting and DCO card explosion.
+10. `seed-advertisers` — v4. Bootstrap advertiser seed data.
+11. `extract-ad-thumbnails` — v9. Extracts images from ad HTML snapshots.
+12. `analyse-competitor-creatives` — v31. Multi-step AI visual analysis pipeline. **⚠️ verify_jwt disabled — see Known Issues.**
+13. `vision-model-test` — v5. Standalone visual forensic analysis test.
+14. `process-analysis-batch` — v24. Batch orchestrator for vision analysis.
+
+**Video analysis pipeline:**
+
+15. `analyse-video` — v4. Orchestrator; accepts competitor_ad_id, calls Railway worker, writes `video_analyses` + `video_shots`. Secrets: `VIDEO_WORKER_URL`, `VIDEO_WORKER_SECRET`.
+16. `list-video-analyses` — v4. Query analyses with filters (status, run_id, competitor_ad_id) and pagination.
+17. `get-video-analysis` — v4. Fetch single analysis with all shots + full competitor ad context.
+18. `transcribe-video` — v2. Whisper transcription leg of the pipeline.
+19. `ocr-video-frames` — v7. OCR extraction across reference frames.
+20. `merge-video-script` — v1. Merges transcript + OCR into combined script.
+21. `extract-video-script` — v2. Orchestrates transcribe → OCR → merge.
+22. `ai-analyse-video` — v2. Layout detection via Claude vision; writes `screen_layout` per shot and `layout_summary` aggregate.
+23. `generate-ugc-brief` — v6. Chefly-branded UGC creator briefs. 16384 max_tokens, truncation detection, shot variations (2/3/4), layout-aware prompts. Secrets: `CLAUDE_API_KEY` or `ANTHROPIC_API_KEY`.
+
+**Diagnostics:**
+
+24. `debug-auth` — v4. Diagnostic endpoint. **⚠️ verify_jwt disabled — see Known Issues.**
+
+**Alignment:** Every deployed slug has a matching `supabase/functions/<slug>/index.ts` directory on `main` (verified 16 Apr). A previous CLAUDE.md revision listed `sync-competitor-metadata` as deployed; that entry was incorrect and has been removed.
 
 ## Video Worker (Railway Microservice)
 
 Located at `video-worker/` in repo. Express + FFmpeg service for heavy video processing.
 
-- **Endpoint:** `POST /process-video` — downloads video, detects shots via FFmpeg scene analysis, extracts reference frames, generates contact sheet, extracts audio
-- **Auth:** Bearer token via `WORKER_SECRET` env var
-- **Deployment:** Railway with Docker (Dockerfile in repo). Project: `triumphant-dedication`, URL: `https://creative-kitchen-static-production.up.railway.app`
-- **Env vars:** `WORKER_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `PORT=3000`
+- **Endpoint:** `POST /process-video` — downloads video, detects shots via FFmpeg scene analysis, extracts reference frames, generates contact sheet, extracts audio.
+- **Auth:** Bearer token via `WORKER_SECRET` env var.
+- **Deployment:** Railway with Docker (Dockerfile in repo). Project: `triumphant-dedication`, URL: `https://creative-kitchen-static-production.up.railway.app`.
+- **Env vars:** `WORKER_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `PORT=3000`.
 - **Status:** Deployed and verified end-to-end (13 Apr 2026). FFmpeg 5.1.8. Contact sheets tested on 17+ shot videos.
 - **Test Videos:**
   - A: Simmer `3324195914449903` — 12.7s, 8 shots, 720x900
   - B: Huel `33860239276954284` — 21.4s, 17 shots, 720x1280
   - C: Frive `1440540640941645` — 31.4s, 17 shots, 720x1280
 
+**Planned:** yt-dlp added to the worker image to support YouTube downloads for the Organic Intelligence phase.
+
 ## Development Rules
 
 - **GitHub is the single source of truth.** If it's not in the repo, it doesn't exist.
 - **Edge functions deploy FROM the repo.** Never deploy directly to Supabase from session code. Commit to GitHub first.
+- **Every deployed slug must have a matching `supabase/functions/<slug>/index.ts`.** Re-verified 16 Apr; now 1:1.
 - **No direct pushes to main** (once branching is set up). Use feature branches → dev → main.
-- **Ticket-first for multi-file changes.** If a change touches >1 file, create an Asana ticket first in "Creative Kitchen — Engineering Stabilisation" project.
+- **Ticket-first for multi-file changes.** If a change touches more than one file, create an Asana ticket first in the engineering project (see Related Projects below).
 - **Run the pre-session checklist** at `docs/pre-session-checklist.md` before writing any code.
 - **Update this file** at the end of every session if architecture, tables, or edge functions changed.
 
 ## Known Issues
 
-- Facebook snapshot URLs (`snapshot_url` in `competitor_ads`) may be blocked by Facebook's CSP when rendered in iframes — needs live verification. If blocked, consider server-side screenshotting as fallback.
-- Local `src/` directory may be empty — code has been pushed directly to GitHub via MCP in previous sessions. Always check GitHub for the source of truth.
-- Shares Supabase tables (static_*) that also appear in the creative-kitchen-video-v3 database
+- **JWT regression: `analyse-competitor-creatives` v31 has `verify_jwt: false`.** Tracked under Asana task [1214111066075066](https://app.asana.com/1/5717506944667/project/1214024873723525/task/1214111066075066). Needs re-enabling without breaking the batch flow.
+- **JWT regression: `debug-auth` v4 has `verify_jwt: false`.** Tracked under Asana task [1214101220983182](https://app.asana.com/1/5717506944667/project/1214024873723525/task/1214101220983182). Options: harden + re-enable JWT, or retire after diagnostics finish.
+- Facebook snapshot URLs (`snapshot_url` in `competitor_ads`) may be blocked by Facebook's CSP when rendered in iframes, needs live verification. If blocked, consider server-side screenshotting as fallback.
+- Local `src/` directory may be empty, code has been pushed directly to GitHub via MCP in previous sessions. Always check GitHub for the source of truth.
+- Shares Supabase tables (static_*) that also appear in the creative-kitchen-video-v3 database.
 - Foreplay API credits are limited (10,000 per period). Edge function has a `credit_budget` safeguard (default 500) and logs usage to `foreplay_credit_log`. Be careful with exploratory API calls.
-- Foreplay Spyder only started tracking Simmer from ~Jan 11, 2026 — no historical data before that date
+- Foreplay Spyder only started tracking Simmer from ~Jan 11, 2026, no historical data before that date.
+- Duplicate `CompetitorAds.jsx` exists in `src/` and `src/components/`. The `src/` copy is stale; Phase 3 cleanup.
 
 ## Related Projects
 
-- **creative-kitchen-video-v3** — sister project (video content), same Marketing department
-- **willa-hq** — loads this tool via iframe as "Static Assets" under Marketing
-- **Creative Kitchen** (Supabase) — may be the database this connects to
+- **creative-kitchen-video-v3** — sister project (video content), same Marketing department.
+- **willa-hq** — loads this tool via iframe as "Static Assets" under Marketing.
+- **Asana engineering project** — [project 1214024873723525](https://app.asana.com/1/5717506944667/project/1214024873723525/list/1214024873723542). Tracks stabilisation backlog, Video Analysis work, and Organic Intelligence milestones.
 
 ## Conventions
 
@@ -142,3 +172,4 @@ Located at `video-worker/` in repo. Express + FFmpeg service for heavy video pro
 - Review ratings: great, good, needs-work, slop
 - Reviewers: "claude" (AI) or "user" (human)
 - Prompt versioning for iterative improvement
+- Writing style: no em dashes or en dashes. Use commas, colons, full stops, or arrows (→). Write ranges as "2 to 3" not "2-3".
