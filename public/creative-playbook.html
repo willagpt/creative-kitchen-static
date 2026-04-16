@@ -441,6 +441,10 @@ function render(data) {
     return;
   }
   const brandMap = buildBrandMap(complete, ads);
+  // Attach ad data to each complete analysis so getBrandsUsing can resolve names
+  const adMap = {};
+  ads.forEach(a => { adMap[a.id] = a; });
+  complete.forEach(an => { an.ad = adMap[an.competitor_ad_id] || {}; });
   const brands = Object.values(brandMap).sort((a,b) => b.analyses.length - a.analyses.length);
   const totalVideos = complete.length;
   const totalBrands = brands.length;
