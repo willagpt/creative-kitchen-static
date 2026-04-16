@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Production Company Brief / Creative Kitchen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf9f7;--surface:#fff;--surface-alt:#f4f2ee;--surface-warm:#f9f5f0;
+  --ink:#1a1714;--ink-2:#5c564d;--ink-3:#8a8279;--ink-4:#b0a99e;
+  --accent:#b44d1e;--accent-light:#f4e6dc;--accent-dark:#8a3710;--accent-glow:rgba(180,77,30,.08);
+  --green:#2d6a4f;--green-light:#d8f3dc;--green-bg:#f0f9f2;
+  --blue:#1d4e89;--blue-light:#d0e2f4;--blue-bg:#eef4fa;
+  --purple:#6b21a8;--purple-light:#ede9fe;
+  --amber:#92400e;--amber-light:#fef3c7;
+  --red:#991b1b;--red-light:#fee2e2;
+  --border:#e8e4de;--border-light:#f0ece6;
+  --radius:5px;--radius-lg:8px;
+  --shadow-sm:0 1px 2px rgba(26,23,20,.05);--shadow:0 1px 4px rgba(26,23,20,.08);--shadow-lg:0 4px 20px rgba(26,23,20,.1);
+  --font-display:'Fraunces',Georgia,serif;--font-body:'DM Sans',system-ui,sans-serif;
+}
+html{font-size:14.5px;scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.65;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
+
+.page{max-width:900px;margin:0 auto;padding:0 clamp(1rem,3vw,2.5rem) 4rem}
+
+/* ── Top bar ── */
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:1.1rem 0;border-bottom:1px solid var(--border);margin-bottom:0}
+.topbar-brand{font-family:var(--font-display);font-size:.95rem;font-weight:700;color:var(--accent-dark);letter-spacing:-.02em}
+.topbar-actions{display:flex;gap:.5rem}
+.btn{padding:.5rem 1.1rem;font-family:var(--font-body);font-size:.76rem;font-weight:600;border-radius:var(--radius);cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem}
+.btn-export{border:1.5px solid var(--ink);background:var(--ink);color:var(--bg)}
+.btn-export:hover{background:var(--accent-dark);border-color:var(--accent-dark);color:#fff}
+.btn-back{border:1.5px solid var(--border);background:var(--surface);color:var(--ink-2)}
+.btn-back:hover{border-color:var(--ink-3);color:var(--ink)}
+
+/* ── Cover ── */
+.cover{padding:clamp(3rem,8vw,5rem) 0 clamp(2rem,4vw,3rem);margin-bottom:2rem;border-bottom:2px solid var(--accent)}
+.cover-eyebrow{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--blue);margin-bottom:1rem}
+.cover h1{font-size:clamp(2rem,4.5vw,3rem);font-weight:800;letter-spacing:-.04em;line-height:1.1;max-width:650px}
+.cover-subtitle{font-size:.95rem;color:var(--ink-2);margin-top:1rem;max-width:520px;line-height:1.6}
+.cover-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-top:2rem;padding:1.25rem;background:var(--blue-bg);border-radius:var(--radius-lg)}
+.cover-meta-item{display:flex;flex-direction:column;gap:.15rem}
+.cover-meta-val{font-family:var(--font-display);font-size:1.1rem;font-weight:700;color:var(--blue)}
+.cover-meta-lbl{font-size:.65rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
+
+/* ── Brief info box ── */
+.brief-info{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:2rem;box-shadow:var(--shadow-sm)}
+.brief-info h3{font-size:.92rem;margin-bottom:.75rem}
+.brief-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+@media(max-width:600px){.brief-info-grid{grid-template-columns:1fr}}
+.brief-info-item{display:flex;flex-direction:column;gap:.15rem}
+.brief-info-item label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3)}
+.brief-info-item span{font-size:.88rem;color:var(--ink)}
+
+/* ── Shot cards ── */
+.shot-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:1.75rem;overflow:hidden;box-shadow:var(--shadow-sm)}
+.shot-card:hover{box-shadow:var(--shadow)}
+.shot-card-header{display:flex;justify-content:space-between;align-items:flex-start;padding:1.25rem 1.5rem;gap:1rem;flex-wrap:wrap}
+.shot-card-num{font-family:var(--font-display);font-size:1.8rem;font-weight:800;color:var(--accent);line-height:1;min-width:2.5rem}
+.shot-card-title-area{flex:1}
+.shot-card-title{font-family:var(--font-display);font-size:1.15rem;font-weight:700;line-height:1.3;margin-bottom:.3rem}
+.shot-card-type{display:flex;flex-wrap:wrap;gap:.25rem}
+.tag{display:inline-block;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:.2rem .45rem;border-radius:3px}
+.tag-hook{background:var(--accent-light);color:var(--accent-dark)}
+.tag-body{background:var(--blue-light);color:var(--blue)}
+.tag-proof{background:var(--green-light);color:var(--green)}
+.tag-cta{background:var(--purple-light);color:var(--purple)}
+.shot-card-priority{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.25rem .6rem;border-radius:3px}
+.p1{background:var(--accent-light);color:var(--accent-dark)}
+.p2{background:var(--blue-light);color:var(--blue)}
+.p3{background:var(--surface-alt);color:var(--ink-3)}
+
+.shot-card-body{padding:0 1.5rem 1.5rem;display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+@media(max-width:640px){.shot-card-body{grid-template-columns:1fr}}
+
+.shot-section{margin-bottom:0}
+.shot-section-title{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);margin-bottom:.5rem;padding-bottom:.3rem;border-bottom:1px solid var(--border-light)}
+.shot-section p,.shot-section li{font-size:.86rem;color:var(--ink-2);line-height:1.6}
+.shot-section ul{list-style:none;padding:0}
+.shot-section li{padding:.2rem 0 .2rem 1rem;position:relative}
+.shot-section li::before{content:'';position:absolute;left:0;top:.55rem;width:4px;height:4px;border-radius:50%;background:var(--accent)}
+
+/* Full-width sections within shot card */
+.shot-card-full{padding:0 1.5rem 1.5rem;display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.25rem}
+@media(max-width:700px){.shot-card-full{grid-template-columns:1fr}}
+
+.shot-card-footer{padding:1rem 1.5rem;background:var(--surface-alt);border-top:1px solid var(--border-light);display:flex;gap:2rem;flex-wrap:wrap}
+.shot-card-footer-item{display:flex;flex-direction:column;gap:.1rem}
+.shot-card-footer-item label{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3)}
+.shot-card-footer-item span{font-size:.82rem;font-weight:500;color:var(--ink)}
+
+/* ── Deliverables ── */
+.deliverables{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-top:2.5rem;box-shadow:var(--shadow-sm)}
+.deliverables h3{font-size:1rem;margin-bottom:1rem}
+.del-table{width:100%;border-collapse:collapse}
+.del-table th{text-align:left;font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:700;padding:.5rem .6rem;border-bottom:2px solid var(--border)}
+.del-table td{padding:.6rem;border-bottom:1px solid var(--border-light);font-size:.85rem}
+.del-table tr:last-child td{border-bottom:none}
+.del-table tr:nth-child(even) td{background:var(--surface-warm)}
+
+/* ── Evidence box ── */
+.evidence{background:var(--surface-warm);border-left:3px solid var(--accent);padding:1rem 1.25rem;border-radius:0 var(--radius-lg) var(--radius-lg) 0;margin-bottom:1.5rem}
+.evidence h4{font-family:var(--font-display);font-size:.82rem;font-weight:700;margin-bottom:.3rem}
+.evidence p{font-size:.82rem;color:var(--ink-2);line-height:1.55}
+
+/* ── Loading ── */
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:1.5rem}
+.loading-screen h2{font-family:var(--font-display);font-size:1.4rem;color:var(--ink-2)}
+.loading-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse .8s infinite alternate}
+.loading-dot:nth-child(2){animation-delay:.15s}.loading-dot:nth-child(3){animation-delay:.3s}
+@keyframes pulse{0%{opacity:.2;transform:scale(.8)}100%{opacity:1;transform:scale(1.1)}}
+
+/* ── Print ── */
+@page{size:A4;margin:18mm 16mm 22mm 16mm}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  html{font-size:9.5px}
+  body{background:#fff}
+  .topbar,.no-print{display:none!important}
+  .page{max-width:none;padding:0}
+  .cover{padding:0 0 4mm 0;margin-bottom:4mm;page-break-after:always;min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(175deg,#faf9f7 0%,#d0e2f4 50%,#b8cfe8 100%)!important;margin:-18mm -16mm 0 -16mm;padding:30mm 20mm 15mm 20mm;border:none}
+  .cover h1{font-size:28px;max-width:380px}
+  .cover-eyebrow{font-size:7.5px}
+  .cover-subtitle{font-size:9px}
+  .cover-meta{padding:3mm;gap:3mm}
+  .cover-meta-val{font-size:10px}
+  .cover-meta-lbl{font-size:6px}
+  .cover::after{content:'Confidential. Prepared by Creative Kitchen for production partner use only.';display:block;margin-top:auto;padding-top:8mm;font-size:7px;color:#8a8279;letter-spacing:.04em}
+  .brief-info{padding:3mm;margin-bottom:4mm;page-break-inside:avoid}
+  .brief-info h3{font-size:9px;margin-bottom:2mm}
+  .brief-info-item label{font-size:6px}
+  .brief-info-item span{font-size:8px}
+  .shot-card{page-break-inside:avoid;margin-bottom:4mm}
+  .shot-card-header{padding:3mm 4mm}
+  .shot-card-num{font-size:14px}
+  .shot-card-title{font-size:10px}
+  .tag{font-size:5.5px;padding:.8mm 1.5mm}
+  .shot-card-body{padding:0 4mm 3mm;gap:3mm}
+  .shot-card-full{padding:0 4mm 3mm;gap:3mm}
+  .shot-section-title{font-size:6px;margin-bottom:1.5mm}
+  .shot-section p,.shot-section li{font-size:7.5px;line-height:1.45}
+  .shot-card-footer{padding:2mm 4mm;gap:4mm}
+  .shot-card-footer-item label{font-size:5.5px}
+  .shot-card-footer-item span{font-size:7.5px}
+  .evidence{padding:2.5mm 3mm;margin-bottom:3mm}
+  .evidence h4{font-size:7.5px}
+  .evidence p{font-size:7px}
+  .deliverables{padding:3mm;margin-top:4mm;page-break-inside:avoid}
+  .deliverables h3{font-size:9px;margin-bottom:2mm}
+  .del-table th{font-size:6px;padding:1.5mm}
+  .del-table td{font-size:7.5px;padding:1.5mm}
+  .section-divider{page-break-before:always}
+}
+</style>
+</head>
+<body>
+<div class="page" id="app">
+  <div class="loading-screen" id="loading">
+    <h2>Building production brief</h2>
+    <div><span class="loading-dot"></span> <span class="loading-dot"></span> <span class="loading-dot"></span></div>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://ifrxylvoufncdxyltgqt.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA';
+const HEADERS = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` };
+
+async function fetchData() {
+  const analysesRes = await fetch(`${SB_URL}/rest/v1/video_analyses?status=eq.complete&select=*&order=created_at.desc`, { headers: HEADERS });
+  const analyses = await analysesRes.json();
+  const adIds = [...new Set(analyses.map(a => a.competitor_ad_id).filter(Boolean))];
+  let ads = [];
+  if (adIds.length > 0) {
+    const idsParam = `(${adIds.map(id => `"${id}"`).join(',')})`;
+    const adsRes = await fetch(`${SB_URL}/rest/v1/competitor_ads?id=in.${idsParam}&select=id,page_name,page_id,days_active`, { headers: HEADERS });
+    ads = await adsRes.json();
+  }
+  return { analyses, ads };
+}
+
+function getStats(analyses, ads) {
+  const adMap = {};
+  ads.forEach(a => { adMap[a.id] = a; });
+  analyses.forEach(an => { an.ad = adMap[an.competitor_ad_id] || {}; });
+
+  // Group by page_id for brand count
+  const pageIds = new Set();
+  analyses.forEach(an => { if (an.ad.page_id) pageIds.add(an.ad.page_id); });
+
+  const totalVids = analyses.length;
+  const totalBrands = pageIds.size;
+  const avgDur = (analyses.reduce((s, a) => s + (a.duration_seconds || 0), 0) / totalVids).toFixed(0);
+
+  // Hook type counts
+  const hookCounts = {};
+  analyses.forEach(an => {
+    const h = (an.ai_analysis?.hook?.type || '').toLowerCase().trim();
+    if (h) hookCounts[h] = (hookCounts[h] || 0) + 1;
+  });
+  const topHook = Object.entries(hookCounts).sort((a,b) => b[1] - a[1])[0];
+
+  // Emotion counts
+  const emotionCounts = {};
+  analyses.forEach(an => {
+    (an.ai_analysis?.emotional_drivers || []).forEach(e => {
+      const k = e.toLowerCase().trim();
+      if (k) emotionCounts[k] = (emotionCounts[k] || 0) + 1;
+    });
+  });
+  const topEmotions = Object.entries(emotionCounts).sort((a,b) => b[1] - a[1]).slice(0, 3).map(([e]) => e.replace(/\b\w/g, c => c.toUpperCase()));
+
+  // UGC vs polished
+  const ugcCount = analyses.filter(a => ['ugc','talking-head','selfie','testimonial'].includes((a.ai_analysis?.production_style?.format || '').toLowerCase())).length;
+  const ugcPct = Math.round((ugcCount / totalVids) * 100);
+
+  // Selling point counts
+  const spCounts = {};
+  analyses.forEach(an => {
+    (an.ai_analysis?.selling_points || []).forEach(s => {
+      const k = s.toLowerCase().trim();
+      if (k) spCounts[k] = (spCounts[k] || 0) + 1;
+    });
+  });
+
+  // Taste mentions
+  const tasteMentions = analyses.filter(a => (a.ai_analysis?.selling_points || []).some(s => s.toLowerCase().includes('taste'))).length;
+  const tastePct = Math.round((tasteMentions / totalVids) * 100);
+
+  return { totalVids, totalBrands, avgDur, topHook, topEmotions, ugcPct, tastePct, spCounts };
+}
+
+function pct(count, total) { return total > 0 ? Math.round((count / total) * 100) : 0; }
+function fmt(s) { return s.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); }
+
+function render(data) {
+  const complete = data.analyses.filter(a => a.ai_analysis && a.transcript_text);
+  if (complete.length === 0) {
+    document.getElementById('app').innerHTML = '<div class="loading-screen"><h2>No data available</h2></div>';
+    return;
+  }
+  const stats = getStats(complete, data.ads);
+  const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  document.getElementById('app').innerHTML = `
+    <div class="topbar no-print">
+      <div class="topbar-brand">Creative Kitchen</div>
+      <div class="topbar-actions">
+        <a href="creative-playbook.html" class="btn btn-back">&#8592; Playbook</a>
+        <button class="btn btn-export" onclick="window.print()">Export PDF</button>
+      </div>
+    </div>
+
+    <div class="cover">
+      <div class="cover-eyebrow">Production Company Brief / Track 2</div>
+      <h1>High-Production Brand Content Shoot Pack</h1>
+      <p class="cover-subtitle">A complete shoot brief for production partners, including shot-by-shot direction, lighting and lens notes, talent direction, wardrobe, locations, props, sound, and deliverable specifications. Every creative decision is evidenced by competitive data from ${stats.totalVids} analysed ads across ${stats.totalBrands} brands.</p>
+      <div class="cover-meta">
+        <div class="cover-meta-item"><span class="cover-meta-val">${stats.totalVids}</span><span class="cover-meta-lbl">Videos Analysed</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-val">${stats.totalBrands}</span><span class="cover-meta-lbl">Brands Studied</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-val">${stats.ugcPct}% UGC</span><span class="cover-meta-lbl">Market Format Split</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-val">${stats.tastePct}%</span><span class="cover-meta-lbl">Sell on Taste (gap)</span></div>
+      </div>
+    </div>
+
+    <!-- Brief Overview -->
+    <div class="brief-info">
+      <h3>Brief Overview</h3>
+      <div class="brief-info-grid">
+        <div class="brief-info-item"><label>Client</label><span>Willa Ltd</span></div>
+        <div class="brief-info-item"><label>Brief Date</label><span>${today}</span></div>
+        <div class="brief-info-item"><label>Objective</label><span>Create a premium video asset library that positions the brand above the UGC-dominated competitive set. Hero brand film + supporting content pieces for paid social, organic, and website.</span></div>
+        <div class="brief-info-item"><label>Why This Matters</label><span>${stats.ugcPct}% of competitor ads are UGC or talking-head format. Polished cinematic production is a genuine whitespace. No brand in the ${stats.totalBrands}-brand dataset invests in premium food cinematography.</span></div>
+        <div class="brief-info-item"><label>Target Audience</label><span>Health-conscious professionals (25 to 45), fitness enthusiasts, time-poor parents. Primary emotion drivers: ${stats.topEmotions.join(', ')}.</span></div>
+        <div class="brief-info-item"><label>Tone</label><span>Warm, appetising, confident. Not clinical or "gym bro." Think: the visual quality of a premium recipe channel, applied to meal prep. The food should look irresistible.</span></div>
+      </div>
+    </div>
+
+    <div class="evidence">
+      <h4>Why cinematic production?</h4>
+      <p>${stats.ugcPct}% of the ${stats.totalVids} analysed competitor video ads use UGC, talking-head, or testimonial formats. The remaining ${100 - stats.ugcPct}% are mixed or lifestyle formats, but none achieve true cinematic quality. This brief fills a clear production gap in the category. The dominant hook type across competitors is "${stats.topHook ? fmt(stats.topHook[0]) : 'Unknown'}" (${stats.topHook ? pct(stats.topHook[1], stats.totalVids) : 0}% of ads), which this brief deliberately avoids in favour of visual-first storytelling. See the <a href="creative-playbook.html" style="color:var(--accent)">Creative Strategy Playbook</a> for the full competitive analysis.</p>
+    </div>
+
+    <!-- SHOT 1 -->
+    <div class="shot-card">
+      <div class="shot-card-header" style="background:var(--accent-light)">
+        <div class="shot-card-num">01</div>
+        <div class="shot-card-title-area">
+          <div class="shot-card-title">Hero Brand Film</div>
+          <div class="shot-card-type">
+            <span class="tag tag-hook">hook</span>
+            <span class="tag tag-body">body</span>
+            <span class="tag tag-cta">cta</span>
+          </div>
+        </div>
+        <span class="shot-card-priority p1">P1 / Must Have</span>
+      </div>
+      <div class="shot-card-body">
+        <div class="shot-section">
+          <div class="shot-section-title">Concept</div>
+          <p>Cinematic food prep sequence that makes the meals the hero. Steam, colour, texture, motion. Real food being prepared by real hands, then cut to real people eating in real locations. No voiceover. Music + text overlays only. This is the anchor asset: the single video that says "we are not like the others."</p>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">Shot List</div>
+          <ul>
+            <li><strong>Open:</strong> Macro shot of fresh ingredients on a wooden board. Pull focus from herbs in foreground to protein in background. 2s.</li>
+            <li><strong>Prep 1:</strong> Overhead: chef's hands slicing vegetables. Fast, confident knife work. Shallow depth. 1.5s.</li>
+            <li><strong>Prep 2:</strong> Side angle: sauce being poured into a pan. Steam rising. Warm backlight catching the vapour. 2s.</li>
+            <li><strong>Cook:</strong> Close-up: spices hitting hot oil. Sizzle and pop. Slow motion (120fps). 1.5s.</li>
+            <li><strong>Plate:</strong> Overhead: meal being plated into a branded container. Clean, precise movements. 2s.</li>
+            <li><strong>Seal:</strong> Close-up: container being sealed with branded lid. Satisfying click/snap sound. 1s.</li>
+            <li><strong>Transition:</strong> Match cut from sealed container to someone opening it at a desk/gym/home. 1s.</li>
+            <li><strong>Eat 1:</strong> Medium shot: professional at their desk, first bite, genuine reaction. 2s.</li>
+            <li><strong>Eat 2:</strong> Medium shot: gym-goer post-workout, eating from container. 1.5s.</li>
+            <li><strong>Eat 3:</strong> Medium shot: parent at a kitchen counter, child visible in background. 1.5s.</li>
+            <li><strong>Close:</strong> Product hero shot with branding. Text overlay: offer + CTA. 3s.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shot-card-full">
+        <div class="shot-section">
+          <div class="shot-section-title">Lighting / Lens</div>
+          <ul>
+            <li>Natural window light (kitchen scenes), supplemented with a warm key</li>
+            <li>Backlight on all steam/vapour shots to catch texture</li>
+            <li>50mm f/1.4 for shallow depth on food macro</li>
+            <li>35mm for lifestyle/eating scenes</li>
+            <li>Warm colour temperature throughout (3800K to 4500K)</li>
+          </ul>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">Talent / Wardrobe</div>
+          <ul>
+            <li>Chef: real kitchen professional, not an actor. Chef whites or clean black apron. Confident hands.</li>
+            <li>Desk eater: smart-casual, 28 to 35 age range. Neutral office wear.</li>
+            <li>Gym eater: athletic, post-workout look. Branded gym wear if available.</li>
+            <li>Parent: relatable, 30 to 40 age range. Casual home clothes.</li>
+            <li>No talent should look at camera. Documentary style.</li>
+          </ul>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">Location / Props</div>
+          <ul>
+            <li>Professional kitchen (prep + cook scenes)</li>
+            <li>Bright modern office (desk eating scene)</li>
+            <li>Gym or gym lobby (post-workout scene)</li>
+            <li>Home kitchen with warm lighting (parent scene)</li>
+            <li>Props: branded containers (x12 minimum), fresh ingredients (per menu), wooden boards, quality cookware</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shot-card-footer">
+        <div class="shot-card-footer-item"><label>Duration</label><span>25 to 30s (hero cut)</span></div>
+        <div class="shot-card-footer-item"><label>Aspect Ratios</label><span>9:16 (primary), 1:1, 4:5</span></div>
+        <div class="shot-card-footer-item"><label>Frame Rate</label><span>24fps base, 120fps for slow-motion inserts</span></div>
+        <div class="shot-card-footer-item"><label>Sound</label><span>Licensed music track (upbeat, warm). Foley: knife on board, sizzle, container snap. No voiceover.</span></div>
+        <div class="shot-card-footer-item"><label>Text Overlays</label><span>Added in post. Brand name, macro stats, offer, CTA.</span></div>
+      </div>
+    </div>
+
+    <!-- SHOT 2 -->
+    <div class="shot-card section-divider">
+      <div class="shot-card-header" style="background:var(--blue-light)">
+        <div class="shot-card-num">02</div>
+        <div class="shot-card-title-area">
+          <div class="shot-card-title">Kitchen-to-Container Journey</div>
+          <div class="shot-card-type">
+            <span class="tag tag-body">body</span>
+            <span class="tag tag-proof">proof</span>
+          </div>
+        </div>
+        <span class="shot-card-priority p1">P1 / Must Have</span>
+      </div>
+      <div class="shot-card-body">
+        <div class="shot-section">
+          <div class="shot-section-title">Concept</div>
+          <p>Follow one meal from raw ingredients through the professional kitchen to being sealed, labelled, and packed for delivery. The full supply chain in 25 seconds. This addresses the biggest trust gap in the category: customers cannot see the production process. Every competitor relies on the end product; none show the journey.</p>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">Shot List</div>
+          <ul>
+            <li><strong>Open:</strong> Wide shot of raw ingredients laid out on a stainless prep table. Chef's hand enters frame, picks up a pepper. 2s.</li>
+            <li><strong>Prep:</strong> Time-lapse: chopping, marinating, portioning. Camera on tripod, sped up 4x. 3s.</li>
+            <li><strong>Cook:</strong> Close-up: food in a commercial oven, pan, or grill. Steam, colour change. Real time. 2s.</li>
+            <li><strong>Plate:</strong> Chef portions meal into container with precision. Overhead shot. 2s.</li>
+            <li><strong>Macro:</strong> Extreme close-up: nutritional label being applied to container. Focus on macro numbers. 1.5s.</li>
+            <li><strong>Seal:</strong> Container sealed, stacked with others. Camera pulls back to reveal a full tray of meals. 2s.</li>
+            <li><strong>Pack:</strong> Meals placed into insulated delivery box. Branded sticker. 1.5s.</li>
+            <li><strong>Delivery:</strong> Box on a doorstep. Hand picks it up, brings inside. 2s.</li>
+            <li><strong>Reveal:</strong> Fridge opens, meals placed inside. Neat, colourful rows. 2s.</li>
+            <li><strong>CTA:</strong> Text overlay: "From chef's hands to your microwave in 90 seconds." Offer + link. 3s.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shot-card-full">
+        <div class="shot-section">
+          <div class="shot-section-title">Lighting / Lens</div>
+          <ul>
+            <li>Bright, clean kitchen lighting (industrial overhead + fill)</li>
+            <li>Overhead rig for prep and plating sequences</li>
+            <li>Slider for smooth tracking on the "pull back to reveal" shot</li>
+            <li>Warm shift as we move from kitchen to home (colder whites to warmer tones)</li>
+          </ul>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">Talent / Wardrobe</div>
+          <ul>
+            <li>Chef: same person from Shot 01 for continuity. Clean uniform.</li>
+            <li>Delivery recipient: any demographic. Hands and arms only (no face needed).</li>
+            <li>Optional: second kitchen worker visible in background for scale.</li>
+          </ul>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">Location / Props</div>
+          <ul>
+            <li>Professional kitchen (same location as Shot 01)</li>
+            <li>Home front door + home kitchen</li>
+            <li>Full set of branded containers (empty + filled)</li>
+            <li>Insulated delivery box with branding</li>
+            <li>Nutritional labels (printed, accurate)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shot-card-footer">
+        <div class="shot-card-footer-item"><label>Duration</label><span>20 to 25s</span></div>
+        <div class="shot-card-footer-item"><label>Aspect Ratios</label><span>9:16, 1:1, 4:5</span></div>
+        <div class="shot-card-footer-item"><label>Frame Rate</label><span>24fps + time-lapse sections at 4x</span></div>
+        <div class="shot-card-footer-item"><label>Sound</label><span>Same music track as Shot 01 (consistent brand sound). Foley: chopping, sizzle, container snap, door open. VO option: "From chef's hands to your microwave in 90 seconds."</span></div>
+      </div>
+    </div>
+
+    <!-- SHOT 3 -->
+    <div class="shot-card section-divider">
+      <div class="shot-card-header" style="background:var(--green-light)">
+        <div class="shot-card-num">03</div>
+        <div class="shot-card-title-area">
+          <div class="shot-card-title">Ingredient Close-ups Library (B-roll Bank)</div>
+          <div class="shot-card-type">
+            <span class="tag tag-body">body</span>
+          </div>
+        </div>
+        <span class="shot-card-priority p1">P1 / Must Have</span>
+      </div>
+      <div class="shot-card-body">
+        <div class="shot-section">
+          <div class="shot-section-title">Concept</div>
+          <p>A library of 20 to 30 slow-motion ingredient clips. This is the most valuable long-term asset from the entire shoot. Each clip is 3 to 5 seconds, shot at 120fps minimum. These clips will be reused across dozens of future ads, social posts, email headers, and website backgrounds for 12+ months.</p>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">Shot List (minimum 20 clips)</div>
+          <ul>
+            <li>Fresh herbs (basil, coriander) being torn or scattered onto a board</li>
+            <li>Olive oil drizzle into a hot pan (slow motion, steam rising)</li>
+            <li>Vegetables being julienned (side angle, shallow depth)</li>
+            <li>Spices hitting hot oil (close-up, sizzle and colour bloom)</li>
+            <li>Cherry tomatoes being halved (overhead, juice spreading)</li>
+            <li>Chicken breast being sliced (cross-section reveal)</li>
+            <li>Rice or grain falling into a bowl (top-down)</li>
+            <li>Sauce being ladled over a dish (slow pour, steam)</li>
+            <li>Avocado being sliced and fanned (overhead)</li>
+            <li>Lemon being squeezed over food (juice drops in slow motion)</li>
+            <li>Pepper grinder in action (close-up, particles falling)</li>
+            <li>Egg being cracked into a pan (slow motion, whites spreading)</li>
+            <li>Noodles being lifted with tongs/chopsticks (steam rising)</li>
+            <li>Fresh salmon fillet being placed on a cutting board</li>
+            <li>Bubbling sauce in a pan (top-down, slow motion)</li>
+            <li>Green beans or asparagus dropped into water (splash)</li>
+            <li>Finished meal being placed on a table (hero angle)</li>
+            <li>Steam rising from an open container (backlit)</li>
+            <li>Hands peeling garlic or ginger (macro)</li>
+            <li>A pan being tossed (low angle, dramatic)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shot-card-full">
+        <div class="shot-section">
+          <div class="shot-section-title">Lighting / Lens</div>
+          <ul>
+            <li>Strong backlight for all steam/vapour shots</li>
+            <li>Dark/black background option for hero ingredient shots</li>
+            <li>Light/natural background for lifestyle ingredient shots</li>
+            <li>Macro lens (100mm) for extreme close-ups</li>
+            <li>50mm f/1.2 for shallow depth on action shots</li>
+            <li>120fps minimum, 240fps for splash/drop shots</li>
+          </ul>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">Art Direction</div>
+          <ul>
+            <li>Two setups: dark moody (black slate/board) and bright clean (marble/white)</li>
+            <li>Every ingredient should look impossibly fresh</li>
+            <li>Keep branded containers visible in 5+ clips for product placement</li>
+            <li>Shoot each ingredient from 2 to 3 angles for maximum reuse</li>
+          </ul>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">Props</div>
+          <ul>
+            <li>Full ingredient set from the current menu (coordinate with kitchen team)</li>
+            <li>Black slate board, marble cutting board, wooden board</li>
+            <li>Quality cookware (cast iron, stainless)</li>
+            <li>Branded containers for product placement shots</li>
+            <li>Spray bottle for freshness on vegetables</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shot-card-footer">
+        <div class="shot-card-footer-item"><label>Deliverables</label><span>20 to 30 individual clips, 3 to 5s each</span></div>
+        <div class="shot-card-footer-item"><label>Aspect Ratios</label><span>16:9 (master), crop to 9:16 and 1:1 in post</span></div>
+        <div class="shot-card-footer-item"><label>Frame Rate</label><span>120fps minimum, 240fps for liquid/splash</span></div>
+        <div class="shot-card-footer-item"><label>Sound</label><span>Capture wild sound/foley on set (sizzle, chop, pour). Deliver as separate audio tracks.</span></div>
+      </div>
+    </div>
+
+    <!-- SHOT 4 -->
+    <div class="shot-card section-divider">
+      <div class="shot-card-header" style="background:var(--amber-light)">
+        <div class="shot-card-num">04</div>
+        <div class="shot-card-title-area">
+          <div class="shot-card-title">Taste Test Series</div>
+          <div class="shot-card-type">
+            <span class="tag tag-proof">proof</span>
+            <span class="tag tag-hook">hook</span>
+          </div>
+        </div>
+        <span class="shot-card-priority p2">P2 / Should Have</span>
+      </div>
+      <div class="shot-card-body">
+        <div class="shot-section">
+          <div class="shot-section-title">Concept</div>
+          <p>Film 6 to 8 people trying meals for the first time. Capture genuine reactions with two cameras (face + food). Edit into a rapid-cut montage. The taste gap is the single most consistent weakness across all ${stats.totalBrands} brands in the competitive set: only ${stats.tastePct}% of ads sell on taste. Everyone sells convenience and macros. Nobody proves the food tastes good.</p>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">Shot List (per taster)</div>
+          <ul>
+            <li><strong>Setup:</strong> Wide shot: taster seated at a clean table. Container in front, closed. 1s.</li>
+            <li><strong>Reveal:</strong> Medium: taster opens container. Camera captures their initial visual reaction. 1.5s.</li>
+            <li><strong>First bite:</strong> Close-up on face: first mouthful. Hold for genuine reaction. This is the money shot. 2 to 3s.</li>
+            <li><strong>Food close-up:</strong> Cut to food on fork/spoon, mid-bite. 1s.</li>
+            <li><strong>Comment:</strong> Medium: taster gives one unprompted comment. Keep rolling. 3 to 5s.</li>
+            <li><strong>Score (optional):</strong> Taster writes a score on a card (1 to 10). Holds up to camera. 2s.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shot-card-full">
+        <div class="shot-section">
+          <div class="shot-section-title">Lighting / Lens</div>
+          <ul>
+            <li>Soft key light on face, fill from opposite side</li>
+            <li>Camera A: 85mm on face (reaction shots)</li>
+            <li>Camera B: 50mm wider (food + hands + environment)</li>
+            <li>Clean, bright background (white/light wood)</li>
+          </ul>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">Talent / Wardrobe</div>
+          <ul>
+            <li>6 to 8 real people (not actors). Mix of demographics.</li>
+            <li>At least 2 gym/fitness types, 2 professionals, 2 parents.</li>
+            <li>They MUST NOT have tried the product before.</li>
+            <li>Own clothes (relatable, not styled).</li>
+          </ul>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">Direction Notes</div>
+          <ul>
+            <li>Do NOT tell them what to say. Genuine reactions only.</li>
+            <li>Film EVERY reaction, even negative ones (for authenticity in selection).</li>
+            <li>Test 3 to 4 different meals across the group.</li>
+            <li>The montage edit will use the best 2s from each person.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shot-card-footer">
+        <div class="shot-card-footer-item"><label>Duration</label><span>20 to 30s (montage cut)</span></div>
+        <div class="shot-card-footer-item"><label>Also Produces</label><span>6 to 8 individual vertical clips (one per taster) for organic social</span></div>
+        <div class="shot-card-footer-item"><label>End Card</label><span>"X out of X said they'd reorder." + offer code</span></div>
+        <div class="shot-card-footer-item"><label>Sound</label><span>Music bed under reactions. Dip music for each comment. No separate VO.</span></div>
+      </div>
+    </div>
+
+    <!-- SHOT 5 -->
+    <div class="shot-card section-divider">
+      <div class="shot-card-header" style="background:var(--purple-light)">
+        <div class="shot-card-num">05</div>
+        <div class="shot-card-title-area">
+          <div class="shot-card-title">Chef Profile</div>
+          <div class="shot-card-type">
+            <span class="tag tag-body">body</span>
+            <span class="tag tag-proof">proof</span>
+          </div>
+        </div>
+        <span class="shot-card-priority p2">P2 / Should Have</span>
+      </div>
+      <div class="shot-card-body">
+        <div class="shot-section">
+          <div class="shot-section-title">Concept</div>
+          <p>60-second piece on whoever develops the recipes. Their background, training, food philosophy, what makes these meals different. Interview format (podcast-style framing with a slightly off-centre camera) intercut with kitchen B-roll of them cooking. Builds the "faces behind the food" trust layer that no competitor has.</p>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">Shot List</div>
+          <ul>
+            <li><strong>Open:</strong> B-roll: chef's hands at work in kitchen. 3s. No face yet.</li>
+            <li><strong>Intro:</strong> Interview frame: chef introduces themselves. Name, background, how they got here. 8 to 10s.</li>
+            <li><strong>Philosophy:</strong> "What I believe about food is..." Let them talk naturally. Intercut with B-roll from Shot 03 bank. 10 to 15s.</li>
+            <li><strong>Process:</strong> "Every recipe starts with..." Show their actual process. Kitchen B-roll underneath. 10 to 12s.</li>
+            <li><strong>Why this brand:</strong> "What makes these meals different is..." This is the money section. 10 to 12s.</li>
+            <li><strong>Close:</strong> Chef plating a meal, looks up at camera briefly (or doesn't). Text: "Meet the chef behind your meals." 5s.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shot-card-full">
+        <div class="shot-section">
+          <div class="shot-section-title">Lighting / Lens</div>
+          <ul>
+            <li>Interview: key light at 45 degrees, hair light, soft fill. Moody but not dark.</li>
+            <li>Background slightly out of focus (kitchen shelves, equipment).</li>
+            <li>85mm f/1.8 for interview (flattering compression).</li>
+            <li>B-roll intercuts use footage from Shots 01 to 03.</li>
+          </ul>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">Direction Notes</div>
+          <ul>
+            <li>Pre-interview: 10 min conversation OFF camera to relax them.</li>
+            <li>Questions from behind camera, interviewer NOT visible.</li>
+            <li>Ask open questions: "tell me about..." not yes/no.</li>
+            <li>Film for 15 to 20 mins; the edit will pull the best 60s.</li>
+          </ul>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">Deliverable Cuts</div>
+          <ul>
+            <li>60s full version (paid social, website)</li>
+            <li>30s mid-cut (paid social)</li>
+            <li>15s teaser (stories, reels)</li>
+            <li>Audio-only edit (podcast content)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shot-card-footer">
+        <div class="shot-card-footer-item"><label>Duration</label><span>60s (hero) + 30s + 15s cuts</span></div>
+        <div class="shot-card-footer-item"><label>Sound</label><span>Interview audio (lapel mic) + subtle music bed. Music dips during speech.</span></div>
+        <div class="shot-card-footer-item"><label>Subtitles</label><span>Required on all versions (80%+ of social video watched without sound).</span></div>
+      </div>
+    </div>
+
+    <!-- Deliverables Summary -->
+    <div class="deliverables section-divider">
+      <h3>Deliverables Summary</h3>
+      <table class="del-table">
+        <thead><tr><th>Asset</th><th>Duration</th><th>Formats</th><th>Cuts</th><th>Priority</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Hero Brand Film</strong></td><td>25 to 30s</td><td>9:16, 1:1, 4:5</td><td>1 hero + 15s cutdown</td><td>P1</td></tr>
+          <tr><td><strong>Kitchen-to-Container</strong></td><td>20 to 25s</td><td>9:16, 1:1, 4:5</td><td>1 hero + 15s cutdown</td><td>P1</td></tr>
+          <tr><td><strong>B-roll Library</strong></td><td>3 to 5s each</td><td>16:9 master</td><td>20 to 30 individual clips</td><td>P1</td></tr>
+          <tr><td><strong>Taste Test Montage</strong></td><td>20 to 30s</td><td>9:16, 1:1</td><td>1 montage + 6 to 8 individual clips</td><td>P2</td></tr>
+          <tr><td><strong>Chef Profile</strong></td><td>60s</td><td>9:16, 1:1, 16:9</td><td>60s + 30s + 15s + audio</td><td>P2</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="brief-info" style="margin-top:2rem">
+      <h3>Technical Requirements</h3>
+      <div class="brief-info-grid">
+        <div class="brief-info-item"><label>Resolution</label><span>4K (3840x2160) minimum. Deliver ProRes 422 HQ or H.265 at 100Mbps+.</span></div>
+        <div class="brief-info-item"><label>Colour</label><span>Deliver graded (warm, appetising) + flat/log versions for future regrading.</span></div>
+        <div class="brief-info-item"><label>Audio</label><span>Stereo mix + separate stems (music, foley, VO/interview). 48kHz 24-bit.</span></div>
+        <div class="brief-info-item"><label>Subtitles</label><span>SRT files for all cuts. White text, black outline, centred bottom third.</span></div>
+        <div class="brief-info-item"><label>Project Files</label><span>Premiere/Resolve project with all raw footage on a delivered drive.</span></div>
+        <div class="brief-info-item"><label>Timeline</label><span>Shoot day + 5 working days for first rough cut. 3 revision rounds included.</span></div>
+      </div>
+    </div>
+
+    <div class="evidence" style="margin-top:1.5rem;border-left-color:var(--blue)">
+      <h4>Data source</h4>
+      <p>All creative decisions in this brief are evidenced by the competitive analysis in the <a href="creative-playbook.html" style="color:var(--blue)">Creative Strategy Playbook</a>, which analyses ${stats.totalVids} top-performing video ads from ${stats.totalBrands} brands in the UK meal prep category. The playbook contains the full evidence base: hook strategies, narrative structures, emotional drivers, and brand-by-brand intelligence.</p>
+    </div>
+
+    <div style="text-align:center;padding:2rem 0;color:var(--ink-4);font-size:.78rem">
+      <p>Prepared by Creative Kitchen for Willa Ltd / ${today}</p>
+      <p style="margin-top:.25rem">Confidential. For production partner use only.</p>
+    </div>
+  `;
+}
+
+(async () => {
+  try { render(await fetchData()); }
+  catch (err) { document.getElementById('app').innerHTML = `<div class="loading-screen"><h2>Failed to load</h2><p style="color:var(--ink-2)">${err.message}</p></div>`; }
+})();
+</script>
+</body>
+</html>

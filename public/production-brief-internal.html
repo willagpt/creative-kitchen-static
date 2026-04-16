@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Internal Production Brief / Creative Kitchen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf9f7;--surface:#fff;--surface-alt:#f4f2ee;--surface-warm:#f9f5f0;
+  --ink:#1a1714;--ink-2:#5c564d;--ink-3:#8a8279;--ink-4:#b0a99e;
+  --accent:#b44d1e;--accent-light:#f4e6dc;--accent-dark:#8a3710;--accent-glow:rgba(180,77,30,.08);
+  --green:#2d6a4f;--green-light:#d8f3dc;
+  --blue:#1d4e89;--blue-light:#d0e2f4;
+  --purple:#6b21a8;--purple-light:#ede9fe;
+  --amber:#92400e;--amber-light:#fef3c7;
+  --border:#e8e4de;--border-light:#f0ece6;
+  --radius:5px;--radius-lg:8px;
+  --shadow-sm:0 1px 2px rgba(26,23,20,.05);--shadow:0 1px 4px rgba(26,23,20,.08);
+  --font-display:'Fraunces',Georgia,serif;--font-body:'DM Sans',system-ui,sans-serif;
+}
+html{font-size:14.5px;scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.65;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
+
+.page{max-width:900px;margin:0 auto;padding:0 clamp(1rem,3vw,2.5rem) 4rem}
+
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:1.1rem 0;border-bottom:1px solid var(--border)}
+.topbar-brand{font-family:var(--font-display);font-size:.95rem;font-weight:700;color:var(--accent-dark)}
+.topbar-actions{display:flex;gap:.5rem}
+.btn{padding:.5rem 1.1rem;font-family:var(--font-body);font-size:.76rem;font-weight:600;border-radius:var(--radius);cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem}
+.btn-export{border:1.5px solid var(--ink);background:var(--ink);color:var(--bg)}
+.btn-export:hover{background:var(--accent-dark);border-color:var(--accent-dark);color:#fff}
+.btn-back{border:1.5px solid var(--border);background:var(--surface);color:var(--ink-2)}
+.btn-back:hover{border-color:var(--ink-3);color:var(--ink)}
+
+.cover{padding:clamp(3rem,8vw,5rem) 0 clamp(2rem,4vw,3rem);margin-bottom:2rem;border-bottom:2px solid var(--accent)}
+.cover-eyebrow{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);margin-bottom:1rem}
+.cover h1{font-size:clamp(2rem,4.5vw,3rem);font-weight:800;letter-spacing:-.04em;line-height:1.1;max-width:600px}
+.cover-subtitle{font-size:.95rem;color:var(--ink-2);margin-top:1rem;max-width:520px;line-height:1.6}
+.cover-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin-top:2rem;padding:1.25rem;background:var(--accent-light);border-radius:var(--radius-lg)}
+.cover-meta-item{display:flex;flex-direction:column;gap:.15rem}
+.cover-meta-val{font-family:var(--font-display);font-size:1.1rem;font-weight:700;color:var(--accent-dark)}
+.cover-meta-lbl{font-size:.65rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
+
+/* Shot card (simpler than studio version) */
+.shot{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:1.5rem;overflow:hidden;box-shadow:var(--shadow-sm)}
+.shot-header{display:flex;align-items:flex-start;gap:1rem;padding:1.25rem 1.5rem;flex-wrap:wrap}
+.shot-num{font-family:var(--font-display);font-size:1.5rem;font-weight:800;color:var(--accent);line-height:1;min-width:2rem}
+.shot-info{flex:1}
+.shot-title{font-family:var(--font-display);font-size:1.05rem;font-weight:700;margin-bottom:.2rem}
+.shot-tags{display:flex;flex-wrap:wrap;gap:.25rem;margin-top:.3rem}
+.tag{display:inline-block;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:.2rem .45rem;border-radius:3px}
+.tag-hook{background:var(--accent-light);color:var(--accent-dark)}
+.tag-body{background:var(--blue-light);color:var(--blue)}
+.tag-proof{background:var(--green-light);color:var(--green)}
+.tag-cta{background:var(--purple-light);color:var(--purple)}
+.shot-pri{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.25rem .6rem;border-radius:3px}
+.p1{background:var(--accent-light);color:var(--accent-dark)}
+.p2{background:var(--blue-light);color:var(--blue)}
+.p3{background:var(--surface-alt);color:var(--ink-3)}
+
+.shot-body{padding:0 1.5rem 1.25rem;display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+@media(max-width:640px){.shot-body{grid-template-columns:1fr}}
+.shot-section-title{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);margin-bottom:.4rem;border-bottom:1px solid var(--border-light);padding-bottom:.25rem}
+.shot-section p,.shot-section li{font-size:.86rem;color:var(--ink-2);line-height:1.6}
+.shot-section ul{list-style:none;padding:0}
+.shot-section li{padding:.2rem 0 .2rem .8rem;position:relative}
+.shot-section li::before{content:'';position:absolute;left:0;top:.55rem;width:4px;height:4px;border-radius:50%;background:var(--accent)}
+
+.shot-footer{padding:.75rem 1.5rem;background:var(--surface-alt);border-top:1px solid var(--border-light);display:flex;gap:1.5rem;flex-wrap:wrap;font-size:.82rem;color:var(--ink-2)}
+.shot-footer strong{color:var(--ink);font-weight:600}
+
+.evidence{background:var(--surface-warm);border-left:3px solid var(--accent);padding:1rem 1.25rem;border-radius:0 var(--radius-lg) var(--radius-lg) 0;margin-bottom:1.5rem}
+.evidence h4{font-family:var(--font-display);font-size:.82rem;font-weight:700;margin-bottom:.3rem}
+.evidence p{font-size:.82rem;color:var(--ink-2);line-height:1.55}
+
+.kit-list{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-top:2rem;box-shadow:var(--shadow-sm)}
+.kit-list h3{font-size:.95rem;margin-bottom:.75rem}
+.kit-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem}
+@media(max-width:600px){.kit-grid{grid-template-columns:1fr}}
+.kit-item{display:flex;align-items:flex-start;gap:.4rem;font-size:.84rem;color:var(--ink-2);line-height:1.5}
+.kit-item::before{content:'';display:block;width:4px;height:4px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:.5rem}
+
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:1.5rem}
+.loading-screen h2{font-family:var(--font-display);font-size:1.4rem;color:var(--ink-2)}
+.loading-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse .8s infinite alternate}
+.loading-dot:nth-child(2){animation-delay:.15s}.loading-dot:nth-child(3){animation-delay:.3s}
+@keyframes pulse{0%{opacity:.2;transform:scale(.8)}100%{opacity:1;transform:scale(1.1)}}
+
+@page{size:A4;margin:18mm 16mm 22mm 16mm}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  html{font-size:9.5px}
+  body{background:#fff}
+  .topbar,.no-print{display:none!important}
+  .page{max-width:none;padding:0}
+  .cover{page-break-after:always;min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(175deg,#faf9f7 0%,#f4e6dc 50%,#e8d5c4 100%)!important;margin:-18mm -16mm 0 -16mm;padding:30mm 20mm 15mm 20mm;border:none}
+  .cover h1{font-size:26px}
+  .cover::after{content:'Confidential. Internal use only.';display:block;margin-top:auto;padding-top:8mm;font-size:7px;color:#8a8279}
+  .shot{page-break-inside:avoid;margin-bottom:3mm}
+  .shot-header{padding:3mm 4mm}
+  .shot-num{font-size:12px}
+  .shot-title{font-size:9.5px}
+  .tag{font-size:5px;padding:.8mm 1.5mm}
+  .shot-body{padding:0 4mm 3mm;gap:3mm}
+  .shot-section-title{font-size:5.5px}
+  .shot-section p,.shot-section li{font-size:7.5px;line-height:1.4}
+  .shot-footer{padding:2mm 4mm;font-size:7px}
+  .evidence{padding:2.5mm 3mm}
+  .evidence h4{font-size:7px}
+  .evidence p{font-size:6.5px}
+}
+</style>
+</head>
+<body>
+<div class="page" id="app">
+  <div class="loading-screen"><h2>Building internal brief</h2><div><span class="loading-dot"></span> <span class="loading-dot"></span> <span class="loading-dot"></span></div></div>
+</div>
+
+<script>
+const SB_URL = 'https://ifrxylvoufncdxyltgqt.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA';
+const HEADERS = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` };
+
+async function fetchData() {
+  const analysesRes = await fetch(`${SB_URL}/rest/v1/video_analyses?status=eq.complete&select=*&order=created_at.desc`, { headers: HEADERS });
+  const analyses = await analysesRes.json();
+  const adIds = [...new Set(analyses.map(a => a.competitor_ad_id).filter(Boolean))];
+  let ads = [];
+  if (adIds.length > 0) {
+    const idsParam = `(${adIds.map(id => `"${id}"`).join(',')})`;
+    const adsRes = await fetch(`${SB_URL}/rest/v1/competitor_ads?id=in.${idsParam}&select=id,page_name,page_id,days_active`, { headers: HEADERS });
+    ads = await adsRes.json();
+  }
+  return { analyses, ads };
+}
+
+function getStats(analyses, ads) {
+  const adMap = {};
+  ads.forEach(a => { adMap[a.id] = a; });
+  analyses.forEach(an => { an.ad = adMap[an.competitor_ad_id] || {}; });
+  const pageIds = new Set();
+  analyses.forEach(an => { if (an.ad.page_id) pageIds.add(an.ad.page_id); });
+  const totalVids = analyses.length;
+  const totalBrands = pageIds.size;
+  const emotionCounts = {};
+  analyses.forEach(an => { (an.ai_analysis?.emotional_drivers || []).forEach(e => { const k = e.toLowerCase().trim(); if (k) emotionCounts[k] = (emotionCounts[k] || 0) + 1; }); });
+  const topEmotions = Object.entries(emotionCounts).sort((a,b) => b[1] - a[1]).slice(0,3).map(([e]) => e.replace(/\b\w/g, c => c.toUpperCase()));
+  const avgDur = (analyses.reduce((s,a) => s + (a.duration_seconds || 0), 0) / totalVids).toFixed(0);
+  const textOverlayHeavy = analyses.filter(a => (a.ai_analysis?.production_style?.text_overlays || '').toLowerCase().includes('heavy')).length;
+  const textPct = Math.round((textOverlayHeavy / totalVids) * 100);
+  return { totalVids, totalBrands, topEmotions, avgDur, textPct };
+}
+
+function render(data) {
+  const complete = data.analyses.filter(a => a.ai_analysis && a.transcript_text);
+  if (complete.length === 0) { document.getElementById('app').innerHTML = '<div class="loading-screen"><h2>No data</h2></div>'; return; }
+  const s = getStats(complete, data.ads);
+  const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  document.getElementById('app').innerHTML = `
+    <div class="topbar no-print">
+      <div class="topbar-brand">Creative Kitchen</div>
+      <div class="topbar-actions">
+        <a href="creative-playbook.html" class="btn btn-back">&#8592; Playbook</a>
+        <button class="btn btn-export" onclick="window.print()">Export PDF</button>
+      </div>
+    </div>
+
+    <div class="cover">
+      <div class="cover-eyebrow">Internal Production Brief / Track 1</div>
+      <h1>Quick-Turn In-House Content</h1>
+      <p class="cover-subtitle">7 content pieces your team can shoot with a phone, ring light, and your product. Designed for rapid iteration: film on any delivery day, test, learn, repeat. Based on ${s.totalVids} analysed competitor ads.</p>
+      <div class="cover-meta">
+        <div class="cover-meta-item"><span class="cover-meta-val">7</span><span class="cover-meta-lbl">Content Pieces</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-val">${s.avgDur}s</span><span class="cover-meta-lbl">Avg Competitor Duration</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-val">${s.textPct}%</span><span class="cover-meta-lbl">Use Heavy Text</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-val">${s.totalVids}</span><span class="cover-meta-lbl">Videos Analysed</span></div>
+      </div>
+    </div>
+
+    <div class="evidence">
+      <h4>Why internal production?</h4>
+      <p>Speed wins on paid social. While production company assets set the quality bar, internal content lets you test hooks, offers, and angles in days rather than weeks. These briefs are designed for one person with a phone. Film on every delivery day to build variation. The emotional drivers across ${s.totalVids} competitor ads are: ${s.topEmotions.join(', ')}. Every brief below targets at least one.</p>
+    </div>
+
+    <!-- Shot 1 -->
+    <div class="shot">
+      <div class="shot-header" style="background:var(--accent-light)">
+        <div class="shot-num">01</div>
+        <div class="shot-info">
+          <div class="shot-title">"What I Actually Ate This Week" Rapid Showcase</div>
+          <div class="shot-tags"><span class="tag tag-hook">hook</span><span class="tag tag-body">body</span></div>
+        </div>
+        <span class="shot-pri p1">P1</span>
+      </div>
+      <div class="shot-body">
+        <div class="shot-section">
+          <div class="shot-section-title">What to Film</div>
+          <ul>
+            <li>7 meals shown in fast succession, each held to camera</li>
+            <li>Name overlay on each meal (add in CapCut or similar)</li>
+            <li>Close on: "and I didn't cook once."</li>
+            <li>Keep total under 20 seconds</li>
+          </ul>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">How to Film</div>
+          <ul>
+            <li>Phone on tripod or propped against something stable</li>
+            <li>Same background for all 7 meals (kitchen counter works)</li>
+            <li>Hold each meal for exactly 2 seconds, then swap</li>
+            <li>Film on delivery day when all meals are available</li>
+            <li>Natural light from a window (no overhead lights)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shot-footer"><strong>Duration:</strong> 15 to 20s &nbsp; <strong>Can also be:</strong> static image (grid of 7) &nbsp; <strong>Best for:</strong> Feed, Reels, TikTok</div>
+    </div>
+
+    <!-- Shot 2 -->
+    <div class="shot">
+      <div class="shot-header" style="background:var(--accent-light)">
+        <div class="shot-num">02</div>
+        <div class="shot-info">
+          <div class="shot-title">Fridge Pull Reveal</div>
+          <div class="shot-tags"><span class="tag tag-hook">hook</span></div>
+        </div>
+        <span class="shot-pri p1">P1</span>
+      </div>
+      <div class="shot-body">
+        <div class="shot-section">
+          <div class="shot-section-title">What to Film</div>
+          <ul>
+            <li>Camera starts on closed fridge door</li>
+            <li>Hand opens it to reveal a full shelf of branded containers</li>
+            <li>Text overlay: "This is what organised eating looks like."</li>
+            <li>Hold the reveal for 3 seconds, then cut to CTA</li>
+          </ul>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">How to Film</div>
+          <ul>
+            <li>Phone mounted at chest height, straight on</li>
+            <li>Clean the fridge first (nothing distracting on other shelves)</li>
+            <li>Containers should be label-forward, colourful meals visible</li>
+            <li>Fridge light provides the reveal moment</li>
+            <li>One take. Don't overthink it.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shot-footer"><strong>Duration:</strong> 8 to 12s &nbsp; <strong>Can also be:</strong> static image (fridge open) &nbsp; <strong>Best for:</strong> Stories hook, Reel opener</div>
+    </div>
+
+    <!-- Shot 3 -->
+    <div class="shot">
+      <div class="shot-header" style="background:var(--accent-light)">
+        <div class="shot-num">03</div>
+        <div class="shot-info">
+          <div class="shot-title">Microwave Timer Split-Screen</div>
+          <div class="shot-tags"><span class="tag tag-body">body</span><span class="tag tag-proof">proof</span></div>
+        </div>
+        <span class="shot-pri p1">P1</span>
+      </div>
+      <div class="shot-body">
+        <div class="shot-section">
+          <div class="shot-section-title">What to Film</div>
+          <ul>
+            <li>Split screen: microwave timer counting down (90s) on one side</li>
+            <li>Other side: time-lapse of cooking from scratch (shopping, chopping, cooking, washing up)</li>
+            <li>Text: "Same macros. Different time investment."</li>
+            <li>End with price per meal comparison</li>
+          </ul>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">How to Film</div>
+          <ul>
+            <li>Film the microwave timer on a separate day (just the countdown + ding)</li>
+            <li>Film the cooking time-lapse on another day (speed up 8x to 12x)</li>
+            <li>Combine in CapCut with side-by-side or top/bottom split</li>
+            <li>Add text overlays with time stamps and macro comparisons</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shot-footer"><strong>Duration:</strong> 15 to 25s &nbsp; <strong>Pattern:</strong> Category contrast (convenience emotion) &nbsp; <strong>Best for:</strong> Feed, Reels</div>
+    </div>
+
+    <!-- Shot 4 -->
+    <div class="shot">
+      <div class="shot-header" style="background:var(--blue-light)">
+        <div class="shot-num">04</div>
+        <div class="shot-info">
+          <div class="shot-title">Ingredient Label Flip</div>
+          <div class="shot-tags"><span class="tag tag-hook">hook</span><span class="tag tag-proof">proof</span></div>
+        </div>
+        <span class="shot-pri p2">P2</span>
+      </div>
+      <div class="shot-body">
+        <div class="shot-section">
+          <div class="shot-section-title">What to Film</div>
+          <ul>
+            <li>Pick up a supermarket ready meal, flip to show the long ingredients list</li>
+            <li>Hold for 2 seconds so viewer can see the length</li>
+            <li>Pick up your meal, flip to show the short, clean list</li>
+            <li>Text: "Read the label."</li>
+          </ul>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">How to Film</div>
+          <ul>
+            <li>Buy a competitor supermarket ready meal (Tesco, Sainsbury's "Healthy" range)</li>
+            <li>Film close-up on a neutral background</li>
+            <li>Make sure both labels are legible in the video</li>
+            <li>Keep lighting bright and even</li>
+            <li>Confrontational tone in text overlay</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shot-footer"><strong>Duration:</strong> 10 to 15s &nbsp; <strong>Pattern:</strong> Category contrast + Health anxiety &nbsp; <strong>Can also be:</strong> Static (side-by-side labels)</div>
+    </div>
+
+    <!-- Shot 5 -->
+    <div class="shot">
+      <div class="shot-header" style="background:var(--blue-light)">
+        <div class="shot-num">05</div>
+        <div class="shot-info">
+          <div class="shot-title">Macro Scan</div>
+          <div class="shot-tags"><span class="tag tag-proof">proof</span></div>
+        </div>
+        <span class="shot-pri p2">P2</span>
+      </div>
+      <div class="shot-body">
+        <div class="shot-section">
+          <div class="shot-section-title">What to Film</div>
+          <ul>
+            <li>Open MyFitnessPal (or any tracking app)</li>
+            <li>Scan the barcode on a meal container</li>
+            <li>Show the clean macro split appearing on screen</li>
+            <li>Text: "Every meal, already in the app."</li>
+          </ul>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">How to Film</div>
+          <ul>
+            <li>Screen recording + over-the-shoulder angle</li>
+            <li>Make sure the barcode scans first time (test before filming)</li>
+            <li>Pause on the macro split for 2 seconds</li>
+            <li>Extremely cheap to produce. 5 minutes of work.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shot-footer"><strong>Duration:</strong> 10 to 15s &nbsp; <strong>Audience:</strong> Fitness/tracking segment &nbsp; <strong>Note:</strong> No competitor in the dataset shows this</div>
+    </div>
+
+    <!-- Shot 6 -->
+    <div class="shot">
+      <div class="shot-header" style="background:var(--blue-light)">
+        <div class="shot-num">06</div>
+        <div class="shot-info">
+          <div class="shot-title">Desk Lunch B-roll</div>
+          <div class="shot-tags"><span class="tag tag-body">body</span></div>
+        </div>
+        <span class="shot-pri p2">P2</span>
+      </div>
+      <div class="shot-body">
+        <div class="shot-section">
+          <div class="shot-section-title">What to Film</div>
+          <ul>
+            <li>Office setting: unwrap and eat at a desk</li>
+            <li>No voiceover. ASMR-style audio (optional) or just music</li>
+            <li>Text overlays scroll with benefit claims: "50g protein. 450 cals. 90 seconds."</li>
+            <li>Clean, satisfying, silent-optimised</li>
+          </ul>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">How to Film</div>
+          <ul>
+            <li>Film in any office or at a clean desk at home</li>
+            <li>Slightly overhead angle (phone propped on a stack of books)</li>
+            <li>Focus on the food, not the person (hands and container only)</li>
+            <li>Add text overlays in post (large, bold, centred)</li>
+            <li>${s.textPct}% of competitor ads use heavy text overlays. This format leans into that.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shot-footer"><strong>Duration:</strong> 12 to 18s &nbsp; <strong>Audience:</strong> Professionals &nbsp; <strong>Best for:</strong> Feed (silent autoplay)</div>
+    </div>
+
+    <!-- Shot 7 -->
+    <div class="shot">
+      <div class="shot-header" style="background:var(--surface-alt)">
+        <div class="shot-num">07</div>
+        <div class="shot-info">
+          <div class="shot-title">Unboxing</div>
+          <div class="shot-tags"><span class="tag tag-body">body</span><span class="tag tag-cta">cta</span></div>
+        </div>
+        <span class="shot-pri p3">P3</span>
+      </div>
+      <div class="shot-body">
+        <div class="shot-section">
+          <div class="shot-section-title">What to Film</div>
+          <ul>
+            <li>Delivery arrives, open on kitchen counter</li>
+            <li>Show each meal with genuine reaction</li>
+            <li>End with "link in bio" or offer code</li>
+            <li>Standard but essential for the content library</li>
+          </ul>
+        </div>
+        <div class="shot-section">
+          <div class="shot-section-title">How to Film</div>
+          <ul>
+            <li>Film on every delivery day (build variety over time)</li>
+            <li>Different person each time if possible</li>
+            <li>Keep it casual and genuine. Not scripted.</li>
+            <li>Low priority because it's table stakes, but you need it in the library.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shot-footer"><strong>Duration:</strong> 20 to 30s &nbsp; <strong>Note:</strong> Every competitor has one. Table stakes, not a differentiator.</div>
+    </div>
+
+    <!-- Kit list -->
+    <div class="kit-list">
+      <h3>Kit Checklist (everything you need)</h3>
+      <div class="kit-grid">
+        <div class="kit-item">Smartphone (iPhone 13+ or equivalent)</div>
+        <div class="kit-item">Phone tripod with adjustable height</div>
+        <div class="kit-item">Ring light (12" minimum)</div>
+        <div class="kit-item">Lapel microphone (optional but helps)</div>
+        <div class="kit-item">Clean kitchen counter</div>
+        <div class="kit-item">Branded containers (full set)</div>
+        <div class="kit-item">CapCut app (free, for editing + text overlays)</div>
+        <div class="kit-item">Supermarket ready meal (for comparison shots)</div>
+        <div class="kit-item">MyFitnessPal app (for barcode scan shot)</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:2rem 0;color:var(--ink-4);font-size:.78rem">
+      <p>Prepared by Creative Kitchen for Willa Ltd / ${today}</p>
+    </div>
+  `;
+}
+
+(async () => {
+  try { render(await fetchData()); }
+  catch (err) { document.getElementById('app').innerHTML = `<div class="loading-screen"><h2>Failed to load</h2><p style="color:var(--ink-2)">${err.message}</p></div>`; }
+})();
+</script>
+</body>
+</html>

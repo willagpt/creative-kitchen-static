@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UGC Creator Briefs / Creative Kitchen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf9f7;--surface:#fff;--surface-alt:#f4f2ee;--surface-warm:#f9f5f0;
+  --ink:#1a1714;--ink-2:#5c564d;--ink-3:#8a8279;--ink-4:#b0a99e;
+  --accent:#b44d1e;--accent-light:#f4e6dc;--accent-dark:#8a3710;--accent-glow:rgba(180,77,30,.08);
+  --green:#2d6a4f;--green-light:#d8f3dc;--green-bg:#f0f9f2;
+  --blue:#1d4e89;--blue-light:#d0e2f4;--blue-bg:#eef4fa;
+  --purple:#6b21a8;--purple-light:#ede9fe;
+  --amber:#92400e;--amber-light:#fef3c7;
+  --red:#991b1b;--red-light:#fee2e2;
+  --border:#e8e4de;--border-light:#f0ece6;
+  --radius:5px;--radius-lg:8px;
+  --shadow-sm:0 1px 2px rgba(26,23,20,.05);--shadow:0 1px 4px rgba(26,23,20,.08);--shadow-lg:0 4px 20px rgba(26,23,20,.1);
+  --font-display:'Fraunces',Georgia,serif;--font-body:'DM Sans',system-ui,sans-serif;
+}
+html{font-size:14.5px;scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.65;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
+
+.page{max-width:960px;margin:0 auto;padding:0 clamp(1rem,3vw,2.5rem) 4rem}
+
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:1.1rem 0;border-bottom:1px solid var(--border);margin-bottom:0}
+.topbar-brand{font-family:var(--font-display);font-size:.95rem;font-weight:700;color:var(--accent-dark)}
+.topbar-actions{display:flex;gap:.5rem}
+.btn{padding:.5rem 1.1rem;font-family:var(--font-body);font-size:.76rem;font-weight:600;border-radius:var(--radius);cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem}
+.btn-export{border:1.5px solid var(--ink);background:var(--ink);color:var(--bg)}
+.btn-export:hover{background:var(--accent-dark);border-color:var(--accent-dark);color:#fff}
+.btn-back{border:1.5px solid var(--border);background:var(--surface);color:var(--ink-2)}
+.btn-back:hover{border-color:var(--ink-3);color:var(--ink)}
+
+.cover{padding:clamp(3rem,8vw,5rem) 0 clamp(2rem,4vw,3rem);margin-bottom:2rem;border-bottom:2px solid var(--green)}
+.cover-eyebrow{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--green);margin-bottom:1rem}
+.cover h1{font-size:clamp(2rem,4.5vw,3rem);font-weight:800;letter-spacing:-.04em;line-height:1.1;max-width:650px}
+.cover-subtitle{font-size:.95rem;color:var(--ink-2);margin-top:1rem;max-width:520px;line-height:1.6}
+.cover-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin-top:2rem;padding:1.25rem;background:var(--green-bg);border-radius:var(--radius-lg)}
+.cover-meta-item{display:flex;flex-direction:column;gap:.15rem}
+.cover-meta-val{font-family:var(--font-display);font-size:1.1rem;font-weight:700;color:var(--green)}
+.cover-meta-lbl{font-size:.65rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
+
+/* Concept card */
+.concept{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:2.5rem;overflow:hidden;box-shadow:var(--shadow-sm)}
+.concept:hover{box-shadow:var(--shadow)}
+.concept-header{padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap}
+.concept-num{font-family:var(--font-display);font-size:1.6rem;font-weight:800;color:var(--green);line-height:1;min-width:2.5rem}
+.concept-title-area{flex:1}
+.concept-title{font-family:var(--font-display);font-size:1.1rem;font-weight:700;line-height:1.3;margin-bottom:.25rem}
+.concept-subtitle{font-size:.84rem;color:var(--ink-2);line-height:1.5}
+.concept-tags{display:flex;flex-wrap:wrap;gap:.25rem;margin-top:.4rem}
+.tag{display:inline-block;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:.2rem .45rem;border-radius:3px}
+.tag-hook{background:var(--accent-light);color:var(--accent-dark)}
+.tag-body{background:var(--blue-light);color:var(--blue)}
+.tag-proof{background:var(--green-light);color:var(--green)}
+.tag-cta{background:var(--purple-light);color:var(--purple)}
+.concept-priority{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.25rem .6rem;border-radius:3px}
+.p1{background:var(--accent-light);color:var(--accent-dark)}
+.p2{background:var(--blue-light);color:var(--blue)}
+.p3{background:var(--surface-alt);color:var(--ink-3)}
+
+/* Brief section inside concept */
+.concept-brief{padding:0 1.5rem 1rem}
+.brief-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);margin-bottom:.4rem;padding-bottom:.25rem;border-bottom:1px solid var(--border-light)}
+.brief-text{font-size:.86rem;color:var(--ink-2);line-height:1.6;margin-bottom:1rem}
+.brief-text strong{color:var(--ink);font-weight:600}
+
+/* Variation cards */
+.variations{padding:0 1.5rem 1.5rem}
+.variations-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--green);margin-bottom:.75rem}
+.var-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem}
+@media(max-width:700px){.var-grid{grid-template-columns:1fr}}
+.var-card{border:1px solid var(--border);border-radius:var(--radius);padding:1rem;background:var(--surface-warm);position:relative}
+.var-card-label{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--green);margin-bottom:.5rem}
+.var-card h4{font-family:var(--font-display);font-size:.88rem;font-weight:700;margin-bottom:.4rem}
+.var-section{margin-bottom:.6rem}
+.var-section-title{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:.25rem}
+.var-section p,.var-section li{font-size:.8rem;color:var(--ink-2);line-height:1.5}
+.var-section ul{list-style:none;padding:0}
+.var-section li{padding:.15rem 0 .15rem .8rem;position:relative}
+.var-section li::before{content:'';position:absolute;left:0;top:.45rem;width:3px;height:3px;border-radius:50%;background:var(--green)}
+
+/* Concept footer */
+.concept-footer{padding:.75rem 1.5rem;background:var(--surface-alt);border-top:1px solid var(--border-light);display:flex;gap:1.5rem;flex-wrap:wrap}
+.concept-footer-item{display:flex;flex-direction:column;gap:.1rem}
+.concept-footer-item label{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3)}
+.concept-footer-item span{font-size:.82rem;font-weight:500;color:var(--ink)}
+
+.evidence{background:var(--surface-warm);border-left:3px solid var(--green);padding:1rem 1.25rem;border-radius:0 var(--radius-lg) var(--radius-lg) 0;margin-bottom:1.5rem}
+.evidence h4{font-family:var(--font-display);font-size:.82rem;font-weight:700;margin-bottom:.3rem}
+.evidence p{font-size:.82rem;color:var(--ink-2);line-height:1.55}
+
+.creator-checklist{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-top:2rem;box-shadow:var(--shadow-sm)}
+.creator-checklist h3{font-size:.95rem;margin-bottom:.75rem}
+.checklist-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem}
+@media(max-width:600px){.checklist-grid{grid-template-columns:1fr}}
+.checklist-item{display:flex;align-items:flex-start;gap:.5rem;font-size:.84rem;color:var(--ink-2);line-height:1.5}
+.checklist-item::before{content:'[ ]';font-family:monospace;font-size:.7rem;color:var(--ink-3);flex-shrink:0;margin-top:.15rem}
+
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:1.5rem}
+.loading-screen h2{font-family:var(--font-display);font-size:1.4rem;color:var(--ink-2)}
+.loading-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse .8s infinite alternate}
+.loading-dot:nth-child(2){animation-delay:.15s}.loading-dot:nth-child(3){animation-delay:.3s}
+@keyframes pulse{0%{opacity:.2;transform:scale(.8)}100%{opacity:1;transform:scale(1.1)}}
+
+@page{size:A4;margin:18mm 16mm 22mm 16mm}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  html{font-size:9px}
+  body{background:#fff}
+  .topbar,.no-print{display:none!important}
+  .page{max-width:none;padding:0}
+  .cover{padding:0 0 4mm 0;margin-bottom:4mm;page-break-after:always;min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(175deg,#faf9f7 0%,#d8f3dc 50%,#c5e8cc 100%)!important;margin:-18mm -16mm 0 -16mm;padding:30mm 20mm 15mm 20mm;border:none}
+  .cover h1{font-size:26px;max-width:360px}
+  .cover::after{content:'Confidential. Prepared by Creative Kitchen.';display:block;margin-top:auto;padding-top:8mm;font-size:7px;color:#8a8279}
+  .concept{page-break-inside:avoid;margin-bottom:4mm}
+  .concept-header{padding:3mm 4mm}
+  .concept-num{font-size:12px}
+  .concept-title{font-size:9.5px}
+  .concept-subtitle{font-size:7.5px}
+  .tag{font-size:5px;padding:.8mm 1.5mm}
+  .concept-brief{padding:0 4mm 2mm}
+  .brief-label{font-size:5.5px}
+  .brief-text{font-size:7.5px;line-height:1.4;margin-bottom:2mm}
+  .variations{padding:0 4mm 3mm}
+  .var-grid{gap:2mm}
+  .var-card{padding:2.5mm}
+  .var-card-label{font-size:5px}
+  .var-card h4{font-size:8px}
+  .var-section-title{font-size:5px}
+  .var-section p,.var-section li{font-size:7px;line-height:1.4}
+  .concept-footer{padding:2mm 4mm;gap:3mm}
+  .concept-footer-item label{font-size:5px}
+  .concept-footer-item span{font-size:7px}
+  .evidence{padding:2.5mm 3mm;margin-bottom:3mm}
+  .evidence h4{font-size:7px}
+  .evidence p{font-size:6.5px}
+}
+</style>
+</head>
+<body>
+<div class="page" id="app">
+  <div class="loading-screen"><h2>Building creator briefs</h2><div><span class="loading-dot"></span> <span class="loading-dot"></span> <span class="loading-dot"></span></div></div>
+</div>
+
+<script>
+const SB_URL = 'https://ifrxylvoufncdxyltgqt.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA';
+const HEADERS = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` };
+
+async function fetchData() {
+  const analysesRes = await fetch(`${SB_URL}/rest/v1/video_analyses?status=eq.complete&select=*&order=created_at.desc`, { headers: HEADERS });
+  const analyses = await analysesRes.json();
+  const adIds = [...new Set(analyses.map(a => a.competitor_ad_id).filter(Boolean))];
+  let ads = [];
+  if (adIds.length > 0) {
+    const idsParam = `(${adIds.map(id => `"${id}"`).join(',')})`;
+    const adsRes = await fetch(`${SB_URL}/rest/v1/competitor_ads?id=in.${idsParam}&select=id,page_name,page_id,days_active`, { headers: HEADERS });
+    ads = await adsRes.json();
+  }
+  return { analyses, ads };
+}
+
+function getStats(analyses, ads) {
+  const adMap = {};
+  ads.forEach(a => { adMap[a.id] = a; });
+  analyses.forEach(an => { an.ad = adMap[an.competitor_ad_id] || {}; });
+  const pageIds = new Set();
+  analyses.forEach(an => { if (an.ad.page_id) pageIds.add(an.ad.page_id); });
+  const totalVids = analyses.length;
+  const totalBrands = pageIds.size;
+  const ugcCount = analyses.filter(a => ['ugc','talking-head','selfie','testimonial'].includes((a.ai_analysis?.production_style?.format || '').toLowerCase())).length;
+  const ugcPct = Math.round((ugcCount / totalVids) * 100);
+  const hookCounts = {};
+  analyses.forEach(an => { const h = (an.ai_analysis?.hook?.type || '').toLowerCase().trim(); if (h) hookCounts[h] = (hookCounts[h] || 0) + 1; });
+  const ugcTestimonialPct = Math.round(((hookCounts['ugc-testimonial'] || 0) / totalVids) * 100);
+  const emotionCounts = {};
+  analyses.forEach(an => { (an.ai_analysis?.emotional_drivers || []).forEach(e => { const k = e.toLowerCase().trim(); if (k) emotionCounts[k] = (emotionCounts[k] || 0) + 1; }); });
+  const topEmotions = Object.entries(emotionCounts).sort((a,b) => b[1] - a[1]).slice(0, 3).map(([e]) => e.replace(/\b\w/g, c => c.toUpperCase()));
+  const tastePct = Math.round((analyses.filter(a => (a.ai_analysis?.selling_points || []).some(s => s.toLowerCase().includes('taste'))).length / totalVids) * 100);
+  return { totalVids, totalBrands, ugcPct, ugcTestimonialPct, topEmotions, tastePct };
+}
+
+function render(data) {
+  const complete = data.analyses.filter(a => a.ai_analysis && a.transcript_text);
+  if (complete.length === 0) { document.getElementById('app').innerHTML = '<div class="loading-screen"><h2>No data</h2></div>'; return; }
+  const s = getStats(complete, data.ads);
+  const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  document.getElementById('app').innerHTML = `
+    <div class="topbar no-print">
+      <div class="topbar-brand">Creative Kitchen</div>
+      <div class="topbar-actions">
+        <a href="creative-playbook.html" class="btn btn-back">&#8592; Playbook</a>
+        <button class="btn btn-export" onclick="window.print()">Export PDF</button>
+      </div>
+    </div>
+
+    <div class="cover">
+      <div class="cover-eyebrow">UGC Creator Briefs / Track 3</div>
+      <h1>Creator-Led Content Briefs</h1>
+      <p class="cover-subtitle">7 content concepts, each with 3 creator variations. Hand these directly to creators: each variation is a self-contained brief with talking points, visual direction, and the competitive evidence behind the concept.</p>
+      <div class="cover-meta">
+        <div class="cover-meta-item"><span class="cover-meta-val">7</span><span class="cover-meta-lbl">Concepts</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-val">21</span><span class="cover-meta-lbl">Total Variations</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-val">${s.ugcTestimonialPct}%</span><span class="cover-meta-lbl">UGC Hooks in Market</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-val">${s.totalVids}</span><span class="cover-meta-lbl">Videos Analysed</span></div>
+      </div>
+    </div>
+
+    <div class="evidence">
+      <h4>Why these briefs?</h4>
+      <p>UGC testimonial hooks appear in ${s.ugcTestimonialPct}% of the ${s.totalVids} analysed competitor ads. ${s.ugcPct}% use UGC or talking-head formats. This means UGC is table stakes, but most of it looks the same. These briefs exploit specific gaps: female creators (the competitive set is overwhelmingly male-presenting), taste-led content (only ${s.tastePct}% of ads sell on taste), non-gym audiences (professionals, parents, students), and format novelty (duo, diary, explainer). Each concept has 3 variations so you can A/B/C test creator types, angles, or talking points.</p>
+    </div>
+
+    <!-- CONCEPT 1 -->
+    ${conceptCard(1, 'Female Fitness Creator: "My Week on [Brand]"',
+      'A 7-day diary format showing a different meal each day alongside gym/activity clips. The competitive set is overwhelmingly male-presenting creators. Female fitness is the single biggest audience whitespace.',
+      ['hook','body','cta'], 'P1',
+      'UGC testimonial + Audience gap. Female fitness creators are virtually absent from the competitive set.',
+      '30 to 45s', '9:16 (Reels/TikTok/Stories)',
+      [
+        { label: 'Variation A', title: 'Gym-focused fitness creator',
+          creator: 'Female, 22 to 28, gym-focused (lifting/CrossFit). 50K+ following.',
+          hook: '"I tracked everything I ate for a week using [brand]. Here\'s what happened to my performance."',
+          shots: ['Day 1: unboxing + first taste reaction', 'Day 2 to 6: one meal per day + gym clip showing the workout', 'Day 7: wrap-up with body/energy/performance reflections', 'Throughout: MyFitnessPal screenshots showing macro accuracy'],
+          talkingPoints: ['Focus on macro accuracy and recovery', '"I didn\'t have to think about food once this week"', 'Genuine taste reaction on day 1 (film naturally, not scripted)'],
+          cta: 'Code + "link in bio"'
+        },
+        { label: 'Variation B', title: 'Yoga/Pilates/wellness creator',
+          creator: 'Female, 25 to 35, yoga/Pilates/wellness focused. Softer aesthetic.',
+          hook: '"I\'m not a meal prep person but I tried [brand] for a week and honestly?"',
+          shots: ['Day 1: kitchen counter unboxing, morning routine context', 'Day 3: mid-week check-in while eating lunch', 'Day 5: workout clip + post-workout meal', 'Day 7: honest review while eating breakfast'],
+          talkingPoints: ['Focus on convenience and ingredient quality, NOT macros', '"The ingredients are actually clean"', 'Compare to previous meal prep attempts that failed'],
+          cta: 'Discount code + "I\'ll leave the link"'
+        },
+        { label: 'Variation C', title: 'Running/outdoor fitness creator',
+          creator: 'Female, 28 to 38, running/cycling/outdoor fitness. Active lifestyle aesthetic.',
+          hook: '"I run 40 miles a week and this is how I fuel it without spending hours cooking."',
+          shots: ['Pre-run morning routine: grab container from fridge, eat, go', 'Running clip + "I used to bonk by mile 8 because I ate rubbish"', 'Post-run: eating at kitchen counter, sweaty and genuine', 'End of week: "my recovery has been noticeably better"'],
+          talkingPoints: ['Focus on energy, recovery, and time savings', '"I need 2,500 calories a day and I don\'t have time to cook that"', 'The convenience angle for high-volume eaters'],
+          cta: 'Code + "honestly just try it for a week"'
+        }
+      ]
+    )}
+
+    <!-- CONCEPT 2 -->
+    ${conceptCard(2, 'Busy Professional: "How I Save 5 Hours a Week"',
+      'Before/after format. Show the old routine (takeaway receipts, sad desk lunches, late-night cooking) vs the new one (clean meals ready, evenings free). Numbers-led hook that broadens appeal beyond fitness.',
+      ['hook','proof'], 'P1',
+      'Before/after format adapted for non-gym audience. Broadens reach beyond fitness.',
+      '25 to 35s', '9:16',
+      [
+        { label: 'Variation A', title: 'Corporate professional',
+          creator: 'Male or female, 28 to 38, office worker. Smart-casual look.',
+          hook: '"I calculated how much time I spent on food every week. It was 7 hours. Now it\'s 20 minutes."',
+          shots: ['Quick montage: supermarket queue, chopping, washing up, Deliveroo receipts', 'Cut to: "now I just do this" + opening fridge full of containers', 'Eating at desk, tracking on phone', '"I get home at 6 and my evening is actually free"'],
+          talkingPoints: ['Lead with the time calculation (make it specific)', '"I was spending more on takeaways than this costs"', 'Show the actual receipts or bank statement (blur amounts if needed)'],
+          cta: '"Try it for a week. Do the maths yourself." + code'
+        },
+        { label: 'Variation B', title: 'Entrepreneur / freelancer',
+          creator: 'Male or female, 25 to 35, works from home. Relatable home office setup.',
+          hook: '"Working from home means I either cook for an hour or eat rubbish. There\'s no middle ground. Or there wasn\'t."',
+          shots: ['Home office: eating crisps at desk, cutting to proper meal from container', 'Show the microwave timer (90 seconds)', '"I used to lose my entire lunch break to cooking"', 'Evening: actually cooking for pleasure, not obligation'],
+          talkingPoints: ['The WFH food trap: fridge proximity is dangerous', 'Distinction between "I CAN cook" and "I WANT to cook every meal"', 'Financial comparison: takeaway vs this service'],
+          cta: 'Code + "my afternoons are so much more productive now"'
+        },
+        { label: 'Variation C', title: 'Junior doctor / nurse / shift worker',
+          creator: 'Male or female, 26 to 35, healthcare or shift work. Scrubs or uniform visible.',
+          hook: '"I do 12-hour shifts and I used to eat vending machine food for dinner. Not anymore."',
+          shots: ['Getting ready for shift, grabbing containers from fridge', 'At work: eating a proper meal during break', 'Back home: too tired to cook, but meal is already there', '"I actually have energy at the end of my shift now"'],
+          talkingPoints: ['Shift work makes cooking almost impossible', 'The health irony: healthcare worker eating badly', '"My colleagues keep asking what I\'m eating"'],
+          cta: 'Code + "if you do shifts, you need this"'
+        }
+      ]
+    )}
+
+    <!-- CONCEPT 3 -->
+    ${conceptCard(3, 'Nutritionist/PT Explainer: "Why I Recommend [Brand]"',
+      'Authority/expert format. A credentialled nutritionist or PT explains what they look for in a meal prep service. Expert formats have the highest longevity (40+ days active) in the competitive dataset.',
+      ['proof','body'], 'P1',
+      'Authority hook. Expert formats run longest in the competitive set (highest ROI per creative).',
+      '30 to 40s', '9:16',
+      [
+        { label: 'Variation A', title: 'Registered Dietitian',
+          creator: 'RD or equivalent qualification. 30 to 45. Clinical/professional credibility.',
+          hook: '"As a registered dietitian, I get asked about meal prep services all the time. Here\'s what I actually look for."',
+          shots: ['Podcast-style setup (ring light, clean background, slightly off-centre)', 'Hold up or point to a container: "First thing I check is the ingredients list"', 'Show label: "Short list, recognisable ingredients"', '"The macro split is accurate. I\'ve checked."', 'Eating the food: "And yes, it actually tastes good"'],
+          talkingPoints: ['Lead with credentials (briefly)', '3 criteria: ingredient quality, macro accuracy, portion consistency', 'The professional endorsement carries weight (use it at the end)'],
+          cta: '"I recommend this to my clients." + code'
+        },
+        { label: 'Variation B', title: 'Personal trainer',
+          creator: 'PT with visible clientele (not just gym selfies). 25 to 40. Certification visible.',
+          hook: '"I put all my clients on meal prep. Here\'s the one I actually trust."',
+          shots: ['Gym setting: between clients or end of session', '"Most meal prep companies get the protein right but the ingredients are rubbish"', 'Show the label comparison (vs supermarket ready meal)', '"My clients who use this see results faster because compliance goes up"'],
+          talkingPoints: ['Frame as professional recommendation, not personal preference', 'The compliance angle: "the best diet is the one you actually follow"', 'Results-focused: what changes when nutrition is sorted'],
+          cta: '"Tell them I sent you." + code'
+        },
+        { label: 'Variation C', title: 'Sports nutritionist',
+          creator: 'Sports nutrition background. Works with athletes or teams. 28 to 45.',
+          hook: '"I\'ve worked with professional athletes. Here\'s what they eat when they\'re not in camp."',
+          shots: ['Clean professional setting (office or kitchen)', '"Meal prep is the single biggest lever for body composition"', 'Break down the macro split of a specific meal', '"This is what a properly formulated meal looks like"', 'Eating: "And it doesn\'t taste like cardboard"'],
+          talkingPoints: ['Professional athlete angle creates aspiration', 'Technical credibility: show you understand macros, timing, quality', 'The taste comment at the end humanises the expert'],
+          cta: '"Link in bio. Use my code." + code'
+        }
+      ]
+    )}
+
+    <!-- CONCEPT 4 -->
+    ${conceptCard(4, 'Couple / Housemate: "We Switched to [Brand]"',
+      'Two-person format. No competitor in the dataset uses a duo. Format novelty creates pattern interruption in the feed. The conversation format feels more genuine than a single person talking to camera.',
+      ['hook','body'], 'P2',
+      'Novel duo format. Zero competitors use two-person UGC. Differentiation through format.',
+      '25 to 35s', '9:16',
+      [
+        { label: 'Variation A', title: 'Couple (mixed fitness levels)',
+          creator: 'Real couple, 25 to 35. One is fitness-focused, the other is not. Genuine dynamic.',
+          hook: '"My partner is a gym bro. I am not. We both eat [brand] for completely different reasons."',
+          shots: ['Kitchen: both opening containers. One checks macros, the other just eats', '"He likes it because [macros]. I like it because [convenience]"', 'Playful disagreement about best meal', 'Both agree on one thing: "neither of us has to cook"'],
+          talkingPoints: ['The contrast makes it relatable to both audiences', 'Let them disagree naturally (don\'t script the banter)', 'Film in one take if possible for authenticity'],
+          cta: '"We both have codes." + two codes or one shared code'
+        },
+        { label: 'Variation B', title: 'Flatmates',
+          creator: 'Two friends sharing a flat, 22 to 30. Relatable student/young professional vibe.',
+          hook: '"We used to argue about whose turn it was to cook. Problem solved."',
+          shots: ['Kitchen counter: both eating different meals from containers', '"I was sceptical but the Thai green curry changed my mind"', '"We save about 6 hours a week between us"', 'Show the fridge: labelled containers, organised'],
+          talkingPoints: ['The shared living angle: who cooks, who cleans, food theft', 'Different tastes from the same service', 'Cost split: "cheaper than what we were spending on Deliveroo"'],
+          cta: '"Honestly just try it." + code'
+        },
+        { label: 'Variation C', title: 'Parent + teenager',
+          creator: 'Parent (35 to 45) with teenage child (15 to 18). Real family dynamic.',
+          hook: '"My teenager is the fussiest eater alive. Watch what happens."',
+          shots: ['Parent introduces the challenge: "I ordered [brand] to see if [teen] would eat it"', 'Teen\'s first reaction: suspicion, then surprise', 'Both eating: genuine taste comparison', '"Even [teen] admits it\'s better than my cooking"'],
+          talkingPoints: ['The fussy eater angle is universally relatable', 'Genuine teen reactions (don\'t coach them)', 'The parent\'s relief: "I don\'t have to cook AND they\'re eating properly"'],
+          cta: '"If my teenager likes it, yours will too." + code'
+        }
+      ]
+    )}
+
+    <!-- CONCEPT 5 -->
+    ${conceptCard(5, 'Gym Transformation: "30 Days on [Brand]"',
+      'Daily check-in diary. Weigh-ins, meal tracking, gym clips. Transformation content is the highest-impact proof format in the competitive dataset. Requires 30-day lead time.',
+      ['hook','proof','cta'], 'P2',
+      'Before/after + FOMO. Transformation results are the highest-impact proof point in the dataset.',
+      '30 to 45s', '9:16',
+      [
+        { label: 'Variation A', title: 'Male cutting phase',
+          creator: 'Male, 25 to 35, intermediate lifter doing a cut. Visible but not extreme physique.',
+          hook: '"30 days. Only [brand] meals. Here\'s what happened to my body."',
+          shots: ['Day 1: weigh-in, progress photo, "starting at X kg"', 'Week 1 montage: meals + gym + tracking app screenshots', 'Week 2: mid-point check-in, "the easiest cut I\'ve ever done"', 'Day 30: final weigh-in, progress photo, side-by-side'],
+          talkingPoints: ['Numbers focus: weight, macros, lifts maintained', '"I didn\'t have to think about food once"', 'The ease comparison to previous cuts'],
+          cta: 'Progress photos + code + "link in bio"'
+        },
+        { label: 'Variation B', title: 'Female body recomp',
+          creator: 'Female, 25 to 35, fitness-focused. Recomposition goal (not weight loss framing).',
+          hook: '"I wanted to see what consistent nutrition actually does. 30 days, no cooking, just [brand]."',
+          shots: ['Day 1: measurements, gym benchmarks, "I\'m not trying to lose weight, I\'m trying to fuel properly"', 'Weekly check-ins: energy levels, gym performance, sleep', 'Food diary clips: genuine reactions to meals', 'Day 30: benchmark comparison, how she feels, the numbers'],
+          talkingPoints: ['Frame as performance/recomp, NOT weight loss', '"I have more energy at 5pm than I used to have at 9am"', 'The mental load reduction: "I stopped thinking about food"'],
+          cta: '"Try it for 30 days. See what happens." + code'
+        },
+        { label: 'Variation C', title: 'Bulking / mass gain',
+          creator: 'Male, 20 to 30, skinny or lean build trying to gain. Relatable "hard gainer" angle.',
+          hook: '"I need 3,200 calories a day and I HATE cooking. Can [brand] actually help me bulk?"',
+          shots: ['Day 1: "I can\'t eat enough. That\'s always been my problem"', 'Show the volume: multiple containers per day', 'Gym clips: progressive overload, new PRs', 'Day 30: scale, mirror, "I actually gained 2kg of lean mass"'],
+          talkingPoints: ['The hard gainer struggle is deeply relatable to this audience', 'Volume eating made easy: "I don\'t have to prep 6 meals"', 'Cost comparison: eating 3,200 cals of good food vs cooking it'],
+          cta: '"If you struggle to eat enough, this is it." + code'
+        }
+      ]
+    )}
+
+    <!-- CONCEPT 6 -->
+    ${conceptCard(6, 'First-Bite Taste Reaction',
+      'Short, punchy, hook-optimised. Genuine first-bite surprise. The taste gap is the most consistent weakness across all brands in the dataset. Nobody proves the food tastes good.',
+      ['hook'], 'P2',
+      'Competitive gap: taste. Only ${s.tastePct}% of competitor ads sell on taste.',
+      '10 to 15s', '9:16',
+      [
+        { label: 'Variation A', title: 'Sceptic convert',
+          creator: 'Anyone, 22 to 35. Expressive face. Naturally sceptical energy.',
+          hook: '"Meal prep that actually tastes good? I\'ll believe it when I try it."',
+          shots: ['Open container with visible scepticism', 'First bite: genuine surprise', '"OK wait. This is actually really good?"', 'Quick shot of the label: meal name + macros'],
+          talkingPoints: ['The scepticism must be REAL (don\'t fake it)', 'One genuine reaction is worth more than a scripted review', 'Keep it under 15 seconds. This is a hook, not a review.'],
+          cta: '"Link in bio" (keep it brief)'
+        },
+        { label: 'Variation B', title: 'Foodie surprised',
+          creator: 'Someone who clearly loves food. Home cook, food blogger, restaurant reviewer. 25 to 40.',
+          hook: '"I\'ve tried every meal prep company. They all taste like cardboard. Except..."',
+          shots: ['Container open, close-up of the food (make it look appealing)', 'First bite: eyebrows go up', '"OK so this is genuinely restaurant quality?"', 'Eats more while talking about specific flavours'],
+          talkingPoints: ['The "I know food" credibility makes the endorsement stronger', 'Name specific flavours ("the lemongrass in this is actually real")', 'Compare to other meal prep (without naming them)'],
+          cta: '"I\'m ordering more." + code'
+        },
+        { label: 'Variation C', title: 'Post-workout hunger',
+          creator: 'Anyone, 20 to 30, just finished training. Sweaty, hungry, genuine.',
+          hook: '"Post-workout and STARVING. Let\'s see if [brand] hits different."',
+          shots: ['Just walked through door, still in gym kit', 'Microwave: 90 seconds. Timer visible.', 'First massive bite: relief + genuine enjoyment', '"Why does this taste so good right now?"'],
+          talkingPoints: ['The hunger context makes the taste reaction more intense', 'Show the speed: gym to eating in under 2 minutes', 'The relief of not having to cook after training'],
+          cta: '"90 seconds. That\'s it." + code'
+        }
+      ]
+    )}
+
+    <!-- CONCEPT 7 -->
+    ${conceptCard(7, 'Student Budget: "Cost Per Meal Breakdown"',
+      'Calculator on screen, breaking down cost including time value. The value angle is completely untouched by competitors. Good for younger demographic acquisition.',
+      ['proof'], 'P3',
+      'Bold claim + Category contrast. The value angle has zero competition in the dataset.',
+      '20 to 30s', '9:16',
+      [
+        { label: 'Variation A', title: 'University student',
+          creator: 'Student, 19 to 23. Relatable student accommodation or shared house.',
+          hook: '"Everyone says meal prep is expensive. Let me do the actual maths."',
+          shots: ['Calculator/notes app on screen', '"Supermarket shop: this much. Time cooking: X hours at minimum wage: this much"', '"Total real cost of cooking: this. [Brand] cost: this."', '"When you factor in your time, it\'s actually cheaper"'],
+          talkingPoints: ['Make the calculation visible and honest', 'Include time at minimum wage (strong for students)', 'Don\'t pretend it\'s dirt cheap. Show it\'s competitive when you factor everything in.'],
+          cta: '"Do the maths yourself." + student discount code'
+        },
+        { label: 'Variation B', title: 'Graduate in first job',
+          creator: '22 to 26, first "real" job. Learning to adult. Relatable energy.',
+          hook: '"I earn a salary now but I still can\'t cook and I\'m spending a fortune on Deliveroo."',
+          shots: ['Show Deliveroo/UberEats order history (blur prices if needed)', '"Last month I spent this much on takeaways"', '"[Brand] for the same period costs this much. AND it\'s actually healthy."', 'Eating at desk: "Plus I don\'t have to leave the office for lunch"'],
+          talkingPoints: ['The takeaway comparison is devastating (people know they overspend)', '"I\'m eating better and spending less"', 'The adulting angle: "I feel like I\'ve finally figured out food"'],
+          cta: '"Stop ordering Deliveroo." + code'
+        },
+        { label: 'Variation C', title: 'Budget-conscious meal prepper',
+          creator: '25 to 35, currently does Sunday meal prep. Knows the effort involved.',
+          hook: '"I used to spend every Sunday batch cooking. Let me tell you what that actually costs."',
+          shots: ['Sunday routine: shopping, chopping, cooking, cleaning (time-lapse)', '"4 hours of my weekend, gone. Every week."', '"I switched to [brand] and got my Sundays back"', '"Same macros. Better taste. Less stress."'],
+          talkingPoints: ['This targets existing meal preppers (high conversion potential)', 'The Sunday afternoon cost is emotional, not just financial', '"I cook for fun now, not because I have to"'],
+          cta: '"Get your Sundays back." + code'
+        }
+      ]
+    )}
+
+    <!-- Creator checklist -->
+    <div class="creator-checklist">
+      <h3>Creator Delivery Checklist</h3>
+      <p style="font-size:.84rem;color:var(--ink-2);margin-bottom:1rem">Include this with every creator brief. All deliverables must meet these specifications.</p>
+      <div class="checklist-grid">
+        <div class="checklist-item">Film in 9:16 vertical (1080x1920 minimum, 4K preferred)</div>
+        <div class="checklist-item">Good lighting: natural window light or ring light. No overhead shadows on face.</div>
+        <div class="checklist-item">Clean audio: use a lapel mic or phone close to face. No echo.</div>
+        <div class="checklist-item">Film in one continuous session per day (no obvious outfit/location changes).</div>
+        <div class="checklist-item">Include 2 to 3 seconds of "handle" at the start and end of each clip.</div>
+        <div class="checklist-item">Deliver raw footage (unedited) + one self-edited version.</div>
+        <div class="checklist-item">Brand name must be clearly visible on containers in at least 3 shots.</div>
+        <div class="checklist-item">No competitor brand names visible anywhere in the video.</div>
+        <div class="checklist-item">Include your unique discount code in the final 3 seconds.</div>
+        <div class="checklist-item">Usage rights: 12 months paid social + organic. Confirm in writing before filming.</div>
+        <div class="checklist-item">Turnaround: raw footage within 5 working days of receiving product.</div>
+        <div class="checklist-item">Revisions: 1 round included. Major reshoots require new agreement.</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:2rem 0;color:var(--ink-4);font-size:.78rem">
+      <p>Prepared by Creative Kitchen for Willa Ltd / ${today}</p>
+      <p style="margin-top:.25rem">Confidential.</p>
+    </div>
+  `;
+}
+
+function conceptCard(num, title, subtitle, types, priority, evidence, duration, format, variations) {
+  const tagMap = { hook:'tag-hook', body:'tag-body', proof:'tag-proof', cta:'tag-cta' };
+  const priClass = priority === 'P1' ? 'p1' : priority === 'P2' ? 'p2' : 'p3';
+  const priLabel = priority === 'P1' ? 'P1 / Top Priority' : priority === 'P2' ? 'P2 / Should Have' : 'P3 / Nice to Have';
+
+  return `<div class="concept">
+    <div class="concept-header" style="background:${priority === 'P1' ? 'var(--accent-light)' : priority === 'P2' ? 'var(--blue-light)' : 'var(--surface-alt)'}">
+      <div class="concept-num">${String(num).padStart(2, '0')}</div>
+      <div class="concept-title-area">
+        <div class="concept-title">${title}</div>
+        <div class="concept-subtitle">${subtitle}</div>
+        <div class="concept-tags">${types.map(t => `<span class="tag ${tagMap[t] || ''}">${t}</span>`).join('')}</div>
+      </div>
+      <span class="concept-priority ${priClass}">${priLabel}</span>
+    </div>
+
+    <div class="concept-brief">
+      <div class="brief-label">Competitive Evidence</div>
+      <div class="brief-text">${evidence}</div>
+    </div>
+
+    <div class="variations">
+      <div class="variations-title">3 Creator Variations</div>
+      <div class="var-grid">
+        ${variations.map(v => `
+          <div class="var-card">
+            <div class="var-card-label">${v.label}</div>
+            <h4>${v.title}</h4>
+            <div class="var-section">
+              <div class="var-section-title">Creator Profile</div>
+              <p>${v.creator}</p>
+            </div>
+            <div class="var-section">
+              <div class="var-section-title">Opening Hook</div>
+              <p><em>${v.hook}</em></p>
+            </div>
+            <div class="var-section">
+              <div class="var-section-title">Shot Sequence</div>
+              <ul>${v.shots.map(s => `<li>${s}</li>`).join('')}</ul>
+            </div>
+            <div class="var-section">
+              <div class="var-section-title">Key Talking Points</div>
+              <ul>${v.talkingPoints.map(t => `<li>${t}</li>`).join('')}</ul>
+            </div>
+            <div class="var-section">
+              <div class="var-section-title">CTA</div>
+              <p>${v.cta}</p>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="concept-footer">
+      <div class="concept-footer-item"><label>Duration</label><span>${duration}</span></div>
+      <div class="concept-footer-item"><label>Format</label><span>${format}</span></div>
+      <div class="concept-footer-item"><label>Variations</label><span>3 (A/B/C test)</span></div>
+    </div>
+  </div>`;
+}
+
+(async () => {
+  try { render(await fetchData()); }
+  catch (err) { document.getElementById('app').innerHTML = `<div class="loading-screen"><h2>Failed to load</h2><p style="color:var(--ink-2)">${err.message}</p></div>`; }
+})();
+</script>
+</body>
+</html>
