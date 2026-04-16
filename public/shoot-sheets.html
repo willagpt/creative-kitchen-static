@@ -137,13 +137,17 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.2}
   .section-divider-title{font-family:var(--font-display);font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--ink);margin-bottom:2.5mm}
   .section-divider-desc{font-size:8.5px;color:var(--ink-2);max-width:300px;line-height:1.5;margin-bottom:4mm}
   .section-divider-table{width:auto;min-width:340px;max-width:440px;margin:0 auto;border-collapse:collapse;text-align:left}
-  .section-divider-table.sd-multicol{min-width:90%;max-width:100%}
   .section-divider-table th{font-size:5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);padding:1mm 2mm;border-bottom:1.5px solid var(--ink)}
   .section-divider-table td{font-size:7.5px;padding:1mm 2mm;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.35}
   .section-divider-table td:first-child{font-family:var(--font-display);font-weight:700;color:var(--ink-3);width:14px}
   .section-divider-table .sd-concept{font-weight:600;color:var(--ink)}
-  .section-divider-table .sd-vars{font-size:6.5px;color:var(--ink-3);padding-top:.3mm}
   .section-divider-table .sd-pri{font-size:6.5px;color:var(--ink-4);text-align:right;white-space:nowrap;width:18px}
+  /* Multi-column sheet list for UGC */
+  .sd-grid{columns:3;column-gap:5mm;width:90%;max-width:700px;margin:0 auto}
+  .sd-grid-item{break-inside:avoid;display:flex;align-items:baseline;gap:1.5mm;padding:1.2mm 0;border-bottom:1px solid var(--border);font-size:7px}
+  .sd-grid-item .sd-num{font-family:var(--font-display);font-weight:700;color:var(--ink-3);min-width:12px;font-size:7.5px}
+  .sd-grid-item .sd-name{font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+  .sd-grid-item .sd-p{font-size:6px;color:var(--ink-4);flex-shrink:0}
 
   .sheet-view{display:block!important;page-break-after:always}
   .sheet-view:last-child{page-break-after:auto}
@@ -795,21 +799,13 @@ function render(data) {
       // Build table content
       let tableHtml = '';
       if (t.key === 'UGC') {
-        // 3-column grid for 21 items: 7 rows across 3 columns
-        const cols = 3;
-        const perCol = Math.ceil(trackSheets.length / cols);
-        const columns = [];
-        for (let c = 0; c < cols; c++) columns.push(trackSheets.slice(c * perCol, (c + 1) * perCol));
-        tableHtml = `<table class="section-divider-table sd-multicol"><tr>` +
-          columns.map(col => `<td style="vertical-align:top;padding:0;border:none"><table class="section-divider-table" style="width:100%;min-width:0;margin:0">
-            <tr><th>#</th><th>Sheet</th><th></th></tr>
-            ${col.map(s => {
-              const idx = trackSheets.indexOf(s) + 1;
-              const shortTitle = s.title.length > 42 ? s.title.substring(0, 40) + '...' : s.title;
-              return `<tr><td>${String(idx).padStart(2, '0')}</td><td><span class="sd-concept">${shortTitle}</span></td><td class="sd-pri">${s.priority}</td></tr>`;
-            }).join('')}
-          </table></td>`).join('<td style="width:3mm;border:none;padding:0"></td>') +
-          `</tr></table>`;
+        // CSS columns: flat list, auto-balanced across 3 columns
+        tableHtml = `<div class="sd-grid">` +
+          trackSheets.map((s, i) => `<div class="sd-grid-item">
+            <span class="sd-num">${String(i + 1).padStart(2, '0')}</span>
+            <span class="sd-name">${s.title}</span>
+            <span class="sd-p">${s.priority}</span>
+          </div>`).join('') + `</div>`;
       } else {
         tableHtml = `<table class="section-divider-table">
           <tr><th>#</th><th>Sheet</th><th>Duration</th><th></th></tr>
