@@ -198,12 +198,19 @@ const BRAND_COLORS = [
 ];
 
 async function fetchData() {
-  const [analysesRes, adsRes] = await Promise.all([
-    fetch(`${SB_URL}/rest/v1/video_analyses?status=eq.complete&select=*&order=created_at.desc`, { headers: HEADERS }),
-    fetch(`${SB_URL}/rest/v1/competitor_ads?video_url=not.is.null&select=id,page_name,page_id,days_active,impressions_lower,impressions_upper,start_date,cta_type,creative_body&order=days_active.desc.nullslast`, { headers: HEADERS }),
-  ]);
+  // Step 1: fetch all completed analyses
+  const analysesRes = await fetch(`${SB_URL}/rest/v1/video_analyses?status=eq.complete&select=*&order=created_at.desc`, { headers: HEADERS });
   const analyses = await analysesRes.json();
-  const ads = await adsRes.json();
+
+  // Step 2: fetch only the competitor ads that have analyses (avoids 1000-row default limit)
+  const adIds = [...new Set(analyses.map(a => a.competitor_ad_id).filter(Boolean))];
+  let ads = [];
+  if (adIds.length > 0) {
+    // Supabase in filter: id=in.(id1,id2,...)
+    const idsParam = `(${adIds.map(id => `"${id}"`).join(',')})`;
+    const adsRes = await fetch(`${SB_URL}/rest/v1/competitor_ads?id=in.${idsParam}&select=id,page_name,page_id,days_active,impressions_lower,impressions_upper,start_date,cta_type,creative_body`, { headers: HEADERS });
+    ads = await adsRes.json();
+  }
   return { analyses, ads };
 }
 
