@@ -133,21 +133,32 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
 .brand-card-stat-lbl{font-size:.65rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
 
 /* ── Page 4: Strategy ── */
-.strategy-track{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1.5rem;background:var(--surface)}
-.strategy-track-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border-light)}
-.strategy-track-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.25rem}
-.strategy-track-title{font-family:var(--font-display);font-size:1.2rem;font-weight:700}
-.strategy-track-rationale{font-size:.88rem;color:var(--ink-2);margin-top:.35rem;line-height:1.55}
-.strategy-shots{padding:1rem 1.5rem}
-.strategy-shot{padding:.85rem 0;border-bottom:1px solid var(--border-light);display:grid;grid-template-columns:28px 1fr auto;gap:.75rem;align-items:start}
-.strategy-shot:last-child{border-bottom:none}
-.shot-num{font-family:var(--font-display);font-size:.85rem;font-weight:700;color:var(--ink-3);text-align:center;padding-top:.1rem}
-.shot-content h5{font-size:.88rem;font-weight:600;margin-bottom:.2rem}
-.shot-content p{font-size:.82rem;color:var(--ink-2);line-height:1.5}
-.shot-priority{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:.2rem .5rem;border-radius:3px;white-space:nowrap;height:fit-content}
-.priority-p1{background:var(--accent-light);color:var(--accent-dark)}
-.priority-p2{background:var(--blue-light);color:var(--blue)}
-.priority-p3{background:var(--surface-alt);color:var(--ink-3)}
+.track-toggle{display:flex;gap:.35rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.track-btn{padding:.5rem 1.1rem;font-family:var(--font-body);font-size:.8rem;font-weight:600;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--ink-2);cursor:pointer;transition:all .15s}
+.track-btn:hover{border-color:var(--ink-3);color:var(--ink)}
+.track-btn.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.track-section{display:none}.track-section.active{display:block}
+.track-header{margin-bottom:1.5rem;padding:1.25rem 1.5rem;border-radius:var(--radius-lg);border:1px solid var(--border)}
+.track-header-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.25rem}
+.track-header-title{font-family:var(--font-display);font-size:1.2rem;font-weight:700;margin-bottom:.35rem}
+.track-header-rationale{font-size:.88rem;color:var(--ink-2);line-height:1.6}
+.shot-table{width:100%;border-collapse:collapse;font-size:.84rem;margin-bottom:2rem}
+.shot-table th{text-align:left;padding:.6rem .65rem;border-bottom:2px solid var(--border);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:600;white-space:nowrap}
+.shot-table td{padding:.75rem .65rem;border-bottom:1px solid var(--border-light);vertical-align:top;line-height:1.55}
+.shot-table tr:last-child td{border-bottom:none}
+.shot-table tr:hover td{background:var(--surface-warm)}
+.shot-table td:first-child{font-family:var(--font-display);font-weight:700;color:var(--ink-3);text-align:center;width:32px}
+.shot-table td strong{font-weight:700;color:var(--ink)}
+.tag{display:inline-block;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.15rem .4rem;border-radius:3px;margin-right:.25rem;margin-bottom:.2rem}
+.tag-hook{background:var(--accent-light);color:var(--accent-dark)}
+.tag-body{background:var(--blue-light);color:var(--blue)}
+.tag-proof{background:var(--green-light);color:var(--green)}
+.tag-cta{background:var(--purple-light);color:var(--purple)}
+.priority-high{color:var(--accent-dark);font-weight:700}
+.priority-med{color:var(--blue);font-weight:600}
+.priority-low{color:var(--ink-3);font-weight:500}
+.shot-notes{font-size:.8rem;color:var(--ink-2);max-width:200px}
+.shot-source{font-size:.78rem;color:var(--ink-3);font-style:italic}
 
 /* ── Page 5: Raw Data ── */
 .data-table{width:100%;border-collapse:collapse;font-size:.82rem}
@@ -165,7 +176,11 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
   body{font-size:11px;background:#fff}
   .cover{padding:1.5rem 0}
   .cover h1{font-size:2rem}
-  .brand-card,.strategy-track,.pattern-row{break-inside:avoid}
+  .brand-card,.pattern-row,.track-header{break-inside:avoid}
+  .track-toggle{display:none!important}
+  .track-section{display:block!important;page-break-before:always}
+  .shot-table{break-inside:auto}
+  .shot-table tr{break-inside:avoid}
 }
 </style>
 </head>
@@ -502,9 +517,15 @@ function render(data) {
     <!-- Page 4: Strategic Choices -->
     <div class="section" id="strategy">
       <div class="section-header">
-        <div class="section-num">04 / Strategic Choices</div>
-        <h2 class="section-title">Production Recommendations</h2>
-        <p class="section-sub">Where to invest creative resources, broken into three production tracks. Each recommendation is tied back to competitive evidence.</p>
+        <div class="section-num">04 / Production Briefs</div>
+        <h2 class="section-title">Creative Briefs by Production Track</h2>
+        <p class="section-sub">Specific content briefs organised by production track. Each shot is tagged with the pattern it exploits, the competitor evidence behind it, and prioritised by expected impact. Hand these directly to your production team or UGC creators.</p>
+      </div>
+
+      <div class="track-toggle no-print" id="trackToggle">
+        <button class="track-btn active" data-track="internal">Internal Production</button>
+        <button class="track-btn" data-track="production">Production Company</button>
+        <button class="track-btn" data-track="ugc">UGC Creator Briefs</button>
       </div>
 
       ${renderStrategySection(complete, brandMap, hookTypes, narrativeArcs, emotionalDrivers, totalBrands)}
@@ -566,6 +587,16 @@ function render(data) {
     document.getElementById(btn.dataset.tab).classList.add('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
+
+  // Wire up track toggle
+  document.getElementById('trackToggle').addEventListener('click', e => {
+    const btn = e.target.closest('.track-btn');
+    if (!btn) return;
+    document.querySelectorAll('.track-btn').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.track-section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('track-' + btn.dataset.track).classList.add('active');
+  });
 }
 
 function getHookInsight(type, pct, brands) {
@@ -576,73 +607,235 @@ function getHookInsight(type, pct, brands) {
 }
 
 function renderStrategySection(analyses, brandMap, hookTypes, narrativeArcs, emotionalDrivers, totalBrands) {
-  // Gather all steals and weaknesses to inform recommendations
-  const allSteals = [];
-  const allWeaknesses = [];
-  analyses.forEach(an => {
-    const ci = an.ai_analysis?.competitor_insights;
-    if (ci?.what_to_steal) ci.what_to_steal.forEach(s => allSteals.push(s));
-    if (ci?.weaknesses) ci.weaknesses.forEach(w => allWeaknesses.push(w));
-  });
-
-  // Determine dominant patterns for strategic framing
-  const topHook = hookTypes[0] ? formatLabel(hookTypes[0][0]) : 'Problem-Solution';
-  const topArc = narrativeArcs[0] ? formatLabel(narrativeArcs[0][0]) : 'Problem-Solution';
-  const topEmotions = emotionalDrivers.slice(0, 3).map(([e]) => formatLabel(e)).join(', ');
   const totalVids = analyses.length;
   const brands = Object.values(brandMap);
+  const topHook = hookTypes[0] ? formatLabel(hookTypes[0][0]) : 'Testimonial';
+  const topEmotions = emotionalDrivers.slice(0, 3).map(([e]) => formatLabel(e)).join(', ');
+
+  // Compute data-driven stats for rationale text
+  const ugcCount = analyses.filter(a => ['ugc','talking-head','selfie','testimonial'].includes((a.ai_analysis?.production_style?.format || '').toLowerCase())).length;
+  const ugcPct = pctOf(ugcCount, totalVids);
+  const polishedCount = analyses.filter(a => ['cinematic','studio','professional','polished','lifestyle','mixed'].includes((a.ai_analysis?.production_style?.format || '').toLowerCase())).length;
+  const polishedPct = pctOf(polishedCount, totalVids);
+  const ugcHookCount = hookTypes.filter(([h]) => h.includes('ugc') || h.includes('testimonial')).reduce((s, [,c]) => s + c, 0);
+  const ugcHookPct = pctOf(ugcHookCount, totalVids);
+  const avgDur = (analyses.reduce((s, a) => s + (a.duration_seconds || 0), 0) / totalVids).toFixed(0);
+
+  // Gather top steals and top hooks for reference
+  const topBrands2 = brands.slice(0, 2).map(b => b.name).join(' and ');
+  const beforeAfterBrands = getBrandsUsing(analyses, 'hook', 'type', 'before-after');
+  const testimonialBrands = getBrandsUsing(analyses, 'hook', 'type', 'ugc-testimonial');
+  const curiosityBrands = getBrandsUsing(analyses, 'hook', 'type', 'curiosity-gap');
+
+  function shotRow(num, title, desc, types, source, priority, notes) {
+    const tagMap = { hook: 'tag-hook', body: 'tag-body', proof: 'tag-proof', cta: 'tag-cta' };
+    const tagsHtml = types.map(t => `<span class="tag ${tagMap[t] || ''}">${t}</span>`).join('');
+    const priClass = priority === 'P1' ? 'priority-high' : priority === 'P2' ? 'priority-med' : 'priority-low';
+    return `<tr>
+      <td>${num}</td>
+      <td><strong>${title}</strong><br>${desc}</td>
+      <td>${tagsHtml}</td>
+      <td class="shot-source">${source}</td>
+      <td class="${priClass}">${priority}</td>
+      <td class="shot-notes">${notes}</td>
+    </tr>`;
+  }
+
+  const tableHead = '<table class="shot-table"><thead><tr><th>#</th><th>Shot / Content Piece</th><th>Type</th><th>Pattern Source</th><th>Priority</th><th>Notes</th></tr></thead><tbody>';
+  const tableFoot = '</tbody></table>';
 
   return `
-    <!-- Internal -->
-    <div class="strategy-track">
-      <div class="strategy-track-header" style="background:var(--accent-light)">
-        <div class="strategy-track-label" style="color:var(--accent-dark)">Track 1</div>
-        <div class="strategy-track-title">Internal Production</div>
-        <p class="strategy-track-rationale">Quick-turn content your team can produce in-house. Based on the most common competitor formats, adapted for speed and iteration. The dominant hook across ${totalVids} analysed videos is "${topHook}" and the primary emotional drivers are ${topEmotions}.</p>
+    <!-- INTERNAL PRODUCTION -->
+    <div class="track-section active" id="track-internal">
+      <div class="track-header" style="background:var(--accent-light);border-color:var(--accent)">
+        <div class="track-header-label" style="color:var(--accent-dark)">Track 1 / Internal Production</div>
+        <div class="track-header-title">Quick-Turn In-House Content</div>
+        <p class="track-header-rationale">Content your team can produce with a phone, ring light, and your product. Based on the ${totalVids} analysed videos, the dominant hook is "${topHook}" and the primary emotional drivers are ${topEmotions}. Average ad duration across the competitive set is ${avgDur}s. These briefs are designed for rapid iteration: film, test, learn, repeat.</p>
       </div>
-      <div class="strategy-shots">
-        <div class="strategy-shot"><div class="shot-num">1</div><div class="shot-content"><h5>"What I actually ate this week" rapid showcase</h5><p>7 meals shown in fast succession, each held to camera with name overlay. Close on the convenience message. This mirrors the UGC testimonial format used by ${brands.length > 1 ? brands.slice(0,2).map(b=>b.name).join(' and ') : brands[0]?.name || 'competitors'}. 15 to 20s.</p></div><div class="shot-priority priority-p1">P1</div></div>
-        <div class="strategy-shot"><div class="shot-num">2</div><div class="shot-content"><h5>Fridge pull reveal</h5><p>Camera on closed fridge. Hand opens it to reveal stacked containers. "This is what organised eating looks like." Trending format that works as both video and static. Targets the convenience + aspiration emotional drivers found in ${pctOf(emotionalDrivers.find(e => e[0] === 'convenience')?.[1] || 0, totalVids)}% of analysed ads.</p></div><div class="shot-priority priority-p1">P1</div></div>
-        <div class="strategy-shot"><div class="shot-num">3</div><div class="shot-content"><h5>Speed comparison (split-screen)</h5><p>Real-time microwave timer vs someone cooking from scratch. Same macros, different time investment. The "category contrast" pattern appears across multiple brands and is one of the most effective patterns in the dataset.</p></div><div class="shot-priority priority-p1">P1</div></div>
-        <div class="strategy-shot"><div class="shot-num">4</div><div class="shot-content"><h5>Ingredient label flip</h5><p>Supermarket ready meal label (long ingredients list) vs your label (short, clean). "Read the label." Directly informed by category contrast hooks in the competitive set. Confrontational, high pattern-interrupt potential.</p></div><div class="shot-priority priority-p2">P2</div></div>
-        <div class="strategy-shot"><div class="shot-num">5</div><div class="shot-content"><h5>Macro scan</h5><p>Open a calorie tracking app, scan a barcode, show the clean macro split. None of the ${totalBrands} analysed brands show this. Quick trust-builder for the fitness audience.</p></div><div class="shot-priority priority-p2">P2</div></div>
-      </div>
+
+      ${tableHead}
+        ${shotRow(1,
+          '"What I actually ate this week" rapid showcase',
+          '7 meals shown in fast succession, each held to camera with name overlay. Close on "and I didn\'t cook once." Keep it under 20s. Film on any delivery day.',
+          ['hook', 'body'],
+          'UGC testimonial + Benefit stacking. Mirrors the format used by ' + topBrands2,
+          'P1',
+          '15 to 20s. Fills the "variety" gap. Can repurpose as stills for static ads.'
+        )}
+        ${shotRow(2,
+          'Fridge pull reveal',
+          'Camera starts on closed fridge. Hand opens it to reveal a full shelf of branded containers. Text: "This is what organised eating looks like." Pause on the visual, then cut to CTA.',
+          ['hook'],
+          'UGC testimonial / Bold claim. Trending TikTok format.',
+          'P1',
+          'Can be repurposed as a static image. Targets the convenience + aspiration emotional drivers found in ' + pctOf(emotionalDrivers.find(e => e[0] === 'convenience')?.[1] || 0, totalVids) + '% of analysed ads.'
+        )}
+        ${shotRow(3,
+          'Microwave timer (split-screen)',
+          'Real-time 90s microwave cook on one side. Someone spending 45 min cooking from scratch on the other. Text: "Same macros. Different time investment." End with price per meal.',
+          ['body', 'proof'],
+          'Convenience emotion + Category contrast. Split-screen format appears in ' + (getBrandsUsing(analyses, 'production_style', 'format', 'mixed').join(', ') || 'multiple brands'),
+          'P1',
+          'Needs kitchen location. Strong pattern-interrupt. The time-saving claim is the most underleveraged selling point in the dataset.'
+        )}
+        ${shotRow(4,
+          'Ingredient label flip',
+          'Pick up a supermarket ready meal, flip to the ingredients list (long, unrecognisable). Then pick up your meal (short, clean list). Text: "Read the label." Confrontational tone.',
+          ['hook', 'proof'],
+          'Category contrast + Health anxiety. Informed by competitive weakness: ' + pctOf(analyses.filter(a => (a.ai_analysis?.emotional_drivers || []).some(e => e.toLowerCase().includes('health'))).length, totalVids) + '% of ads use health as a driver but few show evidence.',
+          'P2',
+          'High pattern-interrupt potential. Works as both video hook and static ad concept.'
+        )}
+        ${shotRow(5,
+          'Macro scan',
+          'Open MyFitnessPal or similar, scan the barcode, show the clean macro split appearing on screen. "Every meal, already in the app." Screen recording + hand.',
+          ['proof'],
+          'Benefit stacking. No competitor in the ${totalBrands}-brand dataset shows this.',
+          'P2',
+          'Quick trust-builder for fitness audience. 10 to 15s. Extremely cheap to produce.'
+        )}
+        ${shotRow(6,
+          'Desk lunch B-roll',
+          'Office setting. Someone unwraps and eats at their desk. No voiceover, just ASMR-style audio + text overlays with benefit claims scrolling. "50g protein. 450 cals. 90 seconds."',
+          ['body'],
+          'Convenience + Lifestyle integration. Fills the "professional" audience gap.',
+          'P2',
+          'Film in any office. Silent-optimised (matches the ' + pctOf(analyses.filter(a => (a.ai_analysis?.production_style?.text_overlays || '').includes('heavy')).length, totalVids) + '% of ads using heavy text overlays).'
+        )}
+        ${shotRow(7,
+          'Unboxing',
+          'Delivery arrives, unbox on kitchen counter, show each meal with genuine reaction. End with "link in bio." Standard but essential for the library.',
+          ['body', 'cta'],
+          'UGC testimonial + Social proof. Every competitor has one.',
+          'P3',
+          'Essential library content. Film on every delivery day to build variation. Low priority because it\'s table stakes, not a differentiator.'
+        )}
+      ${tableFoot}
     </div>
 
-    <!-- Production Company -->
-    <div class="strategy-track">
-      <div class="strategy-track-header" style="background:var(--blue-light)">
-        <div class="strategy-track-label" style="color:var(--blue)">Track 2</div>
-        <div class="strategy-track-title">Production Company</div>
-        <p class="strategy-track-rationale">Higher production value content that differentiates from the market. Analysis shows ${pctOf(analyses.filter(a => ['ugc','talking-head','selfie'].includes(a.ai_analysis?.production_style?.format?.toLowerCase())).length, totalVids)}% of competitor ads use UGC/talking-head formats. Polished production is a genuine gap.</p>
+    <!-- PRODUCTION COMPANY -->
+    <div class="track-section" id="track-production">
+      <div class="track-header" style="background:var(--blue-light);border-color:var(--blue)">
+        <div class="track-header-label" style="color:var(--blue)">Track 2 / Production Company</div>
+        <div class="track-header-title">High-Production Brand Content</div>
+        <p class="track-header-rationale">${ugcPct}% of the ${totalVids} analysed competitor ads use UGC or talking-head formats. Polished, cinematic production is a genuine whitespace in this category. These briefs require a production partner but create assets that elevate your brand above the feed and build a reusable clip library.</p>
       </div>
-      <div class="strategy-shots">
-        <div class="strategy-shot"><div class="shot-num">1</div><div class="shot-content"><h5>Hero brand film (30s)</h5><p>Cinematic food prep: steam, chopping, sauce pours. Cut to real people eating in real locations. Music + text, no voiceover. This format barely exists in the competitive set, making it a clear differentiator. One hero video that positions above the sea of UGC.</p></div><div class="shot-priority priority-p1">P1</div></div>
-        <div class="strategy-shot"><div class="shot-num">2</div><div class="shot-content"><h5>Kitchen-to-container journey</h5><p>Follow one meal from raw ingredients through the kitchen to sealed and delivered. Time-lapse + macro shots. Fills the "what's actually inside" trust gap identified in competitor weaknesses.</p></div><div class="shot-priority priority-p1">P1</div></div>
-        <div class="strategy-shot"><div class="shot-num">3</div><div class="shot-content"><h5>Ingredient close-ups library</h5><p>20 to 30 slow-motion clips: herbs falling, oil drizzling, spices hitting a pan. Reusable B-roll for all future ads. The most valuable long-term production investment.</p></div><div class="shot-priority priority-p1">P1</div></div>
-        <div class="strategy-shot"><div class="shot-num">4</div><div class="shot-content"><h5>Taste test series</h5><p>5 to 8 genuine first-time reactions. Rapid-cut montage with meal names as lower thirds. Competitor analysis reveals that almost nobody sells on taste. This is a wide-open lane.</p></div><div class="shot-priority priority-p2">P2</div></div>
-      </div>
+
+      ${tableHead}
+        ${shotRow(1,
+          'Hero Brand Film (30s)',
+          'Cinematic food prep sequence: steam rising from a pan, ingredients being chopped, sauce being poured in slow motion. Cut to real people eating in real locations (gym, office, home). Close on branding + offer. No voiceover. Music + text overlays only.',
+          ['hook', 'body', 'cta'],
+          'Competitive gap: no brand in the dataset has polished cinematic production. ' + ugcPct + '% of ads are UGC/talking-head format.',
+          'P1',
+          'THE differentiator. One hero video that sets you apart from the sea of UGC. Aim for 25 to 30s. Use as the anchor for all paid social.'
+        )}
+        ${shotRow(2,
+          'Kitchen-to-Container Journey',
+          'Follow one meal from raw ingredients through the professional kitchen to being sealed, labelled, and packed for delivery. Time-lapse + macro shots. VO: "From chef\'s hands to your microwave in 90 seconds."',
+          ['body', 'proof'],
+          'Trust + Quality contrast. Fills the "what\'s actually inside" gap identified across competitor weaknesses.',
+          'P1',
+          'Requires kitchen access. Addresses the biggest trust gap in the category: customers can\'t see the production process.'
+        )}
+        ${shotRow(3,
+          'Ingredient Close-ups Library (B-roll bank)',
+          'Shoot 20 to 30 slow-motion ingredient clips: herbs falling onto a board, olive oil drizzling into a pan, vegetables being julienned, spices hitting hot oil with a sizzle. Each clip 3 to 5s. Shoot at 120fps minimum.',
+          ['body'],
+          'Food visual gap across entire competitive set. No brand invests in premium food cinematography.',
+          'P1',
+          'Most valuable long-term asset. Reusable across dozens of future ads, social posts, and website. Shoot once, use for 12+ months.'
+        )}
+        ${shotRow(4,
+          'Taste Test Series',
+          'Film 5 to 8 people trying meals for the first time. Capture genuine reactions with two cameras (face + food). Edit into a rapid-cut montage (2s per reaction) with meal names as lower thirds. End with "X out of X said they\'d reorder."',
+          ['proof', 'hook'],
+          'Competitive gap: virtually no brand in the dataset sells on taste. Selling points across ' + totalVids + ' ads focus on convenience (' + pctOf(analyses.filter(a => (a.ai_analysis?.selling_points || []).some(s => s.toLowerCase().includes('conveni'))).length, totalVids) + '%), protein (' + pctOf(analyses.filter(a => (a.ai_analysis?.selling_points || []).some(s => s.toLowerCase().includes('protein'))).length, totalVids) + '%), and time-saving.',
+          'P2',
+          'Can also be cut into individual vertical clips for organic social. The taste gap is the single most consistent weakness across all brands.'
+        )}
+        ${shotRow(5,
+          'Chef Profile',
+          '60s piece on whoever develops the recipes. Their background, training, food philosophy, what makes your meals different. Interview format (podcast-style framing) intercut with kitchen B-roll of them cooking. End with "meet the chef behind your meals."',
+          ['body', 'proof'],
+          'Founder/authority interview format. Used by ' + (curiosityBrands.join(', ') || 'multiple brands') + ' with curiosity-gap hooks. Adapted for chef angle instead of founder.',
+          'P2',
+          'Builds the "faces behind the food" trust layer. Can be cut into 15s, 30s, and 60s versions. Interview audio becomes podcast/reel content.'
+        )}
+      ${tableFoot}
     </div>
 
-    <!-- UGC -->
-    <div class="strategy-track">
-      <div class="strategy-track-header" style="background:var(--green-light)">
-        <div class="strategy-track-label" style="color:var(--green)">Track 3</div>
-        <div class="strategy-track-title">UGC Creator Briefs</div>
-        <p class="strategy-track-rationale">Creator-led content based on proven formats from the competitive set. The UGC/testimonial hook type appears in ${pctOf(hookTypes.find(h => h[0].includes('ugc') || h[0].includes('testimonial'))?.[1] || 0, totalVids)}% of analysed videos. These briefs adapt what works and fill the gaps competitors leave open.</p>
+    <!-- UGC CREATOR BRIEFS -->
+    <div class="track-section" id="track-ugc">
+      <div class="track-header" style="background:var(--green-light);border-color:var(--green)">
+        <div class="track-header-label" style="color:var(--green)">Track 3 / UGC Creator Briefs</div>
+        <div class="track-header-title">Creator-Led Content Briefs</div>
+        <p class="track-header-rationale">UGC testimonial hooks appear in ${ugcHookPct}% of the ${totalVids} analysed ads. These briefs are designed to hand directly to creators. Each includes talking points, visual direction, and the competitive evidence behind the concept. The goal: adapt what works and fill the gaps competitors leave open.</p>
       </div>
-      <div class="strategy-shots">
-        <div class="strategy-shot"><div class="shot-num">1</div><div class="shot-content"><h5>Female fitness creator: "My week on [brand]"</h5><p>7-day diary format. Each day: different meal + gym clip. Convenience + routine fit. The competitive analysis shows a significant underrepresentation of female creators. This is the single biggest audience whitespace.</p></div><div class="shot-priority priority-p1">P1</div></div>
-        <div class="strategy-shot"><div class="shot-num">2</div><div class="shot-content"><h5>Busy professional: "How I save 5 hours a week"</h5><p>Before (takeaway receipts, sad desk lunch) and after (clean meals, macro tracking). Numbers-led hook. Adapts the before/after format for a non-gym audience, broadening appeal beyond fitness.</p></div><div class="shot-priority priority-p1">P1</div></div>
-        <div class="strategy-shot"><div class="shot-num">3</div><div class="shot-content"><h5>Nutritionist explainer</h5><p>Podcast-style talking head. Credentialled nutritionist explains what they look for in meal prep and why this ticks the boxes. B-roll of meals throughout. This format is proven as one of the longest-running ad types in the competitive set.</p></div><div class="shot-priority priority-p1">P1</div></div>
-        <div class="strategy-shot"><div class="shot-num">4</div><div class="shot-content"><h5>Couple/housemate dual testimonial</h5><p>Two people discussing the switch, splitting talking points between taste and convenience. Unscripted feel. No competitor uses a duo format. Differentiation through format novelty.</p></div><div class="shot-priority priority-p2">P2</div></div>
-        <div class="strategy-shot"><div class="shot-num">5</div><div class="shot-content"><h5>First-bite taste reaction</h5><p>Genuine surprise at taste quality. Compare to previous meal prep experiences. 10 to 15s, hook-optimised. Commission multiple creators cheaply. The gap in competitor creative around taste is consistent across all brands.</p></div><div class="shot-priority priority-p2">P2</div></div>
-      </div>
+
+      ${tableHead}
+        ${shotRow(1,
+          'Female fitness creator: "My week on [brand]"',
+          '7-day diary format. Each day: show a different meal + a gym/activity clip. Focus on convenience and routine fit. Key talking points: (1) "I don\'t have to think about food" (2) the macro split (3) genuine taste reaction on day 1. End with code + "link in bio." 30 to 45s.',
+          ['hook', 'body', 'cta'],
+          'UGC testimonial + Audience gap. The competitive set is overwhelmingly male-presenting creators. Female fitness is the single biggest audience whitespace.',
+          'P1',
+          'TOP PRIORITY. Commission 2 to 3 creators simultaneously for A/B testing. Brief them to film naturally, not scripted. The "week in my life" format is proven by ' + (testimonialBrands.slice(0, 2).join(', ') || 'multiple brands') + '.'
+        )}
+        ${shotRow(2,
+          'Busy professional: "How I save 5 hours a week"',
+          'Before: show takeaway receipts, sad desk lunch, late-night cooking. After: clean meals ready to go, macro tracking on phone, evenings free. Numbers-led hook: "I calculated how much time I spent cooking. It was 7 hours a week." 25 to 35s.',
+          ['hook', 'proof'],
+          'Before/after format (used by ' + (beforeAfterBrands.join(', ') || 'multiple brands') + ') adapted for non-gym audience. Broadens appeal beyond fitness.',
+          'P1',
+          'Brief: professional in their 30s, relatable kitchen, real receipts/screenshots. The time-saving angle is undersold across the competitive set.'
+        )}
+        ${shotRow(3,
+          'Nutritionist/PT explainer: "Why I recommend [brand]"',
+          'Podcast-style talking head. Credentialled nutritionist or PT explains what they look for in a meal prep service: ingredient quality, macro accuracy, portion consistency. B-roll of meals throughout. End with professional endorsement + offer. 30 to 40s.',
+          ['proof', 'body'],
+          'Authority/expert format. Directly adapted from the longest-running ad formats in the competitive set (nutritionist and founder interviews consistently run 40+ days).',
+          'P1',
+          'Find a credentialled nutritionist (RD or equivalent). The authority hook is proven: expert formats have the highest longevity in the dataset. Film in their clinic/office, not a home kitchen.'
+        )}
+        ${shotRow(4,
+          'Couple / housemate: "We switched to [brand]"',
+          'Two people in a kitchen discussing the switch. One handles taste ("I was sceptical but honestly the Thai green curry is better than my local"), the other handles convenience ("I used to batch cook every Sunday, now I just don\'t"). Natural, unscripted feel. Pass the product between them. 25 to 35s.',
+          ['hook', 'body'],
+          'UGC testimonial (novel duo format). No competitor in the ${totalBrands}-brand dataset uses a two-person format.',
+          'P2',
+          'Differentiation through format novelty. Brief both people separately so the conversation feels genuine. Film in one take if possible.'
+        )}
+        ${shotRow(5,
+          'Gym bro transformation: "30 days on [brand]"',
+          'Daily check-in diary. Weigh-ins, meal tracking screenshots, gym clips. Focus: "the easiest cut/bulk I\'ve ever done." End with progress photos side-by-side + offer code. 30 to 45s.',
+          ['hook', 'proof', 'cta'],
+          'Before/after (proven by ' + (beforeAfterBrands.join(', ') || 'multiple brands') + ') + FOMO. Transformation results are the highest-impact proof point in the dataset.',
+          'P2',
+          'Requires 30-day lead time. Brief creator early. The physique shot is proven as a high-impact payoff (see competitive data for Simmer and Frive).'
+        )}
+        ${shotRow(6,
+          'First-bite taste reaction',
+          'Genuine first-bite surprise. "I didn\'t expect meal prep to taste like THIS." Compare to previous meal prep experiences. Short, punchy. 10 to 15s. Hook-optimised for feed stopping.',
+          ['hook'],
+          'Competitive gap: taste. Consistent weakness across ALL brands in the dataset. Nobody sells on how the food actually tastes.',
+          'P2',
+          'Commission 3 to 5 creators cheaply. The hook writes itself. Can test multiple meal variants. The taste gap is the most consistent weakness across all ${totalBrands} brands.'
+        )}
+        ${shotRow(7,
+          'Student budget: "Cost per meal breakdown"',
+          'Calculator on screen, breaking down cost per meal including time value. "When you factor in your time at minimum wage, [brand] costs less than cooking from scratch." Show the maths visually. 20 to 30s.',
+          ['proof'],
+          'Bold claim + Category contrast. The value angle is untouched by competitors.',
+          'P3',
+          'Good for younger demographic. Brief a student creator. The cost comparison angle has zero competition in the dataset.'
+        )}
+      ${tableFoot}
     </div>
 
     <div class="methodology-note" style="margin-top:1.5rem">
       <h4>How to use this document</h4>
-      <p>Pages 1 to 3 are the evidence. Page 4 is the action plan. When challenged on a creative direction, trace the recommendation back through the data: the shot brief (Page 4) references a pattern (Page 2), which is evidenced by specific brands (Page 3), drawn from the raw dataset (Page 5). Every recommendation has a paper trail.</p>
+      <p>Pages 1 to 3 are the evidence. Page 4 is the action plan. When someone challenges a creative direction, trace the recommendation back through the data: the shot brief (Page 4) references a pattern (Page 2), which is evidenced by specific brands (Page 3), drawn from the raw dataset (Page 5). Every recommendation has a paper trail. Hand Track 2 directly to your production company. Hand Track 3 directly to UGC creators (each row is a self-contained brief).</p>
     </div>
   `;
 }
