@@ -103,6 +103,9 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.2}
 .sheet-foot-item label{display:block;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin-bottom:.15rem}
 .sheet-foot-item span{color:var(--ink)}
 
+/* Cover page (print only) */
+.cover-page,.section-divider{display:none}
+
 /* Print */
 @page{size:A4 landscape;margin:12mm 14mm 16mm 14mm}
 @media print{
@@ -111,6 +114,34 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.2}
   body{background:#fff}
   .topbar,.hub,.no-print{display:none!important}
   .page{max-width:none;padding:0}
+  .cover-page,.section-divider{display:flex!important}
+  .cover-page{flex-direction:column;justify-content:center;align-items:center;min-height:100vh;page-break-after:always;text-align:center;padding:20mm}
+  .cover-logo{font-family:var(--font-display);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:16mm}
+  .cover-title{font-family:var(--font-display);font-size:36px;font-weight:800;letter-spacing:-.03em;color:var(--ink);margin-bottom:4mm}
+  .cover-subtitle{font-size:11px;color:var(--ink-2);max-width:320px;line-height:1.6;margin-bottom:14mm}
+  .cover-meta{font-size:8px;color:var(--ink-3);line-height:2}
+  .cover-meta strong{color:var(--ink);font-weight:600}
+  .cover-toc{text-align:left;margin-top:10mm;border-top:1.5px solid var(--border);padding-top:6mm;width:280px}
+  .cover-toc-title{font-family:var(--font-display);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:4mm}
+  .cover-toc-row{display:flex;justify-content:space-between;align-items:baseline;padding:1.5mm 0;border-bottom:1px dotted var(--border)}
+  .cover-toc-row .toc-label{font-size:8.5px;font-weight:600;color:var(--ink)}
+  .cover-toc-row .toc-dot{flex-shrink:0;width:8px;height:8px;border-radius:50%;margin-right:2mm}
+  .cover-toc-row .toc-count{font-size:8px;color:var(--ink-3)}
+  .cover-rule{width:60px;height:2px;background:var(--accent);border:none;margin:8mm auto}
+  .cover-confidential{font-size:7px;color:var(--ink-4);margin-top:8mm;letter-spacing:.05em;text-transform:uppercase}
+
+  /* Section dividers */
+  .section-divider{flex-direction:column;justify-content:center;align-items:center;min-height:100vh;page-break-after:always;text-align:center;padding:30mm}
+  .section-divider-num{font-family:var(--font-display);font-size:60px;font-weight:800;line-height:1;margin-bottom:4mm}
+  .section-divider-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.15em;margin-bottom:3mm}
+  .section-divider-title{font-family:var(--font-display);font-size:28px;font-weight:800;letter-spacing:-.02em;color:var(--ink);margin-bottom:4mm}
+  .section-divider-desc{font-size:9.5px;color:var(--ink-2);max-width:300px;line-height:1.6;margin-bottom:6mm}
+  .section-divider-list{text-align:left;width:260px;margin:0 auto}
+  .section-divider-list-item{display:flex;align-items:baseline;gap:2mm;padding:1.5mm 0;font-size:8px;color:var(--ink-2);border-bottom:1px dotted var(--border)}
+  .section-divider-list-item .sd-num{font-family:var(--font-display);font-weight:700;min-width:14px;color:var(--ink-3)}
+  .section-divider-list-item .sd-title{font-weight:600;color:var(--ink)}
+  .section-divider-list-item .sd-pri{margin-left:auto;font-size:7px;color:var(--ink-4)}
+
   .sheet-view{display:block!important;page-break-after:always}
   .sheet-view:last-child{page-break-after:auto}
   .sheet-head{margin-bottom:3mm;padding-bottom:2mm}
@@ -721,7 +752,60 @@ function render(data) {
       }).join('')}
     </div>
 
-    ${sheets.map((s, i) => renderSheet(s, i)).join('')}
+    <!-- COVER PAGE (print only) -->
+    <div class="cover-page">
+      <div class="cover-logo">Creative Kitchen</div>
+      <div class="cover-title">Shoot Sheets</div>
+      <div class="cover-subtitle">${sheets.length} production-ready shoot sheets. Step-by-step table grids designed for on-set use. Print, tick off, hand to anyone.</div>
+      <hr class="cover-rule">
+      <div class="cover-meta">
+        <div><strong>Prepared:</strong> ${today}</div>
+        <div><strong>Source data:</strong> ${stats.totalVids} competitor videos across ${stats.totalBrands} brands</div>
+        <div><strong>Tracks:</strong> 3 (Internal, Studio, UGC)</div>
+      </div>
+      <div class="cover-toc">
+        <div class="cover-toc-title">Contents</div>
+        ${tracks.map((t, ti) => {
+          const trackSheets = sheets.filter(s => s.track === t.key);
+          return `<div class="cover-toc-row">
+            <div class="toc-dot" style="background:${t.dot}"></div>
+            <span class="toc-label">Track ${ti + 1}: ${t.key}</span>
+            <span class="toc-count">${trackSheets.length} sheet${trackSheets.length !== 1 ? 's' : ''}</span>
+          </div>`;
+        }).join('')}
+        <div class="cover-toc-row" style="border-bottom:none;padding-top:2mm">
+          <span class="toc-label" style="font-weight:400;color:var(--ink-3)">Total</span>
+          <span class="toc-count" style="font-weight:700;color:var(--ink)">${sheets.length} sheets</span>
+        </div>
+      </div>
+      <div class="cover-confidential">Confidential. For internal and production partner use only.</div>
+    </div>
+
+    <!-- SECTION DIVIDER + SHEETS per track -->
+    ${tracks.map((t, ti) => {
+      const trackSheets = sheets.filter(s => s.track === t.key);
+      const descriptions = {
+        Internal: 'Quick-turn content your team can film with a phone, ring light, and your product. Designed for rapid iteration: film, test, learn, repeat.',
+        Studio: 'High-production brand content requiring a production partner. Cinematic quality that elevates your brand above the feed.',
+        UGC: 'Creator-led content briefs with 3 variations per concept. Hand directly to creators with talking points, visual direction, and shot-by-shot structure.'
+      };
+      return `
+        <div class="section-divider">
+          <div class="section-divider-num" style="color:${t.dot}">0${ti + 1}</div>
+          <div class="section-divider-label" style="color:${t.dot}">Track ${ti + 1} of 3</div>
+          <div class="section-divider-title">${t.key}</div>
+          <div class="section-divider-desc">${descriptions[t.key]}</div>
+          <div class="section-divider-list">
+            ${trackSheets.map((s, i) => `<div class="section-divider-list-item">
+              <span class="sd-num">${String(i + 1).padStart(2, '0')}</span>
+              <span class="sd-title">${s.title}</span>
+              <span class="sd-pri">${s.priority}</span>
+            </div>`).join('')}
+          </div>
+        </div>
+        ${trackSheets.map(s => renderSheet(s, sheets.indexOf(s))).join('')}
+      `;
+    }).join('')}
   `;
 }
 
@@ -743,20 +827,26 @@ function showSheet(id) {
 
 function printCurrent() {
   if (!currentSheet) return;
-  // Hide all sheets except current, print, restore
+  // Hide cover, dividers, and all other sheets. Show only current.
+  const cover = document.querySelector('.cover-page');
+  const dividers = document.querySelectorAll('.section-divider');
   const allSheets = document.querySelectorAll('.sheet-view');
   const states = [];
+  if (cover) { cover.dataset.origDisplay = cover.style.display; cover.style.display = 'none'; }
+  dividers.forEach(d => { d.dataset.origDisplay = d.style.display; d.style.display = 'none'; });
   allSheets.forEach(s => {
     states.push(s.style.display);
     if (s.id !== 'sheet-' + currentSheet) s.style.display = 'none';
     else s.style.display = 'block';
   });
   window.print();
+  if (cover) cover.style.display = cover.dataset.origDisplay || '';
+  dividers.forEach(d => { d.style.display = d.dataset.origDisplay || ''; });
   allSheets.forEach((s, i) => s.style.display = states[i]);
 }
 
 function printAll() {
-  // Show all sheets for print
+  // Show all sheets for print (cover + dividers handled by CSS)
   document.querySelectorAll('.sheet-view').forEach(s => s.style.display = 'block');
   window.print();
   // Restore: only show current (or none)
