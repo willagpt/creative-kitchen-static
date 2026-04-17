@@ -11,10 +11,12 @@ import Launcher from './components/Launcher'
 import PromptTester from './components/PromptTester'
 import CompareAnalyses from './components/CompareAnalyses'
 import VideoAnalysis from './components/VideoAnalysis'
+import OrganicIntel from './components/OrganicIntel'
 
 const TABS = [
   { key: 'competitors', label: 'Competitor Ads' },
   { key: 'video-analysis', label: 'Video Analysis' },
+  { key: 'organic', label: 'Organic Intel' },
   { key: 'compare', label: 'Compare' },
   { key: 'gallery', label: 'Ad Library' },
   { key: 'brand', label: 'Brand DNA' },
@@ -140,6 +142,10 @@ export default function App() {
 
         {tab === 'video-analysis' && (
           <VideoAnalysis />
+        )}
+
+        {tab === 'organic' && (
+          <OrganicIntel />
         )}
 
         {tab === 'compare' && (

@@ -942,20 +942,76 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
   }
 
   // Trigger video analysis for a single ad
-  // Run Phase 2+3 pipeline steps directly from frontend (transcribe, OCR, merge, AI)
-  // This bypasses unreliable edge-function-to-edge-function relay
+  // Run Phase 2+3 pipeline steps directly from frontend (transcribe, OCR, merge, AI).
+  // This bypasses unreliable edge-function-to-edge-function relay.
+  //
+  // transcribe-video gets client-side retries on transient HTTP errors
+  // (429, 5xx, network drop). The edge function already retries the
+  // OpenAI Whisper call internally; this outer retry catches the rarer
+  // case where the edge function itself blips (cold-start timeout,
+  // Supabase gateway 5xx) before it can write transcript_status to the
+  // video_analyses row. Partial transcripts (low-coverage Whisper output)
+  // are NOT retried here, since retrying Whisper rarely improves bad
+  // audio: the edge function records status='partial' and we log it.
   async function runPipelineSteps(analysisId) {
-    const steps = ['transcribe-video', 'ocr-video-frames', 'merge-video-script', 'ai-analyse-video']
+    const steps = [
+      { name: 'transcribe-video', retries: 2, retryDelayMs: 2000 },
+      { name: 'ocr-video-frames', retries: 0, retryDelayMs: 0 },
+      { name: 'merge-video-script', retries: 0, retryDelayMs: 0 },
+      { name: 'ai-analyse-video', retries: 0, retryDelayMs: 0 },
+    ]
     for (const step of steps) {
-      try {
-        const r = await fetch(`${supabaseUrl}/functions/v1/${step}`, {
-          method: 'POST',
-          headers: fnHeaders,
-          body: JSON.stringify({ analysis_id: analysisId }),
-        })
-        if (!r.ok) console.warn(`Pipeline step ${step} returned ${r.status}`)
-      } catch (e) {
-        console.warn(`Pipeline step ${step} failed:`, e)
+      let finalResp = null
+      let finalErr = null
+      for (let attempt = 1; attempt <= step.retries + 1; attempt++) {
+        try {
+          const r = await fetch(`${supabaseUrl}/functions/v1/${step.name}`, {
+            method: 'POST',
+            headers: fnHeaders,
+            body: JSON.stringify({ analysis_id: analysisId }),
+          })
+          finalResp = r
+          if (r.ok) {
+            // Surface transcribe-video's observability fields in the console.
+            if (step.name === 'transcribe-video') {
+              try {
+                const body = await r.clone().json()
+                const coverage = typeof body.coverage === 'number' ? body.coverage.toFixed(2) : 'n/a'
+                console.log(
+                  `[pipeline] transcribe-video ok: status=${body.transcript_status}, ` +
+                  `attempts=${body.attempts}, coverage=${coverage}, chars=${body.char_count}`,
+                )
+                if (body.transcript_status === 'partial') {
+                  console.warn(
+                    `[pipeline] transcribe-video returned partial for ${analysisId} (coverage=${coverage}). ` +
+                    `Row marked transcript_status='partial' in video_analyses.`,
+                  )
+                }
+              } catch {
+                // Body parse is best-effort, don't fail the pipeline if the
+                // response shape changes.
+              }
+            }
+            break
+          }
+          const retryable = r.status === 429 || r.status >= 500
+          console.warn(
+            `[pipeline] ${step.name} attempt ${attempt}/${step.retries + 1} returned ${r.status} ` +
+            `(retryable=${retryable})`,
+          )
+          if (!retryable || attempt > step.retries) break
+        } catch (e) {
+          finalErr = e
+          console.warn(`[pipeline] ${step.name} attempt ${attempt}/${step.retries + 1} threw:`, e)
+          if (attempt > step.retries) break
+        }
+        if (step.retryDelayMs) {
+          await new Promise((res) => setTimeout(res, step.retryDelayMs))
+        }
+      }
+      if (finalErr || (finalResp && !finalResp.ok)) {
+        const statusLabel = finalErr ? 'threw' : `${finalResp.status}`
+        console.warn(`[pipeline] ${step.name} gave up after retries (${statusLabel})`)
       }
     }
   }
