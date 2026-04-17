@@ -945,18 +945,19 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
   // Run Phase 2+3 pipeline steps directly from frontend (transcribe, OCR, merge, AI).
   // This bypasses unreliable edge-function-to-edge-function relay.
   //
-  // transcribe-video gets client-side retries on transient HTTP errors
-  // (429, 5xx, network drop). The edge function already retries the
-  // OpenAI Whisper call internally; this outer retry catches the rarer
-  // case where the edge function itself blips (cold-start timeout,
-  // Supabase gateway 5xx) before it can write transcript_status to the
-  // video_analyses row. Partial transcripts (low-coverage Whisper output)
-  // are NOT retried here, since retrying Whisper rarely improves bad
-  // audio: the edge function records status='partial' and we log it.
+  // transcribe-video and ocr-video-frames both get client-side retries on
+  // transient HTTP errors (429, 5xx, network drop). Each edge function
+  // already retries its upstream (Whisper / Claude Vision) internally; this
+  // outer retry catches the rarer case where the edge function itself blips
+  // (cold-start timeout, Supabase gateway 5xx) before it can write its
+  // status column on video_analyses. Partial outputs (low-coverage Whisper,
+  // partial-batch OCR failures) are NOT retried here, since retrying rarely
+  // fixes a bad-quality upstream: the edge function records status='partial'
+  // and the UI reads it from video_analyses.{transcript,ocr}_status.
   async function runPipelineSteps(analysisId) {
     const steps = [
       { name: 'transcribe-video', retries: 2, retryDelayMs: 2000 },
-      { name: 'ocr-video-frames', retries: 0, retryDelayMs: 0 },
+      { name: 'ocr-video-frames', retries: 2, retryDelayMs: 2000 },
       { name: 'merge-video-script', retries: 0, retryDelayMs: 0 },
       { name: 'ai-analyse-video', retries: 0, retryDelayMs: 0 },
     ]
@@ -990,6 +991,28 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
               } catch {
                 // Body parse is best-effort, don't fail the pipeline if the
                 // response shape changes.
+              }
+            }
+            // Surface ocr-video-frames's observability fields in the console.
+            if (step.name === 'ocr-video-frames') {
+              try {
+                const body = await r.clone().json()
+                const coverage = typeof body.coverage === 'number' ? body.coverage.toFixed(2) : 'n/a'
+                const batchErrs = Array.isArray(body.batch_errors) ? body.batch_errors.length : 0
+                console.log(
+                  `[pipeline] ocr-video-frames ok: status=${body.ocr_status}, ` +
+                  `shots=${body.shots_updated}/${body.shots_processed}, ` +
+                  `coverage=${coverage}, batch_errors=${batchErrs}/${body.total_batches}`,
+                )
+                if (body.ocr_status === 'partial') {
+                  console.warn(
+                    `[pipeline] ocr-video-frames returned partial for ${analysisId} ` +
+                    `(coverage=${coverage}, batch_errors=${batchErrs}). ` +
+                    `Row marked ocr_status='partial' in video_analyses.`,
+                  )
+                }
+              } catch {
+                // Body parse is best-effort; don't fail the pipeline on shape drift.
               }
             }
             break
