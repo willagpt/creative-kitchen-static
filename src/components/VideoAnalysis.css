@@ -1219,3 +1219,75 @@
     align-items: stretch;
   }
 }
+
+/* Source filter bar (VAE organic wire-up) */
+.va-filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.va-filter-btn {
+  background: #18181f;
+  color: #9a9aa5;
+  border: 1px solid #2a2a34;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+.va-filter-btn:hover {
+  color: #d4d4d8;
+  border-color: #3a3a44;
+}
+.va-filter-btn.active {
+  color: #fafafa;
+  border-color: #7c7cf0;
+  background: rgba(124, 124, 240, 0.08);
+}
+.va-filter-count {
+  display: inline-flex;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: #2a2a34;
+  color: #c4c4ce;
+  font-size: 11px;
+  font-weight: 600;
+  align-items: center;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+}
+.va-filter-btn.active .va-filter-count {
+  background: #7c7cf0;
+  color: #0b0b12;
+}
+
+/* Source chip inside each analysis card */
+.va-source-chip {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  margin-top: 8px;
+  width: fit-content;
+}
+.va-source-ad {
+  background: rgba(124, 124, 240, 0.12);
+  color: #a4a4f5;
+  border-color: rgba(124, 124, 240, 0.3);
+}
+.va-source-organic {
+  background: rgba(52, 211, 153, 0.12);
+  color: #6ee7b7;
+  border-color: rgba(52, 211, 153, 0.3);
+}
