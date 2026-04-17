@@ -307,6 +307,7 @@ export default function OrganicIntel() {
   const [accounts, setAccounts] = useState([])
   const [logsByAccount, setLogsByAccount] = useState({})
   const [postsByAccount, setPostsByAccount] = useState({})
+  const [runsSummary, setRunsSummary] = useState({ ig: null, yt: null })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [platformFilter, setPlatformFilter] = useState('all')
@@ -318,10 +319,15 @@ export default function OrganicIntel() {
     try {
       // Phase 3b: single RPC returns account + latest log + post count.
       // Replaces the Phase 3a client-side grouping of 500 logs + 5000 post ids.
-      const rows = await callRpc('list_organic_accounts_with_stats', {
-        p_platform: null,
-        p_active_only: true,
-      })
+      // Phase 3c: parallel call for the last-7-days observability strip.
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+      const [rows, summaryRows] = await Promise.all([
+        callRpc('list_organic_accounts_with_stats', {
+          p_platform: null,
+          p_active_only: true,
+        }),
+        callRpc('list_fetch_runs_summary', { p_since: since }).catch(() => []),
+      ])
 
       const accountsRes = []
       const latestByAccount = {}
@@ -359,6 +365,22 @@ export default function OrganicIntel() {
       setAccounts(accountsRes)
       setLogsByAccount(latestByAccount)
       setPostsByAccount(counts)
+
+      // Aggregate the daily rows into per-platform totals for the strip.
+      const emptyRoll = { runs: 0, successes: 0, errors: 0, posts_new: 0, cost_estimate: 0, yt_quota_units: 0 }
+      const byPlatform = { instagram: null, youtube: null }
+      for (const row of summaryRows || []) {
+        const p = row.platform
+        if (p !== 'instagram' && p !== 'youtube') continue
+        if (!byPlatform[p]) byPlatform[p] = { ...emptyRoll }
+        byPlatform[p].runs += Number(row.runs) || 0
+        byPlatform[p].successes += Number(row.successes) || 0
+        byPlatform[p].errors += Number(row.errors) || 0
+        byPlatform[p].posts_new += Number(row.posts_new) || 0
+        byPlatform[p].cost_estimate += Number(row.cost_estimate) || 0
+        byPlatform[p].yt_quota_units += Number(row.yt_quota_units) || 0
+      }
+      setRunsSummary({ ig: byPlatform.instagram, yt: byPlatform.youtube })
     } catch (e) {
       setError(e.message)
     } finally {
@@ -432,6 +454,32 @@ export default function OrganicIntel() {
           <div className="oi-stat-value">{formatNumber(summary.totalPosts)}</div>
         </div>
       </div>
+
+      {(runsSummary.ig || runsSummary.yt) && (
+        <div className="oi-runs-strip">
+          <div className="oi-runs-strip-label">Last 7 days</div>
+          {runsSummary.ig && (
+            <div className="oi-runs-chip">
+              <span className="oi-chip oi-chip-ig">IG</span>
+              <span>{runsSummary.ig.runs} runs</span>
+              <span>{runsSummary.ig.successes} ok</span>
+              {runsSummary.ig.errors > 0 && <span className="oi-runs-chip-err">{runsSummary.ig.errors} err</span>}
+              <span>+{formatNumber(runsSummary.ig.posts_new)} new</span>
+              <span>${Number(runsSummary.ig.cost_estimate || 0).toFixed(2)}</span>
+            </div>
+          )}
+          {runsSummary.yt && (
+            <div className="oi-runs-chip">
+              <span className="oi-chip oi-chip-yt">YT</span>
+              <span>{runsSummary.yt.runs} runs</span>
+              <span>{runsSummary.yt.successes} ok</span>
+              {runsSummary.yt.errors > 0 && <span className="oi-runs-chip-err">{runsSummary.yt.errors} err</span>}
+              <span>+{formatNumber(runsSummary.yt.posts_new)} new</span>
+              <span>{runsSummary.yt.yt_quota_units} units</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {error && <div className="oi-error">{error}</div>}
 

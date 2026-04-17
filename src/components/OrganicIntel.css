@@ -390,3 +390,36 @@
   .oi-header { flex-direction: column; align-items: flex-start; }
   .oi-detail-head { flex-direction: column; }
 }
+
+/* Phase 3c — last-7-days observability strip */
+.oi-runs-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-1);
+  border: 1px solid var(--bg-3);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-xl);
+}
+.oi-runs-strip-label {
+  font-size: var(--text-xs);
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  font-weight: var(--weight-semibold);
+}
+.oi-runs-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius);
+  background: var(--bg-0);
+  border: 1px solid var(--bg-3);
+  font-size: var(--text-xs);
+  color: var(--text-1);
+  font-weight: var(--weight-medium);
+}
+.oi-runs-chip-err { color: var(--slop, #e05b5b); font-weight: var(--weight-semibold); }
