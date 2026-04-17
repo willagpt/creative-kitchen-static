@@ -78,6 +78,52 @@ export default function TrendReports() {
   const [rankBy, setRankBy] = useState('views')
   const [topN, setTopN] = useState('10')
 
+  // Pre-flight match count (direct PostgREST, debounced)
+  const [matchCount, setMatchCount] = useState(null)
+  const [matchLoading, setMatchLoading] = useState(false)
+  const [matchError, setMatchError] = useState(null)
+
+  useEffect(() => {
+    if (!showGenerator) return
+    const t = setTimeout(async () => {
+      setMatchLoading(true)
+      setMatchError(null)
+      try {
+        const params = new URLSearchParams()
+        params.set('select', 'id')
+        params.set('status', 'eq.complete')
+        if (filterSource) params.set('source', `eq.${filterSource}`)
+        if (filterPacing) params.set('pacing_profile', `eq.${filterPacing}`)
+        if (filterSinceDays) {
+          const cutoff = new Date(Date.now() - Number(filterSinceDays) * 86400000).toISOString()
+          params.append('created_at', `gte.${cutoff}`)
+        }
+        if (filterMinDuration) params.append('duration_seconds', `gte.${Number(filterMinDuration)}`)
+        if (filterMaxDuration) params.append('duration_seconds', `lte.${Number(filterMaxDuration)}`)
+        const res = await fetch(`${supabaseUrl}/rest/v1/video_analyses?${params.toString()}`, {
+          method: 'HEAD',
+          headers: {
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${supabaseAnonKey}`,
+            Prefer: 'count=exact',
+            Range: '0-0',
+          },
+        })
+        const contentRange = res.headers.get('content-range') || ''
+        const total = contentRange.split('/')[1]
+        const n = total ? parseInt(total, 10) : 0
+        setMatchCount(Number.isFinite(n) ? n : 0)
+      } catch (err) {
+        setMatchError(err.message || 'Count failed')
+        setMatchCount(null)
+      } finally {
+        setMatchLoading(false)
+      }
+    }, 350)
+    return () => clearTimeout(t)
+  }, [showGenerator, filterSource, filterPacing, filterSinceDays, filterMinDuration, filterMaxDuration])
+
+
   async function loadReports() {
     setLoading(true)
     setError(null)
@@ -348,14 +394,55 @@ export default function TrendReports() {
             <button
               type="submit"
               className="tr-btn tr-btn-primary"
-              disabled={generating}
+              disabled={generating || (matchCount !== null && matchCount < 3)}
             >
               {generating ? 'Generating…' : 'Synthesise trends'}
             </button>
+            <span className={`tr-match-badge ${matchCount === null ? 'tr-match-neutral' : matchCount < 3 ? 'tr-match-bad' : matchCount < 10 ? 'tr-match-warn' : 'tr-match-good'}`}>
+              {matchLoading
+                ? 'Counting matches…'
+                : matchError
+                ? 'Match count unavailable'
+                : matchCount === null
+                ? 'Adjust filters to preview match count'
+                : `${matchCount} analysed ${matchCount === 1 ? 'video' : 'videos'} match${matchCount === 1 ? 'es' : ''} (before platform/brand filter)`}
+            </span>
             <span className="tr-gen-hint">
-              Needs at least 3 analysed videos matching the filter. Uses Claude Sonnet 4.5.
+              Needs at least 3 analysed videos. Uses Claude Sonnet 4.5.
             </span>
           </div>
+          {matchCount !== null && matchCount < 3 && (
+            <div className="tr-error-banner tr-error-soft">
+              <div>
+                <strong>Not enough matches.</strong>{' '}
+                {filterSource === 'organic_post'
+                  ? 'You have very few organic-post analyses in the database. Run Video Analysis on more organic posts, or switch source to Competitor ads (70+ analyses available).'
+                  : 'Widen the date range, relax the pacing filter, or remove the source filter.'}
+              </div>
+              <div className="tr-rescue-actions">
+                {filterSource === 'organic_post' && (
+                  <button type="button" className="tr-btn tr-btn-ghost" onClick={() => setFilterSource('competitor_ad')}>
+                    Switch to competitor ads
+                  </button>
+                )}
+                {filterSource && (
+                  <button type="button" className="tr-btn tr-btn-ghost" onClick={() => setFilterSource('')}>
+                    Source: any
+                  </button>
+                )}
+                {filterSinceDays && Number(filterSinceDays) < 180 && (
+                  <button type="button" className="tr-btn tr-btn-ghost" onClick={() => setFilterSinceDays('180')}>
+                    Extend to 180 days
+                  </button>
+                )}
+                {filterPacing && (
+                  <button type="button" className="tr-btn tr-btn-ghost" onClick={() => setFilterPacing('')}>
+                    Any pacing
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </form>
       )}
 
