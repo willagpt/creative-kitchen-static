@@ -149,6 +149,51 @@
   font-style: italic;
 }
 
+.tr-match-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: var(--text-xs, 12px);
+  font-weight: var(--weight-medium, 500);
+  border: 1px solid transparent;
+}
+.tr-match-neutral {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-2, rgba(255,255,255,0.55));
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.tr-match-bad {
+  background: rgba(255, 106, 90, 0.12);
+  color: #ff8f7a;
+  border-color: rgba(255, 106, 90, 0.3);
+}
+.tr-match-warn {
+  background: rgba(255, 193, 94, 0.12);
+  color: #ffc15e;
+  border-color: rgba(255, 193, 94, 0.3);
+}
+.tr-match-good {
+  background: rgba(78, 212, 158, 0.12);
+  color: #4ed49e;
+  border-color: rgba(78, 212, 158, 0.3);
+}
+
+.tr-error-soft {
+  color: var(--text-0, #fff);
+  background: rgba(255, 193, 94, 0.06);
+  border-color: rgba(255, 193, 94, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tr-rescue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 /* ---------- List ---------- */
 
 .tr-list {
