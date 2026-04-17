@@ -301,7 +301,10 @@
   right: var(--space-sm);
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   gap: var(--space-sm);
+  row-gap: 4px;
+  flex-wrap: wrap;
   pointer-events: none;
 }
 .oi-thumb-badges > * { pointer-events: auto; }
@@ -449,6 +452,17 @@
   background: rgba(52, 211, 153, 0.18);
   color: #34d399;
   border-color: rgba(52, 211, 153, 0.35);
+}
+/* Pipeline-stage chips (TX, OCR, AI) sit next to the Analysed chip on the
+   thumb badge row. Reuse .oi-chip-status colour tokens for success/partial/
+   error/running/pending. The prefix ("TX", "OCR") makes them scannable at a
+   glance without a legend. */
+.oi-chip-ai {
+  background: rgba(92, 207, 255, 0.15);
+  color: var(--refine);
+  border-color: rgba(92, 207, 255, 0.3);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.04em;
 }
 
 /* ---------- Bulk analyse bar + per-card selection (shipped 17 Apr) ---------- */

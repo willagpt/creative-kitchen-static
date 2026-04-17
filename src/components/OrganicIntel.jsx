@@ -158,6 +158,26 @@ function AccountsList({ accounts, logsByAccount, postsByAccount, onOpen }) {
 
 // ---------- Post card ----------
 
+// Pipeline-stage short labels (transcript, OCR). We use initials so we can stack
+// three chips onto the thumbnail badge row without crowding the UX.
+const PIPELINE_STATUS_LABELS = {
+  success: 'ok',
+  partial: 'partial',
+  error: 'error',
+  running: 'running',
+  pending: 'pending',
+}
+
+function PipelineStatusChip({ prefix, status, title }) {
+  if (!status) return null
+  const label = PIPELINE_STATUS_LABELS[status] || status
+  return (
+    <span className={`oi-chip oi-chip-status ${status}`} title={title}>
+      {prefix} {label}
+    </span>
+  )
+}
+
 function PostCard({
   post,
   metrics,
@@ -228,6 +248,25 @@ function PostCard({
           <span className="oi-chip oi-chip-type">{typeLabel}</span>
           {duration && <span className="oi-duration">{duration}</span>}
           {alreadyAnalysed && <span className="oi-chip oi-chip-analysed">Analysed</span>}
+          {alreadyAnalysed && analysisInfo?.transcript_status && (
+            <PipelineStatusChip
+              prefix="TX"
+              status={analysisInfo.transcript_status}
+              title={`Transcript: ${analysisInfo.transcript_status}`}
+            />
+          )}
+          {alreadyAnalysed && analysisInfo?.ocr_status && (
+            <PipelineStatusChip
+              prefix="OCR"
+              status={analysisInfo.ocr_status}
+              title={`On-screen text OCR: ${analysisInfo.ocr_status}`}
+            />
+          )}
+          {alreadyAnalysed && analysisInfo?.ai_analysis && (
+            <span className="oi-chip oi-chip-ai" title="Layout + scene AI analysis complete">
+              AI
+            </span>
+          )}
           {bulkBadge && <span className={`oi-chip oi-chip-bulk oi-chip-bulk-${bulkState}`}>{bulkBadge}</span>}
         </div>
         {selectable && (
@@ -322,7 +361,7 @@ function AccountDetail({ account, latestLog, onBack }) {
     try {
       const idList = postIds.map(id => `"${id}"`).join(',')
       const rows = await fetchTable(
-        `video_analyses?source=eq.organic_post&source_id=in.(${idList})&status=in.(processing,complete)&select=id,source_id,status`
+        `video_analyses?source=eq.organic_post&source_id=in.(${idList})&status=in.(processing,complete)&select=id,source_id,status,transcript_status,ocr_status,ai_analysis`
       )
       const map = {}
       for (const r of rows) {
