@@ -80,6 +80,30 @@ export default function VideoAnalysis() {
       if (!response.ok) throw new Error('Failed to fetch analyses')
       const data = await response.json()
 
+      // Fetch first-shot frame_url for each analysis (used as card thumbnail).
+      // Contact sheets look bad at 16/9 because they are 4-col portrait grids padded with black.
+      let firstFrameByAnalysisId = new Map()
+      try {
+        const ids = data.map((a) => a.id).filter(Boolean)
+        if (ids.length > 0) {
+          const idList = ids.map((id) => `"${id}"`).join(',')
+          const shotsRes = await fetch(
+            `${supabaseUrl}/rest/v1/video_shots?shot_number=eq.1&video_analysis_id=in.(${idList})&select=video_analysis_id,frame_url`,
+            { headers: fnHeaders }
+          )
+          if (shotsRes.ok) {
+            const shots = await shotsRes.json()
+            shots.forEach((s) => {
+              if (s.video_analysis_id && s.frame_url) {
+                firstFrameByAnalysisId.set(s.video_analysis_id, s.frame_url)
+              }
+            })
+          }
+        }
+      } catch (e) {
+        console.warn('First-frame fetch failed, falling back to contact sheet:', e)
+      }
+
       // Enrich with competitor ad data
       const enriched = await Promise.all(
         data.map(async (analysis) => {
@@ -97,9 +121,15 @@ export default function VideoAnalysis() {
               ...analysis,
               brand_name: pageName + hookLabel,
               page_name: pageName,
+              first_frame_url: firstFrameByAnalysisId.get(analysis.id) || null,
             }
           } catch (e) {
-            return { ...analysis, brand_name: 'Unknown', page_name: '' }
+            return {
+              ...analysis,
+              brand_name: 'Unknown',
+              page_name: '',
+              first_frame_url: firstFrameByAnalysisId.get(analysis.id) || null,
+            }
           }
         })
       )
@@ -332,17 +362,17 @@ function AnalysisCard({ analysis, onClick, onDelete, isDeleting }) {
   return (
     <div className="va-card" onClick={onClick}>
       <div className="va-card-image">
-        {analysis.contact_sheet_url ? (
+        {(analysis.first_frame_url || analysis.contact_sheet_url) ? (
           <img
-            src={analysis.contact_sheet_url}
-            alt="Contact sheet"
+            src={analysis.first_frame_url || analysis.contact_sheet_url}
+            alt="First-frame thumbnail"
             onError={(e) => {
               e.target.style.display = 'none'
               e.target.nextElementSibling.style.display = 'flex'
             }}
           />
         ) : null}
-        <div className="va-card-placeholder" style={{ display: analysis.contact_sheet_url ? 'none' : 'flex' }}>
+        <div className="va-card-placeholder" style={{ display: (analysis.first_frame_url || analysis.contact_sheet_url) ? 'none' : 'flex' }}>
           📹
         </div>
       </div>
