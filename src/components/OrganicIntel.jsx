@@ -8,6 +8,9 @@ const fnHeaders = {
   'Content-Type': 'application/json',
 }
 
+// Bulk-analyse concurrency cap (keeps Railway worker + edge functions comfortable).
+const BULK_CONCURRENCY = 3
+
 // ---------- Formatting helpers ----------
 
 function formatRelativeTime(iso) {
@@ -56,6 +59,12 @@ function formatDuration(seconds) {
 function statusLabel(status) {
   if (!status) return 'Never fetched'
   return status.charAt(0).toUpperCase() + status.slice(1)
+}
+
+function isVideoPost(post) {
+  if (!post?.video_url) return false
+  const t = (post.post_type || '').toLowerCase()
+  return t === 'reel' || t === 'short' || t === 'video'
 }
 
 // ---------- Data hooks ----------
@@ -130,23 +139,65 @@ function AccountsList({ accounts, logsByAccount, postsByAccount, onOpen }) {
   )
 }
 
-// ---------- Detail view ----------
+// ---------- Post card ----------
 
-function PostCard({ post, metrics, analysisInfo, onAnalyse, analysing }) {
+function PostCard({
+  post,
+  metrics,
+  analysisInfo,
+  firstFrameUrl,
+  onAnalyse,
+  analysing,
+  bulkState, // null | 'queued' | 'running' | 'done' | 'error'
+  selected,
+  selectable,
+  onToggleSelect,
+}) {
   const hasVideo = !!post.video_url
   const typeLabel = (post.post_type || 'post').replace(/_/g, ' ')
   const duration = formatDuration(post.duration_seconds)
   const caption = post.title || post.caption || ''
   const hashtags = Array.isArray(post.hashtags) ? post.hashtags : []
-  const videoTypes = ['reel', 'short', 'video']
-  const analysable = hasVideo && videoTypes.includes((post.post_type || '').toLowerCase())
+  const analysable = isVideoPost(post)
   const alreadyAnalysed = !!analysisInfo
 
+  // Thumbnail fallback chain:
+  // 1. Supabase-hosted first video frame (for analysed videos) — rock solid, never hotlink-blocked
+  // 2. post.thumbnail_url with referrerPolicy="no-referrer" — IG/FB CDN urls are hotlink-blocked unless referrer is stripped
+  // 3. onError → hide <img>, show placeholder
+  const primaryThumb = firstFrameUrl || post.thumbnail_url || null
+
+  const bulkBadge = bulkState === 'queued'
+    ? 'Queued'
+    : bulkState === 'running'
+      ? 'Analysing…'
+      : bulkState === 'done'
+        ? 'Done'
+        : bulkState === 'error'
+          ? 'Error'
+          : null
+
   return (
-    <div className="oi-post">
+    <div className={`oi-post ${selected ? 'oi-post-selected' : ''}`}>
       <div className="oi-thumb-wrap">
-        {post.thumbnail_url ? (
-          <img className="oi-thumb" src={post.thumbnail_url} alt={caption.slice(0, 80)} loading="lazy" />
+        {primaryThumb ? (
+          <>
+            <img
+              className="oi-thumb"
+              src={primaryThumb}
+              alt={caption.slice(0, 80)}
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none'
+                const sibling = e.currentTarget.nextElementSibling
+                if (sibling) sibling.style.display = 'flex'
+              }}
+            />
+            <div className="oi-thumb-missing" style={{ display: 'none' }}>
+              Preview blocked
+            </div>
+          </>
         ) : (
           <div className="oi-thumb-missing">No thumbnail</div>
         )}
@@ -154,7 +205,22 @@ function PostCard({ post, metrics, analysisInfo, onAnalyse, analysing }) {
           <span className="oi-chip oi-chip-type">{typeLabel}</span>
           {duration && <span className="oi-duration">{duration}</span>}
           {alreadyAnalysed && <span className="oi-chip oi-chip-analysed">Analysed</span>}
+          {bulkBadge && <span className={`oi-chip oi-chip-bulk oi-chip-bulk-${bulkState}`}>{bulkBadge}</span>}
         </div>
+        {selectable && (
+          <label
+            className={`oi-select-box ${selected ? 'checked' : ''}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={() => onToggleSelect && onToggleSelect(post.id)}
+              aria-label="Select for bulk analyse"
+            />
+            <span />
+          </label>
+        )}
       </div>
       <div className="oi-post-body">
         {caption && <div className="oi-post-caption">{caption}</div>}
@@ -200,18 +266,28 @@ function PostCard({ post, metrics, analysisInfo, onAnalyse, analysing }) {
   )
 }
 
+// ---------- Detail view ----------
+
 function AccountDetail({ account, latestLog, onBack }) {
   const [posts, setPosts] = useState([])
   const [metricsByPost, setMetricsByPost] = useState({})
   const [analysesByPostId, setAnalysesByPostId] = useState({})
+  const [firstFrameByPostId, setFirstFrameByPostId] = useState({})
   const [analysingIds, setAnalysingIds] = useState(() => new Set())
   const [analyseError, setAnalyseError] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  // Bulk selection + bulk run state.
+  const [selectedIds, setSelectedIds] = useState(() => new Set())
+  const [bulkRunning, setBulkRunning] = useState(false)
+  const [bulkStatus, setBulkStatus] = useState({}) // post_id -> 'queued' | 'running' | 'done' | 'error'
+  const [bulkMessage, setBulkMessage] = useState(null)
+
   async function refreshAnalysesForPosts(postIds) {
     if (!postIds || postIds.length === 0) {
       setAnalysesByPostId({})
+      setFirstFrameByPostId({})
       return
     }
     try {
@@ -224,6 +300,32 @@ function AccountDetail({ account, latestLog, onBack }) {
         if (!map[r.source_id]) map[r.source_id] = r
       }
       setAnalysesByPostId(map)
+
+      // Pull first-frame URL (shot_number=1) from video_shots for each analysed post.
+      // Supabase-hosted URLs bypass Instagram/FB hotlink blocks so we prefer them over post.thumbnail_url.
+      const analysisIds = Object.values(map).map(a => `"${a.id}"`)
+      if (analysisIds.length > 0) {
+        try {
+          const shots = await fetchTable(
+            `video_shots?video_analysis_id=in.(${analysisIds.join(',')})&shot_number=eq.1&select=video_analysis_id,frame_url`
+          )
+          const frameByAnalysis = {}
+          for (const s of shots) {
+            if (s.frame_url) frameByAnalysis[s.video_analysis_id] = s.frame_url
+          }
+          const frameByPost = {}
+          for (const [postId, analysis] of Object.entries(map)) {
+            const fu = frameByAnalysis[analysis.id]
+            if (fu) frameByPost[postId] = fu
+          }
+          setFirstFrameByPostId(frameByPost)
+        } catch (e) {
+          console.warn('Could not load first-frame urls:', e)
+          setFirstFrameByPostId({})
+        }
+      } else {
+        setFirstFrameByPostId({})
+      }
     } catch (e) {
       console.warn('Could not load existing analyses:', e)
     }
@@ -256,6 +358,7 @@ function AccountDetail({ account, latestLog, onBack }) {
         } else {
           setMetricsByPost({})
           setAnalysesByPostId({})
+          setFirstFrameByPostId({})
         }
       } catch (e) {
         if (!cancelled) setError(e.message)
@@ -267,6 +370,23 @@ function AccountDetail({ account, latestLog, onBack }) {
     return () => { cancelled = true }
   }, [account.id])
 
+  async function analyseOne(post) {
+    const res = await fetch(
+      `${supabaseUrl}/functions/v1/analyse-video`,
+      {
+        method: 'POST',
+        headers: fnHeaders,
+        body: JSON.stringify({ source: 'organic_post', source_id: post.id }),
+      }
+    )
+    const data = await res.json().catch(() => ({}))
+    // 409 means "already exists" which is fine — treat as success.
+    if (!res.ok && res.status !== 409) {
+      throw new Error(data.error || `HTTP ${res.status}`)
+    }
+    return data
+  }
+
   async function handleAnalyse(post) {
     if (!post?.id) return
     setAnalyseError(null)
@@ -276,19 +396,7 @@ function AccountDetail({ account, latestLog, onBack }) {
       return next
     })
     try {
-      const res = await fetch(
-        `${supabaseUrl}/functions/v1/analyse-video`,
-        {
-          method: 'POST',
-          headers: fnHeaders,
-          body: JSON.stringify({ source: 'organic_post', source_id: post.id }),
-        }
-      )
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok && res.status !== 409) {
-        throw new Error(data.error || `HTTP ${res.status}`)
-      }
-      // 409 means "already exists" which is fine — just refresh the map.
+      await analyseOne(post)
       await refreshAnalysesForPosts(posts.map(p => p.id))
     } catch (e) {
       setAnalyseError(`Could not analyse: ${e.message}`)
@@ -299,6 +407,75 @@ function AccountDetail({ account, latestLog, onBack }) {
         return next
       })
     }
+  }
+
+  // --- Bulk selection handlers ---
+
+  const selectablePosts = useMemo(
+    () => posts.filter(p => isVideoPost(p) && !analysesByPostId[p.id]),
+    [posts, analysesByPostId]
+  )
+
+  function toggleSelect(postId) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(postId)) next.delete(postId)
+      else next.add(postId)
+      return next
+    })
+  }
+
+  function selectAllEligible() {
+    setSelectedIds(new Set(selectablePosts.map(p => p.id)))
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set())
+  }
+
+  async function runBulkAnalyse() {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0 || bulkRunning) return
+    const postsById = Object.fromEntries(posts.map(p => [p.id, p]))
+    const queue = ids.map(id => postsById[id]).filter(Boolean).filter(p => !analysesByPostId[p.id])
+    if (queue.length === 0) {
+      setBulkMessage('All selected posts are already analysed.')
+      return
+    }
+
+    setBulkRunning(true)
+    setBulkMessage(null)
+    const initial = {}
+    for (const p of queue) initial[p.id] = 'queued'
+    setBulkStatus(initial)
+
+    // Concurrency-limited runner.
+    let cursor = 0
+    let succeeded = 0
+    let failed = 0
+    async function worker() {
+      while (cursor < queue.length) {
+        const idx = cursor++
+        const p = queue[idx]
+        setBulkStatus(prev => ({ ...prev, [p.id]: 'running' }))
+        try {
+          await analyseOne(p)
+          succeeded++
+          setBulkStatus(prev => ({ ...prev, [p.id]: 'done' }))
+        } catch (e) {
+          failed++
+          setBulkStatus(prev => ({ ...prev, [p.id]: 'error' }))
+          console.warn('Bulk analyse failure for', p.id, e)
+        }
+      }
+    }
+    const workers = Array.from({ length: Math.min(BULK_CONCURRENCY, queue.length) }, () => worker())
+    await Promise.all(workers)
+
+    await refreshAnalysesForPosts(posts.map(p => p.id))
+    setBulkRunning(false)
+    setBulkMessage(`Bulk analyse finished: ${succeeded} queued, ${failed} error${failed === 1 ? '' : 's'}.`)
+    setSelectedIds(new Set())
   }
 
   const totals = useMemo(() => {
@@ -317,6 +494,9 @@ function AccountDetail({ account, latestLog, onBack }) {
   const platformLabel = account.platform === 'youtube' ? 'YouTube' : 'Instagram'
   const platformChip = account.platform === 'youtube' ? 'oi-chip-yt' : 'oi-chip-ig'
   const statusKey = latestLog?.status || (account.last_fetched_at ? 'success' : 'never')
+
+  const eligibleCount = selectablePosts.length
+  const selectedCount = selectedIds.size
 
   return (
     <div className="oi-root">
@@ -359,6 +539,37 @@ function AccountDetail({ account, latestLog, onBack }) {
         </div>
       </div>
 
+      {eligibleCount > 0 && (
+        <div className="oi-bulk-bar">
+          <div className="oi-bulk-bar-info">
+            <strong>{selectedCount}</strong> selected
+            <span className="oi-bulk-bar-dim"> of {eligibleCount} eligible video{eligibleCount === 1 ? '' : 's'}</span>
+            {bulkRunning && <span className="oi-bulk-bar-running">Running…</span>}
+            {bulkMessage && !bulkRunning && <span className="oi-bulk-bar-message">{bulkMessage}</span>}
+          </div>
+          <div className="oi-bulk-bar-actions">
+            <button
+              type="button"
+              className="oi-bulk-btn oi-bulk-btn-ghost"
+              onClick={selectAllEligible}
+              disabled={bulkRunning || eligibleCount === 0 || selectedCount === eligibleCount}
+            >Select all</button>
+            <button
+              type="button"
+              className="oi-bulk-btn oi-bulk-btn-ghost"
+              onClick={clearSelection}
+              disabled={bulkRunning || selectedCount === 0}
+            >Clear</button>
+            <button
+              type="button"
+              className="oi-bulk-btn oi-bulk-btn-primary"
+              onClick={runBulkAnalyse}
+              disabled={bulkRunning || selectedCount === 0}
+            >{bulkRunning ? 'Analysing…' : `Analyse ${selectedCount || ''} selected`.trim()}</button>
+          </div>
+        </div>
+      )}
+
       {error && <div className="oi-error">{error}</div>}
       {analyseError && <div className="oi-error">{analyseError}</div>}
 
@@ -374,8 +585,13 @@ function AccountDetail({ account, latestLog, onBack }) {
               post={p}
               metrics={metricsByPost[p.id]}
               analysisInfo={analysesByPostId[p.id]}
+              firstFrameUrl={firstFrameByPostId[p.id]}
               onAnalyse={handleAnalyse}
-              analysing={analysingIds.has(p.id)}
+              analysing={analysingIds.has(p.id) || bulkStatus[p.id] === 'running'}
+              bulkState={bulkStatus[p.id] || null}
+              selected={selectedIds.has(p.id)}
+              selectable={isVideoPost(p) && !analysesByPostId[p.id]}
+              onToggleSelect={toggleSelect}
             />
           ))}
         </div>
@@ -400,9 +616,6 @@ export default function OrganicIntel() {
     setLoading(true)
     setError(null)
     try {
-      // Phase 3b: single RPC returns account + latest log + post count.
-      // Replaces the Phase 3a client-side grouping of 500 logs + 5000 post ids.
-      // Phase 3c: parallel call for the last-7-days observability strip.
       const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
       const [rows, summaryRows] = await Promise.all([
         callRpc('list_organic_accounts_with_stats', {
@@ -449,7 +662,6 @@ export default function OrganicIntel() {
       setLogsByAccount(latestByAccount)
       setPostsByAccount(counts)
 
-      // Aggregate the daily rows into per-platform totals for the strip.
       const emptyRoll = { runs: 0, successes: 0, errors: 0, posts_new: 0, cost_estimate: 0, yt_quota_units: 0 }
       const byPlatform = { instagram: null, youtube: null }
       for (const row of summaryRows || []) {
