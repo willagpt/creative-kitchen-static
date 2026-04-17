@@ -1,0 +1,317 @@
+/* BulkAnalyse.css — modal for bulk top-% analysis */
+
+.ba-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 60px 20px 40px;
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.ba-modal {
+  background: var(--bg-1, #0d0d0d);
+  border: 1px solid var(--border-1, #222);
+  border-radius: 10px;
+  width: 100%;
+  max-width: 800px;
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  color: var(--text-1, #fff);
+}
+
+.ba-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+.ba-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+}
+.ba-subtitle {
+  font-size: 13px;
+  color: var(--text-2, #999);
+}
+
+.ba-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.ba-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 180px;
+}
+.ba-field-toggle {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 0 8px;
+}
+.ba-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2, #999);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.ba-input {
+  background: var(--bg-0, #000);
+  border: 1px solid var(--border-1, #2a2a2a);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--text-1, #fff);
+  font-size: 14px;
+}
+.ba-input:focus {
+  outline: none;
+  border-color: var(--accent, #3b82f6);
+}
+
+.ba-pct-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.ba-pct-btn {
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid var(--border-1, #2a2a2a);
+  background: var(--bg-0, #000);
+  color: var(--text-2, #ccc);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ba-pct-btn:hover {
+  border-color: var(--accent, #3b82f6);
+  color: #fff;
+}
+.ba-pct-active {
+  background: var(--accent, #3b82f6);
+  border-color: var(--accent, #3b82f6);
+  color: #fff;
+}
+.ba-pct-input {
+  width: 80px;
+}
+
+.ba-preview {
+  margin: 20px 0;
+  padding: 16px;
+  background: var(--bg-0, #0a0a0a);
+  border: 1px solid var(--border-1, #222);
+  border-radius: 8px;
+  min-height: 60px;
+}
+.ba-preview-neutral {
+  color: var(--text-2, #999);
+  font-size: 13px;
+}
+.ba-preview-bad {
+  color: #ef4444;
+  font-size: 13px;
+}
+.ba-preview-headline {
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+.ba-preview-headline strong {
+  color: var(--accent, #3b82f6);
+  font-size: 18px;
+}
+.ba-preview-sub {
+  color: var(--text-2, #999);
+  font-size: 13px;
+}
+.ba-preview-thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 8px;
+}
+.ba-thumb {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid var(--border-1, #222);
+}
+.ba-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ba-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a1a;
+  color: var(--text-2, #999);
+}
+.ba-thumb-metric {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.ba-thumb-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a1a;
+  color: var(--text-2, #999);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.ba-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 16px;
+}
+.ba-hint {
+  color: var(--text-2, #999);
+  font-size: 12px;
+}
+.ba-btn {
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ba-btn-primary {
+  background: var(--accent, #3b82f6);
+  color: #fff;
+}
+.ba-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.ba-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ba-btn-ghost {
+  background: transparent;
+  border-color: var(--border-1, #2a2a2a);
+  color: var(--text-2, #ccc);
+}
+.ba-btn-ghost:hover {
+  border-color: var(--text-2, #999);
+  color: #fff;
+}
+
+/* Run state */
+.ba-run {
+  margin-top: 8px;
+}
+.ba-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-0, #000);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.ba-progress-fill {
+  height: 100%;
+  background: var(--accent, #3b82f6);
+  transition: width 0.3s;
+}
+.ba-progress-text {
+  font-size: 13px;
+  color: var(--text-2, #999);
+  margin-bottom: 16px;
+}
+.ba-cancelling {
+  color: #f59e0b;
+}
+.ba-queue {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 4px;
+}
+.ba-queue-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid var(--border-1, #222);
+  border-radius: 6px;
+  background: var(--bg-0, #000);
+}
+.ba-queue-item img,
+.ba-queue-item .ba-thumb-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.ba-queue-meta {
+  flex: 1;
+  min-width: 0;
+}
+.ba-queue-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1, #fff);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ba-queue-status {
+  font-size: 12px;
+  color: var(--text-2, #999);
+  margin-top: 2px;
+}
+.ba-status-queued {
+  opacity: 0.6;
+}
+.ba-status-running {
+  border-color: var(--accent, #3b82f6);
+  box-shadow: 0 0 0 1px var(--accent, #3b82f6);
+}
+.ba-status-running .ba-queue-status {
+  color: var(--accent, #3b82f6);
+  font-weight: 600;
+}
+.ba-status-done {
+  border-color: #10b981;
+}
+.ba-status-done .ba-queue-status {
+  color: #10b981;
+}
+.ba-status-error {
+  border-color: #ef4444;
+}
+.ba-status-error .ba-queue-status {
+  color: #ef4444;
+}

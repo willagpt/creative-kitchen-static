@@ -1291,3 +1291,11 @@
   color: #6ee7b7;
   border-color: rgba(52, 211, 153, 0.3);
 }
+
+/* Header actions wrapper for multiple buttons */
+.va-header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}

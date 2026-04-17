@@ -77,6 +77,25 @@ export default function TrendReports() {
   const [topPerformers, setTopPerformers] = useState(false)
   const [rankBy, setRankBy] = useState('views')
   const [topN, setTopN] = useState('10')
+  const [useTopPct, setUseTopPct] = useState(true) // Prefer percentile mode by default
+  const [topPct, setTopPct] = useState('10')
+  const [activeOnly, setActiveOnly] = useState(false)
+
+  // Keep rank_by sensible when source toggles
+  useEffect(() => {
+    if (filterSource === 'competitor_ad') {
+      if (!['days_active', 'is_active_days'].includes(rankBy)) {
+        setRankBy('days_active')
+      }
+    } else {
+      if (['days_active', 'is_active_days'].includes(rankBy)) {
+        setRankBy('views')
+      }
+      // active_only is a competitor-ad concept only
+      if (activeOnly) setActiveOnly(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterSource])
 
   // Pre-flight match count (direct PostgREST, debounced)
   const [matchCount, setMatchCount] = useState(null)
@@ -181,7 +200,14 @@ export default function TrendReports() {
       if (topPerformers) {
         filter.top_performers = true
         filter.rank_by = rankBy
-        if (topN) filter.top_n = Number(topN)
+        if (useTopPct && topPct) {
+          filter.top_pct = Number(topPct)
+        } else if (topN) {
+          filter.top_n = Number(topN)
+        }
+        if (activeOnly && filterSource === 'competitor_ad') {
+          filter.active_only = true
+        }
       }
 
       const body = {
@@ -365,25 +391,89 @@ export default function TrendReports() {
                 value={rankBy}
                 onChange={(e) => setRankBy(e.target.value)}
               >
-                <option value="views">Views</option>
-                <option value="engagement_rate">Engagement rate</option>
-                <option value="likes">Likes</option>
-                <option value="comments">Comments</option>
-                <option value="shares">Shares</option>
+                {filterSource === 'competitor_ad' ? (
+                  <>
+                    <option value="days_active">Days active (longevity)</option>
+                    <option value="is_active_days">Days active &times; still running</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="views">Views</option>
+                    <option value="engagement_rate">Engagement rate</option>
+                    <option value="likes">Likes</option>
+                    <option value="comments">Comments</option>
+                    <option value="shares">Shares</option>
+                  </>
+                )}
               </select>
             </label>
             <label className="tr-gen-field" style={{ opacity: topPerformers ? 1 : 0.4 }}>
-              <span className="tr-gen-label">Top N</span>
-              <input
-                type="number"
-                disabled={!topPerformers}
-                min="3"
-                max="40"
-                className="tr-gen-input"
-                value={topN}
-                onChange={(e) => setTopN(e.target.value)}
-              />
+              <span className="tr-gen-label">Mode</span>
+              <div className="tr-seg">
+                <button
+                  type="button"
+                  className={`tr-seg-btn ${useTopPct ? 'tr-seg-active' : ''}`}
+                  disabled={!topPerformers}
+                  onClick={() => setUseTopPct(true)}
+                >Top %</button>
+                <button
+                  type="button"
+                  className={`tr-seg-btn ${!useTopPct ? 'tr-seg-active' : ''}`}
+                  disabled={!topPerformers}
+                  onClick={() => setUseTopPct(false)}
+                >Top N</button>
+              </div>
             </label>
+            {useTopPct ? (
+              <label className="tr-gen-field" style={{ opacity: topPerformers ? 1 : 0.4 }}>
+                <span className="tr-gen-label">Top %</span>
+                <div className="tr-pct-row">
+                  {['2.5', '5', '10', '20', '25'].map((v) => (
+                    <button
+                      type="button"
+                      key={v}
+                      disabled={!topPerformers}
+                      className={`tr-pct-btn ${topPct === v ? 'tr-pct-active' : ''}`}
+                      onClick={() => setTopPct(v)}
+                    >{v}%</button>
+                  ))}
+                  <input
+                    type="number"
+                    disabled={!topPerformers}
+                    min="1"
+                    max="50"
+                    step="0.5"
+                    className="tr-gen-input tr-pct-input"
+                    value={topPct}
+                    onChange={(e) => setTopPct(e.target.value)}
+                  />
+                </div>
+              </label>
+            ) : (
+              <label className="tr-gen-field" style={{ opacity: topPerformers ? 1 : 0.4 }}>
+                <span className="tr-gen-label">Top N</span>
+                <input
+                  type="number"
+                  disabled={!topPerformers}
+                  min="3"
+                  max="200"
+                  className="tr-gen-input"
+                  value={topN}
+                  onChange={(e) => setTopN(e.target.value)}
+                />
+              </label>
+            )}
+            {filterSource === 'competitor_ad' && (
+              <label className="tr-gen-field tr-gen-field-toggle" style={{ opacity: topPerformers ? 1 : 0.4 }}>
+                <input
+                  type="checkbox"
+                  disabled={!topPerformers}
+                  checked={activeOnly}
+                  onChange={(e) => setActiveOnly(e.target.checked)}
+                />
+                <span className="tr-gen-label">Active ads only</span>
+              </label>
+            )}
           </div>
 
           {generateError && (

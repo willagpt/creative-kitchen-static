@@ -3,6 +3,7 @@ import './VideoAnalysis.css'
 import { supabaseUrl, supabaseAnonKey } from '../lib/supabase'
 import { generateShareableHTML } from '../lib/shareableExport'
 import { generateBriefHTML } from '../lib/briefExport'
+import BulkAnalyse from './BulkAnalyse'
 
 const fnHeaders = {
   apikey: supabaseAnonKey,
@@ -58,6 +59,7 @@ export default function VideoAnalysis() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [showAnalyzeForm, setShowAnalyzeForm] = useState(false)
+  const [showBulkAnalyse, setShowBulkAnalyse] = useState(false)
   const [analyzingAdId, setAnalyzingAdId] = useState('')
   const [analyzeLoading, setAnalyzeLoading] = useState(false)
   const [analyzeError, setAnalyzeError] = useState(null)
@@ -266,13 +268,28 @@ export default function VideoAnalysis() {
           <h1 className="va-title">Video Analysis</h1>
           <p className="va-subtitle">Review AI-generated insights from competitor video ads</p>
         </div>
-        <button
-          className="va-btn va-btn-primary"
-          onClick={() => setShowAnalyzeForm(!showAnalyzeForm)}
-        >
-          {showAnalyzeForm ? 'Cancel' : '+ Analyse New Video'}
-        </button>
+        <div className="va-header-actions">
+          <button
+            className="va-btn va-btn-ghost"
+            onClick={() => setShowBulkAnalyse(true)}
+          >
+            ⚡ Bulk Analyse (Top %)
+          </button>
+          <button
+            className="va-btn va-btn-primary"
+            onClick={() => setShowAnalyzeForm(!showAnalyzeForm)}
+          >
+            {showAnalyzeForm ? 'Cancel' : '+ Analyse New Video'}
+          </button>
+        </div>
       </div>
+
+      {showBulkAnalyse && (
+        <BulkAnalyse
+          defaultSource="competitor_ad"
+          onClose={() => { setShowBulkAnalyse(false); fetchAnalyses(); }}
+        />
+      )}
 
       {/* Analyze form (expanded) */}
       {showAnalyzeForm && (
