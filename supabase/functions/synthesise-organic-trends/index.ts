@@ -348,21 +348,21 @@ Actionable ideas: produce 6 to 10 concrete creative ideas we could make ourselve
     : `
 Actionable ideas: produce 3 to 5 creative ideas inspired by the recurring patterns, each tied back to [index] references. Specificity over cleverness.`;
 
-  return \`\${header}
+  return `${header}
 
-Scope of corpus: \${JSON.stringify(filter)}
+Scope of corpus: ${JSON.stringify(filter)}
 
-Below are \${n} videos, each with transcript, on-screen text, shot list (with durations + layout), and platform context.\${topMode ? " Each block also includes a metric(...) line with the raw performance value. The top of the corpus is the highest performer." : ""} Find the patterns that actually repeat. Be specific. No filler.
-\${ideasGuidance}
+Below are ${n} videos, each with transcript, on-screen text, shot list (with durations + layout), and platform context.${topMode ? " Each block also includes a metric(...) line with the raw performance value. The top of the corpus is the highest performer." : ""} Find the patterns that actually repeat. Be specific. No filler.
+${ideasGuidance}
 
 CORPUS:
-\${corpus}
+${corpus}
 
 Return STRICT JSON matching this schema. No markdown, no commentary, no prose outside JSON:
 
 {
   "overview": "2 to 3 sentence plain-English summary of what this corpus is doing overall",
-  \${topMode ? '"why_these_won": ["3 to 6 bullets explaining the specific signals that separate top performers from average (e.g. \'hook is a face-to-camera stop-scroll within 0.8s\')"],' : ""}
+  ${topMode ? '"why_these_won": ["3 to 6 bullets explaining the specific signals that separate top performers from average (e.g. \'hook is a face-to-camera stop-scroll within 0.8s\')"],' : ""}
   "recurring_hooks": [
     { "pattern": "short name", "description": "what the hook does", "frequency_pct": 30, "examples": ["index numbers e.g. [1]", "[3]"] }
   ],
@@ -423,7 +423,7 @@ Rules:
 - examples and references should reference the [index] numbers from the corpus.
 - No em dashes or en dashes anywhere. Use commas or colons.
 - Keep each string under 200 chars (except arrays of beats, which can be up to 6 items).
-- actionable_ideas priority is integer 1 (highest) to 3.\`;
+- actionable_ideas priority is integer 1 (highest) to 3.`;
 }
 
 async function callClaude(prompt: string): Promise<{ text: string; model: string }> {
