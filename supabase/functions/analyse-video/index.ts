@@ -5,16 +5,19 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const VIDEO_WORKER_URL = Deno.env.get("VIDEO_WORKER_URL") || "";
 const VIDEO_WORKER_SECRET = Deno.env.get("VIDEO_WORKER_SECRET") || "";
 
+const FUNCTION_VERSION = "analyse-video@2.0.0";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Expose-Headers": "X-Function-Version",
 };
 
 function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data, null, 2), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders, "Content-Type": "application/json", "X-Function-Version": FUNCTION_VERSION },
   });
 }
 
@@ -26,7 +29,8 @@ function supabaseHeaders() {
   };
 }
 
-// Fetch a single competitor ad by ID
+type Source = "competitor_ad" | "organic_post";
+
 async function getCompetitorAd(adId: string) {
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/competitor_ads?id=eq.${encodeURIComponent(adId)}&select=*&limit=1`,
@@ -38,14 +42,55 @@ async function getCompetitorAd(adId: string) {
   return rows[0];
 }
 
-// Create a video_analyses record with status=processing
-async function createAnalysisRecord(competitorAdId: string, videoUrl: string, runId: string | null) {
+async function getOrganicPost(postId: string) {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/organic_posts?id=eq.${encodeURIComponent(postId)}&select=*&limit=1`,
+    { headers: supabaseHeaders() }
+  );
+  if (!res.ok) throw new Error(`Failed to fetch organic post: ${res.status}`);
+  const rows = await res.json();
+  if (!rows || rows.length === 0) throw new Error(`Organic post not found: ${postId}`);
+  return rows[0];
+}
+
+async function findExistingAnalysis(source: Source, sourceId: string, legacyCompetitorAdId?: string) {
+  // New path: source + source_id
+  const q = `${SUPABASE_URL}/rest/v1/video_analyses?source=eq.${encodeURIComponent(source)}&source_id=eq.${encodeURIComponent(sourceId)}&status=in.(processing,complete)&select=id,status&limit=1`;
+  const res = await fetch(q, { headers: supabaseHeaders() });
+  if (!res.ok) return null;
+  const rows = await res.json();
+  if (rows && rows.length > 0) return rows[0];
+
+  // Legacy fallback for competitor_ad: old rows indexed only by competitor_ad_id
+  if (source === "competitor_ad" && legacyCompetitorAdId) {
+    const legacyRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/video_analyses?competitor_ad_id=eq.${encodeURIComponent(legacyCompetitorAdId)}&status=in.(processing,complete)&select=id,status&limit=1`,
+      { headers: supabaseHeaders() }
+    );
+    if (legacyRes.ok) {
+      const rows2 = await legacyRes.json();
+      if (rows2 && rows2.length > 0) return rows2[0];
+    }
+  }
+  return null;
+}
+
+async function createAnalysisRecord(
+  source: Source,
+  sourceId: string,
+  videoUrl: string,
+  runId: string | null,
+  legacyCompetitorAdId: string | null
+) {
   const record: Record<string, unknown> = {
-    competitor_ad_id: competitorAdId,
+    source,
+    source_id: sourceId,
     video_url: videoUrl,
     status: "processing",
   };
   if (runId) record.run_id = runId;
+  // Keep competitor_ad_id populated for backward-compat with existing UI code.
+  if (legacyCompetitorAdId) record.competitor_ad_id = legacyCompetitorAdId;
 
   const res = await fetch(`${SUPABASE_URL}/rest/v1/video_analyses`, {
     method: "POST",
@@ -60,7 +105,6 @@ async function createAnalysisRecord(competitorAdId: string, videoUrl: string, ru
   return rows[0];
 }
 
-// Update a video_analyses record with results
 async function updateAnalysisRecord(id: string, data: Record<string, unknown>) {
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/video_analyses?id=eq.${id}`,
@@ -77,7 +121,6 @@ async function updateAnalysisRecord(id: string, data: Record<string, unknown>) {
   return (await res.json())[0];
 }
 
-// Insert video_shots records
 async function insertShots(analysisId: string, shots: Array<Record<string, unknown>>) {
   const records = shots.map((shot) => ({
     video_analysis_id: analysisId,
@@ -101,7 +144,6 @@ async function insertShots(analysisId: string, shots: Array<Record<string, unkno
   }
 }
 
-// Compute pacing profile from shot durations
 function computePacingProfile(shots: Array<{ duration: number }>): string {
   if (shots.length === 0) return "static";
   const avgDuration = shots.reduce((s, sh) => s + sh.duration, 0) / shots.length;
@@ -121,44 +163,73 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    const competitorAdId: string = body.competitor_ad_id;
+
+    // New polymorphic API: { source, source_id }
+    // Legacy API (still supported): { competitor_ad_id }
+    let source: Source;
+    let sourceId: string;
+    let legacyCompetitorAdId: string | null = null;
+
+    if (body.source && body.source_id) {
+      if (body.source !== "competitor_ad" && body.source !== "organic_post") {
+        return jsonResponse({ error: `Unsupported source: ${body.source}` }, 400);
+      }
+      source = body.source;
+      sourceId = String(body.source_id);
+      if (source === "competitor_ad") legacyCompetitorAdId = sourceId;
+    } else if (body.competitor_ad_id) {
+      source = "competitor_ad";
+      sourceId = String(body.competitor_ad_id);
+      legacyCompetitorAdId = sourceId;
+    } else {
+      return jsonResponse({ error: "source+source_id or competitor_ad_id is required" }, 400);
+    }
+
     const sceneThreshold: number = body.scene_threshold || 0.3;
     const runId: string | null = body.run_id || null;
-
-    if (!competitorAdId) {
-      return jsonResponse({ error: "competitor_ad_id is required" }, 400);
-    }
 
     if (!VIDEO_WORKER_URL) {
       return jsonResponse({ error: "VIDEO_WORKER_URL not configured" }, 500);
     }
 
-    // 1. Look up the competitor ad to get video_url
-    console.log(`Looking up competitor ad: ${competitorAdId}`);
-    const ad = await getCompetitorAd(competitorAdId);
-    const videoUrl = ad.video_url;
+    // 1. Resolve the video URL from the source record.
+    let videoUrl = "";
+    let sourceRecord: Record<string, unknown> | null = null;
+
+    if (source === "competitor_ad") {
+      console.log(`Looking up competitor ad: ${sourceId}`);
+      sourceRecord = await getCompetitorAd(sourceId);
+      videoUrl = String(sourceRecord.video_url || "");
+    } else {
+      console.log(`Looking up organic post: ${sourceId}`);
+      sourceRecord = await getOrganicPost(sourceId);
+      videoUrl = String(sourceRecord.video_url || "");
+      const postType = String(sourceRecord.post_type || "");
+      if (!videoUrl) {
+        return jsonResponse(
+          { error: `Organic post ${sourceId} has no video_url (post_type=${postType})` },
+          400
+        );
+      }
+    }
 
     if (!videoUrl) {
-      return jsonResponse({ error: `No video_url for competitor ad ${competitorAdId}` }, 400);
+      return jsonResponse({ error: `No video_url for ${source} ${sourceId}` }, 400);
     }
 
     // 2. Check for existing analysis (avoid duplicates)
-    const existingRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/video_analyses?competitor_ad_id=eq.${encodeURIComponent(competitorAdId)}&status=in.(processing,complete)&select=id,status&limit=1`,
-      { headers: supabaseHeaders() }
-    );
-    const existing = await existingRes.json();
-    if (existing && existing.length > 0) {
+    const existing = await findExistingAnalysis(source, sourceId, legacyCompetitorAdId || undefined);
+    if (existing) {
       return jsonResponse({
-        error: "Analysis already exists for this ad",
-        existing_analysis_id: existing[0].id,
-        existing_status: existing[0].status,
+        error: "Analysis already exists for this source",
+        existing_analysis_id: existing.id,
+        existing_status: existing.status,
       }, 409);
     }
 
     // 3. Create analysis record with status=processing
-    console.log(`Creating analysis record for ad: ${competitorAdId}`);
-    const analysis = await createAnalysisRecord(competitorAdId, videoUrl, runId);
+    console.log(`Creating analysis record for ${source}:${sourceId}`);
+    const analysis = await createAnalysisRecord(source, sourceId, videoUrl, runId, legacyCompetitorAdId);
     const analysisId = analysis.id;
     console.log(`Analysis record created: ${analysisId}`);
 
@@ -199,7 +270,7 @@ Deno.serve(async (req: Request) => {
     const pacingProfile = computePacingProfile(workerResult.shots || []);
 
     // 6. Update the analysis record with results
-    const updatedAnalysis = await updateAnalysisRecord(analysisId, {
+    await updateAnalysisRecord(analysisId, {
       status: "complete",
       duration_seconds: parseFloat(duration.toFixed(3)),
       total_shots: totalShots,
@@ -217,16 +288,14 @@ Deno.serve(async (req: Request) => {
       await insertShots(analysisId, workerResult.shots);
     }
 
-    console.log(`Phase 1 complete: ${analysisId}. Pipeline steps (Phase 2+3) are handled by the frontend.`);
-
-    // Phase 2+3 (transcribe, OCR, merge, AI) are called directly by the frontend
-    // after this response returns. This keeps the edge function fast (~20-30s)
-    // and avoids Supabase execution time limits that cause bulk analysis to drop videos.
+    console.log(`Phase 1 complete: ${analysisId} (${source}:${sourceId}). Downstream pipeline steps handled by frontend.`);
 
     return jsonResponse({
       success: true,
       analysis_id: analysisId,
-      competitor_ad_id: competitorAdId,
+      source,
+      source_id: sourceId,
+      competitor_ad_id: legacyCompetitorAdId,
       video_url: videoUrl,
       status: "complete",
       duration_seconds: duration,

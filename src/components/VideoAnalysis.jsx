@@ -63,6 +63,7 @@ export default function VideoAnalysis() {
   const [analyzeError, setAnalyzeError] = useState(null)
   const [detailTab, setDetailTab] = useState('script') // 'script', 'analysis', 'shots'
   const [deletingId, setDeletingId] = useState(null)
+  const [sourceFilter, setSourceFilter] = useState('all') // 'all' | 'competitor_ad' | 'organic_post'
 
   // Fetch all analyses
   useEffect(() => {
@@ -104,23 +105,56 @@ export default function VideoAnalysis() {
         console.warn('First-frame fetch failed, falling back to contact sheet:', e)
       }
 
-      // Enrich with competitor ad data
+      // Enrich with source-specific metadata
       const enriched = await Promise.all(
         data.map(async (analysis) => {
+          const hookType = analysis.ai_analysis?.hook_type || analysis.ai_analysis?.hook_framework
+          const hookLabel = hookType ? ` — ${hookType.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}` : ''
           try {
+            if (analysis.source === 'organic_post' && analysis.source_id) {
+              const postRes = await fetch(
+                `${supabaseUrl}/rest/v1/organic_posts?id=eq.${analysis.source_id}&select=id,platform,post_url,thumbnail_url,title,caption,post_type,account_id`,
+                { headers: fnHeaders }
+              )
+              const posts = await postRes.json()
+              const post = posts[0] || null
+              let handle = null
+              let brandName = null
+              if (post?.account_id) {
+                const accRes = await fetch(
+                  `${supabaseUrl}/rest/v1/followed_organic_accounts?id=eq.${post.account_id}&select=brand_name,handle,platform`,
+                  { headers: fnHeaders }
+                )
+                const accs = await accRes.json()
+                handle = accs[0]?.handle || null
+                brandName = accs[0]?.brand_name || null
+              }
+              const displayName = handle
+                ? `@${handle}`
+                : (brandName || post?.platform || 'Organic')
+              return {
+                ...analysis,
+                brand_name: displayName + hookLabel,
+                page_name: brandName || displayName,
+                source_label: (post?.platform || 'organic').toString(),
+                organic_post: post,
+                first_frame_url: firstFrameByAnalysisId.get(analysis.id) || null,
+              }
+            }
+
+            // Default: competitor_ad
+            const lookupId = analysis.source_id || analysis.competitor_ad_id
             const adRes = await fetch(
-              `${supabaseUrl}/rest/v1/competitor_ads?id=eq.${analysis.competitor_ad_id}&select=page_name,page_id`,
+              `${supabaseUrl}/rest/v1/competitor_ads?id=eq.${lookupId}&select=page_name,page_id`,
               { headers: fnHeaders }
             )
             const ads = await adRes.json()
             const pageName = ads[0]?.page_name || 'Unknown'
-            // Build a descriptive name: brand + hook type or pacing
-            const hookType = analysis.ai_analysis?.hook_type || analysis.ai_analysis?.hook_framework
-            const hookLabel = hookType ? ` — ${hookType.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}` : ''
             return {
               ...analysis,
               brand_name: pageName + hookLabel,
               page_name: pageName,
+              source_label: 'ad',
               first_frame_url: firstFrameByAnalysisId.get(analysis.id) || null,
             }
           } catch (e) {
@@ -128,6 +162,7 @@ export default function VideoAnalysis() {
               ...analysis,
               brand_name: 'Unknown',
               page_name: '',
+              source_label: analysis.source === 'organic_post' ? 'organic' : 'ad',
               first_frame_url: firstFrameByAnalysisId.get(analysis.id) || null,
             }
           }
@@ -273,10 +308,35 @@ export default function VideoAnalysis() {
         </div>
       )}
 
+      {/* Source filter */}
+      {view === 'list' && (
+        <div className="va-filter-bar">
+          {[
+            { key: 'all', label: 'All' },
+            { key: 'competitor_ad', label: 'Ads' },
+            { key: 'organic_post', label: 'Organic' },
+          ].map((opt) => (
+            <button
+              key={opt.key}
+              type="button"
+              className={`va-filter-btn${sourceFilter === opt.key ? ' active' : ''}`}
+              onClick={() => setSourceFilter(opt.key)}
+            >
+              {opt.label}
+              <span className="va-filter-count">
+                {opt.key === 'all'
+                  ? analyses.length
+                  : analyses.filter((a) => a.source === opt.key).length}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Main content area */}
       {view === 'list' ? (
         <ListViewContent
-          analyses={analyses}
+          analyses={sourceFilter === 'all' ? analyses : analyses.filter((a) => a.source === sourceFilter)}
           loading={loading}
           error={error}
           onSelect={openDetail}
@@ -388,6 +448,16 @@ function AnalysisCard({ analysis, onClick, onDelete, isDeleting }) {
             {analysis.status}
           </div>
         </div>
+        {analysis.source === 'organic_post' && (
+          <div className="va-source-chip va-source-organic">
+            {analysis.source_label || 'Organic'}
+          </div>
+        )}
+        {analysis.source === 'competitor_ad' && (
+          <div className="va-source-chip va-source-ad">
+            Ad
+          </div>
+        )}
 
         <div className="va-card-meta">
           {analysis.duration_seconds && (
