@@ -80,13 +80,15 @@ CI workflow `ci.yml` runs `npm run build` on pushes and PRs to `main` and `devel
 - Fonts: Inter (UI), JetBrains Mono (code/prompts)
 - Antialiased rendering
 
-## Current Status (16 April 2026)
+## Current Status (17 April 2026)
 
 - **Working:** Brand DNA extraction, prompt generation, image creation, review system, competitor ad viewer with inline video playback and Add Competitor button, Video Analysis Engine (Railway worker + 8 video edge functions), layout-aware UGC brief generation.
 - **Phase 1 Complete:** Video Analysis Engine — Foundation (DB + pipeline + Railway worker + video edge functions). See `docs/video-analysis-project-spec.md`.
 - **Phase 1 re-verification complete (16 Apr):** 24 deployed edge functions all have matching source in `supabase/functions/`. All 24 enforce `verify_jwt: true`. Both former JWT regressions (analyse-competitor-creatives, debug-auth) closed same day.
-- **Next:** Phase 2 — Script Extraction (Whisper transcription + OCR), Phase 2 engineering (branching + CI), and Organic Intelligence (IG + YouTube ingestion).
-- **Last deployed:** 16 April 2026.
+- **Organic Intelligence Phase 1.1 complete (17 Apr):** 4 new tables shipped with RLS (`followed_organic_accounts`, `organic_posts`, `organic_post_metrics`, `organic_fetch_log`). Migration `20260417064915_create_organic_intel_tables.sql`.
+- **Organic Intelligence Phase 1.5 complete (17 Apr):** 3 CRUD endpoints live (`list-organic-accounts`, `save-organic-account`, `list-organic-posts`). End-to-end tested via anon key: upsert is idempotent against `UNIQUE(platform, platform_account_id)`, activate/deactivate toggles `is_active`, filters + pagination behave correctly.
+- **Next:** Phase 2 — Script Extraction (Whisper transcription + OCR), Phase 2 engineering (branching + CI), and Organic Intelligence Phase 2 (Apify IG + YouTube ingestion edge functions + scheduler).
+- **Last deployed:** 17 April 2026.
 - **generate-ad-prompt:** v29 (packaging-aware, dynamic packaging terms).
 - **fetch-competitor-ads:** v12 (brand_id/page_id, DCO explosion, credit logging to `foreplay_credit_log`, default `start_date: 2025-12-23`, `credit_budget: 500`).
 - **analyse-competitor-creatives:** v32 (JWT re-enabled 16 Apr).
@@ -99,7 +101,7 @@ CI workflow `ci.yml` runs `npm run build` on pushes and PRs to `main` and `devel
 
 ## Edge Functions
 
-**24 edge functions deployed.** All 24 enforce `verify_jwt: true` (verified via list_edge_functions on 16 Apr post-fix).
+**27 edge functions deployed.** All 27 enforce `verify_jwt: true` (24 verified 16 Apr; +3 Organic Intelligence CRUD endpoints added 17 Apr).
 
 **Prompt / brand / image tooling:**
 
@@ -133,9 +135,15 @@ CI workflow `ci.yml` runs `npm run build` on pushes and PRs to `main` and `devel
 22. `ai-analyse-video` — v2. Layout detection via Claude vision; writes `screen_layout` per shot and `layout_summary` aggregate.
 23. `generate-ugc-brief` — v6. Chefly-branded UGC creator briefs. 16384 max_tokens, truncation detection, shot variations (2/3/4), layout-aware prompts. Secrets: `CLAUDE_API_KEY` or `ANTHROPIC_API_KEY`.
 
+**Organic Intelligence (Phase 1.5):**
+
+25. `list-organic-accounts` — v1. List followed IG + YouTube accounts with `platform` / `is_active` filters, pagination, and exact count. GET + POST. Ordered `brand_name.asc, platform.asc`.
+26. `save-organic-account` — v1. Upsert / activate / deactivate a `followed_organic_accounts` row. POST only. Upsert uses PostgREST `on_conflict=platform,platform_account_id` against the UNIQUE constraint; activate/deactivate takes `id` or `(platform, platform_account_id)` and toggles `is_active` without deleting.
+27. `list-organic-posts` — v1. Query `organic_posts` with filters `account_id`, `platform`, `post_type`, `language`, `posted_after`, `posted_before`, plus pagination. Ordered `posted_at desc nullslast` to match `organic_posts_account_posted_idx`. GET + POST.
+
 **Diagnostics:**
 
-24. `debug-auth` — v6. **Soft-retired 16 Apr.** Returns HTTP 410 Gone with a retirement notice. Source stays in the repo until callers confirmed gone; then hard-deleted.
+28. `debug-auth` — v6. **Soft-retired 16 Apr.** Returns HTTP 410 Gone with a retirement notice. Source stays in the repo until callers confirmed gone; then hard-deleted.
 
 **Alignment:** Every deployed slug has a matching `supabase/functions/<slug>/index.ts` directory on `main` (verified 16 Apr). A previous CLAUDE.md revision listed `sync-competitor-metadata` as deployed; that entry was incorrect and has been removed.
 
