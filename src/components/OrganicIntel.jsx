@@ -132,12 +132,15 @@ function AccountsList({ accounts, logsByAccount, postsByAccount, onOpen }) {
 
 // ---------- Detail view ----------
 
-function PostCard({ post, metrics }) {
+function PostCard({ post, metrics, analysisInfo, onAnalyse, analysing }) {
   const hasVideo = !!post.video_url
   const typeLabel = (post.post_type || 'post').replace(/_/g, ' ')
   const duration = formatDuration(post.duration_seconds)
   const caption = post.title || post.caption || ''
   const hashtags = Array.isArray(post.hashtags) ? post.hashtags : []
+  const videoTypes = ['reel', 'short', 'video']
+  const analysable = hasVideo && videoTypes.includes((post.post_type || '').toLowerCase())
+  const alreadyAnalysed = !!analysisInfo
 
   return (
     <div className="oi-post">
@@ -150,6 +153,7 @@ function PostCard({ post, metrics }) {
         <div className="oi-thumb-badges">
           <span className="oi-chip oi-chip-type">{typeLabel}</span>
           {duration && <span className="oi-duration">{duration}</span>}
+          {alreadyAnalysed && <span className="oi-chip oi-chip-analysed">Analysed</span>}
         </div>
       </div>
       <div className="oi-post-body">
@@ -178,6 +182,19 @@ function PostCard({ post, metrics }) {
       <div className="oi-post-links">
         {post.post_url && <a className="oi-post-link" href={post.post_url} target="_blank" rel="noreferrer">View post &rarr;</a>}
         {hasVideo && <a className="oi-post-link" href={post.video_url} target="_blank" rel="noreferrer">Video &rarr;</a>}
+        {analysable && !alreadyAnalysed && (
+          <button
+            type="button"
+            className="oi-post-analyse"
+            disabled={analysing}
+            onClick={() => onAnalyse && onAnalyse(post)}
+          >
+            {analysing ? 'Analysing…' : 'Analyse video'}
+          </button>
+        )}
+        {alreadyAnalysed && (
+          <span className="oi-post-analysed-label">Analysis ready</span>
+        )}
       </div>
     </div>
   )
@@ -186,8 +203,31 @@ function PostCard({ post, metrics }) {
 function AccountDetail({ account, latestLog, onBack }) {
   const [posts, setPosts] = useState([])
   const [metricsByPost, setMetricsByPost] = useState({})
+  const [analysesByPostId, setAnalysesByPostId] = useState({})
+  const [analysingIds, setAnalysingIds] = useState(() => new Set())
+  const [analyseError, setAnalyseError] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  async function refreshAnalysesForPosts(postIds) {
+    if (!postIds || postIds.length === 0) {
+      setAnalysesByPostId({})
+      return
+    }
+    try {
+      const idList = postIds.map(id => `"${id}"`).join(',')
+      const rows = await fetchTable(
+        `video_analyses?source=eq.organic_post&source_id=in.(${idList})&status=in.(processing,complete)&select=id,source_id,status`
+      )
+      const map = {}
+      for (const r of rows) {
+        if (!map[r.source_id]) map[r.source_id] = r
+      }
+      setAnalysesByPostId(map)
+    } catch (e) {
+      console.warn('Could not load existing analyses:', e)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -207,14 +247,15 @@ function AccountDetail({ account, latestLog, onBack }) {
             `organic_post_metrics?select=post_id,captured_at,views,likes,comments,saves,shares,engagement_rate&post_id=in.(${ids})&order=captured_at.desc`
           )
           if (cancelled) return
-          // group by post_id, keep first (latest) due to order
           const latest = {}
           for (const m of allMetrics) {
             if (!latest[m.post_id]) latest[m.post_id] = m
           }
           setMetricsByPost(latest)
+          await refreshAnalysesForPosts(fetchedPosts.map(p => p.id))
         } else {
           setMetricsByPost({})
+          setAnalysesByPostId({})
         }
       } catch (e) {
         if (!cancelled) setError(e.message)
@@ -225,6 +266,40 @@ function AccountDetail({ account, latestLog, onBack }) {
     load()
     return () => { cancelled = true }
   }, [account.id])
+
+  async function handleAnalyse(post) {
+    if (!post?.id) return
+    setAnalyseError(null)
+    setAnalysingIds(prev => {
+      const next = new Set(prev)
+      next.add(post.id)
+      return next
+    })
+    try {
+      const res = await fetch(
+        `${supabaseUrl}/functions/v1/analyse-video`,
+        {
+          method: 'POST',
+          headers: fnHeaders,
+          body: JSON.stringify({ source: 'organic_post', source_id: post.id }),
+        }
+      )
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok && res.status !== 409) {
+        throw new Error(data.error || `HTTP ${res.status}`)
+      }
+      // 409 means "already exists" which is fine — just refresh the map.
+      await refreshAnalysesForPosts(posts.map(p => p.id))
+    } catch (e) {
+      setAnalyseError(`Could not analyse: ${e.message}`)
+    } finally {
+      setAnalysingIds(prev => {
+        const next = new Set(prev)
+        next.delete(post.id)
+        return next
+      })
+    }
+  }
 
   const totals = useMemo(() => {
     let views = 0, likes = 0, comments = 0
@@ -285,6 +360,7 @@ function AccountDetail({ account, latestLog, onBack }) {
       </div>
 
       {error && <div className="oi-error">{error}</div>}
+      {analyseError && <div className="oi-error">{analyseError}</div>}
 
       {loading ? (
         <div className="oi-empty">Loading posts…</div>
@@ -293,7 +369,14 @@ function AccountDetail({ account, latestLog, onBack }) {
       ) : (
         <div className="oi-posts-grid">
           {posts.map(p => (
-            <PostCard key={p.id} post={p} metrics={metricsByPost[p.id]} />
+            <PostCard
+              key={p.id}
+              post={p}
+              metrics={metricsByPost[p.id]}
+              analysisInfo={analysesByPostId[p.id]}
+              onAnalyse={handleAnalyse}
+              analysing={analysingIds.has(p.id)}
+            />
           ))}
         </div>
       )}

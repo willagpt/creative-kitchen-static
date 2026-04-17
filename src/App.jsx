@@ -12,11 +12,13 @@ import PromptTester from './components/PromptTester'
 import CompareAnalyses from './components/CompareAnalyses'
 import VideoAnalysis from './components/VideoAnalysis'
 import OrganicIntel from './components/OrganicIntel'
+import TrendReports from './components/TrendReports'
 
 const TABS = [
   { key: 'competitors', label: 'Competitor Ads' },
   { key: 'video-analysis', label: 'Video Analysis' },
   { key: 'organic', label: 'Organic Intel' },
+  { key: 'trends', label: 'Trend Reports' },
   { key: 'compare', label: 'Compare' },
   { key: 'gallery', label: 'Ad Library' },
   { key: 'brand', label: 'Brand DNA' },
@@ -146,6 +148,10 @@ export default function App() {
 
         {tab === 'organic' && (
           <OrganicIntel />
+        )}
+
+        {tab === 'trends' && (
+          <TrendReports />
         )}
 
         {tab === 'compare' && (
