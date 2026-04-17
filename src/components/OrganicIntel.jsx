@@ -11,6 +11,23 @@ const fnHeaders = {
 // Bulk-analyse concurrency cap (keeps Railway worker + edge functions comfortable).
 const BULK_CONCURRENCY = 3
 
+// Hosts known to hotlink-block with short-lived signed tokens (oh=... signatures
+// cross-checked against caller IP + UA). For these we route the request through
+// our server-side proxy-thumbnail edge function.
+const HOTLINK_BLOCKED_HOST_RE = /(?:^|\.)(cdninstagram\.com|fbcdn\.net)$/i
+
+function buildProxyThumbUrl(rawUrl) {
+  if (!rawUrl) return null
+  try {
+    const host = new URL(rawUrl).hostname
+    if (!HOTLINK_BLOCKED_HOST_RE.test(host)) return rawUrl
+    const qs = new URLSearchParams({ url: rawUrl })
+    return `${supabaseUrl}/functions/v1/proxy-thumbnail?${qs}`
+  } catch {
+    return rawUrl
+  }
+}
+
 // ---------- Formatting helpers ----------
 
 function formatRelativeTime(iso) {
@@ -161,11 +178,17 @@ function PostCard({
   const analysable = isVideoPost(post)
   const alreadyAnalysed = !!analysisInfo
 
-  // Thumbnail fallback chain:
-  // 1. Supabase-hosted first video frame (for analysed videos) — rock solid, never hotlink-blocked
-  // 2. post.thumbnail_url with referrerPolicy="no-referrer" — IG/FB CDN urls are hotlink-blocked unless referrer is stripped
-  // 3. onError → hide <img>, show placeholder
-  const primaryThumb = firstFrameUrl || post.thumbnail_url || null
+  // Thumbnail fallback chain (robust against IG/FB hotlink blocks):
+  // 1. Supabase-hosted first video frame (only for analysed videos) — rock solid.
+  // 2. post.thumbnail_cached_url — our on-ingest snapshot in the organic-thumbs bucket.
+  // 3. Raw thumbnail_url, routed through the proxy-thumbnail edge function when the
+  //    host is a known hotlink-blocked CDN. YouTube i.ytimg.com passes through as-is.
+  // 4. onError → hide <img>, show placeholder.
+  const primaryThumb =
+    firstFrameUrl ||
+    post.thumbnail_cached_url ||
+    buildProxyThumbUrl(post.thumbnail_url) ||
+    null
 
   const bulkBadge = bulkState === 'queued'
     ? 'Queued'
@@ -195,7 +218,7 @@ function PostCard({
               }}
             />
             <div className="oi-thumb-missing" style={{ display: 'none' }}>
-              Preview blocked
+              Preview unavailable
             </div>
           </>
         ) : (
@@ -283,6 +306,8 @@ function AccountDetail({ account, latestLog, onBack }) {
   const [bulkRunning, setBulkRunning] = useState(false)
   const [bulkStatus, setBulkStatus] = useState({}) // post_id -> 'queued' | 'running' | 'done' | 'error'
   const [bulkMessage, setBulkMessage] = useState(null)
+  // Percentile selector — "Top N% by views" quick pick over the eligible set.
+  const [percentile, setPercentile] = useState(null) // null | 2.5 | 5 | 10 | 20
 
   async function refreshAnalysesForPosts(postIds) {
     if (!postIds || postIds.length === 0) {
@@ -431,6 +456,26 @@ function AccountDetail({ account, latestLog, onBack }) {
 
   function clearSelection() {
     setSelectedIds(new Set())
+    setPercentile(null)
+  }
+
+  // Rank the eligible pool by latest views desc, take ceil(N * pct/100).
+  // Falls back to 0 for posts with no metrics yet — they sort last, fine.
+  function selectTopPercentile(pct) {
+    if (!pct || selectablePosts.length === 0) {
+      setPercentile(null)
+      setSelectedIds(new Set())
+      return
+    }
+    const sorted = [...selectablePosts].sort((a, b) => {
+      const av = Number(metricsByPost[a.id]?.views || 0)
+      const bv = Number(metricsByPost[b.id]?.views || 0)
+      return bv - av
+    })
+    const n = Math.max(1, Math.ceil(selectablePosts.length * (pct / 100)))
+    const slice = sorted.slice(0, n)
+    setSelectedIds(new Set(slice.map(p => p.id)))
+    setPercentile(pct)
   }
 
   async function runBulkAnalyse() {
@@ -546,6 +591,23 @@ function AccountDetail({ account, latestLog, onBack }) {
             <span className="oi-bulk-bar-dim"> of {eligibleCount} eligible video{eligibleCount === 1 ? '' : 's'}</span>
             {bulkRunning && <span className="oi-bulk-bar-running">Running…</span>}
             {bulkMessage && !bulkRunning && <span className="oi-bulk-bar-message">{bulkMessage}</span>}
+          </div>
+          <div className="oi-bulk-bar-pills" role="group" aria-label="Quick pick top N% by views">
+            <span className="oi-bulk-bar-pill-label">Top % by views:</span>
+            {[2.5, 5, 10, 20].map(pct => {
+              const n = Math.max(1, Math.ceil(eligibleCount * (pct / 100)))
+              const active = percentile === pct
+              return (
+                <button
+                  key={pct}
+                  type="button"
+                  className={`oi-bulk-pill${active ? ' active' : ''}`}
+                  disabled={bulkRunning || eligibleCount === 0}
+                  onClick={() => selectTopPercentile(pct)}
+                  title={`Select top ${pct}% by views (${n} of ${eligibleCount})`}
+                >{pct}% <span className="oi-bulk-pill-count">({n})</span></button>
+              )
+            })}
           </div>
           <div className="oi-bulk-bar-actions">
             <button
