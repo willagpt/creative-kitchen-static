@@ -120,7 +120,7 @@ CI workflow `ci.yml` runs `npm run build` on pushes and PRs to `main` and `devel
 **Video analysis pipeline:**
 
 15. `analyse-video` — v4. Orchestrator; accepts competitor_ad_id, calls Railway worker, writes `video_analyses` + `video_shots`. Secrets: `VIDEO_WORKER_URL`, `VIDEO_WORKER_SECRET`.
-16. `list-video-analyses` — v4. Query analyses with filters (status, run_id, competitor_ad_id) and pagination.
+16. `list-video-analyses` — v5. Query analyses with filters (status, run_id, competitor_ad_id) and pagination. Exposes `X-Function-Version: list-video-analyses@1.1.0` response header (CI deploy audit marker).
 17. `get-video-analysis` — v4. Fetch single analysis with all shots + full competitor ad context.
 18. `transcribe-video` — v2. Whisper transcription leg of the pipeline.
 19. `ocr-video-frames` — v7. OCR extraction across reference frames.
@@ -134,6 +134,8 @@ CI workflow `ci.yml` runs `npm run build` on pushes and PRs to `main` and `devel
 24. `debug-auth` — v6. **Soft-retired 16 Apr.** Returns HTTP 410 Gone with a retirement notice. Source stays in the repo until callers confirmed gone; then hard-deleted.
 
 **Alignment:** Every deployed slug has a matching `supabase/functions/<slug>/index.ts` directory on `main` (verified 16 Apr). A previous CLAUDE.md revision listed `sync-competitor-metadata` as deployed; that entry was incorrect and has been removed.
+
+**CI deploy audit signal:** Functions deployed via `deploy-edge-functions.yml` show an `entrypoint_path` of `file:///home/runner/work/...` in `list_edge_functions`. Manual / dashboard deploys show `file:///tmp/user_fn_.../source/index.ts`. Only `list-video-analyses` currently carries the runner path; the rest predate CI.
 
 ## Video Worker (Railway Microservice)
 
