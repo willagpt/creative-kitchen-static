@@ -425,7 +425,7 @@ Deno.serve(async (req: Request) => {
         posts_fetched: apifyPosts.length,
         posts_new: newCount,
         cost_estimate: costEstimate,
-        status: "complete",
+        status: "success",
       });
     }
 
