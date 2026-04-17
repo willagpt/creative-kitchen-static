@@ -308,6 +308,10 @@ function AccountDetail({ account, latestLog, onBack }) {
   const [bulkMessage, setBulkMessage] = useState(null)
   // Percentile selector — "Top N% by views" quick pick over the eligible set.
   const [percentile, setPercentile] = useState(null) // null | 2.5 | 5 | 10 | 20
+  // When true, the grid only renders selected posts. Automatically turns on
+  // when a percentile pill is active so the user can see exactly what was
+  // picked. Can be toggled manually off/on from the bulk bar.
+  const [onlySelected, setOnlySelected] = useState(false)
 
   async function refreshAnalysesForPosts(postIds) {
     if (!postIds || postIds.length === 0) {
@@ -395,6 +399,98 @@ function AccountDetail({ account, latestLog, onBack }) {
     return () => { cancelled = true }
   }, [account.id])
 
+  // Phase 2+3 pipeline: transcribe → OCR → merge → AI analysis.
+  // Each step reads video_shots/video_analyses directly; we just kick them
+  // off in sequence from the frontend so the Railway worker and edge
+  // functions stay decoupled.
+  //
+  // transcribe-video and ocr-video-frames both have observability columns
+  // on video_analyses (`transcript_status`, `ocr_status`) so partial/error
+  // states surface in the UI without needing to retry here. We still do
+  // up to 2 client-side retries on transient HTTP (429, 5xx, network drop)
+  // because the edge function writes its status column AFTER it succeeds,
+  // so a gateway blip before that write leaves the row in pending — retrying
+  // the edge function in that case is safe and idempotent.
+  async function runPipelineSteps(analysisId) {
+    if (!analysisId) return
+    const steps = [
+      { name: 'transcribe-video', retries: 2, retryDelayMs: 2000 },
+      { name: 'ocr-video-frames', retries: 2, retryDelayMs: 2000 },
+      { name: 'merge-video-script', retries: 0, retryDelayMs: 0 },
+      { name: 'ai-analyse-video', retries: 0, retryDelayMs: 0 },
+    ]
+    for (const step of steps) {
+      let finalResp = null
+      let finalErr = null
+      for (let attempt = 1; attempt <= step.retries + 1; attempt++) {
+        try {
+          const r = await fetch(`${supabaseUrl}/functions/v1/${step.name}`, {
+            method: 'POST',
+            headers: fnHeaders,
+            body: JSON.stringify({ analysis_id: analysisId }),
+          })
+          finalResp = r
+          if (r.ok) {
+            // Log the observability fields each step exposes so the bulk
+            // worker's progress is debuggable from the console.
+            try {
+              const body = await r.clone().json()
+              if (step.name === 'transcribe-video') {
+                const cov = typeof body.coverage === 'number' ? body.coverage.toFixed(2) : 'n/a'
+                console.log(
+                  `[organic pipeline] transcribe-video ok: status=${body.transcript_status}, ` +
+                  `attempts=${body.attempts}, coverage=${cov}, chars=${body.char_count}`,
+                )
+              } else if (step.name === 'ocr-video-frames') {
+                const cov = typeof body.coverage === 'number' ? body.coverage.toFixed(2) : 'n/a'
+                const batchErrs = Array.isArray(body.batch_errors) ? body.batch_errors.length : 0
+                console.log(
+                  `[organic pipeline] ocr-video-frames ok: status=${body.ocr_status}, ` +
+                  `shots=${body.shots_updated}/${body.shots_processed}, ` +
+                  `coverage=${cov}, batch_errors=${batchErrs}/${body.total_batches}`,
+                )
+              } else {
+                console.log(`[organic pipeline] ${step.name} ok`)
+              }
+            } catch {
+              // Body parse is best-effort; don't fail the pipeline on shape drift.
+            }
+            break
+          }
+          const retryable = r.status === 429 || r.status >= 500
+          console.warn(
+            `[organic pipeline] ${step.name} attempt ${attempt}/${step.retries + 1} returned ${r.status} ` +
+            `(retryable=${retryable})`,
+          )
+          if (!retryable || attempt > step.retries) break
+        } catch (e) {
+          finalErr = e
+          console.warn(
+            `[organic pipeline] ${step.name} attempt ${attempt}/${step.retries + 1} threw:`,
+            e,
+          )
+          if (attempt > step.retries) break
+        }
+        if (step.retryDelayMs) {
+          await new Promise((res) => setTimeout(res, step.retryDelayMs))
+        }
+      }
+      if (finalErr || (finalResp && !finalResp.ok)) {
+        const statusLabel = finalErr ? 'threw' : `${finalResp.status}`
+        console.warn(
+          `[organic pipeline] ${step.name} gave up after retries (${statusLabel}) for ${analysisId}`,
+        )
+      }
+    }
+  }
+
+  // analyseOne now drives the full pipeline: Phase 1 (shots, contact sheet
+  // via analyse-video → Railway worker) then Phase 2+3 (transcript, OCR,
+  // merged script, AI analysis). Returns the analysis id so callers can
+  // surface it if needed. 409 "already exists" is treated as success and
+  // the pipeline is still re-run for that analysis, which is idempotent
+  // because transcribe-video / ocr-video-frames dedup against their status
+  // columns.
   async function analyseOne(post) {
     const res = await fetch(
       `${supabaseUrl}/functions/v1/analyse-video`,
@@ -405,11 +501,19 @@ function AccountDetail({ account, latestLog, onBack }) {
       }
     )
     const data = await res.json().catch(() => ({}))
-    // 409 means "already exists" which is fine — treat as success.
     if (!res.ok && res.status !== 409) {
       throw new Error(data.error || `HTTP ${res.status}`)
     }
-    return data
+    const analysisId = data.analysis_id || data.existing_analysis_id || null
+    // Phase 2+3: drive transcript / OCR / merge / AI from the frontend.
+    if (analysisId) {
+      try {
+        await runPipelineSteps(analysisId)
+      } catch (e) {
+        console.warn(`[organic pipeline] top-level failure for ${analysisId}:`, e)
+      }
+    }
+    return { ...data, analysis_id: analysisId }
   }
 
   async function handleAnalyse(post) {
@@ -457,6 +561,7 @@ function AccountDetail({ account, latestLog, onBack }) {
   function clearSelection() {
     setSelectedIds(new Set())
     setPercentile(null)
+    setOnlySelected(false)
   }
 
   // Rank the eligible pool by latest views desc, take ceil(N * pct/100).
@@ -476,6 +581,10 @@ function AccountDetail({ account, latestLog, onBack }) {
     const slice = sorted.slice(0, n)
     setSelectedIds(new Set(slice.map(p => p.id)))
     setPercentile(pct)
+    // Picking a percentile is useless if the user can't see which posts
+    // were picked. Default the grid to "only selected" so the user has
+    // immediate visual confirmation of the slice.
+    setOnlySelected(true)
   }
 
   async function runBulkAnalyse() {
@@ -535,6 +644,28 @@ function AccountDetail({ account, latestLog, onBack }) {
     }
     return { views, likes, comments, count: posts.length }
   }, [posts, metricsByPost])
+
+  // What actually renders in the grid. Two overlays on top of the raw
+  // chronological list:
+  //   1. If a percentile is active OR the user has flipped "Only selected",
+  //      we show only the selected post ids.
+  //   2. Regardless of (1), if a percentile is active we sort views desc so
+  //      the #1 performer is at the top of the grid (matches the ranking
+  //      used to pick the slice).
+  const displayPosts = useMemo(() => {
+    let list = posts
+    if (onlySelected && selectedIds.size > 0) {
+      list = list.filter(p => selectedIds.has(p.id))
+    }
+    if (percentile) {
+      list = [...list].sort((a, b) => {
+        const av = Number(metricsByPost[a.id]?.views || 0)
+        const bv = Number(metricsByPost[b.id]?.views || 0)
+        return bv - av
+      })
+    }
+    return list
+  }, [posts, selectedIds, onlySelected, percentile, metricsByPost])
 
   const platformLabel = account.platform === 'youtube' ? 'YouTube' : 'Instagram'
   const platformChip = account.platform === 'youtube' ? 'oi-chip-yt' : 'oi-chip-ig'
@@ -618,6 +749,13 @@ function AccountDetail({ account, latestLog, onBack }) {
             >Select all</button>
             <button
               type="button"
+              className={`oi-bulk-btn oi-bulk-btn-ghost${onlySelected ? ' oi-bulk-btn-active' : ''}`}
+              onClick={() => setOnlySelected(v => !v)}
+              disabled={selectedCount === 0}
+              title={onlySelected ? 'Show all posts' : 'Show only the posts in your current selection'}
+            >{onlySelected ? 'Show all' : 'Only selected'}</button>
+            <button
+              type="button"
               className="oi-bulk-btn oi-bulk-btn-ghost"
               onClick={clearSelection}
               disabled={bulkRunning || selectedCount === 0}
@@ -641,7 +779,7 @@ function AccountDetail({ account, latestLog, onBack }) {
         <div className="oi-empty">No posts fetched for this account yet.</div>
       ) : (
         <div className="oi-posts-grid">
-          {posts.map(p => (
+          {displayPosts.map(p => (
             <PostCard
               key={p.id}
               post={p}
