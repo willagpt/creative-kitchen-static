@@ -87,7 +87,8 @@ CI workflow `ci.yml` runs `npm run build` on pushes and PRs to `main` and `devel
 - **Phase 1 re-verification complete (16 Apr):** 24 deployed edge functions all have matching source in `supabase/functions/`. All 24 enforce `verify_jwt: true`. Both former JWT regressions (analyse-competitor-creatives, debug-auth) closed same day.
 - **Organic Intelligence Phase 1.1 complete (17 Apr):** 4 new tables shipped with RLS (`followed_organic_accounts`, `organic_posts`, `organic_post_metrics`, `organic_fetch_log`). Migration `20260417064915_create_organic_intel_tables.sql`.
 - **Organic Intelligence Phase 1.5 complete (17 Apr):** 3 CRUD endpoints live (`list-organic-accounts`, `save-organic-account`, `list-organic-posts`). End-to-end tested via anon key: upsert is idempotent against `UNIQUE(platform, platform_account_id)`, activate/deactivate toggles `is_active`, filters + pagination behave correctly.
-- **Next:** Phase 2 — Script Extraction (Whisper transcription + OCR), Phase 2 engineering (branching + CI), and Organic Intelligence Phase 2 (Apify IG + YouTube ingestion edge functions + scheduler).
+- **Organic Intelligence Phase 2 complete (17 Apr):** Ingestion pipelines live for Instagram (Apify actor `apify/instagram-scraper`, ID `shu8hvrXbJbY3Eb9W`) and YouTube (Data API v3). 2 new edge functions (`fetch-instagram-posts` v4, `fetch-youtube-posts` v2) plus 20 accounts seeded (10 IG + 10 YT). End-to-end verified: idempotent upserts on `(platform, platform_post_id)`, metrics appended as time series, `last_fetched_at` updates, `organic_fetch_log` captures Apify cost (USD) and YouTube quota units. Shorts detection: `duration <= 60s` AND HEAD probe on `/shorts/{id}` with `redirect: manual`. See `docs/handover-2026-04-17-organic-intel-phase-2.md`.
+- **Next:** Phase 3 — Scheduled cron for daily organic fetches, frontend surface for the organic library, Video Analysis Engine Phase 2 (Whisper transcription + OCR).
 - **Last deployed:** 17 April 2026.
 - **generate-ad-prompt:** v29 (packaging-aware, dynamic packaging terms).
 - **fetch-competitor-ads:** v12 (brand_id/page_id, DCO explosion, credit logging to `foreplay_credit_log`, default `start_date: 2025-12-23`, `credit_budget: 500`).
@@ -101,7 +102,7 @@ CI workflow `ci.yml` runs `npm run build` on pushes and PRs to `main` and `devel
 
 ## Edge Functions
 
-**27 edge functions deployed.** All 27 enforce `verify_jwt: true` (24 verified 16 Apr; +3 Organic Intelligence CRUD endpoints added 17 Apr).
+**29 edge functions deployed.** All 29 enforce `verify_jwt: true` (24 verified 16 Apr; +3 Organic Intelligence CRUD endpoints on 17 Apr; +2 Organic Intelligence fetchers on 17 Apr).
 
 **Prompt / brand / image tooling:**
 
@@ -135,11 +136,16 @@ CI workflow `ci.yml` runs `npm run build` on pushes and PRs to `main` and `devel
 22. `ai-analyse-video` — v2. Layout detection via Claude vision; writes `screen_layout` per shot and `layout_summary` aggregate.
 23. `generate-ugc-brief` — v6. Chefly-branded UGC creator briefs. 16384 max_tokens, truncation detection, shot variations (2/3/4), layout-aware prompts. Secrets: `CLAUDE_API_KEY` or `ANTHROPIC_API_KEY`.
 
-**Organic Intelligence (Phase 1.5):**
+**Organic Intelligence — CRUD (Phase 1.5):**
 
 25. `list-organic-accounts` — v1. List followed IG + YouTube accounts with `platform` / `is_active` filters, pagination, and exact count. GET + POST. Ordered `brand_name.asc, platform.asc`.
 26. `save-organic-account` — v1. Upsert / activate / deactivate a `followed_organic_accounts` row. POST only. Upsert uses PostgREST `on_conflict=platform,platform_account_id` against the UNIQUE constraint; activate/deactivate takes `id` or `(platform, platform_account_id)` and toggles `is_active` without deleting.
 27. `list-organic-posts` — v1. Query `organic_posts` with filters `account_id`, `platform`, `post_type`, `language`, `posted_after`, `posted_before`, plus pagination. Ordered `posted_at desc nullslast` to match `organic_posts_account_posted_idx`. GET + POST.
+
+**Organic Intelligence — Ingestion (Phase 2):**
+
+29. `fetch-instagram-posts` — v4. Pulls up to N recent posts for a handle via Apify actor `apify/instagram-scraper` (ID `shu8hvrXbJbY3Eb9W`). Modes: `test` (no writes, returns sample) and `fetch` (writes to `organic_posts` + `organic_post_metrics`, updates `last_fetched_at`, logs to `organic_fetch_log` with status `success|error|partial` and `cost_estimate` in USD ~$2.30/1000 results). Upsert uses `on_conflict=platform,platform_post_id`. Detects post_type (`image|carousel|reel`) from actor payload. Secrets: `APIFY_TOKEN`.
+30. `fetch-youtube-posts` — v2. Pulls up to N recent uploads for a channel via YouTube Data API v3 (`playlistItems.list` + `videos.list` on snippet, contentDetails, statistics → 2 quota units per fetch). Uploads playlist resolved from `channel UC` → `UU`. Shorts detection: duration ≤ 60s AND HEAD probe on `https://www.youtube.com/shorts/{id}` with `redirect: manual` (2xx = Short; Location containing `/shorts/` = Short; redirect to `/watch` = regular video). post_type values: `short|video|livestream`. Monthly quota budget 10,000 units (configurable) with 80% warning. Modes: `test` and `fetch`. Secrets: `YOUTUBE_API_KEY`.
 
 **Diagnostics:**
 
