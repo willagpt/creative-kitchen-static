@@ -45,8 +45,15 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const SUPABASE_URL = "https://ifrxylvoufncdxyltgqt.supabase.co";
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+// Optional override: explicit legacy JWT for function-to-function dispatch.
+// When Supabase auto-injects SUPABASE_SERVICE_ROLE_KEY in the modern
+// `sb_secret_...` format, PostgREST accepts it via the `apikey` header, but
+// the edge-function gateway (verify_jwt: true) rejects it because it is not
+// a JWT. Set ORG_CRON_SERVICE_KEY to a legacy service-role JWT to unblock,
+// or rely on the incoming Authorization header fallback below.
+const DISPATCH_JWT = Deno.env.get("ORG_CRON_SERVICE_KEY") || "";
 
-const FUNCTION_VERSION = "trigger-organic-fetches@1.0.0";
+const FUNCTION_VERSION = "trigger-organic-fetches@1.1.0";
 
 const IG_DEFAULTS = {
   idleHours: 20,
@@ -169,12 +176,18 @@ async function fetchDueAccounts(platform: string, idleHours: number, maxAccounts
 async function dispatchFetcher(
   fetcherPath: string,
   payload: Record<string, unknown>,
+  dispatchAuth: string,
 ): Promise<{ ok: boolean; http_status: number; body: any }> {
+  // `dispatchAuth` is a full Authorization header value (e.g. "Bearer eyJ...").
+  // Mirror it into the `apikey` header too because Supabase gateway checks both.
+  const token = dispatchAuth.toLowerCase().startsWith("bearer ")
+    ? dispatchAuth.slice(7).trim()
+    : dispatchAuth.trim();
   const res = await fetch(`${SUPABASE_URL}/functions/v1/${fetcherPath}`, {
     method: "POST",
     headers: {
-      apikey: SUPABASE_SERVICE_KEY,
-      Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+      apikey: token,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
@@ -193,6 +206,18 @@ Deno.serve(async (req) => {
 
   if (!SUPABASE_SERVICE_KEY) {
     return jsonResponse({ error: "SUPABASE_SERVICE_ROLE_KEY not configured" }, 500);
+  }
+
+  // Pick the JWT used for dispatching to fetchers. Prefer explicit override,
+  // otherwise forward the caller's Authorization header. Cron passes the vault
+  // JWT in Authorization so this works out of the box once the override is
+  // populated OR when invoked by cron.
+  const incomingAuth = req.headers.get("Authorization") || "";
+  const dispatchAuth = DISPATCH_JWT
+    ? `Bearer ${DISPATCH_JWT}`
+    : incomingAuth;
+  if (!dispatchAuth) {
+    return jsonResponse({ error: "no Authorization header and ORG_CRON_SERVICE_KEY not set" }, 401);
   }
 
   let body: any = {};
@@ -255,11 +280,15 @@ Deno.serve(async (req) => {
     for (let i = 0; i < due.length; i++) {
       const acc = due[i];
       try {
-        const { ok, http_status, body: respBody } = await dispatchFetcher(cfg.fetcherPath, {
-          handle: acc.handle,
-          mode: "fetch",
-          limit: limitPerAccount,
-        });
+        const { ok, http_status, body: respBody } = await dispatchFetcher(
+          cfg.fetcherPath,
+          {
+            handle: acc.handle,
+            mode: "fetch",
+            limit: limitPerAccount,
+          },
+          dispatchAuth,
+        );
         const row: DispatchResult = {
           account_id: acc.id,
           handle: acc.handle,
