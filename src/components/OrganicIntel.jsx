@@ -69,6 +69,19 @@ async function fetchTable(path) {
   return res.json()
 }
 
+async function callRpc(fn, body) {
+  const res = await fetch(`${supabaseUrl}/rest/v1/rpc/${fn}`, {
+    method: 'POST',
+    headers: fnHeaders,
+    body: JSON.stringify(body || {}),
+  })
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`RPC ${fn} ${res.status}: ${text.slice(0, 200)}`)
+  }
+  return res.json()
+}
+
 // ---------- List view ----------
 
 function AccountCard({ account, latestLog, postCount, onOpen }) {
@@ -303,29 +316,44 @@ export default function OrganicIntel() {
     setLoading(true)
     setError(null)
     try {
-      // 1. Accounts
-      const accountsRes = await fetchTable(
-        'followed_organic_accounts?select=*&is_active=eq.true&order=platform.asc,handle.asc'
-      )
+      // Phase 3b: single RPC returns account + latest log + post count.
+      // Replaces the Phase 3a client-side grouping of 500 logs + 5000 post ids.
+      const rows = await callRpc('list_organic_accounts_with_stats', {
+        p_platform: null,
+        p_active_only: true,
+      })
 
-      // 2. Recent fetch logs. Fetch last 500 and group client-side (pick most recent per account).
-      //    Scales fine until we hit thousands of runs. At that point swap to an RPC (DISTINCT ON).
-      const logs = await fetchTable(
-        'organic_fetch_log?select=account_id,started_at,finished_at,posts_fetched,posts_new,cost_estimate,yt_quota_units,status,error_message&order=started_at.desc&limit=500'
-      )
+      const accountsRes = []
       const latestByAccount = {}
-      for (const l of logs) {
-        if (l.account_id && !latestByAccount[l.account_id]) latestByAccount[l.account_id] = l
-      }
-
-      // 3. Post counts per account. Fetch ids + account_id for all posts and count client-side.
-      //    Will need an RPC (count GROUP BY account_id) once we hit ~5K posts.
-      const postRows = await fetchTable(
-        'organic_posts?select=id,account_id&limit=5000'
-      )
       const counts = {}
-      for (const p of postRows) {
-        counts[p.account_id] = (counts[p.account_id] || 0) + 1
+
+      for (const r of rows) {
+        accountsRes.push({
+          id: r.id,
+          brand_name: r.brand_name,
+          platform: r.platform,
+          handle: r.handle,
+          platform_account_id: r.platform_account_id,
+          uploads_playlist_id: r.uploads_playlist_id,
+          is_active: r.is_active,
+          fetch_frequency: r.fetch_frequency,
+          last_fetched_at: r.last_fetched_at,
+          created_at: r.created_at,
+        })
+        counts[r.id] = Number(r.post_count) || 0
+        if (r.latest_log_id) {
+          latestByAccount[r.id] = {
+            account_id: r.id,
+            started_at: r.latest_started_at,
+            finished_at: r.latest_finished_at,
+            posts_fetched: r.latest_posts_fetched,
+            posts_new: r.latest_posts_new,
+            cost_estimate: r.latest_cost_estimate,
+            yt_quota_units: r.latest_yt_quota_units,
+            status: r.latest_status,
+            error_message: r.latest_error_message,
+          }
+        }
       }
 
       setAccounts(accountsRes)
