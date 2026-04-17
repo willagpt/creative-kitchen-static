@@ -2,7 +2,8 @@
 // Pulls N video_analyses rows (transcripts, OCR, shots, layout) and asks Claude
 // to synthesise recurring patterns into a trend_reports row.
 // v1.1.0 (17 Apr 2026): top-performers mode + actionable_ideas output.
-// Filter adds: top_performers (bool), rank_by ("views"|"engagement_rate"|"likes"|"comments"|"shares"), top_n (int).
+// v1.2.0 (17 Apr 2026): top_pct (percentile 1-50), competitor-ad ranking via days_active.
+// Filter adds: top_performers (bool), rank_by ("views"|"engagement_rate"|"likes"|"comments"|"shares"|"days_active"|"is_active_days"), top_n (int), top_pct (1-50), active_only (bool, ads only).
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
@@ -11,7 +12,7 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const CLAUDE_API_KEY = Deno.env.get("CLAUDE_API_KEY") || Deno.env.get("ANTHROPIC_API_KEY") || "";
 const CLAUDE_MODEL = Deno.env.get("CLAUDE_MODEL") || "claude-sonnet-4-5";
 
-const FUNCTION_VERSION = "synthesise-organic-trends@1.1.0";
+const FUNCTION_VERSION = "synthesise-organic-trends@1.2.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -48,8 +49,10 @@ type Filter = {
   // Top-performers mode: after enriching sources, attach latest metric
   // (organic posts only) and keep the top-N performers.
   top_performers?: boolean;
-  rank_by?: "views" | "engagement_rate" | "likes" | "comments" | "shares";
+  rank_by?: "views" | "engagement_rate" | "likes" | "comments" | "shares" | "days_active" | "is_active_days";
   top_n?: number;
+  top_pct?: number; // 1-50, takes priority over top_n if set
+  active_only?: boolean; // competitor_ad: only include ads still running
 };
 
 async function createReport(title: string, filter: Filter, status = "pending") {
@@ -191,11 +194,75 @@ async function enrichWithSources(analyses: Array<Record<string, unknown>>, filte
 
 async function rankByPerformance(
   analyses: Array<Record<string, unknown>>,
-  rankBy: "views" | "engagement_rate" | "likes" | "comments" | "shares",
-  topN: number
+  rankBy: "views" | "engagement_rate" | "likes" | "comments" | "shares" | "days_active" | "is_active_days",
+  topN: number,
+  activeOnly = false
 ): Promise<Array<Record<string, unknown>>> {
-  // Only organic_post analyses have metrics; competitor_ad analyses get metric=null
-  // and are pushed to the end of the ranking.
+  // Organic posts: metric from latest organic_post_metrics snapshot
+  // Competitor ads: metric from competitor_ads.days_active (or is_active_days = days_active * (is_active?1:0.5))
+  const isOrganicMetric = ["views", "engagement_rate", "likes", "comments", "shares"].includes(rankBy);
+  const isAdMetric = ["days_active", "is_active_days"].includes(rankBy);
+
+  // Competitor-ad ranking path
+  if (isAdMetric) {
+    const adIds: string[] = [];
+    const adIdByAid = new Map<string, string>();
+    for (const a of analyses) {
+      if (a.source === "competitor_ad") {
+        const adId = String(a.source_id || (a.competitor_ad_id as string) || "");
+        if (adId) {
+          adIds.push(adId);
+          adIdByAid.set(String(a.id), adId);
+        }
+      }
+    }
+    const daysByAdId = new Map<string, number>();
+    const activeByAdId = new Map<string, boolean>();
+    if (adIds.length > 0) {
+      const inList = [...new Set(adIds)].map((id) => `"${id}"`).join(",");
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/competitor_ads?id=in.(${inList})&select=id,days_active,is_active`,
+        { headers: supabaseHeaders() }
+      );
+      if (res.ok) {
+        const rows = (await res.json()) as Array<Record<string, unknown>>;
+        for (const r of rows) {
+          const adId = String(r.id);
+          const da = typeof r.days_active === "number" ? r.days_active : Number(r.days_active);
+          if (!Number.isNaN(da) && Number.isFinite(da)) daysByAdId.set(adId, da);
+          activeByAdId.set(adId, !!r.is_active);
+        }
+      }
+    }
+    let filtered = analyses;
+    if (activeOnly) {
+      filtered = analyses.filter((a) => {
+        const adId = adIdByAid.get(String(a.id));
+        return adId ? activeByAdId.get(adId) === true : false;
+      });
+    }
+    for (const a of filtered) {
+      const adId = adIdByAid.get(String(a.id));
+      const days = adId ? daysByAdId.get(adId) : undefined;
+      const active = adId ? activeByAdId.get(adId) : undefined;
+      let val: number | null = null;
+      if (typeof days === "number") {
+        val = rankBy === "is_active_days" ? days * (active ? 1 : 0.5) : days;
+      }
+      (a as Record<string, unknown>).performance_metric_rank_by = rankBy;
+      (a as Record<string, unknown>).performance_metric_value = val;
+    }
+    const sorted = [...filtered].sort((a, b) => {
+      const av = (a as Record<string, unknown>).performance_metric_value;
+      const bv = (b as Record<string, unknown>).performance_metric_value;
+      const aNum = typeof av === "number" ? av : -Infinity;
+      const bNum = typeof bv === "number" ? bv : -Infinity;
+      return bNum - aNum;
+    });
+    return sorted.slice(0, Math.max(1, topN));
+  }
+
+  // Organic ranking path (unchanged logic)
   const postIds: string[] = [];
   const postIdByAid = new Map<string, string>();
   for (const a of analyses) {
@@ -498,12 +565,22 @@ Deno.serve(async (req: Request) => {
 
     analyses = await enrichWithSources(analyses, filter);
 
-    // Top performers mode: rank by latest metric + take top N
+    // Top performers mode: rank by latest metric + take top N or top %
     if (filter.top_performers) {
-      const rankBy = (filter.rank_by || "views") as
-        | "views" | "engagement_rate" | "likes" | "comments" | "shares";
-      const topN = Math.max(3, Math.min(Number(filter.top_n) || 10, 40));
-      analyses = await rankByPerformance(analyses, rankBy, topN);
+      // Default rank_by depends on what's in the matched set
+      const hasAds = analyses.some((a) => a.source === "competitor_ad");
+      const hasOrganic = analyses.some((a) => a.source === "organic_post");
+      const defaultRank = hasAds && !hasOrganic ? "days_active" : "views";
+      const rankBy = (filter.rank_by || defaultRank) as
+        | "views" | "engagement_rate" | "likes" | "comments" | "shares" | "days_active" | "is_active_days";
+      let topN: number;
+      if (typeof filter.top_pct === "number" && filter.top_pct > 0) {
+        const pct = Math.max(1, Math.min(filter.top_pct, 50));
+        topN = Math.max(3, Math.ceil((pct / 100) * analyses.length));
+      } else {
+        topN = Math.max(3, Math.min(Number(filter.top_n) || 10, 200));
+      }
+      analyses = await rankByPerformance(analyses, rankBy, topN, !!filter.active_only);
     }
 
     if (analyses.length < 3) {
