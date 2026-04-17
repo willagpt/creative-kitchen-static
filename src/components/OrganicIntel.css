@@ -465,6 +465,43 @@
   letter-spacing: 0.04em;
 }
 
+/* ---------- Last-run memory banner (shipped 17 Apr) ----------
+
+   Shown when returning to an account that was bulk-analysed within the
+   last 24h. Sits above the bulk bar, uses a subtle "info" palette so it
+   doesn't compete with live running-state feedback. */
+.oi-last-run-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  margin: 0 0 var(--space-sm);
+  background: rgba(92, 207, 255, 0.08);
+  border: 1px solid rgba(92, 207, 255, 0.25);
+  border-radius: var(--radius);
+  color: var(--text-1);
+  font-size: var(--text-sm);
+  flex-wrap: wrap;
+}
+.oi-last-run-banner-text {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.oi-last-run-banner-when {
+  color: var(--text-2);
+}
+.oi-last-run-banner-count {
+  color: var(--text-2);
+}
+.oi-last-run-banner-actions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
 /* ---------- Bulk analyse bar + per-card selection (shipped 17 Apr) ---------- */
 
 .oi-bulk-bar {

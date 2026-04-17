@@ -84,6 +84,64 @@ function isVideoPost(post) {
   return t === 'reel' || t === 'short' || t === 'video'
 }
 
+// ---------- Ranking + persistence helpers ----------
+
+// Deterministic comparator used by both the percentile selector and the
+// display-grid sort. Ties on `views` are broken by `posted_at desc` then by
+// `id asc`, so identical inputs always produce the same ordering. Without
+// this, a fresh `organic_post_metrics` row landing between visits can
+// reshuffle the selection even when the top-of-list hasn't really moved.
+function makePostViewComparator(metricsByPost) {
+  return (a, b) => {
+    const av = Number(metricsByPost?.[a.id]?.views || 0)
+    const bv = Number(metricsByPost?.[b.id]?.views || 0)
+    if (bv !== av) return bv - av
+    const at = Date.parse(a.posted_at || '') || 0
+    const bt = Date.parse(b.posted_at || '') || 0
+    if (bt !== at) return bt - at
+    return String(a.id || '').localeCompare(String(b.id || ''))
+  }
+}
+
+// Persist the most recent bulk run per account so a user who navigates
+// away and comes back can still see what happened. Keyed per account id,
+// records expire after 24 hours so stale data doesn't clutter the UI.
+const OI_LAST_RUN_KEY = 'oi.lastBulkRun.v1'
+const OI_LAST_RUN_TTL_MS = 24 * 60 * 60 * 1000
+
+function readLastBulkRun(accountId) {
+  if (!accountId || typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(OI_LAST_RUN_KEY)
+    if (!raw) return null
+    const all = JSON.parse(raw)
+    const rec = all && all[accountId]
+    if (!rec || typeof rec !== 'object') return null
+    const finishedAt = Number(rec.finishedAt || 0)
+    if (!finishedAt || Date.now() - finishedAt > OI_LAST_RUN_TTL_MS) return null
+    return rec
+  } catch {
+    return null
+  }
+}
+
+function writeLastBulkRun(accountId, record) {
+  if (!accountId || typeof window === 'undefined') return
+  try {
+    const raw = window.localStorage.getItem(OI_LAST_RUN_KEY)
+    const all = raw ? JSON.parse(raw) : {}
+    if (record) all[accountId] = record
+    else delete all[accountId]
+    window.localStorage.setItem(OI_LAST_RUN_KEY, JSON.stringify(all))
+  } catch {
+    // Quota exceeded or private-browsing storage denial — non-fatal.
+  }
+}
+
+function clearLastBulkRun(accountId) {
+  writeLastBulkRun(accountId, null)
+}
+
 // ---------- Data hooks ----------
 
 async function fetchTable(path) {
@@ -351,6 +409,10 @@ function AccountDetail({ account, latestLog, onBack }) {
   // when a percentile pill is active so the user can see exactly what was
   // picked. Can be toggled manually off/on from the bulk bar.
   const [onlySelected, setOnlySelected] = useState(false)
+  // Last bulk-analyse run for THIS account, hydrated from localStorage on
+  // mount so the user can see what happened on a previous visit. Shape:
+  // { startedAt, finishedAt, queuedIds: string[], succeeded, failed, errors }.
+  const [lastRun, setLastRun] = useState(() => readLastBulkRun(account.id))
 
   async function refreshAnalysesForPosts(postIds) {
     if (!postIds || postIds.length === 0) {
@@ -611,11 +673,8 @@ function AccountDetail({ account, latestLog, onBack }) {
       setSelectedIds(new Set())
       return
     }
-    const sorted = [...selectablePosts].sort((a, b) => {
-      const av = Number(metricsByPost[a.id]?.views || 0)
-      const bv = Number(metricsByPost[b.id]?.views || 0)
-      return bv - av
-    })
+    const cmp = makePostViewComparator(metricsByPost)
+    const sorted = [...selectablePosts].sort(cmp)
     const n = Math.max(1, Math.ceil(selectablePosts.length * (pct / 100)))
     const slice = sorted.slice(0, n)
     setSelectedIds(new Set(slice.map(p => p.id)))
@@ -636,6 +695,7 @@ function AccountDetail({ account, latestLog, onBack }) {
       return
     }
 
+    const startedAt = Date.now()
     setBulkRunning(true)
     setBulkMessage(null)
     const initial = {}
@@ -668,6 +728,18 @@ function AccountDetail({ account, latestLog, onBack }) {
     await refreshAnalysesForPosts(posts.map(p => p.id))
     setBulkRunning(false)
     setBulkMessage(`Bulk analyse finished: ${succeeded} queued, ${failed} error${failed === 1 ? '' : 's'}.`)
+    // Persist a summary so a return visit can still show what was run.
+    // Only includes ids from THIS run's queue (posts that were actually
+    // dispatched), not the pre-filter selection.
+    const runRecord = {
+      startedAt,
+      finishedAt: Date.now(),
+      queuedIds: queue.map(p => p.id),
+      succeeded,
+      failed,
+    }
+    writeLastBulkRun(account.id, runRecord)
+    setLastRun(runRecord)
     setSelectedIds(new Set())
   }
 
@@ -697,11 +769,8 @@ function AccountDetail({ account, latestLog, onBack }) {
       list = list.filter(p => selectedIds.has(p.id))
     }
     if (percentile) {
-      list = [...list].sort((a, b) => {
-        const av = Number(metricsByPost[a.id]?.views || 0)
-        const bv = Number(metricsByPost[b.id]?.views || 0)
-        return bv - av
-      })
+      const cmp = makePostViewComparator(metricsByPost)
+      list = [...list].sort(cmp)
     }
     return list
   }, [posts, selectedIds, onlySelected, percentile, metricsByPost])
@@ -753,6 +822,45 @@ function AccountDetail({ account, latestLog, onBack }) {
           <div className="oi-stat-value">{formatNumber(totals.comments)}</div>
         </div>
       </div>
+
+      {lastRun && !bulkRunning && (
+        <div className="oi-last-run-banner" role="status">
+          <div className="oi-last-run-banner-text">
+            <strong>Last Analyse run:</strong>{' '}
+            {lastRun.succeeded} completed
+            {lastRun.failed > 0 ? `, ${lastRun.failed} error${lastRun.failed === 1 ? '' : 's'}` : ''}
+            {' · '}
+            <span className="oi-last-run-banner-when">{formatRelativeTime(new Date(lastRun.finishedAt).toISOString())}</span>
+            {Array.isArray(lastRun.queuedIds) && lastRun.queuedIds.length > 0 && (
+              <span className="oi-last-run-banner-count">{' · '}{lastRun.queuedIds.length} post{lastRun.queuedIds.length === 1 ? '' : 's'}</span>
+            )}
+          </div>
+          <div className="oi-last-run-banner-actions">
+            {Array.isArray(lastRun.queuedIds) && lastRun.queuedIds.length > 0 && (
+              <button
+                type="button"
+                className="oi-bulk-btn oi-bulk-btn-ghost"
+                onClick={() => {
+                  // Restore the previous run's selection into the grid.
+                  setSelectedIds(new Set(lastRun.queuedIds))
+                  setPercentile(null)
+                  setOnlySelected(true)
+                }}
+                title="Filter the grid to the posts from the previous run"
+              >View last batch</button>
+            )}
+            <button
+              type="button"
+              className="oi-bulk-btn oi-bulk-btn-ghost"
+              onClick={() => {
+                clearLastBulkRun(account.id)
+                setLastRun(null)
+              }}
+              title="Hide this banner"
+            >Dismiss</button>
+          </div>
+        </div>
+      )}
 
       {eligibleCount > 0 && (
         <div className="oi-bulk-bar">
