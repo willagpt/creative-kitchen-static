@@ -34,8 +34,11 @@ const DEFAULT_BUDGET_USD = 30;
 const BUDGET_WARN_PCT = 0.80;
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
+const THUMBNAIL_BUCKET = "organic-thumbs";
+const THUMBNAIL_FETCH_TIMEOUT_MS = 8000;
+const THUMBNAIL_MAX_BYTES = 5 * 1024 * 1024;
 
-const FUNCTION_VERSION = "fetch-instagram-posts@1.0.0";
+const FUNCTION_VERSION = "fetch-instagram-posts@1.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -262,6 +265,141 @@ function mapMetrics(p: ApifyPost, postId: string): Record<string, unknown> {
   };
 }
 
+
+// -----------------------------------------------------------------------------
+// Thumbnail snapshot: mirror the Apify-supplied display_url into our own public
+// bucket so it survives after IG's signed oh= token expires.
+// -----------------------------------------------------------------------------
+
+function thumbnailObjectKey(platformPostId: string): string {
+  // Keep it flat: platform/<id>.jpg. Apify returns JPEGs from cdninstagram.
+  return `instagram/${platformPostId}.jpg`;
+}
+
+function thumbnailPublicUrl(objectKey: string): string {
+  return `${SUPABASE_URL}/storage/v1/object/public/${THUMBNAIL_BUCKET}/${objectKey}`;
+}
+
+async function fetchThumbnailBytes(url: string): Promise<Uint8Array | null> {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), THUMBNAIL_FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      redirect: "follow",
+      signal: controller.signal,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15",
+        "Accept": "image/*,*/*;q=0.8",
+      },
+    });
+    if (!res.ok) {
+      console.warn(`[thumbnail-snapshot] upstream ${res.status} ${url.slice(0, 80)}`);
+      return null;
+    }
+    const ct = res.headers.get("content-type") || "";
+    if (!ct.startsWith("image/")) {
+      console.warn(`[thumbnail-snapshot] non-image content-type ${ct}`);
+      return null;
+    }
+    const buf = new Uint8Array(await res.arrayBuffer());
+    if (buf.byteLength === 0 || buf.byteLength > THUMBNAIL_MAX_BYTES) {
+      console.warn(`[thumbnail-snapshot] size out of range ${buf.byteLength}`);
+      return null;
+    }
+    return buf;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[thumbnail-snapshot] fetch failed: ${msg}`);
+    return null;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+async function uploadThumbnailToStorage(
+  objectKey: string,
+  bytes: Uint8Array,
+  contentType: string,
+): Promise<string | null> {
+  // Use upsert=true so re-runs overwrite rather than 409. Service role only.
+  const res = await fetch(
+    `${SUPABASE_URL}/storage/v1/object/${THUMBNAIL_BUCKET}/${objectKey}`,
+    {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_SERVICE_KEY,
+        Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+        "Content-Type": contentType,
+        "x-upsert": "true",
+        "cache-control": "3600",
+      },
+      body: bytes,
+    },
+  );
+  if (!res.ok) {
+    console.warn(
+      `[thumbnail-snapshot] upload failed ${res.status}: ${(await res.text()).slice(0, 200)}`,
+    );
+    return null;
+  }
+  return thumbnailPublicUrl(objectKey);
+}
+
+async function snapshotOneThumbnail(
+  platformPostId: string,
+  sourceUrl: string,
+): Promise<string | null> {
+  const bytes = await fetchThumbnailBytes(sourceUrl);
+  if (!bytes) return null;
+  // Best-effort content-type detection via magic bytes; default to image/jpeg.
+  let contentType = "image/jpeg";
+  if (bytes[0] === 0x89 && bytes[1] === 0x50) contentType = "image/png";
+  else if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[8] === 0x57) contentType = "image/webp";
+  const key = thumbnailObjectKey(platformPostId);
+  return await uploadThumbnailToStorage(key, bytes, contentType);
+}
+
+interface SnapshotResult {
+  snapshotted: number;
+  failed: number;
+  byPostId: Map<string, string>;
+}
+
+async function snapshotThumbnailsForRows(
+  rows: Record<string, unknown>[],
+): Promise<SnapshotResult> {
+  const byPostId = new Map<string, string>();
+  let snapshotted = 0;
+  let failed = 0;
+  // Serial with small concurrency. Keep it simple, budget the fetches.
+  const concurrency = 3;
+  const queue = rows.slice();
+  async function worker() {
+    while (queue.length > 0) {
+      const r = queue.shift();
+      if (!r) break;
+      const pid = r.platform_post_id as string;
+      const src = r.thumbnail_url as string | null;
+      if (!pid || !src) continue;
+      const cached = await snapshotOneThumbnail(pid, src);
+      if (cached) {
+        byPostId.set(pid, cached);
+        snapshotted++;
+      } else {
+        failed++;
+      }
+    }
+  }
+  const workers = Array.from(
+    { length: Math.min(concurrency, queue.length) },
+    () => worker(),
+  );
+  await Promise.all(workers);
+  return { snapshotted, failed, byPostId };
+}
+
 interface UpsertResult {
   upserted: Array<{ id: string; platform_post_id: string }>;
   newCount: number;
@@ -414,6 +552,27 @@ Deno.serve(async (req: Request) => {
     const { upserted, newCount } = await upsertPosts(postRows);
     const metricsInserted = await appendMetrics(upserted, apifyPosts);
 
+    // Snapshot thumbnails into our own public bucket so they outlive IG's
+    // signed oh= token. Best-effort: a failure here does not fail the run.
+    const snapshot = await snapshotThumbnailsForRows(postRows);
+    if (snapshot.byPostId.size > 0) {
+      const ops: Promise<unknown>[] = [];
+      for (const u of upserted) {
+        const cached = snapshot.byPostId.get(u.platform_post_id);
+        if (!cached) continue;
+        ops.push(
+          sbPatch(`organic_posts?id=eq.${u.id}`, { thumbnail_cached_url: cached })
+            .catch(err => {
+              console.warn(
+                `[thumbnail-snapshot] patch failed for ${u.platform_post_id}: ${err instanceof Error ? err.message : String(err)}`,
+              );
+            }),
+        );
+      }
+      await Promise.all(ops);
+    }
+
+
     const costEstimate = estimateCost(apifyPosts.length);
     await sbPatch(
       `followed_organic_accounts?id=eq.${account.id}`,
@@ -437,6 +596,8 @@ Deno.serve(async (req: Request) => {
       posts_upserted: postRows.length,
       posts_new: newCount,
       metrics_rows_inserted: metricsInserted,
+      thumbnails_snapshotted: snapshot.snapshotted,
+      thumbnails_failed: snapshot.failed,
       cost_estimate_usd: costEstimate,
       month_spend_usd: Math.round((monthSoFar + costEstimate) * 10000) / 10000,
       budget_usd: budgetUsd,
