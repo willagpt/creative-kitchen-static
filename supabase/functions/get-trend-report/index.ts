@@ -1,13 +1,14 @@
 // GET|POST /functions/v1/get-trend-report?id=...
 // Returns a single trend_reports row with summary JSON + a compact list of
 // the source analyses (id, source, duration_seconds, pacing, thumbnail).
-// v1.0.0
+// v1.1.0 (17 Apr 2026): attach first_frame_url (Supabase-hosted) per source so
+// the UI can render reliable thumbnails instead of hotlink-blocked IG/FB CDN URLs.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const SUPABASE_URL = "https://ifrxylvoufncdxyltgqt.supabase.co";
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const FUNCTION_VERSION = "get-trend-report@1.0.0";
+const FUNCTION_VERSION = "get-trend-report@1.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -65,6 +66,27 @@ Deno.serve(async (req: Request) => {
     if (aRes.ok) {
       sources = await aRes.json();
 
+      // Batch: first-frame URLs (shot_number=1) from video_shots so UI can render
+      // Supabase-hosted thumbnails instead of hotlink-blocked IG/FB CDN URLs.
+      try {
+        const ids = sources.map((s) => String(s.id)).filter(Boolean);
+        if (ids.length > 0) {
+          const inIds = ids.map((id) => `"${id}"`).join(",");
+          const shotsRes = await fetch(
+            `${SUPABASE_URL}/rest/v1/video_shots?shot_number=eq.1&video_analysis_id=in.(${inIds})&select=video_analysis_id,frame_url`,
+            { headers: sbHeaders() }
+          );
+          if (shotsRes.ok) {
+            const shots = await shotsRes.json() as Array<Record<string, unknown>>;
+            const byVa = new Map(shots.map((sh) => [String(sh.video_analysis_id), String(sh.frame_url || "")]));
+            for (const s of sources) {
+              const f = byVa.get(String(s.id));
+              if (f) (s as Record<string, unknown>).first_frame_url = f;
+            }
+          }
+        }
+      } catch (_e) { /* non-fatal: fall back to contact_sheet_url */ }
+
       // Batch: competitor_ads + organic_posts
       const adIds = sources.filter((s) => s.source === "competitor_ad" && s.source_id).map((s) => String(s.source_id));
       const orgIds = sources.filter((s) => s.source === "organic_post" && s.source_id).map((s) => String(s.source_id));
@@ -115,6 +137,50 @@ Deno.serve(async (req: Request) => {
           }
         }
       }
+
+      // If the report was run in top-performers mode, attach latest metric
+      // (by rank_by) per organic source so the UI can badge winners.
+      try {
+        const filter = (report.filter || {}) as Record<string, unknown>;
+        if (filter.top_performers) {
+          const rankBy = (filter.rank_by as string) || "views";
+          // Collect organic post IDs from enriched sources
+          const pids: string[] = [];
+          const pidByAid = new Map<string, string>();
+          for (const s of sources) {
+            const post = (s as Record<string, unknown>).organic_post as Record<string, unknown> | undefined;
+            if (post && post.id) {
+              pids.push(String(post.id));
+              pidByAid.set(String(s.id), String(post.id));
+            }
+          }
+          if (pids.length > 0) {
+            const inList = [...new Set(pids)].map((id) => `"${id}"`).join(",");
+            const mRes = await fetch(
+              `${SUPABASE_URL}/rest/v1/organic_post_metrics?post_id=in.(${inList})&select=post_id,captured_at,views,likes,comments,shares,engagement_rate&order=captured_at.desc&limit=2000`,
+              { headers: sbHeaders() }
+            );
+            if (mRes.ok) {
+              const rows = (await mRes.json()) as Array<Record<string, unknown>>;
+              const latestByPid = new Map<string, Record<string, unknown>>();
+              for (const r of rows) {
+                const pid = String(r.post_id);
+                if (!latestByPid.has(pid)) latestByPid.set(pid, r);
+              }
+              for (const s of sources) {
+                const pid = pidByAid.get(String(s.id));
+                const latest = pid ? latestByPid.get(pid) : undefined;
+                if (latest) {
+                  const raw = latest[rankBy];
+                  const val = typeof raw === "number" ? raw : Number(raw);
+                  (s as Record<string, unknown>).performance_metric_rank_by = rankBy;
+                  (s as Record<string, unknown>).performance_metric_value = Number.isFinite(val) ? val : null;
+                }
+              }
+            }
+          }
+        }
+      } catch (_e) { /* non-fatal */ }
     }
   }
 

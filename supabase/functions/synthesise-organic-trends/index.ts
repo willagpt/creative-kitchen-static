@@ -1,7 +1,8 @@
 // POST /functions/v1/synthesise-organic-trends
 // Pulls N video_analyses rows (transcripts, OCR, shots, layout) and asks Claude
 // to synthesise recurring patterns into a trend_reports row.
-// v1.0.0
+// v1.1.0 (17 Apr 2026): top-performers mode + actionable_ideas output.
+// Filter adds: top_performers (bool), rank_by ("views"|"engagement_rate"|"likes"|"comments"|"shares"), top_n (int).
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
@@ -10,7 +11,7 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const CLAUDE_API_KEY = Deno.env.get("CLAUDE_API_KEY") || Deno.env.get("ANTHROPIC_API_KEY") || "";
 const CLAUDE_MODEL = Deno.env.get("CLAUDE_MODEL") || "claude-sonnet-4-5";
 
-const FUNCTION_VERSION = "synthesise-organic-trends@1.0.0";
+const FUNCTION_VERSION = "synthesise-organic-trends@1.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,6 +45,11 @@ type Filter = {
   pacing_profile?: "fast" | "medium" | "slow" | "static";
   brand_name?: string;
   limit?: number;
+  // Top-performers mode: after enriching sources, attach latest metric
+  // (organic posts only) and keep the top-N performers.
+  top_performers?: boolean;
+  rank_by?: "views" | "engagement_rate" | "likes" | "comments" | "shares";
+  top_n?: number;
 };
 
 async function createReport(title: string, filter: Filter, status = "pending") {
@@ -183,6 +189,66 @@ async function enrichWithSources(analyses: Array<Record<string, unknown>>, filte
   return filtered;
 }
 
+async function rankByPerformance(
+  analyses: Array<Record<string, unknown>>,
+  rankBy: "views" | "engagement_rate" | "likes" | "comments" | "shares",
+  topN: number
+): Promise<Array<Record<string, unknown>>> {
+  // Only organic_post analyses have metrics; competitor_ad analyses get metric=null
+  // and are pushed to the end of the ranking.
+  const postIds: string[] = [];
+  const postIdByAid = new Map<string, string>();
+  for (const a of analyses) {
+    if (a.source === "organic_post") {
+      const post = a.organic_post as Record<string, unknown> | undefined;
+      const pid = post ? String(post.id) : null;
+      if (pid) {
+        postIds.push(pid);
+        postIdByAid.set(String(a.id), pid);
+      }
+    }
+  }
+  const metricByPid = new Map<string, number>();
+  if (postIds.length > 0) {
+    const inList = [...new Set(postIds)].map((id) => `"${id}"`).join(",");
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/organic_post_metrics?post_id=in.(${inList})&select=post_id,captured_at,views,likes,comments,shares,engagement_rate&order=captured_at.desc&limit=2000`,
+      { headers: supabaseHeaders() }
+    );
+    if (res.ok) {
+      const rows = (await res.json()) as Array<Record<string, unknown>>;
+      // Keep LATEST snapshot per post_id (rows already desc by captured_at)
+      const seen = new Set<string>();
+      for (const r of rows) {
+        const pid = String(r.post_id);
+        if (seen.has(pid)) continue;
+        seen.add(pid);
+        const raw = r[rankBy];
+        const val = typeof raw === "number" ? raw : Number(raw);
+        if (!Number.isNaN(val) && Number.isFinite(val)) {
+          metricByPid.set(pid, val);
+        }
+      }
+    }
+  }
+  // Attach metric value to each analysis for corpus + detail response
+  for (const a of analyses) {
+    const pid = postIdByAid.get(String(a.id));
+    const val = pid ? metricByPid.get(pid) : undefined;
+    (a as Record<string, unknown>).performance_metric_rank_by = rankBy;
+    (a as Record<string, unknown>).performance_metric_value = typeof val === "number" ? val : null;
+  }
+  // Sort DESC by metric, nulls last
+  const sorted = [...analyses].sort((a, b) => {
+    const av = (a as Record<string, unknown>).performance_metric_value;
+    const bv = (b as Record<string, unknown>).performance_metric_value;
+    const aNum = typeof av === "number" ? av : -Infinity;
+    const bNum = typeof bv === "number" ? bv : -Infinity;
+    return bNum - aNum;
+  });
+  return sorted.slice(0, Math.max(1, topN));
+}
+
 async function fetchShotsFor(analysisIds: string[]) {
   if (analysisIds.length === 0) return new Map<string, Array<Record<string, unknown>>>();
   const inList = analysisIds.map((id) => `"${id}"`).join(",");
@@ -242,9 +308,16 @@ function buildCorpus(analyses: Array<Record<string, unknown>>, shotsByAid: Map<s
     const transcript = trunc(String(a.transcript_text || ""), 600);
     const ocrAll = trunc(String(a.ocr_text || ""), 300);
 
+    const metricVal = (a as Record<string, unknown>).performance_metric_value;
+    const metricKey = (a as Record<string, unknown>).performance_metric_rank_by;
+    const metricLine = typeof metricVal === "number"
+      ? `    metric(${metricKey}): ${metricVal.toLocaleString()}`
+      : "";
+
     blocks.push(
       [
         `--- [${i + 1}] ${src} ${who}`,
+        metricLine,
         `    duration=${a.duration_seconds}s shots=${a.total_shots} cuts/s=${a.cuts_per_second} pacing=${a.pacing_profile}`,
         title ? `    title: ${title}` : "",
         caption ? `    caption: ${caption}` : "",
@@ -263,11 +336,24 @@ function buildCorpus(analyses: Array<Record<string, unknown>>, shotsByAid: Map<s
 }
 
 function buildPrompt(corpus: string, n: number, filter: Filter): string {
-  return `You are a creative strategist analysing ${n} short-form video ads + organic posts to find trends a production team can turn into new creative.
+  const topMode = !!filter.top_performers;
+  const rankBy = filter.rank_by || "views";
+  const header = topMode
+    ? `You are a creative strategist analysing ${n} short-form videos that are the TOP PERFORMERS (ranked by ${rankBy}) in this corpus. Your job is to work out WHY these specific videos outperformed, then turn those signals into concrete creative ideas a production team can shoot next week.`
+    : `You are a creative strategist analysing ${n} short-form video ads + organic posts to find trends a production team can turn into new creative.`;
+
+  const ideasGuidance = topMode
+    ? `
+Actionable ideas: produce 6 to 10 concrete creative ideas we could make ourselves, each tied back to one or more winning videos via the [index] references. Each idea must explain WHY it would likely work based on the winner signals (not generic advice). Prefer specificity: real hook copy, real shot structure, real CTA phrasing. Rank by estimated priority (1 = highest).`
+    : `
+Actionable ideas: produce 3 to 5 creative ideas inspired by the recurring patterns, each tied back to [index] references. Specificity over cleverness.`;
+
+  return `${header}
 
 Scope of corpus: ${JSON.stringify(filter)}
 
-Below are ${n} videos, each with transcript, on-screen text, shot list (with durations + layout), and platform context. Find the patterns that actually repeat. Be specific. No filler.
+Below are ${n} videos, each with transcript, on-screen text, shot list (with durations + layout), and platform context.${topMode ? " Each block also includes a metric(...) line with the raw performance value. The top of the corpus is the highest performer." : ""} Find the patterns that actually repeat. Be specific. No filler.
+${ideasGuidance}
 
 CORPUS:
 ${corpus}
@@ -276,6 +362,7 @@ Return STRICT JSON matching this schema. No markdown, no commentary, no prose ou
 
 {
   "overview": "2 to 3 sentence plain-English summary of what this corpus is doing overall",
+  ${topMode ? '"why_these_won": ["3 to 6 bullets explaining the specific signals that separate top performers from average (e.g. \'hook is a face-to-camera stop-scroll within 0.8s\')"],' : ""}
   "recurring_hooks": [
     { "pattern": "short name", "description": "what the hook does", "frequency_pct": 30, "examples": ["index numbers e.g. [1]", "[3]"] }
   ],
@@ -312,15 +399,31 @@ Return STRICT JSON matching this schema. No markdown, no commentary, no prose ou
   ],
   "copy_ideas": [
     { "hook": "first 1 to 3 seconds of speech or on-screen text", "beat": "what happens next", "cta": "closing" }
+  ],
+  "actionable_ideas": [
+    {
+      "title": "punchy working title under 60 chars",
+      "priority": 1,
+      "rationale": "why this would likely work, citing specific [index] winners and the signal they share",
+      "format": "talking_head|voiceover_broll|tutorial|transformation|taste_test|ugc_skit|comparison|listicle|other",
+      "target_duration_seconds": 15,
+      "suggested_pacing": "fast|medium|slow",
+      "suggested_layout": "full|split-2|split-3|mixed",
+      "hook": "exact hook copy for the first 1 to 3 seconds",
+      "beats": ["shot 1 description", "shot 2 description", "shot 3 description"],
+      "cta": "closing line",
+      "references": ["[1]", "[4]"]
+    }
   ]
 }
 
 Rules:
 - Only include categories you have real evidence for. Empty arrays are fine.
 - frequency_pct is an integer 0 to 100.
-- examples should reference the [index] numbers from the corpus.
+- examples and references should reference the [index] numbers from the corpus.
 - No em dashes or en dashes anywhere. Use commas or colons.
-- Keep each string under 200 chars.`;
+- Keep each string under 200 chars (except arrays of beats, which can be up to 6 items).
+- actionable_ideas priority is integer 1 (highest) to 3.`;
 }
 
 async function callClaude(prompt: string): Promise<{ text: string; model: string }> {
@@ -394,6 +497,14 @@ Deno.serve(async (req: Request) => {
     }
 
     analyses = await enrichWithSources(analyses, filter);
+
+    // Top performers mode: rank by latest metric + take top N
+    if (filter.top_performers) {
+      const rankBy = (filter.rank_by || "views") as
+        | "views" | "engagement_rate" | "likes" | "comments" | "shares";
+      const topN = Math.max(3, Math.min(Number(filter.top_n) || 10, 40));
+      analyses = await rankByPerformance(analyses, rankBy, topN);
+    }
 
     if (analyses.length < 3) {
       await updateReport(reportId, {

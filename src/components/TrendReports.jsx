@@ -74,6 +74,9 @@ export default function TrendReports() {
   const [filterMaxDuration, setFilterMaxDuration] = useState('')
   const [filterBrand, setFilterBrand] = useState('')
   const [filterLimit, setFilterLimit] = useState('50')
+  const [topPerformers, setTopPerformers] = useState(false)
+  const [rankBy, setRankBy] = useState('views')
+  const [topN, setTopN] = useState('10')
 
   async function loadReports() {
     setLoading(true)
@@ -129,6 +132,11 @@ export default function TrendReports() {
       if (filterMaxDuration) filter.max_duration = Number(filterMaxDuration)
       if (filterBrand) filter.brand_name = filterBrand
       if (filterLimit) filter.limit = Number(filterLimit)
+      if (topPerformers) {
+        filter.top_performers = true
+        filter.rank_by = rankBy
+        if (topN) filter.top_n = Number(topN)
+      }
 
       const body = {
         filter,
@@ -290,6 +298,44 @@ export default function TrendReports() {
                 className="tr-gen-input"
                 value={filterLimit}
                 onChange={(e) => setFilterLimit(e.target.value)}
+              />
+            </label>
+          </div>
+
+          <div className="tr-gen-row tr-gen-row-top">
+            <label className="tr-gen-field tr-gen-field-toggle">
+              <input
+                type="checkbox"
+                checked={topPerformers}
+                onChange={(e) => setTopPerformers(e.target.checked)}
+              />
+              <span className="tr-gen-label">Top performers only (winners, with ideas)</span>
+            </label>
+            <label className="tr-gen-field" style={{ opacity: topPerformers ? 1 : 0.4 }}>
+              <span className="tr-gen-label">Rank by</span>
+              <select
+                disabled={!topPerformers}
+                className="tr-gen-input"
+                value={rankBy}
+                onChange={(e) => setRankBy(e.target.value)}
+              >
+                <option value="views">Views</option>
+                <option value="engagement_rate">Engagement rate</option>
+                <option value="likes">Likes</option>
+                <option value="comments">Comments</option>
+                <option value="shares">Shares</option>
+              </select>
+            </label>
+            <label className="tr-gen-field" style={{ opacity: topPerformers ? 1 : 0.4 }}>
+              <span className="tr-gen-label">Top N</span>
+              <input
+                type="number"
+                disabled={!topPerformers}
+                min="3"
+                max="40"
+                className="tr-gen-input"
+                value={topN}
+                onChange={(e) => setTopN(e.target.value)}
               />
             </label>
           </div>
@@ -473,6 +519,28 @@ function TrendReportDetail({ reportId, onBack }) {
           {summary.overview && (
             <Section title="Overview">
               <p className="tr-prose">{summary.overview}</p>
+            </Section>
+          )}
+
+          {Array.isArray(summary.why_these_won) && summary.why_these_won.length > 0 && (
+            <Section title="Why these won" count={summary.why_these_won.length}>
+              <ul className="tr-bullets tr-bullets-win">
+                {summary.why_these_won.map((b, i) => (
+                  <li key={i}>{typeof b === 'string' ? b : JSON.stringify(b)}</li>
+                ))}
+              </ul>
+            </Section>
+          )}
+
+          {Array.isArray(summary.actionable_ideas) && summary.actionable_ideas.length > 0 && (
+            <Section title="Ideas we could shoot" count={summary.actionable_ideas.length}>
+              <div className="tr-ideas">
+                {[...summary.actionable_ideas]
+                  .sort((a, b) => (Number(a.priority) || 9) - (Number(b.priority) || 9))
+                  .map((idea, i) => (
+                    <IdeaCard key={i} idea={idea} />
+                  ))}
+              </div>
             </Section>
           )}
 
@@ -775,13 +843,76 @@ function CopyIdeas({ ideas }) {
   )
 }
 
+function formatMetric(v) {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return ''
+  if (Math.abs(v) < 1 && v > 0) return (v * 100).toFixed(1) + '%'
+  if (v >= 1_000_000) return (v / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M'
+  if (v >= 1_000) return (v / 1_000).toFixed(1).replace(/\.0$/, '') + 'k'
+  return String(Math.round(v))
+}
+
+function IdeaCard({ idea }) {
+  const priority = Number(idea.priority) || 3
+  const priorityClass = priority === 1 ? 'tr-idea-p1' : priority === 2 ? 'tr-idea-p2' : 'tr-idea-p3'
+  const refs = Array.isArray(idea.references) ? idea.references : []
+  const beats = Array.isArray(idea.beats) ? idea.beats : []
+  const meta = [
+    idea.format,
+    typeof idea.target_duration_seconds === 'number' ? `${idea.target_duration_seconds}s` : null,
+    idea.suggested_pacing,
+    idea.suggested_layout,
+  ].filter(Boolean)
+  return (
+    <div className={`tr-idea ${priorityClass}`}>
+      <div className="tr-idea-head">
+        <span className="tr-idea-priority">P{priority}</span>
+        <h4 className="tr-idea-title">{idea.title || 'Untitled'}</h4>
+      </div>
+      {meta.length > 0 && (
+        <div className="tr-idea-meta">
+          {meta.map((m, i) => <span key={i} className="tr-idea-chip">{m}</span>)}
+        </div>
+      )}
+      {idea.rationale && <p className="tr-idea-rationale">{idea.rationale}</p>}
+      {idea.hook && (
+        <div className="tr-idea-block">
+          <span className="tr-idea-block-label">Hook</span>
+          <div className="tr-idea-block-body">"{idea.hook}"</div>
+        </div>
+      )}
+      {beats.length > 0 && (
+        <div className="tr-idea-block">
+          <span className="tr-idea-block-label">Beats</span>
+          <ol className="tr-idea-beats">
+            {beats.map((b, i) => <li key={i}>{b}</li>)}
+          </ol>
+        </div>
+      )}
+      {idea.cta && (
+        <div className="tr-idea-block">
+          <span className="tr-idea-block-label">CTA</span>
+          <div className="tr-idea-block-body">"{idea.cta}"</div>
+        </div>
+      )}
+      {refs.length > 0 && (
+        <div className="tr-idea-refs">
+          <span className="tr-idea-block-label">From</span>
+          {refs.map((r, i) => <span key={i} className="tr-idea-ref">{r}</span>)}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function SourceCard({ index, source }) {
   const ad = source.competitor_ad
   const post = source.organic_post
   const isOrganic = source.source === 'organic_post' && post
   const isAd = source.source === 'competitor_ad' && ad
 
-  const thumb = post?.thumbnail_url || ad?.thumbnail_url || source.contact_sheet_url
+  // Prefer Supabase-hosted URLs (first_frame_url, contact_sheet_url) over IG/FB CDN thumbnails
+  // which can be IP-bound signed URLs or hotlink-blocked in the browser.
+  const thumb = source.first_frame_url || source.contact_sheet_url || post?.thumbnail_url || ad?.thumbnail_url
   const displayName = isOrganic
     ? post.account
       ? `@${post.account.handle || post.account.brand_name}`
@@ -795,16 +926,35 @@ function SourceCard({ index, source }) {
     <div className="tr-source">
       <div className="tr-source-index">[{index}]</div>
       {thumb ? (
-        <img src={thumb} alt="" className="tr-source-thumb" />
-      ) : (
-        <div className="tr-source-thumb tr-source-thumb-empty">—</div>
-      )}
+        <img
+          src={thumb}
+          alt=""
+          className="tr-source-thumb"
+          referrerPolicy="no-referrer"
+          loading="lazy"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none'
+            if (e.currentTarget.nextElementSibling) {
+              e.currentTarget.nextElementSibling.style.display = 'flex'
+            }
+          }}
+        />
+      ) : null}
+      <div
+        className="tr-source-thumb tr-source-thumb-empty"
+        style={{ display: thumb ? 'none' : 'flex' }}
+      >—</div>
       <div className="tr-source-body">
         <div className="tr-source-title">{displayName}</div>
         <div className="tr-source-meta">
           <span className={`tr-chip ${isOrganic ? 'tr-chip-organic' : 'tr-chip-ad'}`}>
             {isOrganic ? (post.platform || 'organic') : 'ad'}
           </span>
+          {typeof source.performance_metric_value === 'number' && (
+            <span className="tr-chip tr-chip-metric" title={`Latest ${source.performance_metric_rank_by || 'metric'}`}>
+              {formatMetric(source.performance_metric_value)} {source.performance_metric_rank_by === 'engagement_rate' ? 'ER' : (source.performance_metric_rank_by || '')}
+            </span>
+          )}
           {typeof source.duration_seconds === 'number' && (
             <span>{source.duration_seconds.toFixed(1)}s</span>
           )}
