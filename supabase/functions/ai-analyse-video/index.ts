@@ -3,12 +3,18 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 /**
  * ai-analyse-video — Phase 3: Creative Strategy Analysis
  * v2: Added shot_layouts classification for split-screen detection
- * 
+ * v3: Replaced single production_style.format enum ("mixed" was unactionable) with
+ *     primary_format / secondary_format / format_label / format_rationale.
+ *     JSONB-additive: old format field retained for backwards-compat while legacy
+ *     rows are re-analysed. See docs/mixed-format-migration-2026-04-18.md.
+ *
  * Takes a completed video analysis (with combined_script + contact_sheet)
  * and sends to Claude for structured creative strategy breakdown.
  * Writes results to video_analyses.ai_analysis (JSONB).
  * Also classifies screen layouts per shot and computes layout_summary.
  */
+
+const FUNCTION_VERSION = "ai-analyse-video@3";
 
 const SUPABASE_URL = "https://ifrxylvoufncdxyltgqt.supabase.co";
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -24,7 +30,11 @@ const corsHeaders = {
 function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data, null, 2), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+      "x-function-version": FUNCTION_VERSION,
+    },
   });
 }
 
@@ -51,6 +61,19 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 2)
   }
   throw new Error("Max retries exceeded");
 }
+
+// Canonical format vocabulary. Keep this list tight so downstream grouping stays useful.
+// Removed the terminal "mixed" value: every video must now commit to a primary_format
+// and optionally name a secondary_format when a second style takes 20% or more of runtime.
+const FORMAT_VOCAB = [
+  "ugc",
+  "talking-head",
+  "studio",
+  "lifestyle",
+  "animation",
+  "b-roll-heavy",
+  "screen-recording",
+];
 
 const ANALYSIS_PROMPT = `You are an expert DTC (direct-to-consumer) paid social creative strategist analysing a competitor video advertisement.
 
@@ -83,7 +106,10 @@ Analyse this ad and return a JSON object with the following structure:
     "signals": ["array of audience signals from visuals/copy \u2014 e.g. gym setting, meal-prep language, price-conscious messaging"]
   },
   "production_style": {
-    "format": "string \u2014 one of: ugc, studio, lifestyle, animation, mixed, talking-head, b-roll-heavy",
+    "primary_format": "string \u2014 the dominant format by runtime. MUST be one of: ${FORMAT_VOCAB.join(", ")}. Never use 'mixed'. Pick the single style that occupies the largest share of on-screen time.",
+    "secondary_format": "string or null \u2014 the second-most-common format, only if it clearly takes 20% or more of the runtime and is distinct from primary_format. Otherwise null. Must come from the same vocabulary as primary_format.",
+    "format_label": "string \u2014 human-readable combo label. If secondary_format is null, use the Title Case of primary_format (e.g. 'UGC' or 'Talking Head'). If both are set, join them with ' + ' in primary-first order (e.g. 'UGC + Talking Head', 'Studio + B-Roll Heavy').",
+    "format_rationale": "string \u2014 one sentence (max 180 chars) describing what each format does in this ad and roughly how runtime splits. E.g. 'UGC selfie opens and closes the ad (~60%) while talking-head studio shots deliver the product claim in the middle third (~40%).'",
     "quality": "string \u2014 one of: lo-fi, mid, polished, premium",
     "text_overlays": "string \u2014 one of: heavy, moderate, minimal, none",
     "music_pacing": "string \u2014 one of: upbeat, chill, dramatic, none-detected"
@@ -103,6 +129,55 @@ Analyse this ad and return a JSON object with the following structure:
 }
 
 Return ONLY the JSON object, no other text. Be specific and reference actual content from the script \u2014 don't give generic analysis.`;
+
+// Normalise Claude's production_style output into the v3 shape before writing to JSONB.
+// Guards against drift (Claude returning 'mixed', forgetting format_label, etc.).
+function normaliseProductionStyle(raw: unknown): Record<string, unknown> {
+  const ps = (raw && typeof raw === "object") ? raw as Record<string, unknown> : {};
+
+  const titleCase = (s: string) =>
+    s.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+  const coerceFormat = (val: unknown): string | null => {
+    if (!val || typeof val !== "string") return null;
+    const trimmed = val.trim().toLowerCase();
+    if (!trimmed || trimmed === "mixed" || trimmed === "null" || trimmed === "none") return null;
+    return FORMAT_VOCAB.includes(trimmed) ? trimmed : trimmed;
+  };
+
+  let primary = coerceFormat(ps.primary_format);
+  let secondary = coerceFormat(ps.secondary_format);
+
+  // Fallback: the model returned the old `format` key instead of the new ones.
+  if (!primary) {
+    primary = coerceFormat(ps.format) || "ugc";
+  }
+
+  // Drop secondary if it equals primary (no real combo).
+  if (secondary && secondary === primary) {
+    secondary = null;
+  }
+
+  const label = (() => {
+    const existing = typeof ps.format_label === "string" ? ps.format_label.trim() : "";
+    if (existing) return existing;
+    if (!secondary) return titleCase(primary);
+    return `${titleCase(primary)} + ${titleCase(secondary)}`;
+  })();
+
+  const rationale = typeof ps.format_rationale === "string" ? ps.format_rationale.trim() : "";
+
+  return {
+    ...ps,
+    primary_format: primary,
+    secondary_format: secondary,
+    format_label: label,
+    format_rationale: rationale || null,
+    // Preserve the old `format` key for any legacy reader that still expects it.
+    // Downstream should read `format_label` first.
+    format: label,
+  };
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -254,6 +329,11 @@ Deno.serve(async (req: Request) => {
       aiAnalysis = { raw_response: cleaned, parse_error: String(e) };
     }
 
+    // Normalise production_style to the v3 shape (guards against Claude drift).
+    if (aiAnalysis && typeof aiAnalysis === "object" && !aiAnalysis.parse_error) {
+      aiAnalysis.production_style = normaliseProductionStyle(aiAnalysis.production_style);
+    }
+
     // 5. Save to database
     const updateRes = await fetch(
       `${SUPABASE_URL}/rest/v1/video_analyses?id=eq.${analysisId}`,
@@ -315,6 +395,7 @@ Deno.serve(async (req: Request) => {
       success: true,
       analysis_id: analysisId,
       model_used: model,
+      function_version: FUNCTION_VERSION,
       ai_analysis: aiAnalysis,
       layout_summary: shotLayouts.length > 0 ? layoutSummary : null,
     });
