@@ -169,13 +169,20 @@ export function generateShareableHTML(analysis, shots, brief = null) {
   const renderProductionStyle = () => {
     if (!ai_analysis?.production_style) return '';
     const ps = ai_analysis.production_style;
+
+    // v3 (Apr 2026): prefer format_label (e.g. "UGC + Talking Head") with fallback
+    // to the legacy single-enum `format` for pre-migration rows. See
+    // docs/mixed-format-migration-2026-04-18.md.
+    const formatValue = ps.format_label || ps.format || null;
+    const rationale = ps.format_rationale || null;
+
     const items = [
-      { label: 'Format', value: ps.format },
+      { label: 'Format', value: formatValue },
       { label: 'Quality', value: ps.quality },
       { label: 'Music/Pacing', value: ps.music_pacing || ps.music },
       { label: 'Text Overlays', value: ps.text_overlays || ps.overlays },
     ].filter(i => i.value);
-    if (items.length === 0) return '';
+    if (items.length === 0 && !rationale) return '';
 
     return `
       <div class="subsection">
@@ -188,6 +195,7 @@ export function generateShareableHTML(analysis, shots, brief = null) {
             </tr>
           `).join('')}
         </table>
+        ${rationale ? `<p class="body-text" style="margin-top:8px;font-style:italic;opacity:0.85;">${sanitize(rationale)}</p>` : ''}
       </div>
     `;
   };
