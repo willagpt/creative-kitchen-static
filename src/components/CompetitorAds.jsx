@@ -27,6 +27,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
   const [addInput, setAddInput] = useState('')
   const [addLoading, setAddLoading] = useState(false)
   const [addError, setAddError] = useState(null)
+  const [addStatus, setAddStatus] = useState('')
   const [showAddForm, setShowAddForm] = useState(false)
   const [modalAd, setModalAd] = useState(null)
   const [loadingStatus, setLoadingStatus] = useState('')
@@ -811,13 +812,13 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
     if (!addInput.trim()) return
     setAddLoading(true)
     setAddError(null)
+    setAddStatus('Resolving name...')
     try {
       const pageId = extractPageId(addInput)
-      if (!pageId) { setAddError('Invalid page ID or URL.'); setAddLoading(false); return }
+      if (!pageId) { setAddError('Invalid page ID or URL.'); return }
 
       if (followedBrands.some(b => b.pageId === pageId)) {
         setAddError('This brand is already in your list.')
-        setAddLoading(false)
         return
       }
 
@@ -825,15 +826,43 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
       const pageName = resolvedName || 'Brand ' + pageId
 
       const nb = { pageId, pageName, platforms: ['meta'], adCount: 0, lastFetchedAt: null, thumbnailUrl: null }
-      if (await saveBrand(nb, supabaseUrl)) {
-        setFollowedBrands([nb, ...followedBrands])
-        setAddInput('')
-        setShowAddForm(false)
-      } else {
+      setAddStatus('Saving brand...')
+      if (!(await saveBrand(nb, supabaseUrl))) {
         setAddError('Could not save brand.')
+        return
       }
+      setFollowedBrands(prev => [nb, ...prev])
+      setAddInput('')
+
+      // Auto-trigger Foreplay fetch back to 23 Dec 2025
+      setAddStatus('Pulling ads from Foreplay since 23 Dec 2025 (may take a minute)...')
+      try {
+        const res = await fetch(FOREPLAY_FN_URL, {
+          method: 'POST',
+          headers: fnHeaders,
+          body: JSON.stringify({
+            page_id: pageId,
+            start_date: '2025-12-23',
+            credit_budget: 5000,
+          }),
+        })
+        if (res.ok) {
+          const data = await res.json().catch(() => ({}))
+          const refreshed = await fetchFollowedBrands(supabaseUrl)
+          setFollowedBrands(refreshed)
+          if (data && (data.totalRows === 0 || data.ads_fetched === 0)) {
+            setAddError('Brand saved, but Foreplay returned 0 ads for this page.')
+          }
+        } else {
+          const bodyText = await res.text().catch(() => '')
+          setAddError(`Auto-fetch failed (HTTP ${res.status}). ${bodyText.slice(0, 160)} Click the brand in Library to retry.`)
+        }
+      } catch (fetchErr) {
+        setAddError(`Auto-fetch failed: ${fetchErr.message}. Click the brand in Library to retry.`)
+      }
+      setShowAddForm(false)
     } catch (err) { setAddError(err.message) }
-    finally { setAddLoading(false) }
+    finally { setAddLoading(false); setAddStatus('') }
   }
 
   async function handleRemoveBrand(pageId) {
@@ -1389,8 +1418,8 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
             />
             {addError && <p className="ca-add-err">{addError}</p>}
             <div className="ca-add-modal-btns">
-              <button onClick={() => { setShowAddForm(false); setAddInput(''); setAddError(null) }} className="ca-btn-ghost">Cancel</button>
-              <button onClick={handleAddBrand} disabled={addLoading || !addInput.trim()} className="ca-btn-primary">{addLoading ? 'Resolving name...' : 'Add Competitor'}</button>
+              <button onClick={() => { setShowAddForm(false); setAddInput(''); setAddError(null); setAddStatus('') }} className="ca-btn-ghost">Cancel</button>
+              <button onClick={handleAddBrand} disabled={addLoading || !addInput.trim()} className="ca-btn-primary">{addLoading ? (addStatus || 'Working...') : 'Add Competitor'}</button>
             </div>
           </div>
         </div>
