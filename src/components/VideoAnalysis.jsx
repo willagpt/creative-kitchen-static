@@ -3,6 +3,7 @@ import './VideoAnalysis.css'
 import { supabaseUrl, supabaseAnonKey } from '../lib/supabase'
 import { generateShareableHTML } from '../lib/shareableExport'
 import { generateBriefHTML } from '../lib/briefExport'
+import BulkAnalyse from './BulkAnalyse'
 
 const fnHeaders = {
   apikey: supabaseAnonKey,
@@ -58,6 +59,7 @@ export default function VideoAnalysis() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [showAnalyzeForm, setShowAnalyzeForm] = useState(false)
+  const [showBulkAnalyse, setShowBulkAnalyse] = useState(false)
   const [analyzingAdId, setAnalyzingAdId] = useState('')
   const [analyzeLoading, setAnalyzeLoading] = useState(false)
   const [analyzeError, setAnalyzeError] = useState(null)
@@ -266,13 +268,28 @@ export default function VideoAnalysis() {
           <h1 className="va-title">Video Analysis</h1>
           <p className="va-subtitle">Review AI-generated insights from competitor video ads</p>
         </div>
-        <button
-          className="va-btn va-btn-primary"
-          onClick={() => setShowAnalyzeForm(!showAnalyzeForm)}
-        >
-          {showAnalyzeForm ? 'Cancel' : '+ Analyse New Video'}
-        </button>
+        <div className="va-header-actions">
+          <button
+            className="va-btn va-btn-ghost"
+            onClick={() => setShowBulkAnalyse(true)}
+          >
+            ⚡ Bulk Analyse (Top %)
+          </button>
+          <button
+            className="va-btn va-btn-primary"
+            onClick={() => setShowAnalyzeForm(!showAnalyzeForm)}
+          >
+            {showAnalyzeForm ? 'Cancel' : '+ Analyse New Video'}
+          </button>
+        </div>
       </div>
+
+      {showBulkAnalyse && (
+        <BulkAnalyse
+          defaultSource="competitor_ad"
+          onClose={() => { setShowBulkAnalyse(false); fetchAnalyses(); }}
+        />
+      )}
 
       {/* Analyze form (expanded) */}
       {showAnalyzeForm && (
@@ -781,8 +798,11 @@ function AnalysisTab({ analysis }) {
     filterMeaningful(ai.target_audience.signals || []).length > 0
   )
 
+  // v3 (Apr 2026): accept either the new format_label (e.g. "UGC + Talking Head")
+  // or the legacy `format` enum. format_rationale is optional v3-only prose.
+  // See docs/mixed-format-migration-2026-04-18.md.
   const productionStyleItems = ai.production_style ?
-    ['format', 'quality', 'overlays', 'music'].filter(k => !isEmptyValue(ai.production_style[k])) : []
+    ['format_label', 'format', 'quality', 'overlays', 'text_overlays', 'music', 'music_pacing', 'format_rationale'].filter(k => !isEmptyValue(ai.production_style[k])) : []
   const hasProductionStyle = productionStyleItems.length > 0
 
   const hasCompetitorInsights = ai.competitor_insights && (
@@ -893,19 +913,28 @@ function AnalysisTab({ analysis }) {
       {hasProductionStyle && (
         <Section title="Production Style">
           <div className="va-style-grid">
-            {!isEmptyValue(ai.production_style.format) && (
-              <StyleItem label="Format" value={ai.production_style.format} />
-            )}
+            {(() => {
+              // v3: prefer format_label (e.g. "UGC + Talking Head") with fallback to legacy format enum.
+              const formatValue = ai.production_style.format_label || ai.production_style.format
+              return !isEmptyValue(formatValue) ? (
+                <StyleItem label="Format" value={formatValue} />
+              ) : null
+            })()}
             {!isEmptyValue(ai.production_style.quality) && (
               <StyleItem label="Quality" value={ai.production_style.quality} />
             )}
-            {!isEmptyValue(ai.production_style.overlays) && (
-              <StyleItem label="Overlays" value={ai.production_style.overlays} />
+            {!isEmptyValue(ai.production_style.text_overlays || ai.production_style.overlays) && (
+              <StyleItem label="Overlays" value={ai.production_style.text_overlays || ai.production_style.overlays} />
             )}
-            {!isEmptyValue(ai.production_style.music) && (
-              <StyleItem label="Music" value={ai.production_style.music} />
+            {!isEmptyValue(ai.production_style.music_pacing || ai.production_style.music) && (
+              <StyleItem label="Music" value={ai.production_style.music_pacing || ai.production_style.music} />
             )}
           </div>
+          {!isEmptyValue(ai.production_style.format_rationale) && (
+            <p className="va-section-text" style={{ marginTop: '0.75rem', fontStyle: 'italic', opacity: 0.85 }}>
+              {ai.production_style.format_rationale}
+            </p>
+          )}
         </Section>
       )}
 

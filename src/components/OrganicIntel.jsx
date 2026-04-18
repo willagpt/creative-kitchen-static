@@ -8,6 +8,26 @@ const fnHeaders = {
   'Content-Type': 'application/json',
 }
 
+// Bulk-analyse concurrency cap (keeps Railway worker + edge functions comfortable).
+const BULK_CONCURRENCY = 3
+
+// Hosts known to hotlink-block with short-lived signed tokens (oh=... signatures
+// cross-checked against caller IP + UA). For these we route the request through
+// our server-side proxy-thumbnail edge function.
+const HOTLINK_BLOCKED_HOST_RE = /(?:^|\.)(cdninstagram\.com|fbcdn\.net)$/i
+
+function buildProxyThumbUrl(rawUrl) {
+  if (!rawUrl) return null
+  try {
+    const host = new URL(rawUrl).hostname
+    if (!HOTLINK_BLOCKED_HOST_RE.test(host)) return rawUrl
+    const qs = new URLSearchParams({ url: rawUrl })
+    return `${supabaseUrl}/functions/v1/proxy-thumbnail?${qs}`
+  } catch {
+    return rawUrl
+  }
+}
+
 // ---------- Formatting helpers ----------
 
 function formatRelativeTime(iso) {
@@ -56,6 +76,70 @@ function formatDuration(seconds) {
 function statusLabel(status) {
   if (!status) return 'Never fetched'
   return status.charAt(0).toUpperCase() + status.slice(1)
+}
+
+function isVideoPost(post) {
+  if (!post?.video_url) return false
+  const t = (post.post_type || '').toLowerCase()
+  return t === 'reel' || t === 'short' || t === 'video'
+}
+
+// ---------- Ranking + persistence helpers ----------
+
+// Deterministic comparator used by both the percentile selector and the
+// display-grid sort. Ties on `views` are broken by `posted_at desc` then by
+// `id asc`, so identical inputs always produce the same ordering. Without
+// this, a fresh `organic_post_metrics` row landing between visits can
+// reshuffle the selection even when the top-of-list hasn't really moved.
+function makePostViewComparator(metricsByPost) {
+  return (a, b) => {
+    const av = Number(metricsByPost?.[a.id]?.views || 0)
+    const bv = Number(metricsByPost?.[b.id]?.views || 0)
+    if (bv !== av) return bv - av
+    const at = Date.parse(a.posted_at || '') || 0
+    const bt = Date.parse(b.posted_at || '') || 0
+    if (bt !== at) return bt - at
+    return String(a.id || '').localeCompare(String(b.id || ''))
+  }
+}
+
+// Persist the most recent bulk run per account so a user who navigates
+// away and comes back can still see what happened. Keyed per account id,
+// records expire after 24 hours so stale data doesn't clutter the UI.
+const OI_LAST_RUN_KEY = 'oi.lastBulkRun.v1'
+const OI_LAST_RUN_TTL_MS = 24 * 60 * 60 * 1000
+
+function readLastBulkRun(accountId) {
+  if (!accountId || typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(OI_LAST_RUN_KEY)
+    if (!raw) return null
+    const all = JSON.parse(raw)
+    const rec = all && all[accountId]
+    if (!rec || typeof rec !== 'object') return null
+    const finishedAt = Number(rec.finishedAt || 0)
+    if (!finishedAt || Date.now() - finishedAt > OI_LAST_RUN_TTL_MS) return null
+    return rec
+  } catch {
+    return null
+  }
+}
+
+function writeLastBulkRun(accountId, record) {
+  if (!accountId || typeof window === 'undefined') return
+  try {
+    const raw = window.localStorage.getItem(OI_LAST_RUN_KEY)
+    const all = raw ? JSON.parse(raw) : {}
+    if (record) all[accountId] = record
+    else delete all[accountId]
+    window.localStorage.setItem(OI_LAST_RUN_KEY, JSON.stringify(all))
+  } catch {
+    // Quota exceeded or private-browsing storage denial — non-fatal.
+  }
+}
+
+function clearLastBulkRun(accountId) {
+  writeLastBulkRun(accountId, null)
 }
 
 // ---------- Data hooks ----------
@@ -130,23 +214,91 @@ function AccountsList({ accounts, logsByAccount, postsByAccount, onOpen }) {
   )
 }
 
-// ---------- Detail view ----------
+// ---------- Post card ----------
 
-function PostCard({ post, metrics, analysisInfo, onAnalyse, analysing }) {
+// Pipeline-stage short labels (transcript, OCR). We use initials so we can stack
+// three chips onto the thumbnail badge row without crowding the UX.
+const PIPELINE_STATUS_LABELS = {
+  success: 'ok',
+  partial: 'partial',
+  error: 'error',
+  running: 'running',
+  pending: 'pending',
+}
+
+function PipelineStatusChip({ prefix, status, title }) {
+  if (!status) return null
+  const label = PIPELINE_STATUS_LABELS[status] || status
+  return (
+    <span className={`oi-chip oi-chip-status ${status}`} title={title}>
+      {prefix} {label}
+    </span>
+  )
+}
+
+function PostCard({
+  post,
+  metrics,
+  analysisInfo,
+  firstFrameUrl,
+  onAnalyse,
+  analysing,
+  bulkState, // null | 'queued' | 'running' | 'done' | 'error'
+  selected,
+  selectable,
+  onToggleSelect,
+}) {
   const hasVideo = !!post.video_url
   const typeLabel = (post.post_type || 'post').replace(/_/g, ' ')
   const duration = formatDuration(post.duration_seconds)
   const caption = post.title || post.caption || ''
   const hashtags = Array.isArray(post.hashtags) ? post.hashtags : []
-  const videoTypes = ['reel', 'short', 'video']
-  const analysable = hasVideo && videoTypes.includes((post.post_type || '').toLowerCase())
+  const analysable = isVideoPost(post)
   const alreadyAnalysed = !!analysisInfo
 
+  // Thumbnail fallback chain (robust against IG/FB hotlink blocks):
+  // 1. Supabase-hosted first video frame (only for analysed videos) — rock solid.
+  // 2. post.thumbnail_cached_url — our on-ingest snapshot in the organic-thumbs bucket.
+  // 3. Raw thumbnail_url, routed through the proxy-thumbnail edge function when the
+  //    host is a known hotlink-blocked CDN. YouTube i.ytimg.com passes through as-is.
+  // 4. onError → hide <img>, show placeholder.
+  const primaryThumb =
+    firstFrameUrl ||
+    post.thumbnail_cached_url ||
+    buildProxyThumbUrl(post.thumbnail_url) ||
+    null
+
+  const bulkBadge = bulkState === 'queued'
+    ? 'Queued'
+    : bulkState === 'running'
+      ? 'Analysing…'
+      : bulkState === 'done'
+        ? 'Done'
+        : bulkState === 'error'
+          ? 'Error'
+          : null
+
   return (
-    <div className="oi-post">
+    <div className={`oi-post ${selected ? 'oi-post-selected' : ''}`}>
       <div className="oi-thumb-wrap">
-        {post.thumbnail_url ? (
-          <img className="oi-thumb" src={post.thumbnail_url} alt={caption.slice(0, 80)} loading="lazy" />
+        {primaryThumb ? (
+          <>
+            <img
+              className="oi-thumb"
+              src={primaryThumb}
+              alt={caption.slice(0, 80)}
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none'
+                const sibling = e.currentTarget.nextElementSibling
+                if (sibling) sibling.style.display = 'flex'
+              }}
+            />
+            <div className="oi-thumb-missing" style={{ display: 'none' }}>
+              Preview unavailable
+            </div>
+          </>
         ) : (
           <div className="oi-thumb-missing">No thumbnail</div>
         )}
@@ -154,7 +306,41 @@ function PostCard({ post, metrics, analysisInfo, onAnalyse, analysing }) {
           <span className="oi-chip oi-chip-type">{typeLabel}</span>
           {duration && <span className="oi-duration">{duration}</span>}
           {alreadyAnalysed && <span className="oi-chip oi-chip-analysed">Analysed</span>}
+          {alreadyAnalysed && analysisInfo?.transcript_status && (
+            <PipelineStatusChip
+              prefix="TX"
+              status={analysisInfo.transcript_status}
+              title={`Transcript: ${analysisInfo.transcript_status}`}
+            />
+          )}
+          {alreadyAnalysed && analysisInfo?.ocr_status && (
+            <PipelineStatusChip
+              prefix="OCR"
+              status={analysisInfo.ocr_status}
+              title={`On-screen text OCR: ${analysisInfo.ocr_status}`}
+            />
+          )}
+          {alreadyAnalysed && analysisInfo?.ai_analysis && (
+            <span className="oi-chip oi-chip-ai" title="Layout + scene AI analysis complete">
+              AI
+            </span>
+          )}
+          {bulkBadge && <span className={`oi-chip oi-chip-bulk oi-chip-bulk-${bulkState}`}>{bulkBadge}</span>}
         </div>
+        {selectable && (
+          <label
+            className={`oi-select-box ${selected ? 'checked' : ''}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={() => onToggleSelect && onToggleSelect(post.id)}
+              aria-label="Select for bulk analyse"
+            />
+            <span />
+          </label>
+        )}
       </div>
       <div className="oi-post-body">
         {caption && <div className="oi-post-caption">{caption}</div>}
@@ -200,30 +386,76 @@ function PostCard({ post, metrics, analysisInfo, onAnalyse, analysing }) {
   )
 }
 
+// ---------- Detail view ----------
+
 function AccountDetail({ account, latestLog, onBack }) {
   const [posts, setPosts] = useState([])
   const [metricsByPost, setMetricsByPost] = useState({})
   const [analysesByPostId, setAnalysesByPostId] = useState({})
+  const [firstFrameByPostId, setFirstFrameByPostId] = useState({})
   const [analysingIds, setAnalysingIds] = useState(() => new Set())
   const [analyseError, setAnalyseError] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  // Bulk selection + bulk run state.
+  const [selectedIds, setSelectedIds] = useState(() => new Set())
+  const [bulkRunning, setBulkRunning] = useState(false)
+  const [bulkStatus, setBulkStatus] = useState({}) // post_id -> 'queued' | 'running' | 'done' | 'error'
+  const [bulkMessage, setBulkMessage] = useState(null)
+  // Percentile selector — "Top N% by views" quick pick over the eligible set.
+  const [percentile, setPercentile] = useState(null) // null | 2.5 | 5 | 10 | 20
+  // When true, the grid only renders selected posts. Automatically turns on
+  // when a percentile pill is active so the user can see exactly what was
+  // picked. Can be toggled manually off/on from the bulk bar.
+  const [onlySelected, setOnlySelected] = useState(false)
+  // Last bulk-analyse run for THIS account, hydrated from localStorage on
+  // mount so the user can see what happened on a previous visit. Shape:
+  // { startedAt, finishedAt, queuedIds: string[], succeeded, failed, errors }.
+  const [lastRun, setLastRun] = useState(() => readLastBulkRun(account.id))
+
   async function refreshAnalysesForPosts(postIds) {
     if (!postIds || postIds.length === 0) {
       setAnalysesByPostId({})
+      setFirstFrameByPostId({})
       return
     }
     try {
       const idList = postIds.map(id => `"${id}"`).join(',')
       const rows = await fetchTable(
-        `video_analyses?source=eq.organic_post&source_id=in.(${idList})&status=in.(processing,complete)&select=id,source_id,status`
+        `video_analyses?source=eq.organic_post&source_id=in.(${idList})&status=in.(processing,complete)&select=id,source_id,status,transcript_status,ocr_status,ai_analysis`
       )
       const map = {}
       for (const r of rows) {
         if (!map[r.source_id]) map[r.source_id] = r
       }
       setAnalysesByPostId(map)
+
+      // Pull first-frame URL (shot_number=1) from video_shots for each analysed post.
+      // Supabase-hosted URLs bypass Instagram/FB hotlink blocks so we prefer them over post.thumbnail_url.
+      const analysisIds = Object.values(map).map(a => `"${a.id}"`)
+      if (analysisIds.length > 0) {
+        try {
+          const shots = await fetchTable(
+            `video_shots?video_analysis_id=in.(${analysisIds.join(',')})&shot_number=eq.1&select=video_analysis_id,frame_url`
+          )
+          const frameByAnalysis = {}
+          for (const s of shots) {
+            if (s.frame_url) frameByAnalysis[s.video_analysis_id] = s.frame_url
+          }
+          const frameByPost = {}
+          for (const [postId, analysis] of Object.entries(map)) {
+            const fu = frameByAnalysis[analysis.id]
+            if (fu) frameByPost[postId] = fu
+          }
+          setFirstFrameByPostId(frameByPost)
+        } catch (e) {
+          console.warn('Could not load first-frame urls:', e)
+          setFirstFrameByPostId({})
+        }
+      } else {
+        setFirstFrameByPostId({})
+      }
     } catch (e) {
       console.warn('Could not load existing analyses:', e)
     }
@@ -256,6 +488,7 @@ function AccountDetail({ account, latestLog, onBack }) {
         } else {
           setMetricsByPost({})
           setAnalysesByPostId({})
+          setFirstFrameByPostId({})
         }
       } catch (e) {
         if (!cancelled) setError(e.message)
@@ -267,6 +500,123 @@ function AccountDetail({ account, latestLog, onBack }) {
     return () => { cancelled = true }
   }, [account.id])
 
+  // Phase 2+3 pipeline: transcribe → OCR → merge → AI analysis.
+  // Each step reads video_shots/video_analyses directly; we just kick them
+  // off in sequence from the frontend so the Railway worker and edge
+  // functions stay decoupled.
+  //
+  // transcribe-video and ocr-video-frames both have observability columns
+  // on video_analyses (`transcript_status`, `ocr_status`) so partial/error
+  // states surface in the UI without needing to retry here. We still do
+  // up to 2 client-side retries on transient HTTP (429, 5xx, network drop)
+  // because the edge function writes its status column AFTER it succeeds,
+  // so a gateway blip before that write leaves the row in pending — retrying
+  // the edge function in that case is safe and idempotent.
+  async function runPipelineSteps(analysisId) {
+    if (!analysisId) return
+    const steps = [
+      { name: 'transcribe-video', retries: 2, retryDelayMs: 2000 },
+      { name: 'ocr-video-frames', retries: 2, retryDelayMs: 2000 },
+      { name: 'merge-video-script', retries: 0, retryDelayMs: 0 },
+      { name: 'ai-analyse-video', retries: 0, retryDelayMs: 0 },
+    ]
+    for (const step of steps) {
+      let finalResp = null
+      let finalErr = null
+      for (let attempt = 1; attempt <= step.retries + 1; attempt++) {
+        try {
+          const r = await fetch(`${supabaseUrl}/functions/v1/${step.name}`, {
+            method: 'POST',
+            headers: fnHeaders,
+            body: JSON.stringify({ analysis_id: analysisId }),
+          })
+          finalResp = r
+          if (r.ok) {
+            // Log the observability fields each step exposes so the bulk
+            // worker's progress is debuggable from the console.
+            try {
+              const body = await r.clone().json()
+              if (step.name === 'transcribe-video') {
+                const cov = typeof body.coverage === 'number' ? body.coverage.toFixed(2) : 'n/a'
+                console.log(
+                  `[organic pipeline] transcribe-video ok: status=${body.transcript_status}, ` +
+                  `attempts=${body.attempts}, coverage=${cov}, chars=${body.char_count}`,
+                )
+              } else if (step.name === 'ocr-video-frames') {
+                const cov = typeof body.coverage === 'number' ? body.coverage.toFixed(2) : 'n/a'
+                const batchErrs = Array.isArray(body.batch_errors) ? body.batch_errors.length : 0
+                console.log(
+                  `[organic pipeline] ocr-video-frames ok: status=${body.ocr_status}, ` +
+                  `shots=${body.shots_updated}/${body.shots_processed}, ` +
+                  `coverage=${cov}, batch_errors=${batchErrs}/${body.total_batches}`,
+                )
+              } else {
+                console.log(`[organic pipeline] ${step.name} ok`)
+              }
+            } catch {
+              // Body parse is best-effort; don't fail the pipeline on shape drift.
+            }
+            break
+          }
+          const retryable = r.status === 429 || r.status >= 500
+          console.warn(
+            `[organic pipeline] ${step.name} attempt ${attempt}/${step.retries + 1} returned ${r.status} ` +
+            `(retryable=${retryable})`,
+          )
+          if (!retryable || attempt > step.retries) break
+        } catch (e) {
+          finalErr = e
+          console.warn(
+            `[organic pipeline] ${step.name} attempt ${attempt}/${step.retries + 1} threw:`,
+            e,
+          )
+          if (attempt > step.retries) break
+        }
+        if (step.retryDelayMs) {
+          await new Promise((res) => setTimeout(res, step.retryDelayMs))
+        }
+      }
+      if (finalErr || (finalResp && !finalResp.ok)) {
+        const statusLabel = finalErr ? 'threw' : `${finalResp.status}`
+        console.warn(
+          `[organic pipeline] ${step.name} gave up after retries (${statusLabel}) for ${analysisId}`,
+        )
+      }
+    }
+  }
+
+  // analyseOne now drives the full pipeline: Phase 1 (shots, contact sheet
+  // via analyse-video → Railway worker) then Phase 2+3 (transcript, OCR,
+  // merged script, AI analysis). Returns the analysis id so callers can
+  // surface it if needed. 409 "already exists" is treated as success and
+  // the pipeline is still re-run for that analysis, which is idempotent
+  // because transcribe-video / ocr-video-frames dedup against their status
+  // columns.
+  async function analyseOne(post) {
+    const res = await fetch(
+      `${supabaseUrl}/functions/v1/analyse-video`,
+      {
+        method: 'POST',
+        headers: fnHeaders,
+        body: JSON.stringify({ source: 'organic_post', source_id: post.id }),
+      }
+    )
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok && res.status !== 409) {
+      throw new Error(data.error || `HTTP ${res.status}`)
+    }
+    const analysisId = data.analysis_id || data.existing_analysis_id || null
+    // Phase 2+3: drive transcript / OCR / merge / AI from the frontend.
+    if (analysisId) {
+      try {
+        await runPipelineSteps(analysisId)
+      } catch (e) {
+        console.warn(`[organic pipeline] top-level failure for ${analysisId}:`, e)
+      }
+    }
+    return { ...data, analysis_id: analysisId }
+  }
+
   async function handleAnalyse(post) {
     if (!post?.id) return
     setAnalyseError(null)
@@ -276,19 +626,7 @@ function AccountDetail({ account, latestLog, onBack }) {
       return next
     })
     try {
-      const res = await fetch(
-        `${supabaseUrl}/functions/v1/analyse-video`,
-        {
-          method: 'POST',
-          headers: fnHeaders,
-          body: JSON.stringify({ source: 'organic_post', source_id: post.id }),
-        }
-      )
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok && res.status !== 409) {
-        throw new Error(data.error || `HTTP ${res.status}`)
-      }
-      // 409 means "already exists" which is fine — just refresh the map.
+      await analyseOne(post)
       await refreshAnalysesForPosts(posts.map(p => p.id))
     } catch (e) {
       setAnalyseError(`Could not analyse: ${e.message}`)
@@ -299,6 +637,110 @@ function AccountDetail({ account, latestLog, onBack }) {
         return next
       })
     }
+  }
+
+  // --- Bulk selection handlers ---
+
+  const selectablePosts = useMemo(
+    () => posts.filter(p => isVideoPost(p) && !analysesByPostId[p.id]),
+    [posts, analysesByPostId]
+  )
+
+  function toggleSelect(postId) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(postId)) next.delete(postId)
+      else next.add(postId)
+      return next
+    })
+  }
+
+  function selectAllEligible() {
+    setSelectedIds(new Set(selectablePosts.map(p => p.id)))
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set())
+    setPercentile(null)
+    setOnlySelected(false)
+  }
+
+  // Rank the eligible pool by latest views desc, take ceil(N * pct/100).
+  // Falls back to 0 for posts with no metrics yet — they sort last, fine.
+  function selectTopPercentile(pct) {
+    if (!pct || selectablePosts.length === 0) {
+      setPercentile(null)
+      setSelectedIds(new Set())
+      return
+    }
+    const cmp = makePostViewComparator(metricsByPost)
+    const sorted = [...selectablePosts].sort(cmp)
+    const n = Math.max(1, Math.ceil(selectablePosts.length * (pct / 100)))
+    const slice = sorted.slice(0, n)
+    setSelectedIds(new Set(slice.map(p => p.id)))
+    setPercentile(pct)
+    // Picking a percentile is useless if the user can't see which posts
+    // were picked. Default the grid to "only selected" so the user has
+    // immediate visual confirmation of the slice.
+    setOnlySelected(true)
+  }
+
+  async function runBulkAnalyse() {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0 || bulkRunning) return
+    const postsById = Object.fromEntries(posts.map(p => [p.id, p]))
+    const queue = ids.map(id => postsById[id]).filter(Boolean).filter(p => !analysesByPostId[p.id])
+    if (queue.length === 0) {
+      setBulkMessage('All selected posts are already analysed.')
+      return
+    }
+
+    const startedAt = Date.now()
+    setBulkRunning(true)
+    setBulkMessage(null)
+    const initial = {}
+    for (const p of queue) initial[p.id] = 'queued'
+    setBulkStatus(initial)
+
+    // Concurrency-limited runner.
+    let cursor = 0
+    let succeeded = 0
+    let failed = 0
+    async function worker() {
+      while (cursor < queue.length) {
+        const idx = cursor++
+        const p = queue[idx]
+        setBulkStatus(prev => ({ ...prev, [p.id]: 'running' }))
+        try {
+          await analyseOne(p)
+          succeeded++
+          setBulkStatus(prev => ({ ...prev, [p.id]: 'done' }))
+        } catch (e) {
+          failed++
+          setBulkStatus(prev => ({ ...prev, [p.id]: 'error' }))
+          console.warn('Bulk analyse failure for', p.id, e)
+        }
+      }
+    }
+    const workers = Array.from({ length: Math.min(BULK_CONCURRENCY, queue.length) }, () => worker())
+    await Promise.all(workers)
+
+    await refreshAnalysesForPosts(posts.map(p => p.id))
+    setBulkRunning(false)
+    setBulkMessage(`Bulk analyse finished: ${succeeded} queued, ${failed} error${failed === 1 ? '' : 's'}.`)
+    // Persist a summary so a return visit can still show what was run.
+    // Only includes ids from THIS run's queue (posts that were actually
+    // dispatched), not the pre-filter selection.
+    const runRecord = {
+      startedAt,
+      finishedAt: Date.now(),
+      queuedIds: queue.map(p => p.id),
+      succeeded,
+      failed,
+    }
+    writeLastBulkRun(account.id, runRecord)
+    setLastRun(runRecord)
+    setSelectedIds(new Set())
   }
 
   const totals = useMemo(() => {
@@ -314,9 +756,31 @@ function AccountDetail({ account, latestLog, onBack }) {
     return { views, likes, comments, count: posts.length }
   }, [posts, metricsByPost])
 
+  // What actually renders in the grid. Two overlays on top of the raw
+  // chronological list:
+  //   1. If a percentile is active OR the user has flipped "Only selected",
+  //      we show only the selected post ids.
+  //   2. Regardless of (1), if a percentile is active we sort views desc so
+  //      the #1 performer is at the top of the grid (matches the ranking
+  //      used to pick the slice).
+  const displayPosts = useMemo(() => {
+    let list = posts
+    if (onlySelected && selectedIds.size > 0) {
+      list = list.filter(p => selectedIds.has(p.id))
+    }
+    if (percentile) {
+      const cmp = makePostViewComparator(metricsByPost)
+      list = [...list].sort(cmp)
+    }
+    return list
+  }, [posts, selectedIds, onlySelected, percentile, metricsByPost])
+
   const platformLabel = account.platform === 'youtube' ? 'YouTube' : 'Instagram'
   const platformChip = account.platform === 'youtube' ? 'oi-chip-yt' : 'oi-chip-ig'
   const statusKey = latestLog?.status || (account.last_fetched_at ? 'success' : 'never')
+
+  const eligibleCount = selectablePosts.length
+  const selectedCount = selectedIds.size
 
   return (
     <div className="oi-root">
@@ -359,6 +823,100 @@ function AccountDetail({ account, latestLog, onBack }) {
         </div>
       </div>
 
+      {lastRun && !bulkRunning && (
+        <div className="oi-last-run-banner" role="status">
+          <div className="oi-last-run-banner-text">
+            <strong>Last Analyse run:</strong>{' '}
+            {lastRun.succeeded} completed
+            {lastRun.failed > 0 ? `, ${lastRun.failed} error${lastRun.failed === 1 ? '' : 's'}` : ''}
+            {' · '}
+            <span className="oi-last-run-banner-when">{formatRelativeTime(new Date(lastRun.finishedAt).toISOString())}</span>
+            {Array.isArray(lastRun.queuedIds) && lastRun.queuedIds.length > 0 && (
+              <span className="oi-last-run-banner-count">{' · '}{lastRun.queuedIds.length} post{lastRun.queuedIds.length === 1 ? '' : 's'}</span>
+            )}
+          </div>
+          <div className="oi-last-run-banner-actions">
+            {Array.isArray(lastRun.queuedIds) && lastRun.queuedIds.length > 0 && (
+              <button
+                type="button"
+                className="oi-bulk-btn oi-bulk-btn-ghost"
+                onClick={() => {
+                  // Restore the previous run's selection into the grid.
+                  setSelectedIds(new Set(lastRun.queuedIds))
+                  setPercentile(null)
+                  setOnlySelected(true)
+                }}
+                title="Filter the grid to the posts from the previous run"
+              >View last batch</button>
+            )}
+            <button
+              type="button"
+              className="oi-bulk-btn oi-bulk-btn-ghost"
+              onClick={() => {
+                clearLastBulkRun(account.id)
+                setLastRun(null)
+              }}
+              title="Hide this banner"
+            >Dismiss</button>
+          </div>
+        </div>
+      )}
+
+      {eligibleCount > 0 && (
+        <div className="oi-bulk-bar">
+          <div className="oi-bulk-bar-info">
+            <strong>{selectedCount}</strong> selected
+            <span className="oi-bulk-bar-dim"> of {eligibleCount} eligible video{eligibleCount === 1 ? '' : 's'}</span>
+            {bulkRunning && <span className="oi-bulk-bar-running">Running…</span>}
+            {bulkMessage && !bulkRunning && <span className="oi-bulk-bar-message">{bulkMessage}</span>}
+          </div>
+          <div className="oi-bulk-bar-pills" role="group" aria-label="Quick pick top N% by views">
+            <span className="oi-bulk-bar-pill-label">Top % by views:</span>
+            {[2.5, 5, 10, 20].map(pct => {
+              const n = Math.max(1, Math.ceil(eligibleCount * (pct / 100)))
+              const active = percentile === pct
+              return (
+                <button
+                  key={pct}
+                  type="button"
+                  className={`oi-bulk-pill${active ? ' active' : ''}`}
+                  disabled={bulkRunning || eligibleCount === 0}
+                  onClick={() => selectTopPercentile(pct)}
+                  title={`Select top ${pct}% by views (${n} of ${eligibleCount})`}
+                >{pct}% <span className="oi-bulk-pill-count">({n})</span></button>
+              )
+            })}
+          </div>
+          <div className="oi-bulk-bar-actions">
+            <button
+              type="button"
+              className="oi-bulk-btn oi-bulk-btn-ghost"
+              onClick={selectAllEligible}
+              disabled={bulkRunning || eligibleCount === 0 || selectedCount === eligibleCount}
+            >Select all</button>
+            <button
+              type="button"
+              className={`oi-bulk-btn oi-bulk-btn-ghost${onlySelected ? ' oi-bulk-btn-active' : ''}`}
+              onClick={() => setOnlySelected(v => !v)}
+              disabled={selectedCount === 0}
+              title={onlySelected ? 'Show all posts' : 'Show only the posts in your current selection'}
+            >{onlySelected ? 'Show all' : 'Only selected'}</button>
+            <button
+              type="button"
+              className="oi-bulk-btn oi-bulk-btn-ghost"
+              onClick={clearSelection}
+              disabled={bulkRunning || selectedCount === 0}
+            >Clear</button>
+            <button
+              type="button"
+              className="oi-bulk-btn oi-bulk-btn-primary"
+              onClick={runBulkAnalyse}
+              disabled={bulkRunning || selectedCount === 0}
+            >{bulkRunning ? 'Analysing…' : `Analyse ${selectedCount || ''} selected`.trim()}</button>
+          </div>
+        </div>
+      )}
+
       {error && <div className="oi-error">{error}</div>}
       {analyseError && <div className="oi-error">{analyseError}</div>}
 
@@ -368,14 +926,19 @@ function AccountDetail({ account, latestLog, onBack }) {
         <div className="oi-empty">No posts fetched for this account yet.</div>
       ) : (
         <div className="oi-posts-grid">
-          {posts.map(p => (
+          {displayPosts.map(p => (
             <PostCard
               key={p.id}
               post={p}
               metrics={metricsByPost[p.id]}
               analysisInfo={analysesByPostId[p.id]}
+              firstFrameUrl={firstFrameByPostId[p.id]}
               onAnalyse={handleAnalyse}
-              analysing={analysingIds.has(p.id)}
+              analysing={analysingIds.has(p.id) || bulkStatus[p.id] === 'running'}
+              bulkState={bulkStatus[p.id] || null}
+              selected={selectedIds.has(p.id)}
+              selectable={isVideoPost(p) && !analysesByPostId[p.id]}
+              onToggleSelect={toggleSelect}
             />
           ))}
         </div>
@@ -400,9 +963,6 @@ export default function OrganicIntel() {
     setLoading(true)
     setError(null)
     try {
-      // Phase 3b: single RPC returns account + latest log + post count.
-      // Replaces the Phase 3a client-side grouping of 500 logs + 5000 post ids.
-      // Phase 3c: parallel call for the last-7-days observability strip.
       const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
       const [rows, summaryRows] = await Promise.all([
         callRpc('list_organic_accounts_with_stats', {
@@ -449,7 +1009,6 @@ export default function OrganicIntel() {
       setLogsByAccount(latestByAccount)
       setPostsByAccount(counts)
 
-      // Aggregate the daily rows into per-platform totals for the strip.
       const emptyRoll = { runs: 0, successes: 0, errors: 0, posts_new: 0, cost_estimate: 0, yt_quota_units: 0 }
       const byPlatform = { instagram: null, youtube: null }
       for (const row of summaryRows || []) {

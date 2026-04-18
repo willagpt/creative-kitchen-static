@@ -410,9 +410,9 @@ body::after {
 .spinner-inline { display: inline-block; width: 14px; height: 14px; }
 
 /* Nav tabs */
-.nav-tabs { display: flex; gap: var(--space-xs); }
+.nav-tabs { display: flex; gap: var(--space-xs); flex-wrap: wrap; overflow-x: auto; max-width: 100%; min-width: 0; scrollbar-width: thin; }
 .nav-tab {
-  padding: var(--space-sm) var(--space-md); border-radius: 6px; border: none;
+  padding: var(--space-sm) var(--space-md); border-radius: 6px; border: none; flex-shrink: 0; white-space: nowrap;
   background: transparent; color: var(--text-2);
   font-family: var(--font-body); font-size: var(--text-sm); font-weight: var(--weight-medium);
   cursor: pointer; transition: all 0.2s;

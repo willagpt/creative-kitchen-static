@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Creator profile — Cut30</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --cream: #faf6ee;
+      --cream-2: #f2ecdf;
+      --cream-3: #e8dfc9;
+      --ink: #1c1614;
+      --ink-soft: #3a2f2a;
+      --muted: #776a5f;
+      --amber: #8b6f3e;
+      --amber-soft: #b8945d;
+      --amber-bg: #efe3c8;
+      --olive: #556344;
+      --danger: #a6442c;
+      --success: #4a6b3a;
+      --rule: #d6cab1;
+      --radius: 10px;
+      --radius-lg: 14px;
+      --shadow-sm: 0 1px 2px rgba(30, 22, 18, 0.06);
+      --shadow: 0 4px 18px rgba(30, 22, 18, 0.08);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--cream); color: var(--ink); }
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      font-size: 16px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    h1, h2, h3 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; margin: 0; color: var(--ink); letter-spacing: -0.01em; }
+    h1 { font-size: 44px; line-height: 1.05; }
+    h2 { font-size: 32px; line-height: 1.1; }
+    h3 { font-size: 22px; line-height: 1.2; }
+    p { margin: 0; color: var(--ink-soft); }
+    a { color: var(--amber); text-decoration: underline; text-underline-offset: 2px; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      max-width: 1200px;
+      margin: 0 auto;
+      min-height: 100vh;
+      gap: 48px;
+      padding: 48px 32px 96px;
+    }
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; gap: 24px; padding: 24px 18px 64px; }
+      .sidebar { position: static !important; }
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 32px;
+      align-self: start;
+      padding: 20px;
+      background: var(--cream-2);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+    }
+    .sidebar .eyebrow { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    .sidebar .for { font-family: 'Instrument Serif', serif; font-size: 26px; line-height: 1.1; margin-bottom: 16px; }
+    .progress-wrap { margin: 14px 0 18px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .progress-bar { height: 6px; background: var(--cream-3); border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--amber); transition: width .3s ease; width: 0%; }
+    .save-badge { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+    .save-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cream-3); }
+    .save-badge[data-state='pending'] .save-dot { background: var(--amber-soft); animation: pulse 1.2s ease-in-out infinite; }
+    .save-badge[data-state='saved'] .save-dot { background: var(--success); }
+    .save-badge[data-state='error'] .save-dot { background: var(--danger); }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+
+    .nav { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+    .nav li a {
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--rule);
+      color: var(--ink-soft);
+      font-size: 13px;
+      text-decoration: none;
+      transition: color .15s ease;
+    }
+    .nav li a:hover { color: var(--ink); }
+    .nav li a.is-active { color: var(--ink); font-weight: 600; }
+    .nav-mark { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--rule); display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: transparent; background: transparent; }
+    .nav-mark.is-full { background: var(--amber); border-color: var(--amber); color: var(--cream); }
+    .nav-mark.is-partial { background: var(--amber-bg); border-color: var(--amber-soft); }
+
+    .main { min-width: 0; }
+    .intro { margin-bottom: 48px; max-width: 680px; }
+    .intro p { margin-top: 14px; }
+    .intro .eyebrow { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--amber); margin-bottom: 14px; font-weight: 600; }
+
+    .section {
+      border-top: 1px solid var(--rule);
+      padding: 40px 0 8px;
+      scroll-margin-top: 32px;
+    }
+    .section:first-of-type { border-top: none; padding-top: 8px; }
+    .section-header { margin-bottom: 20px; max-width: 680px; }
+    .section-num { font-size: 12px; color: var(--amber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; font-weight: 600; }
+    .section-title { margin-bottom: 10px; }
+    .section-nudge { font-family: 'Instrument Serif', serif; font-style: italic; font-size: 17px; color: var(--muted); }
+
+    .field { margin: 0 0 20px; max-width: 680px; }
+    .field-label { display: block; font-weight: 600; font-size: 14px; color: var(--ink); margin-bottom: 6px; }
+    .field-help { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; font-style: italic; }
+    .field input[type=text], .field input[type=number], .field textarea {
+      width: 100%;
+      font: inherit;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      box-shadow: var(--shadow-sm);
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .field input:focus, .field textarea:focus {
+      outline: none;
+      border-color: var(--amber);
+      box-shadow: 0 0 0 3px rgba(139, 111, 62, 0.15);
+    }
+    .field textarea { min-height: 72px; resize: vertical; line-height: 1.5; }
+    .field textarea.tall { min-height: 120px; }
+    .field input[type=number] { max-width: 120px; }
+
+    .list-items { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+    .list-row { display: flex; gap: 8px; align-items: flex-start; }
+    .list-row input, .list-row textarea { flex: 1; }
+    .list-remove {
+      background: transparent; border: 1px solid var(--rule); color: var(--muted);
+      border-radius: var(--radius); padding: 6px 10px; cursor: pointer; font-size: 12px;
+      transition: color .15s, border-color .15s;
+    }
+    .list-remove:hover { color: var(--danger); border-color: var(--danger); }
+    .list-add {
+      background: transparent; border: 1px dashed var(--amber-soft); color: var(--amber);
+      border-radius: var(--radius); padding: 8px 12px; cursor: pointer; font: inherit;
+      font-size: 13px; font-weight: 500;
+    }
+    .list-add:hover { background: var(--amber-bg); }
+    .list-add:disabled { opacity: .5; cursor: not-allowed; }
+
+    .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+    .chip {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 8px 12px; background: #fff; border: 1px solid var(--rule);
+      border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 500;
+      color: var(--ink-soft); transition: all .15s ease; user-select: none;
+      text-align: center;
+    }
+    .chip input { position: absolute; opacity: 0; pointer-events: none; }
+    .chip:hover { border-color: var(--amber-soft); color: var(--ink); }
+    .chip.is-checked { background: var(--amber); border-color: var(--amber); color: var(--cream); }
+
+    .radio-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .dial { display: grid; grid-template-columns: 120px 1fr 120px 48px; gap: 12px; align-items: center; margin-bottom: 12px; }
+    .dial-left, .dial-right { font-size: 13px; color: var(--muted); }
+    .dial-left { text-align: right; }
+    .dial-value { font-family: 'Instrument Serif', serif; font-size: 22px; text-align: center; color: var(--amber); }
+    .dial input[type=range] {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 4px; background: var(--cream-3); border-radius: 99px; outline: none;
+    }
+    .dial input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 18px; height: 18px; border-radius: 50%; background: var(--amber);
+      cursor: pointer; border: 2px solid var(--cream);
+    }
+    .dial input[type=range]::-moz-range-thumb {
+      width: 18px; height: 18px; border-radius: 50%; background: var(--amber);
+      cursor: pointer; border: 2px solid var(--cream);
+    }
+    @media (max-width: 600px) {
+      .dial { grid-template-columns: 80px 1fr 80px 40px; gap: 8px; }
+      .dial-left, .dial-right { font-size: 11px; }
+    }
+
+    .swipe-row { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 8px; align-items: start; }
+    @media (max-width: 600px) { .swipe-row { grid-template-columns: 1fr; } }
+
+    .footer-actions {
+      margin-top: 48px; padding: 24px; background: var(--cream-2);
+      border: 1px solid var(--rule); border-radius: var(--radius-lg);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 20px; border-radius: var(--radius); font: inherit; font-weight: 600;
+      cursor: pointer; border: 1px solid transparent; transition: all .15s ease;
+    }
+    .btn-primary { background: var(--ink); color: var(--cream); }
+    .btn-primary:hover { background: var(--amber); }
+    .btn-secondary { background: transparent; border-color: var(--ink); color: var(--ink); }
+    .btn-secondary:hover { background: var(--cream-3); }
+    .footer-note { font-size: 13px; color: var(--muted); }
+
+    .banner { padding: 16px 20px; border-radius: var(--radius); margin-bottom: 24px; font-size: 14px; }
+    .banner-error { background: #f7e3dc; border: 1px solid #dcb0a0; color: #6a2b18; }
+    .banner-complete { background: #dfe8d5; border: 1px solid #9cb082; color: #2f4623; }
+
+    .loading {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 120px 24px; gap: 16px; color: var(--muted); text-align: center;
+    }
+    .spinner { width: 32px; height: 32px; border: 3px solid var(--cream-3); border-top-color: var(--amber); border-radius: 50%; animation: spin .9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="loading"><div class="spinner"></div><div id="boot-msg">Loading your profile…</div></div>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    var SB_URL = 'https://ifrxylvoufncdxyltgqt.supabase.co';
+    var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA';
+    var FN_URL = SB_URL + '/functions/v1/save-creator-profile';
+
+    var params = new URLSearchParams(window.location.search);
+    var SLUG = (params.get('s') || params.get('slug') || '').trim();
+
+    var SECTIONS = [
+      {
+        key: 'identity', title: 'Identity + background',
+        nudge: 'Who you are, the shortest version of your life story, and the arc that brought you to Chefly.',
+        fields: [
+          { key: 'name_role', label: 'Name + role', type: 'text' },
+          { key: 'one_line_bio', label: "One-line bio (how you'd introduce yourself at a dinner party)", type: 'textarea' },
+          { key: 'past_lives', label: 'Past lives / career arc (jobs, countries, pivots, stuff you used to do)', type: 'textarea', tall: true },
+          { key: 'where_from_and_now', label: "Where you're from + where you live now", type: 'text' },
+          { key: 'languages', label: 'Languages you speak (and which one you swear in)', type: 'text' },
+          { key: 'upbringing_notes', label: 'Anything about your upbringing that shows up in how you think about food', type: 'textarea' }
+        ]
+      },
+      {
+        key: 'voice', title: 'Voice + vocabulary',
+        nudge: 'How you actually talk. The stuff that makes you sound like you and not a press release.',
+        fields: [
+          { key: 'speaking_style', label: "Three people who'd describe your speaking style — what would they say?", type: 'textarea' },
+          { key: 'catchphrases', label: "Words you use a lot (catchphrases, filler words, things you say when you're excited)", type: 'textarea' },
+          { key: 'avoid_words', label: "Words you'd never say on camera (or in a caption)", type: 'textarea' },
+          {
+            key: 'tone_dials', label: 'Tone dials', type: 'dials',
+            help: 'Drag each dial to where you land.',
+            dials: [
+              { key: 'formal_casual', left: 'Formal', right: 'Casual' },
+              { key: 'serious_playful', left: 'Serious', right: 'Playful' },
+              { key: 'gentle_direct', left: 'Gentle', right: 'Direct' },
+              { key: 'warm_dry', left: 'Warm', right: 'Dry' },
+              { key: 'measured_opinionated', left: 'Measured', right: 'Opinionated' }
+            ]
+          },
+          { key: 'sentence_like_you', label: 'One sentence that sounds exactly like you', type: 'textarea' },
+          { key: 'sentence_not_you', label: "One sentence that sounds nothing like you (so we know what to avoid)", type: 'textarea' }
+        ]
+      },
+      {
+        key: 'interests', title: 'Interests + obsessions',
+        nudge: "Your angle lives here. A format only compounds when it rides an angle no one else can.",
+        fields: [
+          { key: 'top_interests', label: "Three to five things you're deeply into outside of Chefly", help: 'e.g. sea swimming, Formula 1, interior design, behavioural economics, knitting…', type: 'list', max: 5, placeholder: 'An interest' },
+          { key: 'dinner_topic', label: 'One topic you could talk about at dinner for a full hour without running out', type: 'textarea' },
+          { key: 'rants', label: 'Things you could rant about for 5 minutes without preparation', type: 'textarea' },
+          { key: 'pet_peeves', label: 'Pet peeves (specific, not vague)', type: 'textarea' },
+          { key: 'niche_opinion', label: "A niche opinion you hold that most people don't", type: 'textarea' },
+          { key: 'currently_obsessed', label: "What you're currently obsessed with (books, podcasts, shows, creators)", type: 'textarea', tall: true }
+        ]
+      },
+      {
+        key: 'aesthetic', title: 'Taste + aesthetic',
+        nudge: 'What you find beautiful, what makes you roll your eyes, what world your content should live inside.',
+        fields: [
+          { key: 'loved_creators', label: 'Creators you love on IG / TikTok / YouTube (handles or description)', type: 'textarea' },
+          { key: 'contrasting_creators', label: "Creators who do what you do but in a way you'd never do it", type: 'textarea' },
+          { key: 'three_adjectives', label: 'Three adjectives for your personal aesthetic', help: 'e.g. "warm, textural, a bit messy" or "minimal, calm, precise"', type: 'text' },
+          { key: 'colours_materials', label: 'Colours, materials, or textures that feel like you', type: 'textarea' },
+          { key: 'brand_worlds', label: "Brands or worlds (not just food) you'd want Chefly's feel to sit near", help: 'e.g. Aesop, Toast, Monocle, Cereal, School of Life…', type: 'textarea' },
+          { key: 'food_cringes', label: 'Things in the food-content world that make you cringe', type: 'textarea' }
+        ]
+      },
+      {
+        key: 'food_knowledge', title: 'Food knowledge + what you actually know',
+        nudge: "Where your authority is real, and where you'd rather not pretend.",
+        fields: [
+          { key: 'food_background', label: 'Your actual food/cooking background (home cook, trained chef, curious amateur, etc.)', type: 'textarea' },
+          { key: 'insider_knowledge', label: "What you know about UK ready-meal industry, DTC food, or the business side of Chefly that most people don't", type: 'textarea', tall: true },
+          { key: 'confident_topics', label: 'Things you could speak on with real confidence', help: 'List up to 5.', type: 'list', max: 5, placeholder: 'A topic' },
+          { key: 'not_claiming', label: "Things you'd rather not claim expertise in (so we don't accidentally push you there)", type: 'textarea' }
+        ]
+      },
+      {
+        key: 'opinions', title: 'Opinions + hot takes',
+        nudge: "Fuel for 'Hot take', 'Comparison', and 'Strange but true' formats. Stronger and more specific is better.",
+        fields: [
+          { key: 'uk_food_opinions', label: 'Three strong opinions about the UK food industry', type: 'list', max: 3, placeholder: 'An opinion' },
+          { key: 'ready_meal_opinions', label: 'Three strong opinions about ready meals, meal kits, or prepared-food DTC', type: 'list', max: 3, placeholder: 'An opinion' },
+          { key: 'dont_cancel_me', label: "A \"don't cancel me but…\" take you'd actually stand behind", type: 'textarea' },
+          { key: 'industry_myth', label: "An industry myth you'd love to dismantle on camera", type: 'textarea' },
+          { key: 'competitor_feelings', label: 'A competitor or category you have strong feelings about (private, not for broadcasting without review)', type: 'textarea' }
+        ]
+      },
+      {
+        key: 'story', title: 'Personal story hooks',
+        nudge: "For 'My Story' carousels and human-hook content. Nothing you wouldn't want on the internet.",
+        fields: [
+          { key: 'why_chefly', label: 'Why you started Chefly (the real reason, not the pitch-deck reason)', type: 'textarea', tall: true },
+          { key: 'frustration_fix', label: 'A frustration that made you think "someone has to fix this"', type: 'textarea' },
+          { key: 'pivotal_moment', label: 'A pivotal moment in the business so far', type: 'textarea' },
+          { key: 'changed_mind', label: "Something you've publicly changed your mind about", type: 'textarea' },
+          { key: 'mistake_learned', label: "A mistake you've learned from that'd be useful to someone else", type: 'textarea' }
+        ]
+      },
+      {
+        key: 'operations', title: 'Operational reality',
+        nudge: 'What you can actually sustain. The content plan is only as good as its fit with your week.',
+        fields: [
+          { key: 'film_days', label: 'Days of the week you can realistically film', type: 'checkboxes', options: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+          { key: 'time_blocks', label: 'Time blocks per filming day', help: 'e.g. 1 hour before the kids wake up, 2 hours on Thursday afternoons.', type: 'textarea' },
+          { key: 'batch_or_drip', label: 'Batch shooter or drip shooter?', type: 'radio-pills', options: [{ value: 'batch', label: 'Batch (one big day)' }, { value: 'drip', label: 'Drip (little and often)' }, { value: 'both', label: 'Both' }] },
+          { key: 'gear', label: 'Gear you have right now (phone model, ring light, mic, tripod, anything else)', type: 'textarea' },
+          { key: 'locations', label: 'Filming locations available to you', help: 'e.g. home kitchen, garden, Chefly kitchen, outdoors…', type: 'textarea' },
+          { key: 'family_on_camera', label: 'Are kids, partner, pets okay in frame?', help: 'Be specific — "face visible no, from behind fine", etc.', type: 'textarea' },
+          { key: 'morning_or_night', label: 'Morning person or night person — when are you sharpest on camera?', type: 'text' },
+          { key: 'sustainable_weekly', label: 'Realistic sustainable posting floor (posts per week, forever, no burnout)', help: 'Cut30 recommends 3 to 7/week.', type: 'number', min: 0, max: 14 },
+          { key: 'peak_weekly', label: 'Realistic peak cadence for a short sprint (e.g. 7-day challenge week)', type: 'number', min: 0, max: 21 }
+        ]
+      },
+      {
+        key: 'platforms', title: 'Platform preferences',
+        nudge: "Where you'll actually enjoy showing up.",
+        fields: [
+          { key: 'loved_platforms', label: 'Platforms you already use personally and enjoy', type: 'checkboxes', options: ['Instagram', 'TikTok', 'YouTube', 'Substack', 'LinkedIn', 'Threads', 'Twitter/X', 'Pinterest', 'Other'] },
+          { key: 'avoid_platforms', label: "Platforms you'd rather avoid (and why if useful)", type: 'textarea' },
+          { key: 'existing_handles', label: 'Existing accounts (handles) where you already post or have a following', type: 'textarea' },
+          { key: 'copy_mix_creator', label: "A creator whose platform mix you'd want to copy", type: 'textarea' }
+        ]
+      },
+      {
+        key: 'no_gos', title: 'Non-negotiables + no-gos',
+        nudge: 'Setting these now saves painful edits later.',
+        fields: [
+          { key: 'topics_off_limits', label: "Topics you won't discuss on camera", type: 'textarea' },
+          { key: 'personal_off_camera', label: 'Family members, home details, or personal information that stay off-camera', type: 'textarea' },
+          { key: 'wrong_formats', label: 'Formats that feel wrong for you', help: 'e.g. dancing to trends, any face-to-camera lip-sync, certain kinds of vulnerability.', type: 'textarea' },
+          { key: 'wont_name', label: "Industries / brands / people you won't name", type: 'textarea' },
+          { key: 'hard_no', label: "Anything else that's a hard no", type: 'textarea' }
+        ]
+      },
+      {
+        key: 'swipe_file', title: 'Swipe file starter',
+        nudge: "Five to ten videos, creators, or posts you'd want to borrow energy from.",
+        fields: [
+          { key: 'swipes', label: 'Swipe items', help: 'Paste a URL or describe it, plus a one-line note on why you like it.', type: 'swipe-list', max: 10 }
+        ]
+      },
+      {
+        key: 'wildcard', title: 'Wildcard',
+        nudge: "Anything that doesn't fit above but feels important for us to know.",
+        fields: [
+          { key: 'notes', label: 'Wildcard notes', type: 'textarea', tall: true }
+        ]
+      }
+    ];
+
+    var state = {
+      meta: null,
+      profile: {},
+      loaded: false,
+      saving: false,
+      lastSavedAt: null,
+      error: null,
+      saveTimer: null
+    };
+
+    var LS_KEY = 'cut30-profile-' + SLUG;
+
+    function qs(sel, root) { return (root || document).querySelector(sel); }
+    function qsa(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+    function el(tag, attrs, children) {
+      var n = document.createElement(tag);
+      if (attrs) Object.keys(attrs).forEach(function (k) {
+        if (k === 'class') n.className = attrs[k];
+        else if (k === 'html') n.innerHTML = attrs[k];
+        else if (k.slice(0, 2) === 'on' && typeof attrs[k] === 'function') n.addEventListener(k.slice(2), attrs[k]);
+        else if (attrs[k] != null) n.setAttribute(k, attrs[k]);
+      });
+      (children || []).forEach(function (c) {
+        if (c == null) return;
+        n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+      });
+      return n;
+    }
+    function deepGet(obj, path) {
+      var parts = path.split('.');
+      var cur = obj;
+      for (var i = 0; i < parts.length; i++) {
+        if (cur == null) return undefined;
+        cur = cur[parts[i]];
+      }
+      return cur;
+    }
+    function deepSet(obj, path, value) {
+      var parts = path.split('.');
+      var cur = obj;
+      for (var i = 0; i < parts.length - 1; i++) {
+        if (cur[parts[i]] == null || typeof cur[parts[i]] !== 'object') cur[parts[i]] = {};
+        cur = cur[parts[i]];
+      }
+      cur[parts[parts.length - 1]] = value;
+    }
+    function isFilled(v) {
+      if (v == null) return false;
+      if (typeof v === 'string') return v.trim().length > 0;
+      if (typeof v === 'number') return Number.isFinite(v);
+      if (Array.isArray(v)) return v.some(isFilled);
+      if (typeof v === 'object') return Object.keys(v).some(function (k) { return isFilled(v[k]); });
+      return false;
+    }
+    function sectionCompletion(section) {
+      var total = 0, filled = 0;
+      section.fields.forEach(function (f) {
+        if (f.type === 'dials') {
+          f.dials.forEach(function (d) {
+            total++;
+            if (isFilled(deepGet(state.profile, section.key + '.' + f.key + '.' + d.key))) filled++;
+          });
+        } else {
+          total++;
+          if (isFilled(deepGet(state.profile, section.key + '.' + f.key))) filled++;
+        }
+      });
+      return { total: total, filled: filled };
+    }
+    function overallPercent() {
+      var total = 0, filled = 0;
+      SECTIONS.forEach(function (s) {
+        var c = sectionCompletion(s);
+        total += c.total; filled += c.filled;
+      });
+      if (total === 0) return 0;
+      return Math.round((filled / total) * 100);
+    }
+    function loadLocal() {
+      try { var raw = localStorage.getItem(LS_KEY); if (!raw) return null; return JSON.parse(raw); } catch (e) { return null; }
+    }
+    function saveLocal() {
+      try { localStorage.setItem(LS_KEY, JSON.stringify({ profile: state.profile, ts: Date.now() })); } catch (e) {}
+    }
+    function setSaveState(s) {
+      var badge = qs('#save-badge'); if (!badge) return;
+      badge.setAttribute('data-state', s);
+      var label = qs('#save-label'); if (!label) return;
+      if (s === 'pending') label.textContent = 'Saving…';
+      else if (s === 'saved') label.textContent = 'Saved ' + relTime(state.lastSavedAt);
+      else if (s === 'error') label.textContent = 'Save failed — retrying';
+      else label.textContent = 'Changes sync automatically';
+    }
+    function relTime(ts) {
+      if (!ts) return '';
+      var d = Math.round((Date.now() - ts) / 1000);
+      if (d < 5) return 'just now';
+      if (d < 60) return d + 's ago';
+      if (d < 3600) return Math.round(d / 60) + 'm ago';
+      return Math.round(d / 3600) + 'h ago';
+    }
+    function scheduleSave() {
+      saveLocal();
+      setSaveState('pending');
+      if (state.saveTimer) clearTimeout(state.saveTimer);
+      state.saveTimer = setTimeout(flushSave, 1200);
+    }
+    function flushSave() {
+      if (state.saving) { state.saveTimer = setTimeout(flushSave, 400); return; }
+      state.saving = true;
+      var percent = overallPercent();
+      var body = JSON.stringify({ slug: SLUG, profile: state.profile, completion_percent: percent });
+      fetch(FN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY },
+        body: body
+      }).then(function (r) {
+        if (!r.ok) return r.text().then(function (t) { throw new Error('HTTP ' + r.status + ': ' + t); });
+        return r.json();
+      }).then(function (data) {
+        state.lastSavedAt = Date.now();
+        if (data && data.profile) state.meta = Object.assign(state.meta || {}, data.profile);
+        setSaveState('saved');
+      }).catch(function (err) {
+        console.error('save failed', err);
+        setSaveState('error');
+        if (state.saveTimer) clearTimeout(state.saveTimer);
+        state.saveTimer = setTimeout(flushSave, 4000);
+      }).finally(function () {
+        state.saving = false;
+      });
+    }
+    function beaconSave() {
+      try {
+        var percent = overallPercent();
+        var blob = new Blob([JSON.stringify({ slug: SLUG, profile: state.profile, completion_percent: percent })], { type: 'application/json' });
+        if (navigator.sendBeacon) navigator.sendBeacon(FN_URL, blob);
+      } catch (e) {}
+    }
+    function setProfileValue(path, value) {
+      deepSet(state.profile, path, value);
+      updateProgress();
+      scheduleSave();
+    }
+    function updateProgress() {
+      var pct = overallPercent();
+      var fill = qs('#progress-fill');
+      var pctLabel = qs('#progress-pct');
+      if (fill) fill.style.width = pct + '%';
+      if (pctLabel) pctLabel.textContent = pct + '%';
+      SECTIONS.forEach(function (s) {
+        var c = sectionCompletion(s);
+        var mark = qs('#nav-mark-' + s.key);
+        if (!mark) return;
+        mark.className = 'nav-mark';
+        if (c.total > 0 && c.filled === c.total) mark.classList.add('is-full');
+        else if (c.filled > 0) mark.classList.add('is-partial');
+      });
+    }
+
+    function renderField(section, field) {
+      var path = section.key + '.' + field.key;
+      var container = el('div', { class: 'field' }, [ el('label', { class: 'field-label' }, [field.label]) ]);
+      if (field.help) container.appendChild(el('span', { class: 'field-help' }, [field.help]));
+
+      if (field.type === 'text') {
+        var v = deepGet(state.profile, path) || '';
+        var input = el('input', { type: 'text', value: v, placeholder: field.placeholder || '' });
+        input.addEventListener('input', function () { setProfileValue(path, input.value); });
+        container.appendChild(input);
+      } else if (field.type === 'number') {
+        var nv = deepGet(state.profile, path);
+        var ninput = el('input', { type: 'number', value: nv == null ? '' : nv, min: field.min != null ? field.min : '', max: field.max != null ? field.max : '' });
+        ninput.addEventListener('input', function () {
+          var n = ninput.value === '' ? null : Number(ninput.value);
+          setProfileValue(path, n);
+        });
+        container.appendChild(ninput);
+      } else if (field.type === 'textarea') {
+        var tv = deepGet(state.profile, path) || '';
+        var ta = el('textarea', { placeholder: field.placeholder || '', rows: field.tall ? 5 : 3 });
+        if (field.tall) ta.classList.add('tall');
+        ta.value = tv;
+        ta.addEventListener('input', function () { setProfileValue(path, ta.value); });
+        container.appendChild(ta);
+      } else if (field.type === 'list') {
+        var current = (deepGet(state.profile, path) || []).slice();
+        var wrap = el('div', { class: 'list-items' });
+        var addBtn = el('button', { type: 'button', class: 'list-add' }, ['+ Add']);
+        function rerender() {
+          wrap.innerHTML = '';
+          current.forEach(function (val, idx) {
+            var row = el('div', { class: 'list-row' });
+            var input = el('input', { type: 'text', value: val || '', placeholder: field.placeholder || '' });
+            input.addEventListener('input', function () { current[idx] = input.value; setProfileValue(path, current.slice()); });
+            var rm = el('button', { type: 'button', class: 'list-remove' }, ['Remove']);
+            rm.addEventListener('click', function () { current.splice(idx, 1); setProfileValue(path, current.slice()); rerender(); });
+            row.appendChild(input); row.appendChild(rm); wrap.appendChild(row);
+          });
+          addBtn.disabled = field.max ? current.length >= field.max : false;
+        }
+        addBtn.addEventListener('click', function () {
+          if (field.max && current.length >= field.max) return;
+          current.push(''); setProfileValue(path, current.slice()); rerender();
+        });
+        rerender();
+        container.appendChild(wrap); container.appendChild(addBtn);
+      } else if (field.type === 'checkboxes') {
+        var values = deepGet(state.profile, path) || [];
+        var grid = el('div', { class: 'checkbox-grid' });
+        field.options.forEach(function (opt) {
+          var isChecked = values.indexOf(opt) !== -1;
+          var label = el('label', { class: 'chip' + (isChecked ? ' is-checked' : '') });
+          var cb = el('input', { type: 'checkbox' });
+          cb.checked = isChecked;
+          cb.addEventListener('change', function () {
+            var next = (deepGet(state.profile, path) || []).slice();
+            if (cb.checked) { if (next.indexOf(opt) === -1) next.push(opt); }
+            else { next = next.filter(function (x) { return x !== opt; }); }
+            setProfileValue(path, next);
+            label.className = 'chip' + (cb.checked ? ' is-checked' : '');
+          });
+          label.appendChild(cb);
+          label.appendChild(document.createTextNode(opt));
+          grid.appendChild(label);
+        });
+        container.appendChild(grid);
+      } else if (field.type === 'radio-pills') {
+        var rv = deepGet(state.profile, path);
+        var pills = el('div', { class: 'radio-pills' });
+        field.options.forEach(function (opt) {
+          var isChecked = rv === opt.value;
+          var pill = el('label', { class: 'chip' + (isChecked ? ' is-checked' : '') });
+          var r = el('input', { type: 'radio', name: path });
+          r.checked = isChecked;
+          r.addEventListener('change', function () {
+            if (!r.checked) return;
+            setProfileValue(path, opt.value);
+            qsa('input[name="' + path + '"]').forEach(function (sib) {
+              sib.parentElement.className = 'chip' + (sib.checked ? ' is-checked' : '');
+            });
+          });
+          pill.appendChild(r);
+          pill.appendChild(document.createTextNode(opt.label));
+          pills.appendChild(pill);
+        });
+        container.appendChild(pills);
+      } else if (field.type === 'dials') {
+        field.dials.forEach(function (d) {
+          var dpath = path + '.' + d.key;
+          var cv = deepGet(state.profile, dpath);
+          var dial = el('div', { class: 'dial' });
+          dial.appendChild(el('span', { class: 'dial-left' }, [d.left]));
+          var slider = el('input', { type: 'range', min: 1, max: 10, step: 1, value: cv == null ? 5 : cv });
+          var val = el('span', { class: 'dial-value' }, [cv == null ? '—' : String(cv)]);
+          slider.addEventListener('input', function () {
+            val.textContent = slider.value;
+            setProfileValue(dpath, Number(slider.value));
+          });
+          dial.appendChild(slider);
+          dial.appendChild(el('span', { class: 'dial-right' }, [d.right]));
+          dial.appendChild(val);
+          container.appendChild(dial);
+        });
+      } else if (field.type === 'swipe-list') {
+        var swipes = (deepGet(state.profile, path) || []).slice();
+        var swrap = el('div', { class: 'list-items' });
+        var sAdd = el('button', { type: 'button', class: 'list-add' }, ['+ Add swipe']);
+        function srender() {
+          swrap.innerHTML = '';
+          swipes.forEach(function (item, idx) {
+            var row = el('div', { class: 'swipe-row' });
+            var urlIn = el('input', { type: 'text', placeholder: 'URL or description', value: (item && item.url) || '' });
+            var noteIn = el('input', { type: 'text', placeholder: 'Why you like it', value: (item && item.note) || '' });
+            urlIn.addEventListener('input', function () { swipes[idx] = { url: urlIn.value, note: noteIn.value }; setProfileValue(path, swipes.slice()); });
+            noteIn.addEventListener('input', function () { swipes[idx] = { url: urlIn.value, note: noteIn.value }; setProfileValue(path, swipes.slice()); });
+            var rm = el('button', { type: 'button', class: 'list-remove' }, ['×']);
+            rm.addEventListener('click', function () { swipes.splice(idx, 1); setProfileValue(path, swipes.slice()); srender(); });
+            row.appendChild(urlIn); row.appendChild(noteIn); row.appendChild(rm);
+            swrap.appendChild(row);
+          });
+          sAdd.disabled = field.max ? swipes.length >= field.max : false;
+        }
+        sAdd.addEventListener('click', function () {
+          if (field.max && swipes.length >= field.max) return;
+          swipes.push({ url: '', note: '' });
+          setProfileValue(path, swipes.slice()); srender();
+        });
+        srender();
+        container.appendChild(swrap); container.appendChild(sAdd);
+      }
+      return container;
+    }
+
+    function renderSection(section, index) {
+      var sec = el('section', { class: 'section', id: 'sec-' + section.key });
+      var header = el('div', { class: 'section-header' }, [
+        el('div', { class: 'section-num' }, ['Section ' + (index + 1) + ' of ' + SECTIONS.length]),
+        el('h2', { class: 'section-title' }, [section.title]),
+        el('p', { class: 'section-nudge' }, [section.nudge])
+      ]);
+      sec.appendChild(header);
+      section.fields.forEach(function (f) { sec.appendChild(renderField(section, f)); });
+      return sec;
+    }
+    function renderNav() {
+      var ul = el('ul', { class: 'nav' });
+      SECTIONS.forEach(function (s, i) {
+        var a = el('a', { href: '#sec-' + s.key });
+        a.appendChild(el('span', null, [(i + 1) + '. ' + s.title]));
+        a.appendChild(el('span', { class: 'nav-mark', id: 'nav-mark-' + s.key }, ['✓']));
+        var li = el('li');
+        li.appendChild(a);
+        ul.appendChild(li);
+      });
+      return ul;
+    }
+    function renderHeader() {
+      var title = state.meta && state.meta.creator_name ? state.meta.creator_name : 'your creator';
+      return el('div', { class: 'intro' }, [
+        el('div', { class: 'eyebrow' }, ['Cut30 · Creator personalisation']),
+        el('h1', null, ['A profile for ' + title]),
+        el('p', null, ["This makes every Cut30 lesson feel like you, not a generic creator-handbook summary. Write in the gaps. Bullets or sentences, either is fine. Skip anything that feels wrong or unclear. No wrong answers. Your answers save automatically as you type."])
+      ]);
+    }
+    function renderSidebar() {
+      var who = state.meta && state.meta.creator_name ? state.meta.creator_name : 'creator';
+      return el('aside', { class: 'sidebar' }, [
+        el('div', { class: 'eyebrow' }, ['Cut30 profile']),
+        el('div', { class: 'for' }, ['For ' + who]),
+        el('div', { class: 'save-badge', id: 'save-badge', 'data-state': 'idle' }, [
+          el('span', { class: 'save-dot' }),
+          el('span', { id: 'save-label' }, ['Changes sync automatically'])
+        ]),
+        el('div', { class: 'progress-wrap' }, [
+          el('div', { class: 'progress-label' }, [el('span', null, ['Progress']), el('span', { id: 'progress-pct' }, ['0%'])]),
+          el('div', { class: 'progress-bar' }, [el('div', { class: 'progress-fill', id: 'progress-fill' })])
+        ]),
+        renderNav()
+      ]);
+    }
+    function renderFooter() {
+      var isComplete = state.meta && state.meta.status === 'complete';
+      var btn = el('button', { type: 'button', class: 'btn ' + (isComplete ? 'btn-secondary' : 'btn-primary'), id: 'status-btn' }, [
+        isComplete ? 'Move back to draft' : 'Mark profile as done'
+      ]);
+      btn.addEventListener('click', function () {
+        var next = isComplete ? 'draft' : 'complete';
+        btn.disabled = true; btn.textContent = 'Updating…';
+        fetch(FN_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY },
+          body: JSON.stringify({ slug: SLUG, status: next })
+        }).then(function (r) { return r.json(); }).then(function (data) {
+          if (data && data.profile) state.meta = Object.assign(state.meta || {}, data.profile);
+          render();
+        }).catch(function (err) {
+          console.error(err); alert('Could not update status. Please try again.'); btn.disabled = false;
+        });
+      });
+      var children = [btn, el('p', { class: 'footer-note' }, ["You can keep editing after marking this as done. Nothing is locked. This just signals to James that you've had a full pass."])];
+      if (isComplete) {
+        children.unshift(el('div', { class: 'banner banner-complete' }, ['✓ This profile is marked complete. James can feed it into the Cut30 generator any time.']));
+      }
+      return el('div', { class: 'footer-actions' }, children);
+    }
+    function render() {
+      var root = qs('#app');
+      root.innerHTML = '';
+      var layout = el('div', { class: 'layout' });
+      layout.appendChild(renderSidebar());
+      var main = el('main', { class: 'main' });
+      main.appendChild(renderHeader());
+      if (state.error) main.appendChild(el('div', { class: 'banner banner-error' }, [state.error]));
+      SECTIONS.forEach(function (s, i) { main.appendChild(renderSection(s, i)); });
+      main.appendChild(renderFooter());
+      layout.appendChild(main);
+      root.appendChild(layout);
+      updateProgress();
+      setSaveState(state.lastSavedAt ? 'saved' : 'idle');
+      setupObserver();
+    }
+    function setupObserver() {
+      if (!('IntersectionObserver' in window)) return;
+      var obs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            var id = e.target.id.replace('sec-', '');
+            qsa('.nav a').forEach(function (a) {
+              a.classList.toggle('is-active', a.getAttribute('href') === '#sec-' + id);
+            });
+          }
+        });
+      }, { rootMargin: '-40% 0% -50% 0%' });
+      SECTIONS.forEach(function (s) {
+        var node = qs('#sec-' + s.key);
+        if (node) obs.observe(node);
+      });
+    }
+    function showError(msg) {
+      var root = qs('#app');
+      root.innerHTML = '';
+      var wrap = el('div', { class: 'layout' }, [
+        el('div', null, []),
+        el('main', { class: 'main' }, [
+          el('div', { class: 'intro' }, [
+            el('div', { class: 'eyebrow' }, ['Cut30 profile']),
+            el('h1', null, ["We couldn't load this profile"]),
+            el('p', null, [msg || 'Something went wrong.'])
+          ]),
+          el('div', { class: 'banner banner-error' }, ["If you think this is a mistake, send the URL back to James and he'll look into it."])
+        ])
+      ]);
+      root.appendChild(wrap);
+    }
+
+    function boot() {
+      if (!SLUG) { showError('This link is missing an access token. Ask James for the correct URL.'); return; }
+      var local = loadLocal();
+      fetch(FN_URL + '?slug=' + encodeURIComponent(SLUG), {
+        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+      }).then(function (r) {
+        if (r.status === 404) throw new Error('Profile not found for this access token.');
+        if (!r.ok) return r.text().then(function (t) { throw new Error('HTTP ' + r.status + ': ' + t); });
+        return r.json();
+      }).then(function (data) {
+        state.meta = data.profile;
+        state.profile = (data.profile && data.profile.profile) || {};
+        if (local && local.profile) {
+          var localKeys = Object.keys(local.profile || {}).length;
+          var serverKeys = Object.keys(state.profile || {}).length;
+          if (localKeys > serverKeys) {
+            state.profile = local.profile;
+            setTimeout(scheduleSave, 200);
+          }
+        }
+        state.loaded = true;
+        render();
+      }).catch(function (err) {
+        console.error(err);
+        showError(err.message || 'Could not load profile.');
+      });
+
+      window.addEventListener('beforeunload', function () { if (state.loaded) beaconSave(); });
+    }
+
+    boot();
+  })();
+  </script>
+</body>
+</html>
