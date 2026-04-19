@@ -5,9 +5,27 @@ const FOREPLAY_BASE = "https://public.api.foreplay.co";
 const SUPABASE_URL = "https://ifrxylvoufncdxyltgqt.supabase.co";
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
+// Meta Ad Library auto-auth.
+// We prefer an app access token built from META_APP_ID|META_APP_SECRET
+// because app access tokens NEVER EXPIRE. If those env vars are missing we
+// fall back to a per-request user token supplied in the body (legacy path).
+const META_APP_ID = Deno.env.get("META_APP_ID") || "";
+const META_APP_SECRET = Deno.env.get("META_APP_SECRET") || "";
+
 // SAFEGUARDS
 const DEFAULT_CREDIT_BUDGET = 500;
 const DEFAULT_START_DATE = "2025-12-23";
+
+function resolveMetaToken(bodyToken: string): { token: string; source: "app_token" | "user_token" | "none" } {
+  if (META_APP_ID && META_APP_SECRET) {
+    // App access token format: "{APP_ID}|{APP_SECRET}". Never expires.
+    return { token: `${META_APP_ID}|${META_APP_SECRET}`, source: "app_token" };
+  }
+  if (bodyToken) {
+    return { token: bodyToken, source: "user_token" };
+  }
+  return { token: "", source: "none" };
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -556,14 +574,20 @@ Deno.serve(async (req: Request) => {
     // -----------------------------------------------------------------
     // Meta Ad Library fallback
     // Trigger when Foreplay returned zero ads AND we have a page_id AND
-    // the caller supplied a Meta token. Lets us cover brands Foreplay's
-    // Spyder index does not track.
+    // we can resolve a Meta token. Token resolution prefers the app access
+    // token (env META_APP_ID + META_APP_SECRET, never expires) and falls
+    // back to the per-request body token. Lets us cover brands Foreplay's
+    // Spyder index does not track without ever asking the user to paste
+    // a token.
     // -----------------------------------------------------------------
     let metaFallback: Record<string, unknown> | null = null;
-    if (rows.length === 0 && page_id && metaToken) {
+    const resolvedMeta = resolveMetaToken(metaToken);
+    if (rows.length === 0 && page_id && resolvedMeta.token) {
       try {
-        console.log(`Foreplay returned 0 ads for page_id ${page_id}. Falling back to Meta Ad Library.`);
-        const metaResult = await fetchFromMeta(page_id, metaToken, startDate);
+        console.log(
+          `Foreplay returned 0 ads for page_id ${page_id}. Falling back to Meta Ad Library (auth: ${resolvedMeta.source}).`,
+        );
+        const metaResult = await fetchFromMeta(page_id, resolvedMeta.token, startDate);
         const metaRows = metaResult.ads.flatMap((ad) => mapMetaAdToRows(ad, page_id));
         let metaUpsertErrors = 0;
         if (metaRows.length > 0) {
@@ -586,6 +610,7 @@ Deno.serve(async (req: Request) => {
         }
         metaFallback = {
           attempted: true,
+          authSource: resolvedMeta.source,
           pages: metaResult.pages,
           stoppedReason: metaResult.stoppedReason,
           rawAds: metaResult.ads.length,
@@ -594,11 +619,11 @@ Deno.serve(async (req: Request) => {
         };
         console.log(`Meta fallback: ${metaRows.length} rows upserted (${metaUpsertErrors} errors)`);
       } catch (metaErr) {
-        metaFallback = { attempted: true, error: String(metaErr) };
+        metaFallback = { attempted: true, authSource: resolvedMeta.source, error: String(metaErr) };
         console.error(`Meta fallback failed: ${String(metaErr)}`);
       }
-    } else if (rows.length === 0 && page_id && !metaToken) {
-      metaFallback = { attempted: false, reason: "no_meta_token_supplied" };
+    } else if (rows.length === 0 && page_id && !resolvedMeta.token) {
+      metaFallback = { attempted: false, reason: "no_meta_credentials_available" };
     }
 
     const totalRows = rows.length + Number((metaFallback?.totalRows as number) || 0);
