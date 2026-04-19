@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Training Companion / Chefly Internal Shoot Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf9f7;--surface:#fff;--surface-alt:#f4f2ee;--surface-warm:#f9f5f0;
+  --ink:#1a1714;--ink-2:#5c564d;--ink-3:#8a8279;--ink-4:#b0a99e;
+  --accent:#b44d1e;--accent-light:#f4e6dc;--accent-dark:#8a3710;
+  --green:#2d6a4f;--green-light:#d8f3dc;
+  --blue:#1d4e89;--blue-light:#d0e2f4;
+  --amber:#92400e;--amber-light:#fef3c7;
+  --red:#991b1b;--red-light:#fee2e2;
+  --border:#e8e4de;--border-light:#f0ece6;
+  --radius:4px;--radius-lg:6px;
+  --shadow-sm:0 1px 2px rgba(26,23,20,.05);
+  --font-display:'Fraunces',Georgia,serif;--font-body:'DM Sans',system-ui,sans-serif;
+}
+html{font-size:14px;scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
+a{color:var(--accent-dark);text-decoration:none}
+a:hover{text-decoration:underline}
+
+.page{max-width:1040px;margin:0 auto;padding:0 clamp(1rem,3vw,2rem) 4rem}
+
+/* Topbar */
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:.9rem 0;border-bottom:1px solid var(--border)}
+.topbar-brand{font-family:var(--font-display);font-size:.9rem;font-weight:700;color:var(--accent-dark)}
+.topbar-actions{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+.btn{padding:.4rem .9rem;font-family:var(--font-body);font-size:.72rem;font-weight:600;border-radius:var(--radius);cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;border:1.5px solid var(--border);background:var(--surface);color:var(--ink-2)}
+.btn:hover{border-color:var(--ink-3);color:var(--ink)}
+.btn-primary{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark);text-decoration:none}
+
+/* Hero */
+.hero{padding:clamp(2rem,5vw,3.5rem) 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem}
+.eyebrow{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent-dark);margin-bottom:.7rem}
+.hero h1{font-size:clamp(1.7rem,4vw,2.4rem);font-weight:800;letter-spacing:-.025em;margin-bottom:.5rem}
+.hero-sub{font-size:.95rem;color:var(--ink-2);max-width:680px;line-height:1.7;margin-bottom:1rem}
+.hero-note{background:var(--amber-light);border:1px solid var(--amber);border-left:4px solid var(--amber);border-radius:var(--radius-lg);padding:.9rem 1.1rem;font-size:.82rem;color:var(--amber);line-height:1.6;max-width:680px}
+.hero-note strong{color:var(--amber)}
+
+/* TOC */
+.toc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.3rem;margin-bottom:2.5rem}
+.toc-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-2);margin-bottom:.7rem}
+.toc ol{padding-left:1.2rem;font-size:.86rem;line-height:1.9}
+.toc ol li{color:var(--ink-2)}
+.toc ol li a{font-weight:500}
+
+/* Section */
+.section{margin-bottom:3rem;scroll-margin-top:1rem}
+.section-head{border-bottom:2px solid var(--ink);padding-bottom:.6rem;margin-bottom:1.3rem}
+.section-head .sh-tag{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent-dark);margin-bottom:.25rem;display:block}
+.section-head h2{font-size:clamp(1.35rem,3vw,1.8rem);font-weight:800;letter-spacing:-.02em;margin:0}
+.section-head .sh-sub{font-size:.85rem;color:var(--ink-2);margin-top:.4rem;max-width:620px}
+
+/* Prose */
+.prose p{font-size:.9rem;color:var(--ink-2);margin-bottom:.9rem;line-height:1.7}
+.prose p strong{color:var(--ink)}
+.prose ul,.prose ol{padding-left:1.3rem;margin-bottom:1rem}
+.prose li{font-size:.88rem;color:var(--ink-2);margin-bottom:.35rem;line-height:1.65}
+.prose li strong{color:var(--ink)}
+.prose h3{font-size:1.05rem;font-weight:700;margin:1.8rem 0 .6rem;color:var(--ink)}
+.prose h4{font-size:.88rem;font-weight:700;margin:1rem 0 .4rem;color:var(--ink);text-transform:uppercase;letter-spacing:.08em}
+.prose code{background:var(--surface-alt);border:1px solid var(--border);border-radius:3px;padding:.08rem .35rem;font-size:.82em;font-family:'DM Sans',monospace}
+
+/* Cards grid */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-bottom:1.5rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem}
+.card .card-diagram{margin:0 -.3rem .8rem;background:var(--bg);border-radius:var(--radius);padding:.8rem;display:flex;justify-content:center}
+.card h4{font-family:var(--font-display);font-size:1rem;font-weight:700;margin-bottom:.3rem;color:var(--ink)}
+.card .card-term{display:inline-block;background:var(--accent-light);color:var(--accent-dark);font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:.2rem .5rem;border-radius:3px;margin-bottom:.5rem}
+.card p{font-size:.82rem;color:var(--ink-2);line-height:1.6;margin-bottom:.6rem}
+.card p:last-child{margin-bottom:0}
+.card p strong{color:var(--ink)}
+.card-example{margin-top:.6rem;padding-top:.6rem;border-top:1px dashed var(--border);font-size:.78rem;color:var(--ink-3);font-style:italic;line-height:1.55}
+.card-example::before{content:'EXAMPLE · ';font-style:normal;font-weight:700;color:var(--accent-dark);letter-spacing:.06em}
+
+/* Do / Do not blocks */
+.dodont{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.dodont-block{padding:1rem 1.1rem;border-radius:var(--radius-lg);border:1px solid}
+.dodont-do{background:var(--green-light);border-color:var(--green)}
+.dodont-dont{background:var(--red-light);border-color:var(--red)}
+.dodont-block h5{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem}
+.dodont-do h5{color:var(--green)}
+.dodont-dont h5{color:var(--red)}
+.dodont-block ul{padding-left:1rem;margin:0}
+.dodont-block li{font-size:.82rem;color:var(--ink);margin-bottom:.3rem}
+@media (max-width:640px){.dodont{grid-template-columns:1fr}}
+
+/* Walkthrough for each concept */
+.walk{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:0;margin-bottom:2rem;overflow:hidden}
+.walk-head{padding:1.1rem 1.3rem;border-bottom:1px solid var(--border);background:var(--surface-warm);display:flex;flex-wrap:wrap;justify-content:space-between;gap:1rem;align-items:flex-start}
+.walk-head-l{flex:1;min-width:240px}
+.walk-head .walk-num{font-family:var(--font-display);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent-dark);margin-bottom:.25rem}
+.walk-head h3{font-size:1.25rem;font-weight:800;letter-spacing:-.02em;color:var(--ink);margin:0 0 .3rem}
+.walk-head .walk-sub{font-size:.82rem;color:var(--ink-2)}
+.walk-head-r{font-size:.76rem;color:var(--ink-3);display:flex;flex-direction:column;gap:.2rem;text-align:right;min-width:200px}
+.walk-head-r strong{color:var(--ink);font-weight:600}
+.walk-body{padding:1.1rem 1.3rem}
+
+.walk-step{display:grid;grid-template-columns:72px 1fr;gap:1rem;padding:.9rem 0;border-bottom:1px dotted var(--border)}
+.walk-step:last-child{border-bottom:none}
+.walk-step-time{font-family:var(--font-display);font-weight:700;color:var(--accent);font-size:.78rem;line-height:1.3;padding-top:.1rem}
+.walk-step-time .time-label{display:block;font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);font-weight:700;margin-bottom:.1rem;font-family:var(--font-body)}
+.walk-step-body{font-size:.87rem;line-height:1.65;color:var(--ink)}
+.walk-step-body strong{color:var(--ink);font-weight:600}
+.walk-step-body .who{display:inline-block;background:var(--accent-light);color:var(--accent-dark);font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.12rem .45rem;border-radius:3px;margin-right:.35rem;vertical-align:middle}
+.walk-step-body .cam{display:inline-block;background:var(--blue-light);color:var(--blue);font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.12rem .45rem;border-radius:3px;margin-right:.35rem;vertical-align:middle}
+.walk-step-body .check{display:inline-block;background:var(--green-light);color:var(--green);font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.12rem .45rem;border-radius:3px;margin-right:.35rem;vertical-align:middle}
+.walk-step-body em{color:var(--ink-3);font-style:italic}
+
+.walk-checklist{background:var(--surface-warm);border:1px dashed var(--border);border-radius:var(--radius);padding:.9rem 1.1rem;margin:1rem 0}
+.walk-checklist h5{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.5rem}
+.walk-checklist ul{list-style:none;padding:0;margin:0}
+.walk-checklist li{font-size:.82rem;padding:.25rem 0;line-height:1.55;color:var(--ink)}
+.walk-checklist li::before{content:'☐ ';color:var(--accent);font-weight:700;margin-right:.3rem}
+
+/* Diagrams */
+.diagram-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin:1.2rem 0}
+.diagram-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem;text-align:center}
+.diagram-card svg{max-width:100%;height:auto;display:block;margin:0 auto .6rem}
+.diagram-card .dc-label{font-size:.82rem;font-weight:600;color:var(--ink);margin-bottom:.2rem}
+.diagram-card .dc-note{font-size:.72rem;color:var(--ink-3);line-height:1.5}
+
+/* Stat strip */
+.plain-english{background:var(--accent-light);border-left:4px solid var(--accent);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:.9rem 1.1rem;margin:1rem 0;font-size:.86rem;color:var(--ink);line-height:1.65}
+.plain-english strong{color:var(--accent-dark);display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem}
+
+/* Simultaneous vs sequential callout */
+.vs-box{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.2rem 0}
+.vs-block{border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.1rem;background:var(--surface)}
+.vs-block h5{font-family:var(--font-display);font-size:.95rem;font-weight:700;margin-bottom:.4rem;color:var(--ink)}
+.vs-block h5::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:.4rem;vertical-align:middle}
+.vs-simul h5::before{background:var(--green)}
+.vs-seq h5::before{background:var(--blue)}
+.vs-block p{font-size:.82rem;color:var(--ink-2);line-height:1.6;margin:0}
+@media (max-width:640px){.vs-box{grid-template-columns:1fr}}
+
+/* Print */
+@page{size:A4 portrait;margin:14mm 16mm}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  html{font-size:10px}
+  .topbar,.no-print{display:none!important}
+  .walk,.card,.diagram-card{break-inside:avoid;page-break-inside:avoid}
+  .section{page-break-before:auto}
+  .section.pg-break{page-break-before:always}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- TOPBAR -->
+  <div class="topbar no-print">
+    <div class="topbar-brand">Chefly · Training Companion</div>
+    <div class="topbar-actions">
+      <a href="/internal-shoot-pack.html" class="btn">← Shoot pack</a>
+      <a href="/format-brief.html" class="btn">Format brief</a>
+      <button class="btn btn-primary" onclick="window.print()">Print</button>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="eyebrow">training companion · v1.0 · 19 apr 2026 · for james + kaja</div>
+    <h1>Training companion</h1>
+    <p class="hero-sub">A plain-english walkthrough of every term, angle, and setup in the internal shoot pack. Built to be read by someone who has never set up a camera. Covers what each word means, which camera is rolling when, and exactly what to do on the day.</p>
+    <div class="hero-note"><strong>How to use this.</strong> Read Part 1 and Part 2 once before the shoot to learn the vocabulary. On shoot day, keep the Per-concept walkthroughs (Part 5) open on your phone or printed. Each concept gives you the order of operations, who is doing what, and what to check before moving on.</div>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">What's in this doc</div>
+    <ol>
+      <li><a href="#part-0">Part 0 · Before shoot day (kit check + charging)</a></li>
+      <li><a href="#part-1">Part 1 · Camera angles and framing (what each term means, with diagrams)</a></li>
+      <li><a href="#part-2">Part 2 · Lighting basics (what the setup instructions actually mean)</a></li>
+      <li><a href="#part-3">Part 3 · Audio basics (DJI Mic 2 step-by-step)</a></li>
+      <li><a href="#part-4">Part 4 · How to read a shoot sheet (the 9-column grid explained)</a></li>
+      <li><a href="#part-5">Part 5 · Per-concept walkthrough (C1 to C5, plain english)</a></li>
+      <li><a href="#part-6">Part 6 · Common mistakes and rescues</a></li>
+    </ol>
+  </div>
+
+  <!-- ══════════ PART 0 ══════════ -->
+  <div class="section" id="part-0">
+    <div class="section-head">
+      <span class="sh-tag">Part 0</span>
+      <h2>Before shoot day</h2>
+      <p class="sh-sub">Do this the night before. Twenty minutes. Saves two hours of chaos in the morning.</p>
+    </div>
+    <div class="prose">
+      <h3>Charge everything</h3>
+      <ul>
+        <li><strong>iPhone 17 Pro Max</strong> (both units) to 100%. Check free storage, should be at least 40GB free each.</li>
+        <li><strong>iPhone 15 Pro Max</strong> to 100%. Also 40GB free.</li>
+        <li><strong>DJI Mic 2</strong> TX (the clip-on), RX (the receiver), and the charging case. Case first, then the mics in the case.</li>
+        <li><strong>DJI Osmo Mobile 6</strong> gimbal (you'll barely use it, but charge it anyway).</li>
+        <li><strong>Amaran 200x</strong> × 2. These usually run off mains, but confirm the power cables are packed.</li>
+      </ul>
+
+      <h3>Test audio 24 hours before</h3>
+      <p>Plug the DJI Mic 2 RX into the iPhone you plan to use as A-cam. Record 30 seconds of yourself talking. Play it back on headphones. If you hear static, crackle, or drop-outs, it's a connection issue. Fix this the night before, not ten minutes before the first take.</p>
+
+      <h3>Clean the kitchen counter</h3>
+      <p>This is free production value. Clear everything off the surface, wipe it down, put back only what the sheet says should be in frame. An iPhone lens picks up every crumb.</p>
+
+      <h3>Pre-cook one meal</h3>
+      <p>For C3 and C5 you'll need a warm meal that steams when you peel the lid. Heat a container of food just before the first take so it actually produces visible steam. Cold food looks flat on camera.</p>
+
+      <h3>Outfit check</h3>
+      <p>Both of you: plain tops, no busy patterns, no logos, no stripes. Mid-tones (grey, dusty blue, olive, cream) photograph best. Avoid pure white (blows out) and pure black (swallows the face).</p>
+    </div>
+  </div>
+
+  <!-- ══════════ PART 1 ══════════ -->
+  <div class="section pg-break" id="part-1">
+    <div class="section-head">
+      <span class="sh-tag">Part 1</span>
+      <h2>Camera angles and framing</h2>
+      <p class="sh-sub">Every angle word that appears on a shoot sheet, explained in plain english with a diagram and an example.</p>
+    </div>
+
+    <div class="prose">
+      <h3>The vocabulary you need to know</h3>
+      <p>Shot sheets use twelve or so angle words on loop. Once you know these, the rest of production language stops being intimidating. Here they are, grouped by what they describe.</p>
+
+      <h4>Where the camera is (position)</h4>
+      <div class="cards">
+
+        <div class="card">
+          <svg viewBox="0 0 220 130" xmlns="http://www.w3.org/2000/svg">
+            <rect width="220" height="130" fill="#faf9f7"/>
+            <!-- Subject -->
+            <circle cx="110" cy="65" r="18" fill="#b44d1e" opacity=".15" stroke="#b44d1e" stroke-width="1.5"/>
+            <text x="110" y="70" text-anchor="middle" font-family="DM Sans" font-size="9" fill="#b44d1e" font-weight="700">YOU</text>
+            <!-- Camera straight-on -->
+            <rect x="100" y="108" width="20" height="14" rx="2" fill="#1a1714"/>
+            <circle cx="110" cy="115" r="3.5" fill="#faf9f7"/>
+            <line x1="110" y1="105" x2="110" y2="85" stroke="#1a1714" stroke-width="1" stroke-dasharray="2,2"/>
+            <text x="110" y="128" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#5c564d">CAMERA</text>
+          </svg>
+          <div class="card-term">Straight-on / dead-on</div>
+          <h4>Directly in front</h4>
+          <p>Camera points straight at the subject's face. Lens, nose, and the back of the head would line up.</p>
+          <div class="card-example">In C2 the A-cam tripod sits directly in front of James. He looks slightly to one side so he's not staring down the lens.</div>
+        </div>
+
+        <div class="card">
+          <svg viewBox="0 0 220 130" xmlns="http://www.w3.org/2000/svg">
+            <rect width="220" height="130" fill="#faf9f7"/>
+            <circle cx="110" cy="65" r="18" fill="#b44d1e" opacity=".15" stroke="#b44d1e" stroke-width="1.5"/>
+            <text x="110" y="70" text-anchor="middle" font-family="DM Sans" font-size="9" fill="#b44d1e" font-weight="700">YOU</text>
+            <!-- 3/4 right: camera at about 45° to the right of subject -->
+            <rect x="168" y="82" width="20" height="14" rx="2" fill="#1a1714" transform="rotate(-45 178 89)"/>
+            <circle cx="175" cy="86" r="3.5" fill="#faf9f7"/>
+            <line x1="160" y1="92" x2="125" y2="72" stroke="#1a1714" stroke-width="1" stroke-dasharray="2,2"/>
+            <text x="188" y="108" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#5c564d">CAMERA</text>
+            <!-- Angle arc -->
+            <path d="M 110 90 A 25 25 0 0 1 132 77" fill="none" stroke="#8a8279" stroke-width=".8"/>
+            <text x="135" y="95" font-family="DM Sans" font-size="7" fill="#8a8279">45°</text>
+          </svg>
+          <div class="card-term">Three-quarter / 3/4 angle</div>
+          <h4>Partway around to the side</h4>
+          <p>Camera is roughly <strong>45° off dead-on</strong>. You see most of the face but also part of the side (cheek, jaw, ear). It's halfway between straight-on and full profile.</p>
+          <div class="card-example">"3/4 to Kaja's right shoulder" means stand to Kaja's right (her right, not yours) and shoot her face at an angle. You can see her full face and a bit of her right ear.</div>
+        </div>
+
+        <div class="card">
+          <svg viewBox="0 0 220 130" xmlns="http://www.w3.org/2000/svg">
+            <rect width="220" height="130" fill="#faf9f7"/>
+            <circle cx="110" cy="65" r="18" fill="#b44d1e" opacity=".15" stroke="#b44d1e" stroke-width="1.5"/>
+            <text x="110" y="70" text-anchor="middle" font-family="DM Sans" font-size="9" fill="#b44d1e" font-weight="700">YOU</text>
+            <!-- Side: camera directly to the right -->
+            <rect x="175" y="58" width="20" height="14" rx="2" fill="#1a1714"/>
+            <circle cx="180" cy="65" r="3.5" fill="#faf9f7"/>
+            <line x1="172" y1="65" x2="132" y2="65" stroke="#1a1714" stroke-width="1" stroke-dasharray="2,2"/>
+            <text x="193" y="80" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#5c564d">CAMERA</text>
+          </svg>
+          <div class="card-term">Side / profile</div>
+          <h4>Full side view</h4>
+          <p>Camera is <strong>90° off dead-on</strong>. You see one full cheek, jaw, ear. Only one eye visible. Less common in our pack.</p>
+          <div class="card-example">C1 shot 3 (cut-away): Kaja looking out of a window, camera captures her side profile. Gives you a silent cut-point.</div>
+        </div>
+
+        <div class="card">
+          <svg viewBox="0 0 220 130" xmlns="http://www.w3.org/2000/svg">
+            <rect width="220" height="130" fill="#faf9f7"/>
+            <circle cx="110" cy="65" r="18" fill="#b44d1e" opacity=".15" stroke="#b44d1e" stroke-width="1.5"/>
+            <text x="110" y="70" text-anchor="middle" font-family="DM Sans" font-size="9" fill="#b44d1e" font-weight="700">YOU</text>
+            <!-- Over-shoulder: camera just behind subject -->
+            <circle cx="88" cy="55" r="10" fill="#5c564d" opacity=".25" stroke="#5c564d" stroke-width="1"/>
+            <text x="88" y="58" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#5c564d" font-weight="700">SHLDR</text>
+            <rect x="50" y="82" width="20" height="14" rx="2" fill="#1a1714"/>
+            <circle cx="60" cy="89" r="3.5" fill="#faf9f7"/>
+            <line x1="70" y1="82" x2="100" y2="62" stroke="#1a1714" stroke-width="1" stroke-dasharray="2,2"/>
+            <text x="60" y="108" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#5c564d">CAMERA</text>
+          </svg>
+          <div class="card-term">Over-shoulder / over-the-shoulder</div>
+          <h4>Behind, past the shoulder</h4>
+          <p>Camera sits just behind one of the subject's shoulders, looking past it at what they're doing. Shows a bit of the back of the shoulder and what they're looking at.</p>
+          <div class="card-example">C2 shot 3 B-roll: James opens his laptop. Camera is just behind James's right shoulder so we see the shoulder, the screen, and his hands. Feels like we're standing with him.</div>
+        </div>
+
+        <div class="card">
+          <svg viewBox="0 0 220 140" xmlns="http://www.w3.org/2000/svg">
+            <rect width="220" height="140" fill="#faf9f7"/>
+            <!-- Table from side -->
+            <rect x="40" y="95" width="140" height="5" fill="#5c564d"/>
+            <rect x="45" y="100" width="6" height="30" fill="#5c564d"/>
+            <rect x="169" y="100" width="6" height="30" fill="#5c564d"/>
+            <!-- Container on table -->
+            <rect x="90" y="80" width="40" height="15" fill="#b44d1e" opacity=".5" stroke="#b44d1e"/>
+            <text x="110" y="91" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#fff" font-weight="700">MEAL</text>
+            <!-- Camera overhead -->
+            <rect x="100" y="20" width="20" height="14" rx="2" fill="#1a1714"/>
+            <circle cx="110" cy="31" r="3.5" fill="#faf9f7"/>
+            <line x1="110" y1="34" x2="110" y2="78" stroke="#1a1714" stroke-width="1" stroke-dasharray="2,2"/>
+            <!-- Arrow -->
+            <polygon points="107,72 113,72 110,78" fill="#1a1714"/>
+            <text x="155" y="48" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#5c564d">CAMERA</text>
+            <text x="155" y="58" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#5c564d">(on ARKON arm)</text>
+          </svg>
+          <div class="card-term">Overhead / top-down / bird's-eye</div>
+          <h4>Straight down from above</h4>
+          <p>Camera points <strong>directly down</strong> at the table or surface. You see the meal from the angle of someone standing over it. This is what the ARKON Pro Stand is for.</p>
+          <div class="card-example">C5 is entirely overhead. The ARKON arm holds the iPhone above a chopping board, lens pointing at the floor. You reach in from the side to peel lids and pour sauce.</div>
+        </div>
+
+        <div class="card">
+          <svg viewBox="0 0 220 140" xmlns="http://www.w3.org/2000/svg">
+            <rect width="220" height="140" fill="#faf9f7"/>
+            <!-- Head -->
+            <ellipse cx="60" cy="40" rx="18" ry="20" fill="#b44d1e" opacity=".15" stroke="#b44d1e" stroke-width="1.5"/>
+            <text x="60" y="43" text-anchor="middle" font-family="DM Sans" font-size="8" fill="#b44d1e" font-weight="700">YOU</text>
+            <!-- Body -->
+            <rect x="45" y="58" width="30" height="50" rx="4" fill="#b44d1e" opacity=".15" stroke="#b44d1e" stroke-width="1.5"/>
+            <!-- Neck mount with phone on chest -->
+            <rect x="50" y="70" width="20" height="28" rx="2" fill="#1a1714"/>
+            <circle cx="60" cy="80" r="3" fill="#faf9f7"/>
+            <!-- Looking down arrow -->
+            <line x1="80" y1="85" x2="150" y2="115" stroke="#1a1714" stroke-width="1.5" stroke-dasharray="3,2"/>
+            <polygon points="145,110 150,115 143,117" fill="#1a1714"/>
+            <text x="172" y="105" text-anchor="middle" font-family="DM Sans" font-size="8" fill="#5c564d" font-weight="700">HANDS</text>
+            <text x="172" y="118" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#5c564d">(what camera sees)</text>
+          </svg>
+          <div class="card-term">POV / point-of-view</div>
+          <h4>First-person, through your eyes</h4>
+          <p>Camera shows what <strong>you</strong> would be looking at if you were the person in the scene. On the neck mount, the lens sits on your chest and points where your eyes would look if they were tilted down at your hands.</p>
+          <div class="card-example">C3 is POV throughout. Kaja wears the SmallRig neck mount. When she opens the fridge, we see her hands reaching into the fridge, exactly as she would see it. No face in frame.</div>
+        </div>
+      </div>
+
+      <h4>How high the camera is (height)</h4>
+      <div class="diagram-row">
+        <div class="diagram-card">
+          <svg viewBox="0 0 180 200" xmlns="http://www.w3.org/2000/svg">
+            <!-- Person -->
+            <ellipse cx="90" cy="35" rx="15" ry="16" fill="#b44d1e" opacity=".15" stroke="#b44d1e" stroke-width="1.2"/>
+            <rect x="75" y="50" width="30" height="50" rx="4" fill="#b44d1e" opacity=".15" stroke="#b44d1e" stroke-width="1.2"/>
+            <line x1="90" y1="100" x2="90" y2="160" stroke="#b44d1e" stroke-width="1.2" opacity=".5"/>
+            <!-- Eye level camera -->
+            <rect x="140" y="30" width="16" height="11" rx="2" fill="#1a1714"/>
+            <line x1="140" y1="35" x2="110" y2="35" stroke="#1a1714" stroke-width=".8" stroke-dasharray="2,2"/>
+            <text x="148" y="28" text-anchor="middle" font-family="DM Sans" font-size="6" fill="#1a1714">EYE</text>
+            <!-- Chest level -->
+            <rect x="140" y="65" width="16" height="11" rx="2" fill="#1a1714"/>
+            <line x1="140" y1="70" x2="110" y2="70" stroke="#1a1714" stroke-width=".8" stroke-dasharray="2,2"/>
+            <text x="148" y="63" text-anchor="middle" font-family="DM Sans" font-size="6" fill="#1a1714">CHEST</text>
+            <!-- Waist -->
+            <rect x="140" y="95" width="16" height="11" rx="2" fill="#1a1714"/>
+            <line x1="140" y1="100" x2="110" y2="100" stroke="#1a1714" stroke-width=".8" stroke-dasharray="2,2"/>
+            <text x="148" y="93" text-anchor="middle" font-family="DM Sans" font-size="6" fill="#1a1714">WAIST</text>
+            <!-- Low -->
+            <rect x="140" y="140" width="16" height="11" rx="2" fill="#1a1714"/>
+            <line x1="140" y1="145" x2="110" y2="145" stroke="#1a1714" stroke-width=".8" stroke-dasharray="2,2"/>
+            <text x="148" y="138" text-anchor="middle" font-family="DM Sans" font-size="6" fill="#1a1714">LOW</text>
+            <!-- Ground -->
+            <line x1="30" y1="170" x2="170" y2="170" stroke="#5c564d" stroke-width="1"/>
+          </svg>
+          <div class="dc-label">Four common heights</div>
+          <div class="dc-note">Lens pointed straight out at the subject's level. Eye level = neutral. Chest height = slightly up the body. Low = dramatic, looks up at the person.</div>
+        </div>
+
+        <div class="diagram-card">
+          <svg viewBox="0 0 180 200" xmlns="http://www.w3.org/2000/svg">
+            <!-- Top down view showing where you stand for different angles -->
+            <circle cx="90" cy="100" r="20" fill="#b44d1e" opacity=".15" stroke="#b44d1e" stroke-width="1.5"/>
+            <text x="90" y="104" text-anchor="middle" font-family="DM Sans" font-size="8" fill="#b44d1e" font-weight="700">YOU</text>
+            <!-- Dotted radial lines -->
+            <line x1="90" y1="100" x2="90" y2="160" stroke="#8a8279" stroke-width=".6" stroke-dasharray="2,2"/>
+            <line x1="90" y1="100" x2="140" y2="140" stroke="#8a8279" stroke-width=".6" stroke-dasharray="2,2"/>
+            <line x1="90" y1="100" x2="160" y2="100" stroke="#8a8279" stroke-width=".6" stroke-dasharray="2,2"/>
+            <line x1="90" y1="100" x2="140" y2="60" stroke="#8a8279" stroke-width=".6" stroke-dasharray="2,2"/>
+            <line x1="90" y1="100" x2="90" y2="40" stroke="#8a8279" stroke-width=".6" stroke-dasharray="2,2"/>
+            <!-- Camera positions -->
+            <rect x="82" y="160" width="16" height="11" rx="2" fill="#1a1714"/>
+            <rect x="132" y="140" width="16" height="11" rx="2" fill="#1a1714" transform="rotate(-45 140 145)"/>
+            <rect x="152" y="95" width="16" height="11" rx="2" fill="#1a1714"/>
+            <rect x="132" y="54" width="16" height="11" rx="2" fill="#1a1714" transform="rotate(45 140 60)"/>
+            <rect x="82" y="30" width="16" height="11" rx="2" fill="#1a1714"/>
+            <!-- Labels -->
+            <text x="90" y="185" text-anchor="middle" font-family="DM Sans" font-size="6" fill="#5c564d">STRAIGHT ON</text>
+            <text x="145" y="165" text-anchor="start" font-family="DM Sans" font-size="6" fill="#5c564d">3/4 R</text>
+            <text x="170" y="100" text-anchor="start" font-family="DM Sans" font-size="6" fill="#5c564d">SIDE</text>
+            <text x="145" y="48" text-anchor="start" font-family="DM Sans" font-size="6" fill="#5c564d">3/4 BACK</text>
+            <text x="90" y="20" text-anchor="middle" font-family="DM Sans" font-size="6" fill="#5c564d">BEHIND</text>
+          </svg>
+          <div class="dc-label">Top-down view of angles around you</div>
+          <div class="dc-note">If you drew a clock on the floor around the subject, 6 o'clock is straight-on, 3 and 9 are side, 4:30 and 7:30 are the 3/4 angles.</div>
+        </div>
+      </div>
+
+      <h4>How close the camera is (shot size)</h4>
+      <div class="cards">
+        <div class="card">
+          <div class="card-term">Wide / wide shot</div>
+          <h4>Whole body plus room</h4>
+          <p>You see the full person from head to feet and a lot of the room around them. Rarely used in our pack.</p>
+        </div>
+        <div class="card">
+          <div class="card-term">Medium / mid-shot</div>
+          <h4>Roughly waist up</h4>
+          <p>Head, shoulders, arms, down to the belt or hips. Good for someone talking while doing something with their hands.</p>
+          <div class="card-example">C2 A-cam. James's head and shoulders and the top of the desk are all visible.</div>
+        </div>
+        <div class="card">
+          <div class="card-term">Chest-framed</div>
+          <h4>Shoulders up to head</h4>
+          <p>Tighter than medium. Viewer sees head, neck, tops of shoulders. Intimate, conversational.</p>
+          <div class="card-example">C1 primary angle. Camera close enough that Kaja fills most of the 9:16 frame from the shoulder line up. Feels like she's talking directly to you.</div>
+        </div>
+        <div class="card">
+          <div class="card-term">Close-up</div>
+          <h4>Just the face, or just a hand</h4>
+          <p>The frame is filled with one small area: a face, a hand, a fork. Used for B-roll beats where the texture matters.</p>
+          <div class="card-example">C2 shot 4: close-up on James's hand holding a container. Frame is just hand, container, bit of sleeve.</div>
+        </div>
+        <div class="card">
+          <div class="card-term">Macro / extreme close-up</div>
+          <h4>One detail, very tight</h4>
+          <p>Like close-up but even closer. Single ingredient, steam coming off a meal, one grain of rice. Not used in our pack, but you'll see it in studio work.</p>
+        </div>
+      </div>
+
+      <h4>What the camera is doing (movement)</h4>
+      <div class="cards">
+        <div class="card">
+          <div class="card-term">Handheld</div>
+          <h4>You're holding the phone, by hand</h4>
+          <p>You grip the phone with both hands (one on each side of it, tucked close to your chest). Small natural movement is fine and even useful for UGC. Don't shake or pan deliberately.</p>
+          <div class="card-example">C1: James holds iPhone 17 Pro Max handheld, elbows tucked, shoulder-width stance. Small natural sway.</div>
+        </div>
+        <div class="card">
+          <div class="card-term">Tripod / static</div>
+          <h4>Phone locked on a stand, not moving</h4>
+          <p>Phone clamped to a tripod. Frame doesn't move at all. Used when you need clean, steady footage for dialogue or static shots.</p>
+          <div class="card-example">C2 A-cam. The tripod holds the iPhone 15 Pro Max at eye level in front of James's desk. Camera never moves.</div>
+        </div>
+        <div class="card">
+          <div class="card-term">Push-in</div>
+          <h4>Camera moves closer during the shot</h4>
+          <p>Start wide, slowly walk or glide the camera forward, end tighter on the subject. In our pack: walk the phone forward 50cm over 3 seconds. No gimbal needed at that speed.</p>
+          <div class="card-example">C4 shot 4: start with whole container in frame, slowly walk forward until the label fills the frame.</div>
+        </div>
+        <div class="card">
+          <div class="card-term">Pan / tilt</div>
+          <h4>Camera rotates on a fixed spot</h4>
+          <p><strong>Pan</strong> = horizontal rotation (like turning your head left-right). <strong>Tilt</strong> = vertical rotation (like nodding your head up-down). Not used in our pack, but you'll hear the terms.</p>
+        </div>
+        <div class="card">
+          <div class="card-term">Pull focus</div>
+          <h4>Focus shifts from one thing to another</h4>
+          <p>The camera doesn't move but what's sharp changes. Used for dramatic reveals. iPhone does this automatically if you tap a new object. Don't worry about it in our pack.</p>
+        </div>
+        <div class="card">
+          <div class="card-term">Slow-mo / 120fps</div>
+          <h4>Captured at high frame rate, plays back slow</h4>
+          <p>Phone records more frames per second, so when played at normal speed it looks slow. In iPhone camera app: slide to "Slo-Mo" mode. We don't use slow-mo in this pack.</p>
+        </div>
+      </div>
+
+      <h4>About focus / "shallow depth"</h4>
+      <div class="plain-english"><strong>Plain english</strong>When a shot sheet says "shallow depth of field" or "soft background", it means the thing in front is sharp and the background is blurry. On iPhone 17 Pro Max, switch to <strong>Portrait mode</strong> in the camera app to get this automatically. Tap the thing you want sharp. Works for people, food, objects.</div>
+
+      <h4>About resolution / "ProRAW" / "4K60"</h4>
+      <div class="plain-english"><strong>Plain english</strong><strong>ProRAW</strong> = a still-image format that keeps more colour and detail data. Used for stills in C4 and C5. In iPhone camera app: settings → Formats → ProRAW switched on. Then in camera, tap "RAW" icon to enable per-shot. <strong>4K60</strong> = video resolution and frame rate. iPhone default is usually fine; if it's set lower, go to Settings → Camera → Record Video → 4K at 30 fps (our pack doesn't need 60).</div>
+    </div>
+  </div>
+
+  <!-- ══════════ PART 2 ══════════ -->
+  <div class="section pg-break" id="part-2">
+    <div class="section-head">
+      <span class="sh-tag">Part 2</span>
+      <h2>Lighting basics</h2>
+      <p class="sh-sub">What the lighting instructions mean, and how to tell if a setup is working.</p>
+    </div>
+
+    <div class="prose">
+      <h3>The three words you need</h3>
+      <ul>
+        <li><strong>Key light.</strong> The main light hitting the subject's face or the food. Does most of the work. We use the <strong>Amaran 200x</strong> as the key in every concept.</li>
+        <li><strong>Fill light.</strong> A second, softer light that fills in the shadow side so faces don't look half-in-darkness. We use the <strong>Lantern 26"</strong> or the <strong>ARKON ring light</strong> as fill.</li>
+        <li><strong>Modifier.</strong> A cloth or dome you put in front of a hard light to make it soft. The <strong>Dome III</strong> is a softbox you clip onto the Amaran. Light through it comes out wide and gentle instead of a laser beam.</li>
+      </ul>
+
+      <h4>What "camera-left 45°" means</h4>
+      <p>Imagine a clock laid flat on the floor with the subject at the centre and the camera at 6 o'clock. <strong>"Camera-left 45°"</strong> means the light is at roughly 4 or 5 o'clock from the subject's point of view. It's hitting the subject's face diagonally from the front-left.</p>
+
+      <div class="diagram-row">
+        <div class="diagram-card">
+          <svg viewBox="0 0 220 200" xmlns="http://www.w3.org/2000/svg">
+            <!-- Subject -->
+            <circle cx="110" cy="100" r="20" fill="#b44d1e" opacity=".15" stroke="#b44d1e" stroke-width="1.5"/>
+            <text x="110" y="104" text-anchor="middle" font-family="DM Sans" font-size="8" fill="#b44d1e" font-weight="700">YOU</text>
+            <!-- Camera at 6 o'clock -->
+            <rect x="100" y="170" width="20" height="14" rx="2" fill="#1a1714"/>
+            <circle cx="110" cy="177" r="3.5" fill="#faf9f7"/>
+            <line x1="110" y1="168" x2="110" y2="120" stroke="#1a1714" stroke-width=".8" stroke-dasharray="2,2"/>
+            <text x="110" y="195" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#5c564d">CAMERA</text>
+            <!-- Key light camera-left 45° (at 4-5 o'clock-ish) -->
+            <circle cx="165" cy="145" r="14" fill="#ffd60a" opacity=".4" stroke="#92400e" stroke-width="1.5"/>
+            <text x="165" y="148" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#92400e" font-weight="700">KEY</text>
+            <line x1="155" y1="135" x2="125" y2="110" stroke="#92400e" stroke-width="1" stroke-dasharray="3,2"/>
+            <polygon points="128,115 125,110 132,108" fill="#92400e"/>
+            <text x="175" y="168" text-anchor="middle" font-family="DM Sans" font-size="6" fill="#5c564d">Amaran 200x</text>
+            <text x="175" y="176" text-anchor="middle" font-family="DM Sans" font-size="6" fill="#5c564d">+ Dome III</text>
+            <!-- Fill camera-right, opposite -->
+            <circle cx="55" cy="145" r="12" fill="#d0e2f4" opacity=".6" stroke="#1d4e89" stroke-width="1.2"/>
+            <text x="55" y="148" text-anchor="middle" font-family="DM Sans" font-size="6" fill="#1d4e89" font-weight="700">FILL</text>
+            <line x1="66" y1="136" x2="95" y2="112" stroke="#1d4e89" stroke-width=".8" stroke-dasharray="3,2"/>
+            <text x="55" y="168" text-anchor="middle" font-family="DM Sans" font-size="6" fill="#5c564d">Lantern 26"</text>
+          </svg>
+          <div class="dc-label">Classic setup: key camera-left 45°, fill camera-right</div>
+          <div class="dc-note">Key on one side, fill on the other, both slightly forward of the subject. The subject's face gets one directional shadow plus gentle fill on the dark side. Used for C1, C2.</div>
+        </div>
+
+        <div class="diagram-card">
+          <svg viewBox="0 0 220 200" xmlns="http://www.w3.org/2000/svg">
+            <!-- Table from side view -->
+            <rect x="30" y="135" width="160" height="5" fill="#5c564d"/>
+            <rect x="34" y="140" width="6" height="40" fill="#5c564d"/>
+            <rect x="180" y="140" width="6" height="40" fill="#5c564d"/>
+            <rect x="95" y="120" width="30" height="15" fill="#b44d1e" opacity=".6" stroke="#b44d1e"/>
+            <text x="110" y="130" text-anchor="middle" font-family="DM Sans" font-size="6" fill="#fff" font-weight="700">MEAL</text>
+            <!-- Camera overhead -->
+            <rect x="100" y="25" width="20" height="14" rx="2" fill="#1a1714"/>
+            <circle cx="110" cy="36" r="3.5" fill="#faf9f7"/>
+            <line x1="110" y1="39" x2="110" y2="118" stroke="#1a1714" stroke-width=".8" stroke-dasharray="2,2"/>
+            <text x="130" y="38" text-anchor="start" font-family="DM Sans" font-size="7" fill="#5c564d">CAMERA</text>
+            <!-- Key from left high 45° -->
+            <circle cx="40" cy="50" r="14" fill="#ffd60a" opacity=".4" stroke="#92400e" stroke-width="1.5"/>
+            <text x="40" y="53" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#92400e" font-weight="700">KEY</text>
+            <line x1="52" y1="62" x2="95" y2="118" stroke="#92400e" stroke-width="1" stroke-dasharray="3,2"/>
+            <polygon points="90,114 95,118 88,120" fill="#92400e"/>
+            <!-- Fill from right low -->
+            <circle cx="180" cy="85" r="11" fill="#d0e2f4" opacity=".6" stroke="#1d4e89" stroke-width="1.2"/>
+            <text x="180" y="88" text-anchor="middle" font-family="DM Sans" font-size="6" fill="#1d4e89" font-weight="700">FILL</text>
+            <line x1="169" y1="92" x2="128" y2="125" stroke="#1d4e89" stroke-width=".8" stroke-dasharray="3,2"/>
+          </svg>
+          <div class="dc-label">Overhead food setup (C5)</div>
+          <div class="dc-note">Key light 45° high from one side, small fill on the other to stop shadows being too dark. Camera points straight down via ARKON arm.</div>
+        </div>
+      </div>
+
+      <h4>Colour temperature (Kelvin / "4500K", "5600K")</h4>
+      <p>Light has a colour. <strong>3000K</strong> = warm/orange (candlelight). <strong>5600K</strong> = cool/blue-white (daylight). The Amaran lets you set this with a dial. Match your light to the room. If you're shooting indoors with daylight through a window, set to around <strong>5200K to 5600K</strong>. If the room has warm indoor lamps, set around <strong>3800K to 4500K</strong>. Our pack uses 4500K to 5600K throughout.</p>
+
+      <h4>How to tell if lighting is working</h4>
+      <ul>
+        <li><strong>Face test:</strong> can you see both eyes clearly and catch a small reflection of the light in each eye? Good.</li>
+        <li><strong>Shadow test:</strong> does the shadow side of the face still have some detail, or is it black? If it's black, the fill is too weak. Bring the Lantern in closer or turn it up.</li>
+        <li><strong>Food test:</strong> is there one clear direction of shadow across the plate? Good. Shadow everywhere and food looks flat? Move the key further to the side.</li>
+      </ul>
+
+      <div class="dodont">
+        <div class="dodont-block dodont-do">
+          <h5>Do</h5>
+          <ul>
+            <li>Place the key roughly 1.5 to 2m from the subject</li>
+            <li>Use the Dome III on the Amaran for soft, flattering light</li>
+            <li>Match your colour temperature to the room's existing light</li>
+            <li>Turn lights off and on once to check you can see the change on camera</li>
+          </ul>
+        </div>
+        <div class="dodont-block dodont-dont">
+          <h5>Don't</h5>
+          <ul>
+            <li>Point the Amaran bare at a face without the Dome III. Too harsh.</li>
+            <li>Mix warm lamps with cool key. Turn background lamps off.</li>
+            <li>Place a light directly behind the camera. Flat and lifeless.</li>
+            <li>Change light position mid-shoot if the angle is working.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ PART 3 ══════════ -->
+  <div class="section pg-break" id="part-3">
+    <div class="section-head">
+      <span class="sh-tag">Part 3</span>
+      <h2>Audio basics</h2>
+      <p class="sh-sub">The DJI Mic 2 setup in order. If audio works, everything else is fixable. If audio fails, the take is dead.</p>
+    </div>
+
+    <div class="prose">
+      <h3>The parts in your DJI case</h3>
+      <ul>
+        <li><strong>TX (transmitter).</strong> The small square with a clip. This goes on the person talking.</li>
+        <li><strong>RX (receiver).</strong> The larger square. This connects to the iPhone.</li>
+        <li><strong>Case.</strong> Charges all three.</li>
+      </ul>
+
+      <h3>Setup, step by step</h3>
+      <ol>
+        <li>Open the case. TX and RX should both show 3 or 4 green dots = charged.</li>
+        <li>Take the RX out. Plug it into the iPhone's USB-C port directly. It should power on and show a signal bar.</li>
+        <li>Take the TX out. It pairs automatically with the RX (you'll see both show the same channel). If not, hold the pair button on both for 2 seconds.</li>
+        <li>Clip the TX onto the talent's collar or shirt, under the collar if possible to hide it from the camera. The tiny hole on the top of the TX is the mic — that should face upward toward the talent's mouth.</li>
+        <li>Open the iPhone camera app, switch to video mode. You should see a small audio bar or icon indicating external mic is active. If the iPhone still prompts to use the internal mic, reconnect the RX.</li>
+        <li>Ask talent to talk at normal volume for 15 seconds. Record it. Play it back on headphones. Clear and no static = you're good. Crackle = unplug RX, wipe both connectors with a dry cloth, plug back in.</li>
+      </ol>
+
+      <h4>Where to clip the TX</h4>
+      <div class="plain-english"><strong>Plain english</strong>Clip the TX about 15 to 20cm below the mouth (roughly where a tie pin would sit). Hidden under the collar is best. Don't clip onto a flappy bit of fabric (crunching sounds). Don't clip on anything that will rub against the TX (jewellery, another fabric layer).</div>
+
+      <h4>What to listen for</h4>
+      <ul>
+        <li><strong>Wind.</strong> If filming near a window or outside, put the fluffy foam cover (dead cat) on the TX. Removes wind noise.</li>
+        <li><strong>Clothing rustle.</strong> Ask talent to stop moving their hands across their chest. Fabric against TX = ruined audio.</li>
+        <li><strong>Room echo.</strong> Bare kitchen with hard surfaces can echo. If it sounds hollow, add soft things to the room (blanket over a chair off-camera, closed doors, fabric bag on the counter out-of-frame).</li>
+      </ul>
+
+      <h4>Why we only have 1 RX for 2 potential mics</h4>
+      <p>Our current kit is <strong>2× TX + 1× RX</strong>. That means <strong>one person at a time</strong> can be mic'd up to the iPhone. For C1 and C2 (one person talks at a time), this is fine. For any concept with two people talking at once (not in this pack), you'd need a second RX. We're not filming any two-person dialogue in the internal pack, so the single RX is enough.</p>
+
+      <h4>If the DJI fails</h4>
+      <p>Fallback order: (1) use the iPhone's <strong>onboard mic</strong>, but keep the iPhone within 50cm of the talker's face. (2) record audio on a second iPhone right next to talent, sync in post by clapping hands once at the start of each take.</p>
+    </div>
+  </div>
+
+  <!-- ══════════ PART 4 ══════════ -->
+  <div class="section pg-break" id="part-4">
+    <div class="section-head">
+      <span class="sh-tag">Part 4</span>
+      <h2>How to read a shoot sheet</h2>
+      <p class="sh-sub">The 9-column grid in the shoot pack, translated.</p>
+    </div>
+
+    <div class="prose">
+      <h3>Column by column</h3>
+      <ol>
+        <li><strong>✓</strong> Tick box. Tick it when the shot is captured and reviewed.</li>
+        <li><strong>#</strong> Shot number. Order within this concept.</li>
+        <li><strong>Action / description.</strong> What actually happens on camera. The bold bit is the headline. The rest is detail.</li>
+        <li><strong>Frame / angle.</strong> Where the camera is and how close. E.g. "Handheld, chest height, 3/4 to right shoulder."</li>
+        <li><strong>Dur.</strong> How long this clip needs to run (not how long to film it — film longer to have safety).</li>
+        <li><strong>Audio / sound.</strong> What's recorded or added. "DJI Mic on" = someone is mic'd. "Foley" = natural real-world sound (peeling lid, fork clink).</li>
+        <li><strong>Talent.</strong> Who is in the frame. "Hands only" = no face visible.</li>
+        <li><strong>Props / set.</strong> What needs to be in the frame before you roll.</li>
+        <li><strong>Notes.</strong> The most important column. Read every word of this on the day.</li>
+      </ol>
+
+      <h3>Do you film shots 1 and 2 at the same time, or one after the other?</h3>
+      <p>This is the single biggest source of confusion. The answer depends on whether both cameras can see what they need to see without getting in each other's frame.</p>
+
+      <div class="vs-box">
+        <div class="vs-block vs-simul">
+          <h5>Simultaneous (both cameras rolling at once)</h5>
+          <p>If the camera for shot 1 is in one position and the camera for shot 2 is in a different position, and both can roll without appearing in each other's frame, then both run at the same time. Talent only performs once. We cut between angles in post.</p>
+          <p style="margin-top:.5rem"><strong>In our pack:</strong> C2 runs this way. A-cam on tripod straight-on, B-cam on the ARKON clamp at a 3/4 side angle. Both record at once. James delivers his monologue once. Editor has two angles.</p>
+        </div>
+        <div class="vs-block vs-seq">
+          <h5>Sequential (one after the other, talent repeats)</h5>
+          <p>If there's only one camera, or the two angles would put a camera in-frame of the other, you film one shot first, reset, then film the next. Talent repeats the take. Takes twice as long.</p>
+          <p style="margin-top:.5rem"><strong>In our pack:</strong> C1 runs this way. Only one camera (handheld by James). Kaja delivers the monologue once handheld chest-framed, then again handheld at a 3/4 angle. Same script, different angle.</p>
+        </div>
+      </div>
+
+      <h4>Section rows</h4>
+      <p>When you see a highlighted row that says something like <code>Take one · full monologue straight through</code> or <code>Cover · cut-aways and reaction beats</code>, it's a <strong>section break</strong>, not a shot you film. It tells you the shots below it belong to one chunk of the day.</p>
+
+      <h4>"Film separately, combine in post"</h4>
+      <p>When you see this note, it means: the final video looks like things are happening at the same time (e.g. a split-screen), but you film each side one at a time. An editor puts them together on a timeline later.</p>
+
+      <h4>"B-roll" vs "A-roll"</h4>
+      <p><strong>A-roll</strong> = the main footage, usually the person talking. <strong>B-roll</strong> = everything else the editor cuts to: hands, close-ups, action, reactions. Every dialogue concept needs B-roll so the editor can hide cuts in the A-roll.</p>
+
+      <h4>"Foley"</h4>
+      <p>Real-world sound captured at the source: peel of a lid, fork on plate, microwave beep. These are almost always captured by the DJI TX or the iPhone onboard mic. If the take is for a silent scene, the editor will <em>add</em> foley later from a library. In our pack, try to capture real foley on set.</p>
+    </div>
+  </div>
+
+  <!-- ══════════ PART 5 ══════════ -->
+  <div class="section pg-break" id="part-5">
+    <div class="section-head">
+      <span class="sh-tag">Part 5</span>
+      <h2>Per-concept walkthrough</h2>
+      <p class="sh-sub">Plain-english, step by step, for each of C1 to C5. Says which camera rolls, who does what, and what to check before moving on.</p>
+    </div>
+
+    <!-- ───── C1 walkthrough ───── -->
+    <div class="walk">
+      <div class="walk-head">
+        <div class="walk-head-l">
+          <div class="walk-num">Walkthrough · C1</div>
+          <h3>Kaja chest-framed testimonial</h3>
+          <div class="walk-sub">One camera, handheld. Sequential angles. Kaja talks, James holds the phone.</div>
+        </div>
+        <div class="walk-head-r">
+          <div><strong>Cameras rolling:</strong> 1 (iPhone 17 Pro Max)</div>
+          <div><strong>On camera:</strong> Kaja</div>
+          <div><strong>Behind camera:</strong> James</div>
+          <div><strong>Total set time:</strong> ~45 min</div>
+        </div>
+      </div>
+      <div class="walk-body">
+
+        <div class="walk-checklist">
+          <h5>Before you roll</h5>
+          <ul>
+            <li>Counter cleared, 2 to 3 branded containers visible in background, out of focus</li>
+            <li>Amaran 200x + Dome III set camera-left 45°, 5600K. Lantern off for now.</li>
+            <li>Kaja mic'd with DJI TX under her collar, RX plugged into the iPhone 17 Pro Max</li>
+            <li>James does audio test: Kaja counts to 10, play it back on headphones</li>
+            <li>iPhone in video mode, 4K 30fps, back camera</li>
+          </ul>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 0 to 10</span>Setup</div>
+          <div class="walk-step-body"><span class="who">James</span>Set up the lighting and audio per the checklist. <span class="who">Kaja</span>Read through the script once so you know the beats. Don't memorise.</div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 10 to 20</span>Take set A</div>
+          <div class="walk-step-body"><span class="cam">Cam 1 (iPhone 17)</span><strong>Chest-framed, handheld, dead-on.</strong> James stands directly in front of Kaja, phone held at his chest height with both hands, elbows tucked in for stability. Kaja looks at the phone lens, then very slightly to the side (not staring). James hits record. Kaja delivers the full script, straight through.<br><em>Do 3 full takes. Between takes, Kaja can shake out, take a sip of water, then go again. Don't overthink it. The third take is often the best.</em></div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 20 to 30</span>Take set B (angle change)</div>
+          <div class="walk-step-body"><span class="cam">Cam 1 (iPhone 17)</span><strong>3/4 angle, slightly wider, hip height.</strong> James moves to Kaja's right, about 45° off dead-on (stand where the clock reads 4 or 5 o'clock from Kaja's perspective). Phone at hip height, looking up slightly at her face. Record 2 to 3 more takes of the same script.<br><em>Same script, different angle. This gives the editor coverage so they can cut to a different view mid-sentence without it looking weird.</em></div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 30 to 40</span>Cut-aways (B-roll)</div>
+          <div class="walk-step-body"><span class="cam">Cam 1 (iPhone 17)</span>Now film the four cut-away shots: Kaja looking out window (side profile, silent), Kaja opening fridge (over-shoulder), Kaja putting container in microwave (medium, straight-on), Kaja eating at counter (medium, 3/4). <strong>No dialogue</strong> in any of these. Just natural sound. Each one takes 2 minutes to set up and record. <span class="check">After each</span>play it back on the phone to check focus and framing before moving on.</div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 40 to 45</span>Pack up + review</div>
+          <div class="walk-step-body">Sit together, scrub through the takes on the iPhone. Make sure you have at least one clean take of each angle and each cut-away. If a line is flat, do one more take before wrapping. <span class="check">Sign-off</span>audio is clean, focus is sharp, both angles captured, 4 cut-aways in the bag.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───── C2 walkthrough ───── -->
+    <div class="walk">
+      <div class="walk-head">
+        <div class="walk-head-l">
+          <div class="walk-num">Walkthrough · C2</div>
+          <h3>James founder talking head</h3>
+          <div class="walk-sub">Two cameras, both rolling at once. James talks, Kaja monitors. Saves half a day.</div>
+        </div>
+        <div class="walk-head-r">
+          <div><strong>Cameras rolling:</strong> 2 simultaneously</div>
+          <div><strong>On camera:</strong> James</div>
+          <div><strong>Behind camera:</strong> Kaja</div>
+          <div><strong>Total set time:</strong> ~60 min</div>
+        </div>
+      </div>
+      <div class="walk-body">
+
+        <div class="walk-checklist">
+          <h5>Before you roll</h5>
+          <ul>
+            <li>Desk cleared. Laptop closed, centred. One branded container visible but in background (soft focus).</li>
+            <li>Amaran 200x + Lantern 26" set as top key, slightly camera-left, 4500K</li>
+            <li>A-cam: iPhone 15 Pro Max on tripod, dead-on, eye level with James seated. Tripod 1.5 to 2m from James.</li>
+            <li>B-cam: iPhone 17 Pro Max on the ARKON Clamp Stand. Clamp to a shelf or high surface at 3/4 angle to James's right. Wider framing than A-cam.</li>
+            <li>James mic'd with DJI TX, RX plugged into A-cam iPhone 15 (A-cam owns the clean audio)</li>
+            <li>James claps his hands once loudly at start of each take so editor can sync B-cam later</li>
+          </ul>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 0 to 15</span>Setup (longer than C1, two cameras)</div>
+          <div class="walk-step-body"><span class="who">Kaja</span>Build the lighting. <span class="who">James</span>Build A-cam (tripod + iPhone 15 + DJI mic). Then place B-cam on the ARKON Clamp Stand at a 3/4 angle. Both cameras must see James without catching each other in frame. Walk around to verify.</div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 15 to 20</span>Test both cameras</div>
+          <div class="walk-step-body"><span class="cam">Cam 1 (A-cam)</span><span class="cam">Cam 2 (B-cam)</span>James sits at desk. Kaja hits record on both phones. James claps once, loud, close to his hands (this gives a clear audio spike on both recordings so the editor can sync them). James counts to 10. Kaja stops both recordings. Play both back. <span class="check">Check</span>A-cam audio clean, both angles sharp, no camera in the other's frame.</div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 20 to 40</span>Monologue · 3 full takes</div>
+          <div class="walk-step-body"><span class="cam">A-cam + B-cam rolling together</span>Kaja starts both cameras. James claps once. Kaja mouths "rolling" and gives a small thumbs-up. James takes a breath. James delivers the full script start to finish.<br>Do this 3 times. <strong>Don't memorise the script.</strong> Read it once, then say it like you'd say it to a friend. The pauses matter more than the wording. Between takes, stand up, walk around, drink water.<br><em>Because two cameras are rolling, James only performs the monologue 3 times total, not 6. Editor cuts between angles for energy.</em></div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 40 to 55</span>B-roll cut-aways</div>
+          <div class="walk-step-body"><span class="cam">Cam 1 only (handheld)</span>Pick up A-cam off the tripod (or use B-cam if easier to handhold, both are iPhones). Film the four B-roll beats: James opens laptop + pulls container from bag, close-up on container in James's hands, James puts container in microwave, James eats at desk. Each 10 to 15 seconds of rolling, you only need 3 to 4 second clips in the final edit.</div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 55 to 60</span>Pack up + review</div>
+          <div class="walk-step-body">Review on both phones. <span class="check">Sign-off</span>at least 1 strong take of the monologue from both angles, clean audio, 4 B-roll beats in the bag.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───── C3 walkthrough ───── -->
+    <div class="walk">
+      <div class="walk-head">
+        <div class="walk-head-l">
+          <div class="walk-num">Walkthrough · C3</div>
+          <h3>Hands-POV product demo</h3>
+          <div class="walk-sub">Two different camera setups (neck mount + overhead), filmed sequentially. No dialogue.</div>
+        </div>
+        <div class="walk-head-r">
+          <div><strong>Cameras rolling:</strong> 1 at a time (2 setups)</div>
+          <div><strong>On camera:</strong> hands only (Kaja or James)</div>
+          <div><strong>Behind camera:</strong> the other one</div>
+          <div><strong>Total set time:</strong> ~60 min</div>
+        </div>
+      </div>
+      <div class="walk-body">
+
+        <div class="walk-checklist">
+          <h5>Before you roll</h5>
+          <ul>
+            <li>Fridge stocked with 4 to 6 branded containers, labels forward</li>
+            <li>Desk area prepped for overhead beats: clear, one container in centre, fork nearby off-frame</li>
+            <li>SmallRig Magnetic Neck Mount ready. Ensure the phone clicks on firmly (magnet test before wearing)</li>
+            <li>ARKON Pro Stand ready, adjustable arm over the desk</li>
+            <li>No DJI mic needed. We're capturing foley only (onboard iPhone mic is fine).</li>
+          </ul>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 0 to 15</span>Setup · Part A (kitchen POV)</div>
+          <div class="walk-step-body"><span class="who">James</span>Help Kaja attach the iPhone 17 Pro Max to the SmallRig neck mount. <strong>Magnet check:</strong> with Kaja leaning forward, does the phone stay put? If yes, proceed. If it wobbles, tighten the strap.<br>Kitchen lighting: natural daylight only. Don't set up Amaran in the kitchen. Let daylight do the work.</div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 15 to 30</span>Shoot · Part A (kitchen POV)</div>
+          <div class="walk-step-body"><span class="cam">Cam 1 (neck mount)</span>Kaja hits record on the phone (tap the shutter, tuck in neck mount). She walks to the fridge, opens it, reaches for a container, pulls it out, peels the lid, places it in the microwave, closes the door, presses start. <strong>The phone films all of this continuously.</strong> Editor will cut it into the 4 beats in post.<br><span class="who">Kaja</span>Keep movements deliberate. Don't rush. Don't jerk your torso (that ruins POV).<br>Do it 2 to 3 times. Between takes, reset the fridge.</div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 30 to 45</span>Setup · Part B (overhead desk)</div>
+          <div class="walk-step-body">Move to desk. Set up ARKON Pro Stand so the iPhone 17 Pro Max hangs over the desk pointing straight down. Adjust arm height so a container placed under it fills roughly 70% of the frame.<br>Lighting: Amaran 200x + Dome III camera-right at 45° high. ARKON Clamp Stand with ring light as soft fill from camera-left, low power (just takes the edge off the shadow).</div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 45 to 55</span>Shoot · Part B (overhead)</div>
+          <div class="walk-step-body"><span class="cam">Cam 1 (overhead ARKON)</span><span class="who">Kaja</span>Sit at the desk, reach in from off-frame, hold a fork, take a deliberate first bite, pull up. Do it 3 times. Between takes, reheat the meal so it still steams. The overhead shot is the visual payoff, give it proper time.</div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 55 to 60</span>Review</div>
+          <div class="walk-step-body">Review neck mount footage: is it steady, does the container show its label at some point? Review overhead: is the fork-in shot sharp and centred? <span class="check">Sign-off</span>both parts done, steam visible in overhead, no visible camera shake.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───── C4 walkthrough ───── -->
+    <div class="walk">
+      <div class="walk-head">
+        <div class="walk-head-l">
+          <div class="walk-num">Walkthrough · C4</div>
+          <h3>Offer-led static frame</h3>
+          <div class="walk-sub">One camera, three still variants + one short motion clip from the same setup. No talent.</div>
+        </div>
+        <div class="walk-head-r">
+          <div><strong>Cameras rolling:</strong> 1 (iPhone 17 Pro Max)</div>
+          <div><strong>On camera:</strong> containers only</div>
+          <div><strong>Behind camera:</strong> both of you</div>
+          <div><strong>Total set time:</strong> ~45 min</div>
+        </div>
+      </div>
+      <div class="walk-body">
+
+        <div class="walk-checklist">
+          <h5>Before you roll</h5>
+          <ul>
+            <li>Counter cleaned, wiped, no crumbs, no streaks</li>
+            <li>3 containers available (1 hero, 2 supporting)</li>
+            <li>Amaran 200x + Lantern 26" camera-right, 45° high, 4800K. Black card (cereal box, black cloth) camera-left for contrast.</li>
+            <li>iPhone on tripod at a slightly-overhead angle (about 20° down)</li>
+            <li>iPhone settings: Photo mode, ProRAW on, HEIF+RAW if available. Video mode for the push-in: 4K 30fps.</li>
+          </ul>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 0 to 15</span>Setup</div>
+          <div class="walk-step-body"><span class="who">Both</span>Build the lighting. Place containers per variant A: hero container lid-off in front, two supporting containers behind at soft distance. Lock the tripod. Do not move the tripod for the whole session.</div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 15 to 20</span>Variant A · still</div>
+          <div class="walk-step-body"><span class="cam">Cam 1</span>Tap the hero container on the phone screen to focus. Take 5 stills from the exact same framing, small variations in fork placement or lid rotation. Pick best in review.</div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 20 to 25</span>Variant B · still</div>
+          <div class="walk-step-body"><span class="cam">Cam 1</span>Same position. Swap the scene: lid ON, label forward, just the hero container. Take 5 stills. Don't move the tripod.</div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 25 to 35</span>Variant C · overhead</div>
+          <div class="walk-step-body">Now move the phone to the ARKON Pro Stand, pointing straight down over the same container. Fork resting on rim. Take 5 stills at 1:1 and 4:5 crops.</div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 35 to 45</span>Push-in clip</div>
+          <div class="walk-step-body">Handheld iPhone, switch to video 4K 30fps. <span class="who">James</span>Start 1.5m from the container with the whole variant A scene in frame. Walk slowly toward the container over 3 seconds. End with the label filling most of the frame. Do 3 takes. Pick the smoothest. <span class="check">Sign-off</span>at least 5 clean stills of each variant, 1 clean push-in take.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───── C5 walkthrough ───── -->
+    <div class="walk">
+      <div class="walk-head">
+        <div class="walk-head-l">
+          <div class="walk-num">Walkthrough · C5</div>
+          <h3>Top-down food hero</h3>
+          <div class="walk-sub">One setup (ARKON overhead), films 5 video beats + 3 stills. No talent in frame, hands only reach in.</div>
+        </div>
+        <div class="walk-head-r">
+          <div><strong>Cameras rolling:</strong> 1 (iPhone 17 Pro Max on ARKON)</div>
+          <div><strong>On camera:</strong> hands only</div>
+          <div><strong>Behind camera:</strong> both of you</div>
+          <div><strong>Total set time:</strong> ~45 min</div>
+        </div>
+      </div>
+      <div class="walk-body">
+
+        <div class="walk-checklist">
+          <h5>Before you roll</h5>
+          <ul>
+            <li>Wooden board placed centred under where ARKON arm will hang</li>
+            <li>One hero meal warmed and ready. Second meal warming in microwave for take 2.</li>
+            <li>Amaran 200x + Dome III camera-left 45°, 4500K. Lantern 26" camera-right, 1/4 power for fill.</li>
+            <li>ARKON Pro Stand positioned so the iPhone 17 Pro Max hangs directly above the board, pointing straight down</li>
+            <li>Frame filled roughly 70% by container. Adjust arm height to achieve.</li>
+          </ul>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 0 to 15</span>Setup</div>
+          <div class="walk-step-body">Build the ARKON rig. Lock everything. Check the lens is truly perpendicular to the board by placing a square piece of paper under the lens; edges should look parallel to the frame edges. Adjust if skewed.</div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 15 to 30</span>Video beats · 5 clips</div>
+          <div class="walk-step-body"><span class="cam">Cam 1 (overhead)</span>Record each beat separately. Between takes, leave the camera rolling if possible, cut later. Beats: (1) container enters frame from the right, lands centre (2 sec) — (2) hands peel lid, steam rises (2 sec) — (3) sauce pour from small jug (2 sec, optional) — (4) fork takes first bite, pulls up (2 sec) — (5) slow rotation on turntable if available (2 sec, optional). <span class="check">After each beat</span>play back on phone. Is the frame centred, is the food steaming, is the hand clean in frame?</div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 30 to 40</span>Stills · 3 frames</div>
+          <div class="walk-step-body">Switch the iPhone to Photo mode, ProRAW on. Same exact overhead position. Take stills of: (1) lid on, label up (2) lid off, food fully visible, no fork (3) lid off, fork on rim. 3 to 5 frames each.</div>
+        </div>
+
+        <div class="walk-step">
+          <div class="walk-step-time"><span class="time-label">min 40 to 45</span>Review</div>
+          <div class="walk-step-body"><span class="check">Sign-off</span>all 5 video beats clean, 3 still variants captured, steam visible in at least one video beat.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ PART 6 ══════════ -->
+  <div class="section pg-break" id="part-6">
+    <div class="section-head">
+      <span class="sh-tag">Part 6</span>
+      <h2>Common mistakes and rescues</h2>
+      <p class="sh-sub">Things that go wrong on a first shoot, and how to unblock without panicking.</p>
+    </div>
+
+    <div class="prose">
+      <div class="dodont">
+        <div class="dodont-block dodont-dont">
+          <h5>Symptom</h5>
+          <ul>
+            <li>Audio sounds crackly or cuts out</li>
+            <li>Faces look half-dark, one side in shadow</li>
+            <li>Food looks flat, grey, no colour</li>
+            <li>Shaky handheld footage</li>
+            <li>Kaja's / James's delivery feels wooden</li>
+            <li>Container label is readable but out of focus</li>
+          </ul>
+        </div>
+        <div class="dodont-block dodont-do">
+          <h5>Rescue</h5>
+          <ul>
+            <li>Unplug DJI RX, wipe both ports dry, plug back in. If still bad, fall back to iPhone onboard mic and stay within 50cm of talent.</li>
+            <li>Bring the fill light closer, turn it up, or reposition key slightly forward of 45°.</li>
+            <li>Raise colour temperature slightly (cooler makes food pop more), move key light 15cm closer.</li>
+            <li>Tuck both elbows into your chest. Exhale before hitting record. Move your feet not your arms.</li>
+            <li>Scrap the script, have them explain the idea in their own words for 60 seconds. Use that take, even if messy.</li>
+            <li>Tap the label on the iPhone screen to focus on it. Repeat the shot.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>If you run out of time</h3>
+      <p>Priority order for the pack: <strong>C1 first</strong> (the emotional testimonial), <strong>C2 second</strong> (the founder angle). If you only capture C1 and C2 cleanly with good audio, you have enough for a week of paid social tests. C3, C4, C5 can all be shot on a second day.</p>
+
+      <h3>If you're not sure a take is good enough</h3>
+      <p>Film one more. Disk space is free. Time on set is not (but you're home, so it's fine). The only real cost is Kaja's or James's energy, so give each other a break between takes.</p>
+
+      <h3>After the shoot</h3>
+      <p>AirDrop or upload everything into one folder on the day. Name it <code>2026-04-19 internal pack raw</code>. Don't edit on shoot day. Sleep, then watch it back the next morning with fresh eyes. Edits feel very different 12 hours later.</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
