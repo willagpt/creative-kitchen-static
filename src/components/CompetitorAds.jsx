@@ -835,12 +835,12 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
       setAddInput('')
 
       // Auto-trigger Foreplay fetch back to 23 Dec 2025
-      // If Foreplay has zero coverage for this brand AND a Meta token is
-      // connected, the edge function falls back to Meta Ad Library.
-      const fallbackHint = hasKey
-        ? ' Falling back to Meta Ad Library if Foreplay has no coverage.'
-        : ''
-      setAddStatus(`Pulling ads from Foreplay since 23 Dec 2025 (may take a minute).${fallbackHint}`)
+      // The edge function automatically falls back to Meta Ad Library when
+      // Foreplay has no coverage. It uses the server-side app access token
+      // (META_APP_ID + META_APP_SECRET secrets) which never expires, so the
+      // user does not need to paste a Meta token. If those secrets are not
+      // set, the function falls back to a body-supplied user token.
+      setAddStatus('Pulling ads from Foreplay since 23 Dec 2025 (may take a minute). Auto-falls back to Meta Ad Library if Foreplay has no coverage.')
       let autoCloseModal = false
       try {
         const res = await fetch(FOREPLAY_FN_URL, {
@@ -850,6 +850,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
             page_id: pageId,
             start_date: '2025-12-23',
             credit_budget: 5000,
+            // Optional override only used when the server has no app token.
             meta_token: hasKey ? apiKey : undefined,
           }),
         })
@@ -862,12 +863,14 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
           const foreplayRows = Number(data?.foreplayRows ?? totalRows)
           const metaRows = Number(data?.metaFallback?.totalRows ?? 0)
           const source = data?.source || 'foreplay'
+          const authSource = data?.metaFallback?.authSource
 
           if (totalRows > 0) {
             // Success path: close modal, no error.
             autoCloseModal = true
             if (source === 'meta_ad_library' && metaRows > 0) {
-              setAddStatus(`Saved. Foreplay had no coverage, pulled ${metaRows} ads from Meta Ad Library.`)
+              const authNote = authSource === 'app_token' ? ' (auto-auth)' : ''
+              setAddStatus(`Saved. Foreplay had no coverage, pulled ${metaRows} ads from Meta Ad Library${authNote}.`)
             } else {
               setAddStatus(`Saved. Pulled ${foreplayRows} ads from Foreplay.`)
             }
@@ -875,10 +878,10 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
             setAddError(`Foreplay returned 0 ads. Meta fallback failed: ${String(data.metaFallback.error).slice(0, 160)}`)
           } else if (data?.metaFallback?.attempted) {
             setAddError('Brand saved, but neither Foreplay nor Meta Ad Library returned ads for this page (UK reach).')
-          } else if (hasKey) {
-            setAddError('Brand saved, but no ads were returned. Try again or check the page ID.')
+          } else if (data?.metaFallback?.reason === 'no_meta_credentials_available') {
+            setAddError('Foreplay returned 0 ads and no Meta credentials are configured server-side. Add META_APP_ID and META_APP_SECRET to Supabase secrets, or connect a Meta token (top right) as a one-off.')
           } else {
-            setAddError('Foreplay returned 0 ads. Connect a Meta token (top right) to enable the Meta Ad Library fallback for brands Foreplay does not track.')
+            setAddError('Brand saved, but no ads were returned. Try again or check the page ID.')
           }
         } else {
           const bodyText = await res.text().catch(() => '')
