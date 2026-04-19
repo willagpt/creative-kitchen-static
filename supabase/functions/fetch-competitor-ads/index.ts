@@ -240,23 +240,204 @@ async function upsertToSupabase(rows: Array<Record<string, unknown>>, pageId: st
   return errors;
 }
 
-async function logCredits(pageId: string, brandId: string, adsFetched: number, creditsUsed: number, creditBudget: number, rowsUpserted: number) {
-  await fetch(`${SUPABASE_URL}/rest/v1/foreplay_credit_log`, {
-    method: "POST",
-    headers: {
-      apikey: SUPABASE_SERVICE_KEY,
-      Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      page_id: pageId || null,
-      brand_id: brandId || null,
-      ads_fetched: adsFetched,
-      credits_used: creditsUsed,
-      credit_budget: creditBudget,
-      rows_upserted: rowsUpserted,
-    }),
+async function logCredits(
+  pageId: string,
+  brandId: string,
+  adsFetched: number,
+  creditsUsed: number,
+  creditBudget: number,
+  startDate: string,
+  stoppedReason: string,
+) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/foreplay_credit_log`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_SERVICE_KEY,
+        Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify({
+        page_id: pageId || null,
+        brand_id: brandId || null,
+        ads_fetched: adsFetched,
+        credits_used: creditsUsed,
+        credit_budget: creditBudget,
+        start_date: startDate || null,
+        stopped_reason: stoppedReason || null,
+      }),
+    });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      console.error(`foreplay_credit_log insert failed: ${res.status} ${errText}`);
+    }
+  } catch (err) {
+    console.error(`foreplay_credit_log insert threw: ${String(err)}`);
+  }
+}
+
+// =====================================================================
+// Meta Ad Library fallback (used when Foreplay has zero coverage for a page)
+// =====================================================================
+
+interface MetaAd {
+  id?: string;
+  ad_creation_time?: string;
+  ad_delivery_start_time?: string;
+  ad_delivery_stop_time?: string;
+  ad_creative_bodies?: string[];
+  ad_creative_link_titles?: string[];
+  ad_creative_link_descriptions?: string[];
+  ad_creative_link_captions?: string[];
+  ad_snapshot_url?: string;
+  page_id?: string;
+  page_name?: string;
+  publisher_platforms?: string[];
+  impressions?: { lower_bound?: string; upper_bound?: string };
+  languages?: string[];
+  target_locations?: Array<Record<string, unknown>>;
+}
+
+async function fetchFromMeta(
+  pageId: string,
+  metaToken: string,
+  startDate: string,
+): Promise<{ ads: MetaAd[]; pages: number; stoppedReason: string }> {
+  const fields = [
+    "id",
+    "ad_creation_time",
+    "ad_delivery_start_time",
+    "ad_delivery_stop_time",
+    "ad_creative_bodies",
+    "ad_creative_link_titles",
+    "ad_creative_link_descriptions",
+    "ad_creative_link_captions",
+    "ad_snapshot_url",
+    "page_id",
+    "page_name",
+    "publisher_platforms",
+    "impressions",
+    "languages",
+    "target_locations",
+  ].join(",");
+
+  const baseUrl = "https://graph.facebook.com/v19.0/ads_archive";
+  const params = new URLSearchParams({
+    access_token: metaToken,
+    search_page_ids: `[${pageId}]`,
+    ad_active_status: "ALL",
+    ad_type: "ALL",
+    ad_reached_countries: "['GB']",
+    fields,
+    limit: "100",
   });
+
+  let url: string | undefined = `${baseUrl}?${params}`;
+  const all: MetaAd[] = [];
+  let pages = 0;
+  const cutoffMs = startDate ? Date.parse(startDate) : 0;
+  let stoppedReason = "complete";
+
+  // Hard cap to avoid runaway loops, ~10 pages = ~1000 ads
+  const MAX_PAGES = 12;
+
+  while (url && pages < MAX_PAGES) {
+    const res = await fetch(url);
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Meta Ad Library ${res.status}: ${errText.slice(0, 400)}`);
+    }
+    const json = await res.json();
+    const batch: MetaAd[] = Array.isArray(json.data) ? json.data : [];
+    pages++;
+
+    let hitCutoff = false;
+    for (const ad of batch) {
+      if (cutoffMs && ad.ad_delivery_start_time) {
+        const ts = Date.parse(ad.ad_delivery_start_time);
+        if (!isNaN(ts) && ts < cutoffMs) {
+          hitCutoff = true;
+          continue; // skip pre-cutoff ad but keep scanning the rest of this page
+        }
+      }
+      all.push(ad);
+    }
+
+    if (hitCutoff) {
+      stoppedReason = "reached_start_date";
+      break;
+    }
+
+    url = json.paging?.next;
+  }
+
+  if (pages >= MAX_PAGES && url) stoppedReason = "max_pages_reached";
+
+  return { ads: all, pages, stoppedReason };
+}
+
+function mapMetaAdToRows(ad: MetaAd, pageId: string): Array<Record<string, unknown>> {
+  const adId = ad.id || String(Math.random()).slice(2);
+  const startIso = ad.ad_delivery_start_time
+    ? new Date(ad.ad_delivery_start_time).toISOString()
+    : null;
+  const endIso = ad.ad_delivery_stop_time
+    ? new Date(ad.ad_delivery_stop_time).toISOString()
+    : null;
+  const isActive = !ad.ad_delivery_stop_time;
+  const daysActive = startIso
+    ? Math.max(
+        0,
+        Math.floor(
+          ((endIso ? Date.parse(endIso) : Date.now()) - Date.parse(startIso)) /
+            86400000,
+        ),
+      )
+    : 0;
+
+  const platforms = (ad.publisher_platforms || []).map((p) => String(p).toLowerCase());
+  const impressionsLower = ad.impressions?.lower_bound
+    ? Number(ad.impressions.lower_bound)
+    : null;
+  const impressionsUpper = ad.impressions?.upper_bound
+    ? Number(ad.impressions.upper_bound)
+    : null;
+
+  return [
+    {
+      id: String(adId),
+      page_id: pageId,
+      page_name: ad.page_name || "Unknown",
+      brand_id: null,
+      display_format: "IMAGE", // Meta Ad Library does not expose creative type reliably
+      start_date: startIso,
+      end_date: endIso,
+      days_active: daysActive,
+      is_active: isActive,
+      platforms,
+      impressions_lower: impressionsLower,
+      impressions_upper: impressionsUpper,
+      snapshot_url: ad.ad_snapshot_url || null,
+      thumbnail_url: null, // snapshot iframe is the only preview Meta gives
+      video_url: null,
+      card_index: null,
+      creative_title: (ad.ad_creative_link_titles || [])[0] || "",
+      creative_body: (ad.ad_creative_bodies || [])[0] || "",
+      creative_caption: (ad.ad_creative_link_captions || [])[0] || "",
+      creative_description: (ad.ad_creative_link_descriptions || [])[0] || "",
+      link_url: null,
+      cta_type: null,
+      emotional_drivers: null,
+      content_filter: null,
+      creative_targeting: null,
+      categories: null,
+      persona: null,
+      languages: ad.languages || null,
+      market_target: null,
+      niches: null,
+    },
+  ];
 }
 
 Deno.serve(async (req: Request) => {
@@ -270,6 +451,7 @@ Deno.serve(async (req: Request) => {
     let mode = "fetch";
     let creditBudget = DEFAULT_CREDIT_BUDGET;
     let startDate = DEFAULT_START_DATE;
+    let metaToken = "";
 
     if (req.method === "GET") {
       const url = new URL(req.url);
@@ -278,6 +460,7 @@ Deno.serve(async (req: Request) => {
       mode = url.searchParams.get("mode") || "test";
       creditBudget = parseInt(url.searchParams.get("credit_budget") || String(DEFAULT_CREDIT_BUDGET));
       startDate = url.searchParams.get("start_date") || DEFAULT_START_DATE;
+      metaToken = url.searchParams.get("meta_token") || "";
     } else {
       const body = await req.json();
       page_id = body.page_id || "";
@@ -285,6 +468,7 @@ Deno.serve(async (req: Request) => {
       mode = body.mode || "fetch";
       creditBudget = body.credit_budget || DEFAULT_CREDIT_BUDGET;
       startDate = body.start_date || DEFAULT_START_DATE;
+      metaToken = body.meta_token || "";
     }
 
     if (!page_id && !brand_id) {
@@ -302,7 +486,7 @@ Deno.serve(async (req: Request) => {
       const englishAds = ads.filter(isEnglishAd);
       const filteredNonEnglish = ads.length - englishAds.length;
       const rows = englishAds.flatMap(ad => mapAdToRows(ad, page_id || "test"));
-      await logCredits(page_id, brand_id, ads.length, ads.length, creditBudget, 0);
+      await logCredits(page_id, brand_id, ads.length, ads.length, creditBudget, startDate, "test_mode");
       return new Response(JSON.stringify({
         success: true,
         creditsUsed: ads.length,
@@ -367,13 +551,67 @@ Deno.serve(async (req: Request) => {
       upsertErrors = await upsertToSupabase(rows, page_id);
     }
 
-    await logCredits(page_id, brand_id, allAds.length, creditsUsed, creditBudget, rows.length);
+    await logCredits(page_id, brand_id, allAds.length, creditsUsed, creditBudget, startDate, stoppedReason);
+
+    // -----------------------------------------------------------------
+    // Meta Ad Library fallback
+    // Trigger when Foreplay returned zero ads AND we have a page_id AND
+    // the caller supplied a Meta token. Lets us cover brands Foreplay's
+    // Spyder index does not track.
+    // -----------------------------------------------------------------
+    let metaFallback: Record<string, unknown> | null = null;
+    if (rows.length === 0 && page_id && metaToken) {
+      try {
+        console.log(`Foreplay returned 0 ads for page_id ${page_id}. Falling back to Meta Ad Library.`);
+        const metaResult = await fetchFromMeta(page_id, metaToken, startDate);
+        const metaRows = metaResult.ads.flatMap((ad) => mapMetaAdToRows(ad, page_id));
+        let metaUpsertErrors = 0;
+        if (metaRows.length > 0) {
+          metaUpsertErrors = await upsertToSupabase(metaRows, page_id);
+        } else {
+          // Still update last_fetched_at so the UI does not look stuck
+          await fetch(`${SUPABASE_URL}/rest/v1/followed_brands?page_id=eq.${page_id}`, {
+            method: "PATCH",
+            headers: {
+              apikey: SUPABASE_SERVICE_KEY,
+              Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              last_fetched_at: new Date().toISOString(),
+              total_ads: 0,
+              ad_count: 0,
+            }),
+          });
+        }
+        metaFallback = {
+          attempted: true,
+          pages: metaResult.pages,
+          stoppedReason: metaResult.stoppedReason,
+          rawAds: metaResult.ads.length,
+          totalRows: metaRows.length,
+          upsertErrors: metaUpsertErrors,
+        };
+        console.log(`Meta fallback: ${metaRows.length} rows upserted (${metaUpsertErrors} errors)`);
+      } catch (metaErr) {
+        metaFallback = { attempted: true, error: String(metaErr) };
+        console.error(`Meta fallback failed: ${String(metaErr)}`);
+      }
+    } else if (rows.length === 0 && page_id && !metaToken) {
+      metaFallback = { attempted: false, reason: "no_meta_token_supplied" };
+    }
+
+    const totalRows = rows.length + Number((metaFallback?.totalRows as number) || 0);
+    const source =
+      rows.length === 0 && metaFallback && Number(metaFallback.totalRows || 0) > 0
+        ? "meta_ad_library"
+        : "foreplay";
 
     const withMedia = rows.filter(r => r.thumbnail_url);
 
     return new Response(JSON.stringify({
       success: true,
-      source: "foreplay",
+      source,
       creditsUsed,
       creditBudget,
       startDate,
@@ -382,10 +620,12 @@ Deno.serve(async (req: Request) => {
       rawAds: allAds.length,
       filtered_non_english: filteredNonEnglish,
       englishAds: englishAds.length,
-      totalRows: rows.length,
+      totalRows,
+      foreplayRows: rows.length,
       withMedia: withMedia.length,
       formatBreakdown: formatCounts,
       upsertErrors,
+      metaFallback,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
