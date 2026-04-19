@@ -471,7 +471,7 @@
     </header>
 
     <main>
-      <div class="eyebrow">brief · v2 · 19 apr 2026 · draft for james + kaja · inline playback</div>
+      <div class="eyebrow">brief · v2.1 · 19 apr 2026 · draft for james + kaja · inline playback + kit specs</div>
       <h1>format gap.<br/>a <em>reclamation</em> plan.</h1>
       <p class="subline">chefly popularised the 2021 category. the imitators moved on to UGC and talking-head. this doc names the winners worth studying and the formats worth stealing back.</p>
 
@@ -792,48 +792,99 @@
       </section>
 
       <section class="scoped" data-anchor="lighting">
-        <h2>lighting notes (amaran 200x)
-          <button class="anchor-btn" data-anchor="lighting" aria-label="comments on lighting">
+        <h2>kit, lighting + rigs
+          <button class="anchor-btn" data-anchor="lighting" aria-label="comments on kit">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </button>
         </h2>
-        <p>Starting settings if you're shooting with a single amaran 200x bi-colour. All assume a cream backdrop and the d3.2 sleeve on a neutral surface. Dial from here, don't chase numbers.</p>
+
+        <h3>kit on hand
+          <button class="anchor-btn" data-anchor="kit-on-hand" aria-label="comments on kit on hand">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </h3>
+        <ul>
+          <li><b>2× amaran 200x S</b>, bi-colour COB, 2700 to 6500K, bowens mount, 200W.</li>
+          <li><b>1× aputure light dome III</b>, 89cm bowens softbox.</li>
+          <li><b>1× aputure lantern 26"</b>, 360° soft source.</li>
+          <li><b>2× iphone 17 pro max</b> (A cam + wide cover).</li>
+          <li><b>1× iphone 15 pro max</b> (B cam or reverse angle).</li>
+        </ul>
+        <div class="callout callout-sky">
+          <strong>short version.</strong> the two-head + dome + lantern combo is already enough to shoot every format on this brief without renting anything else. the investment priorities below are about audio and chest-mount rigs, not more lights.
+        </div>
+
+        <h3>per-format lighting recipes
+          <button class="anchor-btn" data-anchor="lighting-recipes" aria-label="comments on recipes">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </h3>
         <table class="tbl lighting-tbl">
-          <thead><tr><th>format</th><th>CCT</th><th>modifier</th><th>distance</th><th>power</th></tr></thead>
+          <thead><tr><th>format</th><th>key</th><th>fill</th><th>CCT</th><th>camera</th></tr></thead>
           <tbody>
             <tr>
               <td>talking-head</td>
-              <td class="num">3200 to 4000 K</td>
-              <td>30 to 60cm softbox, 45° camera-right, slight top-down</td>
-              <td class="num">1.2 to 1.5m</td>
-              <td class="num">35 to 55%</td>
+              <td>200x #1 + dome III, 45° cam-right, 1.2m, chest-high, 35 to 50%</td>
+              <td>200x #2 + lantern 26", cam-left ceiling bounce, 15 to 25%</td>
+              <td class="num">3200 to 3400K</td>
+              <td>17 pro max on tripod, chest-height, 4K 30fps</td>
             </tr>
             <tr>
               <td>offer-led static</td>
-              <td class="num">5000 to 5600 K</td>
-              <td>medium softbox or diffusion, overhead-front, 2nd bounce card opposite</td>
-              <td class="num">0.8 to 1.2m</td>
-              <td class="num">60 to 80%</td>
+              <td>200x #1 + dome III overhead-front, 45° down, 0.8m, 60 to 70%</td>
+              <td>200x #2 bare or 1/2 grid paper, opposite side bounce, 25 to 40%</td>
+              <td class="num">5000 to 5200K</td>
+              <td>17 pro max, 1:1 crop, ProRAW</td>
             </tr>
             <tr>
-              <td>UGC (phone)</td>
-              <td class="num">3000 to 3200 K</td>
-              <td>bare or paper diffusion, bounce off ceiling (make it feel like window light)</td>
-              <td class="num">2 to 3m</td>
-              <td class="num">20 to 30%</td>
+              <td>UGC (9:16)</td>
+              <td>natural window first. if needed: 200x #1 bounced off ceiling, 20 to 30%</td>
+              <td>none (or white bounce card off-camera)</td>
+              <td class="num">3000 to 3200K</td>
+              <td>17 pro max handheld or chest-rigged</td>
             </tr>
             <tr>
               <td>food close-up</td>
-              <td class="num">4500 to 5000 K</td>
-              <td>small softbox + black flag to cut rear spill, plus white bounce card</td>
-              <td class="num">0.5 to 0.7m</td>
-              <td class="num">40 to 60%</td>
+              <td>dome III + 200x #1, 45° above-forward, 0.5m, 40 to 55%</td>
+              <td>lantern 26" below-opposite, 15 to 20%</td>
+              <td class="num">4500 to 5000K</td>
+              <td>15 pro max on mini-arm, 0.5x lens for depth</td>
             </tr>
           </tbody>
         </table>
         <div class="callout">
-          <strong>rules of thumb.</strong> warmer CCT for founder/UGC (reads kitchen-human), cooler CCT for static/food (reads clean + product-first). Never go above 70% on the 200x without diffusion: the highlight blows out the cream sticker + yellow label in the chefly palette.
+          <strong>rules of thumb.</strong> warmer CCT for founder/UGC (reads kitchen-human), cooler for static/food (reads clean + product-first). never push the 200x past 70% without diffusion: the highlight blows out the cream sticker + yellow label in the chefly palette. dial from these, don't chase numbers.
         </div>
+
+        <h3>the "filmed from the chest" look
+          <button class="anchor-btn" data-anchor="chest-framing" aria-label="comments on chest framing">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </h3>
+        <p>That framing you've clocked in simmer's "one less thing" (ad 1) and megan petite coach (ad 3) is the creator-pov look, roughly a medium close-up shot sitting neck-to-chest in frame. Three ways to get it, in cost order:</p>
+        <ul>
+          <li><b>handheld (free).</b> creator holds the phone at arm's length and pulls their body close so the frame lands neck-down. reads most natural. 17 pro max front camera, portrait, 4K 30fps, stabilisation on. angle the phone slightly <em>down</em> toward the face so the chin does not get cut off.</li>
+          <li><b>necklace / lanyard mount (£15 to £25, e.g. ulanzi ST-30 or MagSafe lanyard).</b> phone hangs on a strap at chest height, points outward. frees both hands for <em>product interaction</em>: opening the sleeve, putting it in the microwave, peeling the film, plating, eating. this is the POV hand-shot angle, not a face shot.</li>
+          <li><b>chest harness (£40 to £80, e.g. smallrig or telesin chest rig with iPhone clamp).</b> phone worn on a chest plate, points back up toward the creator's face. hands-free "talking-while-doing" footage that stays framed neck-up even when the creator walks around a kitchen. this is the closest match to the simmer and megan ads.</li>
+        </ul>
+        <div class="callout">
+          <strong>stack the two.</strong> one ad can carry a chest-harness face-shot for the first 3 seconds (creator talking), then cut to a necklace-mount POV shot of the product coming out of the fridge for the reveal. two framings from one shoot, no camera-operator needed.
+        </div>
+
+        <h3>kit gaps worth filling
+          <button class="anchor-btn" data-anchor="kit-gaps" aria-label="comments on kit gaps">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </h3>
+        <ul>
+          <li><b>wireless lav mic (£140 to £200).</b> biggest single audio upgrade. DJI mic 2 or rode wireless me. the internal iphone mic falls apart past 0.5m and talking-head needs clean dialogue or the watch-through rate drops. non-negotiable before any founder-on-camera shoot.</li>
+          <li><b>chest harness + necklace mount (£55 to £100 for both).</b> for the POV UGC framing above. one of each covers the face-cam + hands-POV pair.</li>
+          <li><b>5-in-1 reflector, 110cm (~£25).</b> white / silver / black / gold / translucent. fills food close-ups and saves you from running a second head when the kitchen is tight.</li>
+          <li><b>V-flag / black flag pair (~£30).</b> 60×60cm black boards with grip arms. controls rear spill on static shoots so the d3.2 sleeve keeps its clean edge against the cream background.</li>
+          <li><b>iphone tripod + clamp (£30 to £60).</b> if you don't already have it. smallrig or manfrotto. locked-off talking-head needs a tripod, not handheld.</li>
+          <li><b>cream fabric backdrop, 2m (~£40).</b> only if the kitchen or office doesn't give you a clean cream-adjacent wall behind james. optional.</li>
+          <li><b>boom arm or C-stand (~£80).</b> only if you want overhead food static shots without holding the light. one boom + sandbag is enough.</li>
+        </ul>
       </section>
 
       <section class="scoped" data-anchor="blockers">
