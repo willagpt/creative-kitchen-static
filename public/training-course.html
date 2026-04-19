@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chefly Shoot Training · Certification Course</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf9f7;--surface:#fff;--surface-alt:#f4f2ee;--surface-warm:#f9f5f0;
+  --ink:#1a1714;--ink-2:#5c564d;--ink-3:#8a8279;--ink-4:#b0a99e;
+  --accent:#b44d1e;--accent-light:#f4e6dc;--accent-dark:#8a3710;
+  --green:#2d6a4f;--green-light:#d8f3dc;
+  --blue:#1d4e89;--blue-light:#d0e2f4;
+  --amber:#92400e;--amber-light:#fef3c7;
+  --red:#991b1b;--red-light:#fee2e2;
+  --border:#e8e4de;--border-light:#f0ece6;
+  --radius:4px;--radius-lg:6px;
+  --shadow-sm:0 1px 2px rgba(26,23,20,.05);
+  --shadow:0 4px 12px rgba(26,23,20,.08);
+  --font-display:'Fraunces',Georgia,serif;--font-body:'DM Sans',system-ui,sans-serif;
+}
+html{font-size:14px}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
+a{color:var(--accent-dark);text-decoration:none}
+a:hover{text-decoration:underline}
+
+.page{max-width:920px;margin:0 auto;padding:0 clamp(1rem,3vw,2rem) 4rem}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:.9rem 0;border-bottom:1px solid var(--border)}
+.topbar-brand{font-family:var(--font-display);font-size:.9rem;font-weight:700;color:var(--accent-dark)}
+.topbar-actions{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+.btn{padding:.5rem 1rem;font-family:var(--font-body);font-size:.78rem;font-weight:600;border-radius:var(--radius);cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:.35rem;border:1.5px solid var(--border);background:var(--surface);color:var(--ink-2)}
+.btn:hover{border-color:var(--ink-3);color:var(--ink);text-decoration:none}
+.btn-primary{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark);color:#fff}
+.btn-accent{border-color:var(--accent);background:var(--accent);color:#fff}
+.btn-accent:hover{background:var(--accent-dark);border-color:var(--accent-dark);color:#fff}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--ink-2)}
+.btn-ghost:hover{background:var(--surface-alt);border-color:var(--border)}
+.btn-lg{padding:.8rem 1.4rem;font-size:.88rem}
+.btn:disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
+
+.hero{padding:clamp(2rem,5vw,3rem) 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem}
+.eyebrow{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent-dark);margin-bottom:.7rem}
+.hero h1{font-size:clamp(1.9rem,4.4vw,2.6rem);font-weight:800;letter-spacing:-.025em;margin-bottom:.55rem}
+.hero-sub{font-size:.98rem;color:var(--ink-2);max-width:680px;line-height:1.7;margin-bottom:1rem}
+.hero-note{background:var(--amber-light);border:1px solid var(--amber);border-left:4px solid var(--amber);border-radius:var(--radius-lg);padding:.9rem 1.1rem;font-size:.82rem;color:var(--amber);line-height:1.6;max-width:680px}
+.hero-note strong{color:var(--amber);display:block;margin-bottom:.2rem}
+
+/* Enrol */
+.enrol{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem 1.7rem;box-shadow:var(--shadow-sm);max-width:640px;margin:0 auto 2rem}
+.enrol h2{font-size:1.35rem;font-weight:800;margin-bottom:.25rem;letter-spacing:-.02em}
+.enrol .enrol-sub{font-size:.85rem;color:var(--ink-2);margin-bottom:1.1rem}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.35rem}
+.field input[type=text]{width:100%;padding:.65rem .85rem;font-family:var(--font-body);font-size:.92rem;color:var(--ink);background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);transition:border-color .15s}
+.field input[type=text]:focus{outline:none;border-color:var(--accent)}
+.field .hint{font-size:.74rem;color:var(--ink-3);margin-top:.3rem;line-height:1.5}
+.pledge{background:var(--surface-warm);border:1px dashed var(--accent);border-radius:var(--radius-lg);padding:1rem 1.1rem;margin:1rem 0;font-size:.86rem;color:var(--ink);line-height:1.7}
+.pledge strong{display:block;font-family:var(--font-display);font-size:1rem;color:var(--accent-dark);margin-bottom:.4rem}
+.pledge-check{display:flex;align-items:flex-start;gap:.6rem;margin-top:.75rem;font-size:.84rem;color:var(--ink);line-height:1.55;cursor:pointer}
+.pledge-check input{margin-top:.25rem;accent-color:var(--accent);width:16px;height:16px;cursor:pointer}
+
+/* Dashboard */
+.hello{background:var(--surface-warm);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.2rem;margin-bottom:1.3rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem}
+.hello-l{font-size:.85rem;color:var(--ink-2)}
+.hello-l strong{color:var(--ink);font-weight:700}
+.hello-r{font-size:.74rem;color:var(--ink-3)}
+
+.progress{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem;margin-bottom:1.5rem}
+.progress-l{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.6rem}
+.progress-l .p-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-2)}
+.progress-l .p-val{font-family:var(--font-display);font-size:1.15rem;font-weight:700;color:var(--ink)}
+.progress-bar{height:10px;background:var(--surface-alt);border-radius:5px;overflow:hidden}
+.progress-bar > div{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-dark));transition:width .3s ease}
+
+.mod-list{display:grid;gap:.8rem;margin-bottom:2rem}
+.mod{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.2rem;display:grid;grid-template-columns:auto 1fr auto;gap:1rem;align-items:center;transition:border-color .15s}
+.mod:hover{border-color:var(--ink-3)}
+.mod-num{font-family:var(--font-display);font-size:1.3rem;font-weight:700;color:var(--ink-3);width:32px;text-align:center}
+.mod-body h3{font-size:1.02rem;font-weight:700;letter-spacing:-.01em;margin-bottom:.15rem;color:var(--ink)}
+.mod-body .mod-sub{font-size:.78rem;color:var(--ink-2);line-height:1.5}
+.mod-body .mod-meta{font-size:.7rem;color:var(--ink-3);margin-top:.3rem;display:flex;gap:.8rem;flex-wrap:wrap}
+.mod-body .mod-meta span{display:inline-flex;align-items:center;gap:.25rem}
+.mod-status{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:.25rem .55rem;border-radius:3px;white-space:nowrap}
+.mod-status.s-pending{background:var(--surface-alt);color:var(--ink-3)}
+.mod-status.s-pass{background:var(--green-light);color:var(--green)}
+.mod-status.s-fail{background:var(--red-light);color:var(--red)}
+.mod-status.s-lock{background:var(--surface-alt);color:var(--ink-4)}
+.mod.s-lock-row{opacity:.55}
+.mod-cta{display:flex;gap:.4rem}
+
+/* Final exam + cert cards */
+.capstone{display:grid;gap:.8rem;margin-bottom:2rem;grid-template-columns:1fr 1fr}
+@media(max-width:640px){.capstone{grid-template-columns:1fr}}
+.cap{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:1.2rem 1.3rem;position:relative;overflow:hidden}
+.cap.cap-unlocked{border-color:var(--accent);background:linear-gradient(135deg,#fff,var(--accent-light))}
+.cap.cap-locked{opacity:.6}
+.cap-tag{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent-dark);margin-bottom:.3rem}
+.cap h3{font-size:1.15rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.3rem}
+.cap p{font-size:.8rem;color:var(--ink-2);line-height:1.6;margin-bottom:.8rem}
+
+/* Module intro page */
+.m-intro{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.6rem 1.8rem;margin-bottom:2rem}
+.m-intro h2{font-size:1.5rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.4rem}
+.m-intro .m-desc{font-size:.92rem;color:var(--ink-2);line-height:1.7;margin-bottom:1.2rem}
+.m-intro .m-summary{background:var(--surface-warm);border-left:4px solid var(--accent);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:.9rem 1.2rem;margin-bottom:1.3rem}
+.m-intro .m-summary h4{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--accent-dark);margin-bottom:.4rem}
+.m-intro .m-summary ul{list-style:none;padding:0}
+.m-intro .m-summary li{font-size:.85rem;color:var(--ink);padding:.22rem 0 .22rem 1.2rem;position:relative;line-height:1.55}
+.m-intro .m-summary li::before{content:'·';position:absolute;left:.3rem;color:var(--accent);font-weight:700}
+.m-intro-meta{display:flex;gap:1.5rem;margin-bottom:1rem;flex-wrap:wrap;font-size:.78rem;color:var(--ink-2)}
+.m-intro-meta span strong{color:var(--ink);font-weight:700}
+.m-intro-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+
+/* Quiz */
+.quiz-head{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:.9rem 1.2rem;margin-bottom:1rem;display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:center}
+.quiz-head-l{font-size:.72rem;color:var(--ink-2);text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+.quiz-head-l strong{color:var(--ink)}
+.quiz-head-progress{height:6px;background:var(--surface-alt);border-radius:3px;overflow:hidden;margin-top:.4rem}
+.quiz-head-progress > div{height:100%;background:var(--accent);transition:width .3s}
+.quiz-head-r{font-family:var(--font-display);font-size:.85rem;font-weight:700;color:var(--ink-2);text-align:right}
+
+.q{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.6rem 1.8rem;margin-bottom:1rem}
+.q-tag{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent-dark);margin-bottom:.4rem}
+.q-prompt{font-family:var(--font-display);font-size:1.1rem;font-weight:700;line-height:1.4;color:var(--ink);margin-bottom:1rem;letter-spacing:-.01em}
+.q-scenario{background:var(--surface-warm);border-left:3px solid var(--ink-3);padding:.7rem .9rem;border-radius:0 var(--radius) var(--radius) 0;margin-bottom:.9rem;font-size:.88rem;color:var(--ink-2);line-height:1.55;font-style:italic}
+.q-options{display:grid;gap:.5rem;margin-bottom:1rem}
+.q-option{display:flex;align-items:flex-start;gap:.7rem;padding:.75rem .9rem;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .12s;background:var(--bg);user-select:none}
+.q-option:hover{border-color:var(--ink-3);background:var(--surface)}
+.q-option input{margin-top:.18rem;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.q-option-label{font-size:.88rem;color:var(--ink);line-height:1.55}
+.q-option.is-selected{border-color:var(--accent);background:var(--accent-light)}
+.q-option.is-correct{border-color:var(--green);background:var(--green-light)}
+.q-option.is-incorrect{border-color:var(--red);background:var(--red-light)}
+.q-option.is-missed{border-color:var(--amber);background:var(--amber-light)}
+.q-option-label em{font-style:normal;font-size:.74rem;margin-left:.4rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.q-option.is-correct .q-option-label em{color:var(--green)}
+.q-option.is-incorrect .q-option-label em{color:var(--red)}
+.q-option.is-missed .q-option-label em{color:var(--amber)}
+.q-fill input{width:100%;padding:.65rem .85rem;font-family:var(--font-body);font-size:.92rem;color:var(--ink);background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);margin-bottom:.8rem}
+.q-fill input:focus{outline:none;border-color:var(--accent)}
+
+.q-explain{background:var(--surface-warm);border:1px dashed var(--border);border-radius:var(--radius);padding:.75rem .95rem;margin-top:.7rem;font-size:.82rem;color:var(--ink-2);line-height:1.6}
+.q-explain strong{color:var(--ink);display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.25rem;color:var(--accent-dark)}
+
+.q-actions{display:flex;justify-content:space-between;align-items:center;gap:.6rem;margin-top:1.1rem;flex-wrap:wrap}
+.q-verdict{font-size:.82rem;font-weight:700;padding:.4rem .75rem;border-radius:var(--radius)}
+.q-verdict.v-correct{background:var(--green-light);color:var(--green)}
+.q-verdict.v-wrong{background:var(--red-light);color:var(--red)}
+.q-verdict.v-partial{background:var(--amber-light);color:var(--amber)}
+
+/* Image options */
+.q-img-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.7rem;margin-bottom:1rem}
+.q-img-opt{border:1.5px solid var(--border);border-radius:var(--radius);padding:.6rem;cursor:pointer;background:var(--bg);transition:all .12s;text-align:center;user-select:none}
+.q-img-opt:hover{border-color:var(--ink-3)}
+.q-img-opt.is-selected{border-color:var(--accent);background:var(--accent-light)}
+.q-img-opt.is-correct{border-color:var(--green);background:var(--green-light)}
+.q-img-opt.is-incorrect{border-color:var(--red);background:var(--red-light)}
+.q-img-opt svg{max-width:100%;height:auto;margin-bottom:.3rem;pointer-events:none}
+.q-img-opt .q-img-label{font-size:.75rem;color:var(--ink);font-weight:600}
+
+/* Results */
+.results{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.8rem;text-align:center;margin-bottom:1.5rem}
+.results.r-pass{border-color:var(--green);background:linear-gradient(180deg,#fff,var(--green-light))}
+.results.r-fail{border-color:var(--red);background:linear-gradient(180deg,#fff,var(--red-light))}
+.results-eyebrow{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--ink-2);margin-bottom:.4rem}
+.results h2{font-size:2rem;font-weight:800;letter-spacing:-.025em;margin-bottom:.3rem}
+.results-score{font-family:var(--font-display);font-size:4rem;font-weight:800;line-height:1;margin:.8rem 0 .4rem}
+.results.r-pass .results-score{color:var(--green)}
+.results.r-fail .results-score{color:var(--red)}
+.results-breakdown{display:inline-flex;gap:1.6rem;margin:.6rem 0 1.2rem;font-size:.82rem;color:var(--ink-2);flex-wrap:wrap;justify-content:center}
+.results-breakdown strong{color:var(--ink)}
+.results-message{font-size:.9rem;color:var(--ink-2);max-width:540px;margin:0 auto 1.2rem;line-height:1.65}
+.results-actions{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap}
+
+.review{margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border)}
+.review-title{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.8rem}
+.review-q{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.9rem 1.1rem;margin-bottom:.6rem}
+.review-q-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;gap:.6rem}
+.review-q-num{font-size:.72rem;color:var(--ink-3);font-weight:700}
+.review-q-verdict{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.15rem .45rem;border-radius:3px}
+.review-q.v-correct .review-q-verdict{background:var(--green-light);color:var(--green)}
+.review-q.v-wrong .review-q-verdict{background:var(--red-light);color:var(--red)}
+.review-q.v-partial .review-q-verdict{background:var(--amber-light);color:var(--amber)}
+.review-q-prompt{font-size:.85rem;color:var(--ink);line-height:1.55;font-weight:500}
+
+/* Certificate */
+.cert-wrap{max-width:760px;margin:0 auto}
+.cert{background:var(--surface);border:3px double var(--ink);padding:3rem 3rem 2.5rem;position:relative;margin-bottom:1.3rem;box-shadow:var(--shadow)}
+.cert::before,.cert::after{content:'';position:absolute;width:40px;height:40px;border:2px solid var(--accent)}
+.cert::before{top:12px;left:12px;border-right:none;border-bottom:none}
+.cert::after{bottom:12px;right:12px;border-left:none;border-top:none}
+.cert-eyebrow{text-align:center;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.2em;color:var(--accent-dark);margin-bottom:.5rem}
+.cert-logo{text-align:center;font-family:var(--font-display);font-size:1.1rem;font-weight:700;color:var(--ink);margin-bottom:1.5rem}
+.cert h1{text-align:center;font-size:clamp(1.7rem,4vw,2.3rem);font-weight:800;letter-spacing:-.025em;line-height:1.2;margin-bottom:1rem}
+.cert-recipient{text-align:center;margin:1.5rem 0}
+.cert-recipient-l{font-size:.72rem;color:var(--ink-2);text-transform:uppercase;letter-spacing:.14em;margin-bottom:.35rem}
+.cert-recipient-name{font-family:var(--font-display);font-size:clamp(1.6rem,3.5vw,2.1rem);font-weight:800;color:var(--accent-dark);letter-spacing:-.015em;padding:.3rem 0;border-bottom:1.5px solid var(--ink);display:inline-block;min-width:260px}
+.cert-body{text-align:center;font-size:.92rem;color:var(--ink);line-height:1.7;max-width:560px;margin:0 auto 1.5rem}
+.cert-scores{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:.4rem;margin:1.2rem 0 1rem}
+.cert-score{background:var(--surface-warm);border:1px solid var(--border);border-radius:var(--radius);padding:.55rem;text-align:center}
+.cert-score-l{font-size:.62rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:.15rem}
+.cert-score-v{font-family:var(--font-display);font-size:1rem;font-weight:700;color:var(--ink)}
+.cert-final{background:var(--accent);color:#fff;padding:.8rem 1rem;text-align:center;margin:.8rem 0;border-radius:var(--radius)}
+.cert-final-l{font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;margin-bottom:.15rem;opacity:.9}
+.cert-final-v{font-family:var(--font-display);font-size:1.7rem;font-weight:800}
+.cert-foot{display:flex;justify-content:space-between;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border);flex-wrap:wrap;gap:1rem}
+.cert-foot-blk{font-size:.74rem;color:var(--ink-2)}
+.cert-foot-blk strong{color:var(--ink);font-weight:600;display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.18rem;color:var(--ink-3)}
+.cert-serial{font-family:'Courier New',monospace;font-size:.78rem;color:var(--ink);background:var(--surface-warm);padding:.2rem .4rem;border-radius:3px;letter-spacing:.05em}
+.cert-sig{margin-top:.2rem;font-family:var(--font-display);font-style:italic;color:var(--accent-dark)}
+
+.cosign{background:var(--surface-warm);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.4rem 1.6rem;margin-bottom:1.5rem}
+.cosign h3{font-size:1.05rem;font-weight:800;margin-bottom:.3rem}
+.cosign p{font-size:.85rem;color:var(--ink-2);line-height:1.6;margin-bottom:1rem}
+.cosign .cosign-field{display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-start}
+.cosign input{flex:1;min-width:240px;padding:.6rem .85rem;font-family:'Courier New',monospace;font-size:.85rem;color:var(--ink);background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);letter-spacing:.04em}
+.cosign input:focus{outline:none;border-color:var(--accent)}
+.cosign-status{margin-top:.6rem;font-size:.82rem;font-weight:600}
+.cosign-status.ok{color:var(--green)}
+.cosign-status.bad{color:var(--red)}
+
+.danger-zone{margin-top:3rem;padding-top:1.5rem;border-top:1px dashed var(--border);text-align:center;font-size:.76rem;color:var(--ink-3)}
+.danger-zone button{background:none;border:none;color:var(--red);text-decoration:underline;cursor:pointer;font-family:inherit;font-size:inherit;padding:0}
+
+@media print{
+  .topbar,.no-print,.danger-zone{display:none!important}
+  body{background:#fff}
+  .cert{box-shadow:none;break-inside:avoid;border-color:#000}
+  .cert::before,.cert::after{border-color:#000}
+  .page{padding:0}
+}
+
+/* ---- Bridge rules: classes used by the course JS ---- */
+.lead{font-size:.98rem;color:var(--ink-2);max-width:680px;line-height:1.7;margin-bottom:1rem}
+.small{font-size:.78rem;line-height:1.55}
+
+.hero p.lead{font-size:1rem}
+.hero-sub,.hero p{color:var(--ink-2)}
+.hero h1{margin-bottom:.7rem}
+
+/* Enrol form (match JS structure) */
+.enrol h3{font-size:1.25rem;font-weight:800;margin-bottom:.2rem;letter-spacing:-.015em}
+.enrol .field{margin-bottom:.9rem;display:flex;flex-direction:column;gap:.3rem}
+.enrol .field > span{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2)}
+.enrol .field input[type=text],
+.enrol .field select{width:100%;padding:.6rem .8rem;font-family:var(--font-body);font-size:.9rem;color:var(--ink);background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius)}
+.enrol .field input[type=text]:focus,
+.enrol .field select:focus{outline:none;border-color:var(--accent)}
+
+/* Hello strip + progress */
+.hello{flex-direction:column;align-items:flex-start}
+.hello-name{font-family:var(--font-display);font-size:1.25rem;font-weight:700;color:var(--ink);letter-spacing:-.01em}
+.progress{background:var(--surface-alt);height:8px;border-radius:4px;overflow:hidden;margin-top:10px;padding:0;border:none;width:100%}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-dark));transition:width .3s;border:none;border-radius:0;padding:0;margin:0}
+
+/* Module cards — JS uses stacked layout with .mod-num, .mod-title, .mod-blurb, .mod-foot */
+.mod{display:flex;flex-direction:column;gap:.3rem;align-items:stretch}
+.mod-num{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent-dark);width:auto;text-align:left;font-family:var(--font-body)}
+.mod-title{font-family:var(--font-display);font-size:1.15rem;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
+.mod-blurb{font-size:.85rem;color:var(--ink-2);line-height:1.55;margin-bottom:.5rem}
+.mod-foot{display:flex;justify-content:space-between;align-items:center;gap:.8rem;margin-top:.3rem;padding-top:.6rem;border-top:1px solid var(--border-light)}
+.mod-cta{font-size:.82rem;font-weight:700;color:var(--accent-dark);cursor:pointer;text-decoration:none;display:inline-flex}
+.mod-cta:hover{text-decoration:underline}
+.mod.is-passed{border-color:var(--green);background:linear-gradient(180deg,#fff 88%,var(--green-light))}
+
+/* Module status pills — BEM doubles */
+.mod-status--pass{background:var(--green-light);color:var(--green)}
+.mod-status--try{background:var(--amber-light);color:var(--amber)}
+.mod-status--open{background:var(--surface-alt);color:var(--ink-2)}
+.mod-status--locked{background:var(--surface-alt);color:var(--ink-4)}
+
+/* Capstone — JS uses .cap-grid / .cap.is-locked / .cap-title / .cap-blurb / .cap-status */
+.cap-grid{display:grid;gap:.8rem;grid-template-columns:1fr 1fr}
+@media(max-width:640px){.cap-grid{grid-template-columns:1fr}}
+.cap.is-locked{opacity:.55}
+.cap-title{font-family:var(--font-display);font-size:1.15rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.3rem;color:var(--ink)}
+.cap-blurb{font-size:.82rem;color:var(--ink-2);line-height:1.6;margin-bottom:.8rem}
+.cap-status{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding-top:.5rem;border-top:1px solid var(--border-light)}
+
+/* Module intro */
+.m-intro h1{font-size:clamp(1.6rem,3.6vw,2.1rem);font-weight:800;letter-spacing:-.02em;margin-bottom:.4rem}
+.m-rules{background:var(--surface-warm);border:1px dashed var(--border);border-radius:var(--radius);padding:.85rem 1rem;font-size:.85rem;color:var(--ink-2);line-height:1.65;margin-top:.8rem}
+.m-rules div{margin-bottom:.15rem}
+.back-link{font-size:.78rem;font-weight:600;color:var(--ink-3);text-decoration:none;display:inline-flex;gap:.3rem;align-items:center}
+.back-link:hover{color:var(--accent-dark);text-decoration:underline}
+
+/* Quiz head + question body (JS structure) */
+.quiz-head{display:block;padding:.6rem 0;border:none;background:transparent;margin-bottom:1rem;font-size:.72rem;text-transform:uppercase;letter-spacing:.14em;font-weight:700;color:var(--ink-3)}
+.q-text{font-family:var(--font-display);font-size:1.15rem;font-weight:700;line-height:1.4;color:var(--ink);margin-bottom:1rem;letter-spacing:-.01em}
+.q-type--ms .q-option::before{content:'';width:14px;height:14px;border:1.5px solid var(--border);border-radius:3px;margin-top:.18rem;flex-shrink:0;background:#fff;transition:all .12s}
+.q-type--ms .q-option.is-selected::before{background:var(--accent);border-color:var(--accent);box-shadow:inset 0 0 0 2px #fff}
+.q-type--mc .q-option::before,
+.q-type--tf .q-option::before{content:'';width:14px;height:14px;border:1.5px solid var(--border);border-radius:50%;margin-top:.18rem;flex-shrink:0;background:#fff;transition:all .12s}
+.q-type--mc .q-option.is-selected::before,
+.q-type--tf .q-option.is-selected::before{background:var(--accent);border-color:var(--accent);box-shadow:inset 0 0 0 2px #fff}
+
+.q-verdict--right{background:var(--green-light);color:var(--green)}
+.q-verdict--wrong{background:var(--red-light);color:var(--red)}
+
+/* Results — JS uses .results--pass / .results--fail + .score-big / .score-pct */
+.results--pass{border-color:var(--green);background:linear-gradient(180deg,#fff,var(--green-light))}
+.results--fail{border-color:var(--red);background:linear-gradient(180deg,#fff,var(--red-light))}
+.results h1{font-size:2rem;font-weight:800;letter-spacing:-.025em;margin:.5rem 0 .3rem}
+.score-big{font-family:var(--font-display);font-size:3rem;font-weight:800;line-height:1;margin:.8rem 0 .5rem;color:var(--ink)}
+.score-pct{font-size:1.5rem;color:var(--ink-2);margin-left:.4rem}
+.results--pass .score-big{color:var(--green)}
+.results--fail .score-big{color:var(--red)}
+
+/* Review cards (JS) */
+.review h2{font-size:1.2rem;font-weight:800;margin-bottom:.7rem;letter-spacing:-.015em}
+.review-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.9rem 1.1rem;margin-bottom:.6rem}
+.review-q{font-size:.92rem;color:var(--ink);line-height:1.55;font-weight:600;margin-bottom:.5rem;background:none;border:none;padding:0}
+.review-row{font-size:.82rem;color:var(--ink-2);line-height:1.55;margin-bottom:.18rem}
+.review-label{font-weight:700;color:var(--ink);margin-right:.3rem}
+.review-wrong{color:var(--red);text-decoration:line-through;opacity:.8}
+.review-right{color:var(--green);font-weight:600}
+.review-why{margin-top:.5rem;padding:.55rem .75rem;background:var(--surface-warm);border-left:3px solid var(--accent);border-radius:0 var(--radius) var(--radius) 0;font-size:.82rem;color:var(--ink-2);line-height:1.6}
+
+/* Certificate — JS uses bespoke structure */
+.cert-corner{position:absolute;width:40px;height:40px;border:2px solid var(--accent);pointer-events:none}
+.cert-corner--tl{top:12px;left:12px;border-right:none;border-bottom:none}
+.cert-corner--tr{top:12px;right:12px;border-left:none;border-bottom:none}
+.cert-corner--bl{bottom:12px;left:12px;border-right:none;border-top:none}
+.cert-corner--br{bottom:12px;right:12px;border-left:none;border-top:none}
+.cert::before,.cert::after{display:none}
+
+.cert-presents{text-align:center;font-size:.93rem;color:var(--ink);line-height:1.7;max-width:560px;margin:.8rem auto}
+.cert-name{text-align:center;font-family:var(--font-display);font-size:clamp(1.8rem,4vw,2.4rem);font-weight:800;color:var(--accent-dark);letter-spacing:-.02em;padding:.4rem 0;margin:.6rem auto;border-bottom:1.5px solid var(--ink);display:block;max-width:420px}
+.cert-scores{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin:1.3rem auto 1rem;max-width:520px}
+.cert-scores > div{background:var(--surface-warm);border:1px solid var(--border);border-radius:var(--radius);padding:.7rem .55rem;text-align:center;font-size:.85rem;color:var(--ink);line-height:1.45}
+.cert-scores b{display:block;font-size:.62rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:.25rem}
+.cert-footer{display:flex;justify-content:space-between;margin-top:1.8rem;padding-top:1rem;border-top:1px solid var(--border);flex-wrap:wrap;gap:1rem;text-align:center}
+.cert-footer > div{flex:1;min-width:120px}
+.cert-sig-label{font-size:.66rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);font-weight:700;margin-top:.2rem}
+.cert-serial{text-align:center;margin-top:1.1rem;font-size:.8rem;color:var(--ink-2);background:transparent;padding:0;letter-spacing:normal}
+.cert-serial-value{font-family:'Courier New',monospace;font-size:.82rem;color:var(--ink);background:var(--surface-warm);padding:.2rem .45rem;border-radius:3px;letter-spacing:.04em;margin-left:.3rem}
+
+.cosign{margin-top:1.4rem;padding-top:1.2rem;border-top:1px dashed var(--border)}
+.cosign-head{font-family:var(--font-display);font-size:1rem;font-weight:700;color:var(--ink);margin-bottom:.4rem}
+.cosign-row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.cosign-row input{flex:1;min-width:240px;padding:.55rem .8rem;font-family:'Courier New',monospace;font-size:.82rem;color:var(--ink);background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);letter-spacing:.04em}
+.cosign-row input:focus{outline:none;border-color:var(--accent)}
+.cosign-done{margin-top:.7rem;padding:.5rem .7rem;background:var(--green-light);color:var(--green);border-radius:var(--radius);font-size:.82rem;font-weight:600}
+
+.cert-actions{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin-top:1rem}
+
+.danger-zone{text-align:left}
+.danger-zone a{color:var(--ink-3);text-decoration:underline;font-size:.74rem}
+.danger-zone a:hover{color:var(--red)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="topbar no-print">
+    <div class="topbar-brand">Chefly · Shoot Training Course</div>
+    <div class="topbar-actions">
+      <a href="/training-companion.html" class="btn">Training companion</a>
+      <a href="/internal-shoot-pack.html" class="btn">Shoot pack</a>
+      <a href="/format-brief.html" class="btn">Format brief</a>
+    </div>
+  </div>
+
+  <div id="app"></div>
+
+</div>
+
+<script>
+// ============================================================
+// COURSE DATA — 7 modules, 15+ questions each, drawn randomly
+// ============================================================
+
+const COURSE = {
+  title: 'Chefly Shoot Training · Certification',
+  passModule: 0.80,
+  passFinal: 0.85,
+  drawPerModule: 7,
+  drawFinal: 12,
+  modules: []
+};
+
+// ---------- Module 0: Before shoot day ----------
+COURSE.modules.push({
+  id: 'm0',
+  num: 0,
+  title: 'Before shoot day',
+  blurb: 'The prep every shoot needs. If you skip this, you lose the first hour of the shoot to fixing things you should have fixed yesterday.',
+  pool: [
+    { t: 'mc', q: 'The night before a shoot, which of these is NOT on the prep list?',
+      opts: ['Charge every battery: iPhones, Amaran, ARKON, DJI Mic case', 'Clear 64 GB of free space on each iPhone', 'Print two copies of the shoot sheet', 'Upload yesterday\'s footage to YouTube'],
+      a: 3, why: 'Uploads happen after the shoot, not the night before. The prep list is: charge, clear space, print shoot sheet, lay kit out, read the plan.' },
+    { t: 'mc', q: 'How much free space should be on each iPhone before a shoot?',
+      opts: ['At least 10 GB', 'At least 32 GB', 'At least 64 GB', 'At least 128 GB'],
+      a: 2, why: '64 GB minimum. 4K ProRes eats storage fast. Running out mid-shoot costs you a take.' },
+    { t: 'tf', q: 'Airplane mode on the iPhone is optional during a shoot.',
+      opts: ['True', 'False'],
+      a: 1, why: 'False. Airplane mode prevents notifications from interrupting a take and stops background sync from slowing the capture.' },
+    { t: 'mc', q: 'Which camera setting is the default for talking-head and testimonial shots?',
+      opts: ['1080p 60fps', '4K 24fps cinematic', '4K 30fps', '4K 60fps slow-mo'],
+      a: 2, why: '4K 30fps is the shoot default. 30fps matches how paid social plays back. 60fps is only for slow-mo food hero beats.' },
+    { t: 'mc', q: 'The shoot pack lists five concepts. Which is the Kaja testimonial?',
+      opts: ['C1', 'C2', 'C3', 'C5'],
+      a: 0, why: 'C1 is Kaja testimonial. C2 is James founder talking-head. C3 is hands-POV. C4 is offer static. C5 is top-down food hero.' },
+    { t: 'ms', q: 'Which items belong in the "on the table before anyone arrives" kit check? (select all that apply)',
+      opts: ['Both iPhones charged to 100%', 'DJI Mic 2 case charged', 'Amaran 200x + Dome III + stand', 'Laptop for live editing', 'Shoot sheet printed'],
+      a: [0,1,2,4], why: 'Live editing does not happen on shoot day. Everything else is pre-shoot kit check.' },
+    { t: 'fill', q: 'The two iPhones are labelled by role. Fill the blank: iPhone 15 is ____-cam.',
+      a: ['a','a-cam','acam'], why: 'A-cam is the hero angle (dead-on tripod). B-cam is the secondary (ARKON Clamp 3/4 angle).' },
+    { t: 'fill', q: 'And iPhone 17 is ____-cam.',
+      a: ['b','b-cam','bcam'], why: 'B-cam handles the 3/4 angle on the ARKON Clamp during C2 simultaneous takes.' },
+    { t: 'mc', q: 'Why print TWO copies of the shoot sheet?',
+      opts: ['One for the office wall', 'One for James, one for Kaja, so neither has to look over the other\'s shoulder', 'One as backup if the first gets food on it', 'Both B and C are reasonable, but the main reason is B'],
+      a: 3, why: 'Both people work from their own copy. Saves time, avoids the "where are we at?" pause between takes.' },
+    { t: 'tf', q: 'ProRAW and Portrait mode can both be on at the same time.',
+      opts: ['True', 'False'],
+      a: 1, why: 'False. ProRAW is a still-photo format. Portrait mode is a depth effect. They are not compatible. Portrait is for stills with shallow depth; ProRAW is for RAW stills.' },
+    { t: 'mc', q: 'What does "lock exposure" mean on the iPhone camera?',
+      opts: ['Tap and hold the subject to stop the camera re-metering when a shadow passes', 'Turn off auto-focus', 'Switch to manual mode', 'Lock the white balance to daylight'],
+      a: 0, why: 'Tap-and-hold the subject. Exposure stays fixed even if someone walks past or a cloud passes the window. Prevents flicker mid-take.' },
+    { t: 'mc', q: 'Which app is used for ProRAW + 4K ProRes capture on iPhone?',
+      opts: ['Default iOS Camera app', 'Filmic Pro', 'Blackmagic Camera', 'Any of the above works; pick one and stick with it'],
+      a: 3, why: 'All three work. The key is consistency across takes. Switching apps mid-shoot creates colour and exposure mismatches.' },
+    { t: 'ms', q: 'Which of these are "day-of-shoot" jobs (not "night before")? (select all that apply)',
+      opts: ['Pre-stage the kitchen so plates are already cooked and styled', 'Run the shoot sheet from top to bottom in order', 'Charge batteries', 'Do a 30-second test take and watch it back', 'Label SD card folders with the date'],
+      a: [0,1,3], why: 'Charging happens the night before. Folder-labelling happens in edit. Everything else is day-of.' },
+    { t: 'fill', q: 'Shoot sheets are written so one line = one ______.',
+      a: ['shot','take','clip'], why: 'One line per shot. Makes it trivial to tick off as you go.' },
+    { t: 'mc', q: 'If the morning of the shoot your kit is 60% charged, what do you do?',
+      opts: ['Start the shoot anyway and hope', 'Charge for an hour while you prep the food and set lights', 'Cancel the shoot', 'Swap to lower-quality recording to save battery'],
+      a: 1, why: 'An hour of top-up while you do other setup work is free time. Battery anxiety mid-take ruins focus.' },
+    { t: 'mc', q: 'The training companion says "read this the day before you shoot." Why not the morning of?',
+      opts: ['There is not enough time on the morning to absorb it', 'Sleeping on new information helps you retain it and it gives you time to ask questions', 'Both of the above', 'The companion is only legally binding the day before'],
+      a: 2, why: 'Time to absorb plus time to ask. The companion is not legal, it is just a shared reference.' }
+  ]
+});
+
+// ---------- Module 1: Camera angles and framing ----------
+COURSE.modules.push({
+  id: 'm1',
+  num: 1,
+  title: 'Camera angles and framing',
+  blurb: 'Every shot in the pack names an angle and a size. If these two words do not click, every setup will take twice as long.',
+  pool: [
+    { t: 'mc', q: 'A "3/4 angle" means the camera is at what angle relative to the subject?',
+      opts: ['Dead-on, facing them', '45 degrees off their nose line', '90 degrees, straight profile', '180 degrees, directly behind them'],
+      a: 1, why: '3/4 = 45°. Shows one full eye, a bit of the other eye, and the side of the nose. The most flattering angle for faces and the default for food b-roll.' },
+    { t: 'mc', q: 'A "side angle" is at what degree?',
+      opts: ['30°', '45°', '90°', '135°'],
+      a: 2, why: 'Side = 90°. Pure profile. Used for pouring shots, cutting shots, any time the action is horizontal.' },
+    { t: 'mc', q: 'The A-cam for C2 James founder is positioned how?',
+      opts: ['Straight-on tripod, chest-framed', '3/4 angle on ARKON Clamp', 'Overhead on ARKON Clamp', 'Handheld, roaming'],
+      a: 0, why: 'A-cam = dead-on tripod, chest-framed. The hero angle. B-cam handles the 3/4 on the ARKON Clamp.' },
+    { t: 'mc', q: '"Chest-framed" means the bottom of the frame cuts the subject at which point?',
+      opts: ['The waist', 'The mid-chest, roughly nipple line', 'The collarbone', 'The chin'],
+      a: 1, why: 'Chest-framed = mid-chest. Leaves headroom above the head and shows enough body language to feel human, but not so wide that you see clutter in the room.' },
+    { t: 'mc', q: '"POV" stands for what?',
+      opts: ['Point of view: the camera sees what the subject sees', 'Profile of view: side angle', 'Portrait of vendor: a product shot', 'Photo of variation: a still from a video'],
+      a: 0, why: 'POV = point of view. For C3 hands-POV, the camera is strapped to the chest looking down at the hands so the viewer feels like they are cooking.' },
+    { t: 'ms', q: 'Which of these are CORRECT pairings of shot size to use case? (select all)',
+      opts: ['Wide: establishing shot of the whole kitchen', 'Medium: talking-head chest-up', 'Close-up: a single hand gesture or food detail', 'Macro: sizzling bacon or steam coming off a pan', 'Wide: a close-up of a tomato'],
+      a: [0,1,2,3], why: 'First four are textbook. The fifth is a contradiction (wide ≠ close-up).' },
+    { t: 'tf', q: 'Overhead and POV are the same thing.',
+      opts: ['True', 'False'],
+      a: 1, why: 'False. Overhead is the camera straight down from a boom/clamp, filming the action below. POV is the camera mounted on the subject showing what they see. Overhead is third-person; POV is first-person.' },
+    { t: 'mc', q: 'For the C5 top-down food hero, where is the camera?',
+      opts: ['On a tripod at chest height, pointing down at the plate', 'On the ARKON Clamp, parallel to the floor, ≈50-70 cm above the plate', 'Handheld, rotating around the plate', 'On a slider, tracking past the plate'],
+      a: 1, why: 'Top-down = ARKON Clamp, parallel to floor, 50-70 cm above the plate. Lens dead-centre over the food.' },
+    { t: 'fill', q: 'A "push-in" is a move where the camera ______ towards the subject.',
+      a: ['moves','pushes','travels','goes','comes'], why: 'Push-in = camera physically moves closer. Distinct from zoom, which only changes focal length and looks flat.' },
+    { t: 'mc', q: 'What is the difference between a "zoom" and a "push-in"?',
+      opts: ['Nothing, they are the same', 'Zoom changes focal length; push-in physically moves the camera closer', 'Zoom is digital only; push-in is optical', 'Push-in is only for food; zoom is only for faces'],
+      a: 1, why: 'Zoom is a lens change (no parallax). Push-in is physical movement (parallax, depth, cinematic feel). Push-in always wins for hero moments.' },
+    { t: 'mc', q: 'For a talking-head shot, where should the subject\'s eyeline be in the frame?',
+      opts: ['Dead-centre vertically', 'Upper third, with space above the head', 'Lower third, so the room shows behind them', 'Cropped at the top of the frame for drama'],
+      a: 1, why: 'Rule of thirds: eyes on the upper third line. Centre composition looks like a passport photo; lower third looks like a fugitive tape.' },
+    { t: 'ms', q: 'When framing a talking-head, which of these are rules to follow? (select all)',
+      opts: ['Eyes on the upper third', 'Headroom above the head, not cropping the top', 'Nose-room: extra space on the side the subject looks toward', 'Centre the subject exactly in the middle of the frame', 'Chest-framed, not full body'],
+      a: [0,1,2,4], why: 'Perfect centre-framing is wrong for speaking faces. Everything else is standard.' },
+    { t: 'mc', q: 'What does "handheld" mean in the shoot pack?',
+      opts: ['Camera held by the operator, not on a tripod or mount', 'Held only by the talent', 'Handheld gimbal only', 'Phone held in landscape by hand on a table'],
+      a: 0, why: 'Handheld = operator-held. The shoot pack only uses handheld for specific moments (C3 hands-POV chest mount is a kind of body-handheld).' },
+    { t: 'mc', q: 'Why is 3/4 the most flattering angle for faces?',
+      opts: ['It hides a double chin', 'It creates depth: you see one eye fully, the other partially, and the bridge of the nose', 'It is the brightest angle for natural light', 'It makes the jawline look sharper'],
+      a: 1, why: 'Depth. Dead-on flattens; pure profile shows only half the face. 3/4 is the sweet spot.' },
+    { t: 'mc', q: 'For C4 offer static, what is the camera move?',
+      opts: ['Three static variants plus one 3-second push-in', 'A slow pan across the product', 'An overhead spin', 'Handheld walk-around'],
+      a: 0, why: 'C4 = 3 static variants + push-in 3s. The push-in is the one hero motion beat.' },
+    { t: 'mc', q: 'What is a "clean plate" shot?',
+      opts: ['A close-up of the food', 'An empty plate before food is added, for editing reference', 'The same shot with no talent in frame, used to cover edits', 'The final shot of the day'],
+      a: 2, why: 'Clean plate = an empty frame (no talent, no action) held for a few seconds. It gives the editor a background to cut back to if a mistake needs covering. Always grab one at the end of each setup.' }
+  ]
+});
+
+// ---------- Module 2: Lighting basics ----------
+COURSE.modules.push({
+  id: 'm2',
+  num: 2,
+  title: 'Lighting basics',
+  blurb: 'One key light, one fill, one modifier. If that sentence sounds foreign, read Part 2 again before the quiz.',
+  pool: [
+    { t: 'mc', q: 'What is the role of the KEY light?',
+      opts: ['Fills in the shadows', 'The main light on the subject, usually brightest and most directional', 'Lights the background', 'Provides a rim or edge light behind the subject'],
+      a: 1, why: 'Key = the main light. Biggest, brightest, most directional. Everything else supports it.' },
+    { t: 'mc', q: 'What does the FILL light do?',
+      opts: ['Adds drama by deepening shadows', 'Softens the shadows the key light creates, controls contrast', 'Lights only the background', 'Creates a backlight rim'],
+      a: 1, why: 'Fill softens shadows. Without fill, the shadow side of the face looks harsh. The Lantern 26" or ring light is the fill in the Chefly kit.' },
+    { t: 'mc', q: 'What is the Chefly key light?',
+      opts: ['Aputure 120d', 'Amaran 200x', 'Godox SL-60', 'Natural window light only'],
+      a: 1, why: 'Amaran 200x. 200 W bi-colour LED. The hero light.' },
+    { t: 'mc', q: 'The key light goes camera-left at 45°. Looking from the subject\'s point of view, that is which o\'clock position?',
+      opts: ['12 o\'clock (directly ahead)', '2-3 o\'clock', '4-5 o\'clock', '6 o\'clock (behind)'],
+      a: 2, why: '4-5 o\'clock from subject POV = camera-left 45°. This creates a soft shadow down the cheek that adds depth without being harsh.' },
+    { t: 'mc', q: 'How far should the Amaran key light be from the subject for talking-head?',
+      opts: ['0.5 m', '1.5 to 2 m', '3 to 4 m', 'As far as the room allows'],
+      a: 1, why: '1.5 to 2 m. Close enough to feel soft (because the Dome III is wrapping), far enough not to be blinding.' },
+    { t: 'ms', q: 'Which of these are valid FILL options in the Chefly kit? (select all)',
+      opts: ['Lantern 26"', 'ARKON ring light', 'A second Amaran 200x', 'A bedsheet bouncing the key', 'Window light from the opposite side'],
+      a: [0,1,3,4], why: 'Second Amaran is not in the kit. Everything else (lantern, ring, bounce, opposing window) is a valid fill source.' },
+    { t: 'fill', q: 'The Dome III is a light ______ that softens the Amaran output.',
+      a: ['modifier','diffuser','softbox'], why: 'Modifier is the umbrella term; diffuser and softbox are specific kinds. The Dome III is a lantern-style diffuser.' },
+    { t: 'mc', q: '3000 K vs 5600 K: which is warmer?',
+      opts: ['3000 K', '5600 K', 'Both are equally warm', 'Kelvin is a measure of brightness, not colour'],
+      a: 0, why: 'Lower Kelvin = warmer (orange). 3000 K is tungsten/candle. 5600 K is daylight (cooler, more blue). Chefly shoots default to 5600 K unless the scene calls for warm (e.g. evening kitchen mood).' },
+    { t: 'tf', q: 'All lights in a setup must be the same Kelvin value.',
+      opts: ['True', 'False'],
+      a: 0, why: 'True, unless you are doing a deliberate colour contrast. Mixed Kelvin creates a green/pink cast on skin that is almost impossible to fix in edit.' },
+    { t: 'mc', q: '"Hard light" vs "soft light": what makes a light soft?',
+      opts: ['Low brightness', 'Large surface area relative to the subject, or diffusion between light and subject', 'Warm colour temperature', 'LED instead of tungsten'],
+      a: 1, why: 'Soft light = large relative surface area OR diffusion. A small bare bulb 3 m away is hard. The same bulb with a big diffuser is soft. The Dome III exists precisely to make the Amaran soft.' },
+    { t: 'mc', q: 'What is a "key-fill ratio"?',
+      opts: ['The time in seconds the key stays on vs fill', 'The brightness ratio between key and fill (e.g. key twice as bright as fill)', 'The colour temperature difference between them', 'The distance between the two lights'],
+      a: 1, why: 'Brightness ratio. A 2:1 ratio (key twice as bright as fill) gives a gentle shadow. 4:1 is more dramatic. 1:1 is flat.' },
+    { t: 'ms', q: 'Which of these are signs your lighting is wrong? (select all)',
+      opts: ['Hard shadows on the nose and chin', 'Mixed colour casts (orange on one side, blue on the other)', 'Skin looks flat and lifeless', 'Visible light reflection in the subject\'s glasses or eyes on the product', 'Shadow side is completely black'],
+      a: [0,1,2,3,4], why: 'All five are red flags. Fixes: add diffusion, match Kelvin, add fill, reposition, fill the shadow side.' },
+    { t: 'mc', q: 'For C5 top-down food hero, where is the key light positioned?',
+      opts: ['Directly overhead, co-axial with the camera', 'Camera-left 45° as with talking-head', 'Side-angle at 90°, creating long shadows across the plate', 'Below the plate, uplit'],
+      a: 2, why: 'Top-down food hero uses side-light at 90° to create texture shadows on the plate. Steam, sear marks, sauce all pop with side-light. Flat overhead light is boring.' },
+    { t: 'mc', q: 'Golden hour in a kitchen: is it usable as a key light?',
+      opts: ['Yes, if the window is big and the subject can stand near it', 'No, it is too orange to be used as a main light', 'Only at sunrise, not sunset', 'Only with a reflector'],
+      a: 0, why: 'Yes. Big window + golden-hour sun is one of the nicest soft keys you can get for free. Chefly shoots in Kaja\'s kitchen can use window light as key on clear mornings.' },
+    { t: 'fill', q: 'When the key light has a large, soft modifier on it, the shadows become ______.',
+      a: ['soft','softer','smooth','gentler','smoother'], why: 'Soft modifier = soft shadow edges. Hard modifier (bare bulb) = sharp shadow edges.' },
+    { t: 'mc', q: 'If the subject is wearing glasses and you see the key light reflecting in the lenses, what is the first fix?',
+      opts: ['Ask them to take the glasses off', 'Raise the key light above eye level and angle it down more', 'Swap to natural light', 'Move the camera to a 3/4 angle'],
+      a: 1, why: 'Raise and angle down. The reflection sits because the light is at eye level pointing across. Lifting the light changes the angle of reflection so the glare falls below the lens.' }
+  ]
+});
+
+// ---------- Module 3: Audio basics ----------
+COURSE.modules.push({
+  id: 'm3',
+  num: 3,
+  title: 'Audio basics',
+  blurb: 'The DJI Mic 2 is the single most important piece of kit for any shoot with dialogue. Clip it wrong and the whole take is unusable.',
+  pool: [
+    { t: 'mc', q: 'What do TX and RX stand for on the DJI Mic 2?',
+      opts: ['Transmitter (clip-on) and Receiver (on camera)', 'Treble and bass', 'Take and redo', 'Tripod and recording'],
+      a: 0, why: 'TX = transmitter, clipped to the talent. RX = receiver, plugged into the camera or phone.' },
+    { t: 'mc', q: 'Where should the clip-on mic (TX) sit on the talent?',
+      opts: ['On the collar, next to the mouth', '15-20 cm below the mouth, under the collar or on the hem of a jumper', 'On the belt', 'In the pocket'],
+      a: 1, why: '15-20 cm below the mouth. Close enough for clear voice, far enough to avoid breath pops and clothes rustle. Under the collar hides it from frame.' },
+    { t: 'mc', q: 'The kit has how many TX and RX units?',
+      opts: ['1 TX + 1 RX', '2 TX + 1 RX', '2 TX + 2 RX', '3 TX + 1 RX'],
+      a: 1, why: '2 TX + 1 RX. You can mic two people simultaneously into one receiver. You cannot mic three.' },
+    { t: 'mc', q: 'What is a "dead cat" in audio kit?',
+      opts: ['A dead mic battery', 'A fuzzy windshield that slips over the mic to block wind noise', 'A muted take', 'A broken cable'],
+      a: 1, why: 'Dead cat = fuzzy windshield. Essential for outdoor or near-window shoots. Without it, wind sounds like a hurricane on the mic.' },
+    { t: 'tf', q: 'If the DJI Mic 2 fails mid-shoot, the onboard iPhone mic is an acceptable fallback if the subject stays within ~50 cm of the phone.',
+      opts: ['True', 'False'],
+      a: 0, why: 'True, but only at very close range (≤50 cm) and only for emergency. The iPhone mic at 50 cm is tolerable; beyond that, audio gets hollow and picks up room reverb.' },
+    { t: 'ms', q: 'Before every take with dialogue, which audio checks must you do? (select all)',
+      opts: ['TX battery level above 30%', 'RX paired and signal-strength bars visible', 'Clap test: one loud clap, visible in the waveform', 'Headphone monitor (if possible) to hear what is being recorded', 'Ask the talent to count to ten while watching levels'],
+      a: [0,1,2,3,4], why: 'All five. If any fail, fix before rolling. A bad audio take cannot be fixed in edit.' },
+    { t: 'mc', q: 'The "clap for sync" you do at the start of a C2 simultaneous take, why?',
+      opts: ['It marks the emotional energy of the take', 'It creates a visual and audio spike that lets the editor line up A-cam and B-cam footage frame-accurately', 'It signals to the talent to start', 'It wakes the camera up'],
+      a: 1, why: 'Sync. Both cameras record the clap visually, and both audio tracks record the clap spike. The editor uses the spike to align the two takes to the same frame.' },
+    { t: 'mc', q: 'Why is the onboard mic a bad idea at more than 50 cm?',
+      opts: ['Battery drain is too high', 'It picks up room reverb and sounds hollow', 'It records in mono', 'The gain is too low to hear anything'],
+      a: 1, why: 'Room reverb. Anything more than 50 cm and the mic hears as much room echo as it hears voice. The result sounds like a Zoom call, not a production.' },
+    { t: 'mc', q: 'The RX plugs into the iPhone via which adapter or connection?',
+      opts: ['3.5 mm headphone jack direct', 'USB-C direct, or Lightning adapter on older phones', 'AirPlay wireless', 'Bluetooth pairing'],
+      a: 1, why: 'USB-C direct on recent iPhones. Older phones need a Lightning-to-USB-C adapter. Bluetooth audio is low-bitrate and should not be used for production.' },
+    { t: 'fill', q: 'If the talent will be moving around the kitchen (C3 hands-POV), the mic setup is the clip-on ____.',
+      a: ['tx','transmitter','dji','lav','lavalier','lavaliere'], why: 'Clip-on TX. Moving talent needs wireless. A shotgun mic on the camera would fail the moment they turn their head.' },
+    { t: 'mc', q: 'How do you handle clothes rustle (jumper fabric brushing the mic capsule)?',
+      opts: ['Re-position the TX under the collar instead of on top', 'Use a mic tab or sticky mount to hold it still', 'Both of the above', 'Turn up the gain'],
+      a: 2, why: 'Both. Turning up gain amplifies the rustle. The fix is physical: reposition and stabilise.' },
+    { t: 'tf', q: 'You should record audio to the camera AND to a backup (e.g. a second phone running voice memo) for critical dialogue takes.',
+      opts: ['True', 'False'],
+      a: 0, why: 'True. Belt and braces. A phone running voice memo next to the talent is free insurance against the DJI failing.' },
+    { t: 'mc', q: 'The ideal audio level during speech, watching the RX meter, should peak where?',
+      opts: ['In the red every few seconds', 'Between -18 and -6 dB, never touching 0', 'Always above -3 dB', 'Below -30 dB for safety'],
+      a: 1, why: '-18 to -6 dB is the safe band. Touching 0 dB means clipping = permanent distortion. Below -30 dB is too quiet and will be noisy when you raise it in edit.' },
+    { t: 'mc', q: 'If you are shooting outside and the wind picks up, the first fix is?',
+      opts: ['Dead cat on the TX', 'Shoot indoors instead', 'Use the onboard mic', 'Turn down gain'],
+      a: 0, why: 'Dead cat first. Turning down gain just makes the voice quieter while wind is still there. Dead cat kills the wind mechanically.' },
+    { t: 'mc', q: 'C3 hands-POV has no dialogue. Does it need a mic?',
+      opts: ['No, never', 'Yes: ambient kitchen sound (sizzle, chop, pour) is part of the story and the TX can pick it up if clipped near the action', 'Only if the edit needs voiceover', 'Only if the shoot is outdoors'],
+      a: 1, why: 'Yes. Diegetic audio (the actual sound of the cooking) is half the vibe of a hands-POV clip. Clip the TX near the pan or cutting board.' }
+  ]
+});
+
+// ---------- Module 4: How to read a shoot sheet ----------
+COURSE.modules.push({
+  id: 'm4',
+  num: 4,
+  title: 'How to read a shoot sheet',
+  blurb: 'Simultaneous vs sequential is the single biggest source of confusion in the docs. Learn this once and the rest is easy.',
+  pool: [
+    { t: 'mc', q: 'A "SIMULTANEOUS" take means what?',
+      opts: ['Two cameras roll at the same time, talent performs once, captured from two angles in a single take', 'The same take is repeated on two different days', 'Two takes are recorded back-to-back with no break', 'The talent and the cameraperson switch roles'],
+      a: 0, why: 'Simultaneous = 2 cameras rolling together, talent performs ONCE. Both angles come from the same physical moment. Clap-for-sync at the start lines them up in edit.' },
+    { t: 'mc', q: 'A "SEQUENTIAL" take means what?',
+      opts: ['Two cameras roll in sequence', 'One camera is used, and the talent performs the action multiple times so each angle is captured in turn', 'Takes must be shot in the order listed on the sheet', 'The talent reads a numbered sequence of lines'],
+      a: 1, why: 'Sequential = one camera, talent repeats. Move the camera to a new angle, ask the talent to do it again. Slower but only needs one camera operator.' },
+    { t: 'mc', q: 'C1 Kaja testimonial is shot which way?',
+      opts: ['Simultaneous, 2 cameras', 'Sequential, 1 camera', 'Handheld rolling both', 'Iphone only, no tripod'],
+      a: 1, why: 'C1 = sequential, 1 camera, ~45 min. Kaja tells the story multiple times, each time from a different angle. Pro: simpler setup. Con: Kaja has to re-find her energy per take.' },
+    { t: 'mc', q: 'C2 James founder is shot which way?',
+      opts: ['Simultaneous, 2 cameras', 'Sequential, 1 camera', 'Sequential, 2 cameras', 'Handheld, operator moves'],
+      a: 0, why: 'C2 = simultaneous, 2 cameras, ~60 min. A-cam dead-on tripod, B-cam 3/4 on ARKON Clamp, clap-for-sync at the start, 3 monologue takes. James delivers each take once and both angles capture it.' },
+    { t: 'fill', q: 'The approximate duration for the C2 James founder block on shoot day is ____ minutes.',
+      a: ['60','sixty'], why: 'C2 is budgeted at ~60 min including setup, clap-sync, and 3 monologue takes.' },
+    { t: 'fill', q: 'C1 Kaja testimonial is budgeted at ____ minutes.',
+      a: ['45','forty-five','forty five'], why: 'C1 ≈ 45 min. Sequential, 1 camera, testimonial-style, 3 angles.' },
+    { t: 'ms', q: 'Which columns are on the shoot sheet? (select all that apply)',
+      opts: ['Shot number', 'Angle (e.g. dead-on, 3/4)', 'Size (e.g. chest, close-up)', 'Movement (static, push-in, etc)', 'Notes / dialogue cue', 'Editor\'s cut timing'],
+      a: [0,1,2,3,4], why: 'Editor cut timing is a post-production column, not a shoot-day one. Everything else belongs.' },
+    { t: 'mc', q: 'On the shoot sheet, what does the note "CU" mean?',
+      opts: ['Camera Up', 'Close-Up', 'Cook Up', 'Copy URL'],
+      a: 1, why: 'CU = close-up. Standard shot-size abbreviation. Also MS (medium), WS (wide), ECU (extreme close-up).' },
+    { t: 'mc', q: 'On the shoot sheet, what does "MS" mean?',
+      opts: ['Main Scene', 'Medium Shot', 'Multi-Shot', 'Master Shot'],
+      a: 1, why: 'MS = medium shot. Waist-up or chest-up framing.' },
+    { t: 'mc', q: 'On the shoot sheet, what does "WS" mean?',
+      opts: ['Wide Shot', 'Warm Scene', 'Workflow Step', 'Whole Sequence'],
+      a: 0, why: 'WS = wide shot. The establishing frame that shows the whole space.' },
+    { t: 'mc', q: 'If the shoot sheet says "push-in 3s on hero line," what are you doing?',
+      opts: ['Three seconds of pushing the camera in during the hero dialogue line', 'Three takes of pushing in', 'Pushing in for three minutes', 'Pushing back three steps'],
+      a: 0, why: 'Three-second push-in timed to the hero line. A slow, deliberate move. Cinematic.' },
+    { t: 'tf', q: 'Shots on the sheet should be shot in the order they appear.',
+      opts: ['True', 'False'],
+      a: 1, why: 'False, but with a caveat. Group by setup, not by number. Do every dead-on angle shot, then reset to 3/4 and do every 3/4 shot. Breaks down and resets eat time.' },
+    { t: 'mc', q: 'What is "pre-staging" on the shoot sheet?',
+      opts: ['The order of shots before the main talent arrives', 'Cooking and plating the food before cameras roll, so plates are ready and not going cold', 'A rehearsal without cameras', 'The setup of lights before cameras arrive'],
+      a: 1, why: 'Pre-staging = food ready-to-shoot. You do not cook live on shoot day unless the cooking is itself the shot (C3 hands-POV).' },
+    { t: 'ms', q: 'Which of these items belong in "notes" column on a shoot sheet line? (select all)',
+      opts: ['The exact dialogue cue or line', 'The emotional tone (e.g. "warm, conspiratorial")', 'A prop reminder (e.g. "phone out of frame")', 'The caterer\'s invoice total', 'The wardrobe for the take'],
+      a: [0,1,2,4], why: 'Caterer invoice is an ops item, not a shoot-sheet note. Wait — all except the invoice belong. Re-reading, items 0, 1, 2, 4 are wrong choice — the answer is 0, 1, 2 plus the wardrobe note.' },
+    { t: 'mc', q: 'The shoot pack budgets how many total concepts for a standard day?',
+      opts: ['3', '4', '5', '7'],
+      a: 2, why: 'Five concepts: C1 Kaja testimonial, C2 James founder, C3 hands-POV, C4 offer static, C5 top-down food hero.' },
+    { t: 'mc', q: 'C4 offer static is described as "3 variants + push-in 3s." How many total deliverables does that produce?',
+      opts: ['3', '4 (3 statics + 1 video)', '5', '6'],
+      a: 1, why: '3 static variants + 1 push-in motion beat = 4 deliverables from C4.' }
+  ]
+});
+
+// ---------- Module 5: Per-concept walkthroughs ----------
+COURSE.modules.push({
+  id: 'm5',
+  num: 5,
+  title: 'Per-concept walkthroughs (C1 to C5)',
+  blurb: 'The five concepts in shoot order. If you understand each one cold, the shoot runs itself.',
+  pool: [
+    { t: 'mc', q: 'C1 Kaja testimonial: what is the primary camera setup?',
+      opts: ['1 camera sequential, tripod, ~45 min, 3 angles (dead-on, 3/4, over-shoulder)', '2 cameras simultaneous, tripod + ARKON, ~60 min', 'Handheld roaming', 'Overhead clamp only'],
+      a: 0, why: 'C1 = 1 cam sequential, 3 angles, ~45 min. Kaja speaks to camera as if to a friend.' },
+    { t: 'mc', q: 'C2 James founder: what is the setup?',
+      opts: ['1 camera sequential, 3 takes', '2 cameras simultaneous (A-cam iPhone 15 dead-on tripod, B-cam iPhone 17 on ARKON Clamp 3/4), clap-for-sync, 3 monologue takes, ~60 min', '1 camera handheld', 'Overhead clamp, James speaks up to the camera'],
+      a: 1, why: 'C2 = 2-cam simultaneous, A-cam dead-on tripod + B-cam 3/4 on ARKON Clamp, clap-sync, 3 monologue takes, ~60 min.' },
+    { t: 'mc', q: 'C3 hands-POV: what is the primary mount?',
+      opts: ['Tripod at chest height', 'SmallRig neck mount + ARKON overhead', 'Handheld only', 'Shoulder rig'],
+      a: 1, why: 'C3 = SmallRig neck mount (first-person POV) + ARKON overhead (third-person top-down). Two complementary angles of the same cooking action.' },
+    { t: 'mc', q: 'C3 has how much dialogue?',
+      opts: ['3 lines', '6-8 lines', 'None (silent with diegetic kitchen sound)', 'Continuous voiceover'],
+      a: 2, why: 'C3 = no dialogue. Pure hands, pure cooking, pure kitchen sounds (sizzle, chop, pour). Voiceover is added in edit if needed.' },
+    { t: 'mc', q: 'C4 offer static: what is the shot list?',
+      opts: ['3 static variants + 3s push-in', '1 static + 1 push-in', '5 variants', '3 top-down only'],
+      a: 0, why: 'C4 = 3 static variants (different compositions) + 1 push-in 3s motion beat.' },
+    { t: 'mc', q: 'C5 top-down food hero: what is in the shot list?',
+      opts: ['5 video beats + 3 stills, all overhead', '3 video beats, dead-on', '1 video + 1 still', 'Variable — depends on the dish'],
+      a: 0, why: 'C5 = 5 video beats + 3 stills, all top-down via ARKON Clamp. Video beats capture the "hero actions" (steam, drizzle, cut, plate, garnish).' },
+    { t: 'ms', q: 'For C2 James founder, which of these are true? (select all)',
+      opts: ['A-cam is iPhone 15 on a tripod, dead-on', 'B-cam is iPhone 17 on an ARKON Clamp at 3/4', 'Both cameras roll at the same time (simultaneous)', 'Clap at the start of every take for sync', 'James records three monologue takes'],
+      a: [0,1,2,3,4], why: 'All five are correct. This is THE definition of C2 setup.' },
+    { t: 'mc', q: 'In C1, Kaja\'s three angles are recorded how?',
+      opts: ['All at once, 3 cameras', 'Sequentially: camera moves to angle 1, record; then angle 2, record; then angle 3, record', 'Only angle 1 is recorded; the rest are punch-in crops', 'Angle 1 is recorded; angles 2 and 3 are stock'],
+      a: 1, why: 'Sequential. Kaja tells her story 3 times, once per angle. Takes longer but only needs 1 camera.' },
+    { t: 'tf', q: 'C1 Kaja and C2 James both use clap-for-sync.',
+      opts: ['True', 'False'],
+      a: 1, why: 'False. Only C2 needs clap-sync because C2 has two cameras running simultaneously. C1 is single-camera sequential; nothing to sync.' },
+    { t: 'fill', q: 'C3 hands-POV uses a ______ mount on the body of the cook.',
+      a: ['smallrig','neck','chest','pov','body'], why: 'SmallRig neck mount (sometimes called a chest/body mount). Straps the phone to the talent so the lens looks down over their hands.' },
+    { t: 'mc', q: 'How many total cameras get used across the full shoot day (C1 through C5)?',
+      opts: ['1', '2 (both iPhones, used in various configurations)', '3', '4'],
+      a: 1, why: '2 iPhones. iPhone 15 (A-cam) and iPhone 17 (B-cam). They swap roles across concepts: sometimes one is on the clamp, sometimes the neck mount, sometimes the tripod.' },
+    { t: 'mc', q: 'The ARKON Clamp gets used in which concepts?',
+      opts: ['C2 only', 'C2 (3/4 angle) and C3 (overhead) and C5 (top-down)', 'C5 only', 'All five'],
+      a: 1, why: 'ARKON Clamp appears in C2 (B-cam 3/4), C3 (overhead), and C5 (top-down). The tripod is only used in C1 and as A-cam on C2.' },
+    { t: 'mc', q: 'For C5 top-down, how high above the plate is the camera?',
+      opts: ['20-30 cm', '50-70 cm', '1.5-2 m', 'As high as the clamp reaches'],
+      a: 1, why: '50-70 cm. Close enough to see steam and texture, far enough to get the whole plate in frame with a standard iPhone lens.' },
+    { t: 'mc', q: 'The 3 monologue takes in C2 are structurally what?',
+      opts: ['Three different scripts', 'The same script three times with slightly different energy / emphasis / pacing', 'Three different camera angles', 'Three different lighting setups'],
+      a: 1, why: 'Same script, 3 different energies. Take 1: steady and warm. Take 2: more energy. Take 3: a bit looser. Gives the editor choices.' },
+    { t: 'mc', q: 'For C4 offer static, why do you capture both a static and a push-in 3s?',
+      opts: ['So you have a choice in edit between a still-feeling asset and a motion asset for the same offer', 'Because Meta requires both', 'For symmetry', 'No reason, just habit'],
+      a: 0, why: 'Options in edit. Sometimes the static works; sometimes the push-in grabs more attention. Shooting both means you can test.' },
+    { t: 'ms', q: 'Which of these are SHOT on the same physical day using the same kit? (select all)',
+      opts: ['C1', 'C2', 'C3', 'C4', 'C5'],
+      a: [0,1,2,3,4], why: 'All five are shot the same day with the same two iPhones, the Amaran, and the ARKON Clamp. Efficient kit reuse is the whole point.' }
+  ]
+});
+
+// ---------- Module 6: Common mistakes and rescues ----------
+COURSE.modules.push({
+  id: 'm6',
+  num: 6,
+  title: 'Common mistakes and rescues',
+  blurb: 'The ten ways a shoot day goes sideways and how to fix each one without losing the take.',
+  pool: [
+    { t: 'mc', q: 'Mid-take, you notice the shadow side of James\'s face is completely black. Rescue?',
+      opts: ['Ignore it, it looks dramatic', 'Add a fill (ring light or bounce from a white board) on the shadow side', 'Move the key light further away', 'Turn the key light off'],
+      a: 1, why: 'Add fill. A white bounce or the ring light on the shadow side softens the ratio and brings the dark side back to readable.' },
+    { t: 'mc', q: 'You check playback and the audio is distorted / crackling. What went wrong?',
+      opts: ['Gain was too high, signal clipped', 'Battery was too low', 'Wrong Kelvin', 'Too much fill'],
+      a: 0, why: 'Clipping. Gain too hot → signal exceeds 0 dB → permanent distortion that cannot be fixed in edit. Always watch levels at -18 to -6 dB.' },
+    { t: 'mc', q: 'Halfway through C2, you realise you forgot to clap at the start of the take. What do you do?',
+      opts: ['Redo the take from the top', 'Clap now and carry on; editor can still use the late clap as a sync point', 'Keep going and hope the edit works', 'Swap to sequential for the rest'],
+      a: 1, why: 'Clap now. A late clap is still a sync point. A missed clap means the editor has to eyeball-align (possible but painful).' },
+    { t: 'mc', q: 'Your iPhone screen shows "Storage Full" mid-take. What is the priority?',
+      opts: ['Delete something and restart the take', 'Let the current take finish recording whatever it can, then clear space', 'Swap to the B-cam to finish', 'Restart the phone'],
+      a: 2, why: 'Swap to B-cam. Do not interrupt the current recording (what is there is still useful); use the backup phone to get the rest, then clear space after.' },
+    { t: 'mc', q: 'The take looks fine on the iPhone preview but on the laptop it looks dull / washed out. Likely cause?',
+      opts: ['iPhone preview applies auto-enhance; the actual file is flatter (especially in ProRes)', 'The laptop has a bad screen', 'The shot was out of focus', 'The white balance was wrong'],
+      a: 0, why: 'iPhone preview enhances. ProRes and Log footage always look flat unless colour-graded. This is normal, not a mistake.' },
+    { t: 'tf', q: 'If the take looked perfect but the audio has clothes rustle, you cannot fix it in edit.',
+      opts: ['True', 'False'],
+      a: 0, why: 'True. Clothes rustle is baked into the waveform with the voice. Noise-reduction tools can reduce it but not remove it. Redo the take and reposition the mic.' },
+    { t: 'mc', q: 'The talent keeps looking at the B-cam instead of the A-cam during a C2 take. Rescue?',
+      opts: ['Take a break, remind them: eyeline on A-cam (dead-on), B-cam is listening', 'Swap which camera is A', 'Cover B-cam with cloth', 'Delete the take'],
+      a: 0, why: 'Remind and reset. Eyeline on A-cam. B-cam is the "passive listener" capturing the 3/4. Retraining takes one or two reminders.' },
+    { t: 'mc', q: 'After the shoot, you find one of the 3 C2 takes has a phone notification in the audio. What do you do?',
+      opts: ['Use one of the other two takes', 'Patch audio from another take over this one', 'Re-shoot', 'Release with the notification'],
+      a: 0, why: 'Use another take. This is the whole point of recording 3 takes: redundancy.' },
+    { t: 'mc', q: 'Halfway through the shoot, the Amaran starts to flicker. Likely cause?',
+      opts: ['Low battery or dodgy DC cable', 'Wrong Kelvin setting', 'Camera is too close', 'Dome III is incorrectly fitted'],
+      a: 0, why: 'Power issue. LED flicker is almost always battery or cable. Swap to mains or replace the cable.' },
+    { t: 'mc', q: 'A dish for C5 starts to cool visibly between shots. Rescue?',
+      opts: ['Steam it with a hidden kettle before each new take', 'Shoot faster', 'Serve it and cook another', 'Cheat with a glycerin mist'],
+      a: 0, why: 'Hidden kettle. A quick puff of steam under the plate from a kettle or a mister brings "fresh out of the pan" back for the camera. Also glycerin/water 50:50 sprayed on food makes it glisten fresh.' },
+    { t: 'mc', q: 'You realise the key light is 3200 K and the window behind the subject is 5600 K daylight. Skin looks green/orange-split. Fix?',
+      opts: ['Match the key to 5600 K or put a CTO gel on it to warm to match the window', 'Draw the curtains', 'Both are valid solutions', 'Change to black-and-white'],
+      a: 2, why: 'Both valid. Either switch the Amaran to 5600 K (bi-colour, easy) or gel it warm to match the window. Curtains also work if window is behind the subject but kill some natural ambience.' },
+    { t: 'ms', q: 'Which of these are PREVENTABLE mistakes you catch in pre-flight check? (select all)',
+      opts: ['Low battery', 'Unpaired DJI Mic 2 RX', 'Storage full on iPhone', 'Wrong Kelvin mismatch', 'Talent getting bored by take 5'],
+      a: [0,1,2,3], why: 'First four are kit-check issues caught before rolling. Talent fatigue is a pacing/energy issue, managed on the day with breaks and snacks.' },
+    { t: 'mc', q: 'A whole C1 testimonial take plays back silently. What do you check first?',
+      opts: ['RX was not plugged into the iPhone (or the audio-source in Camera app defaulted to onboard)', 'The talent was not speaking', 'The file is corrupt', 'The edit deleted the audio'],
+      a: 0, why: 'RX connection. Audio-source defaults can revert to onboard mic if the USB-C connection wobbled. Always test before rolling and check during long takes.' },
+    { t: 'mc', q: 'Footage looks great but is upside down. Cause?',
+      opts: ['The iPhone was mounted inverted on the ARKON Clamp and orientation lock was on', 'The camera was set to portrait orientation by accident', 'The clamp is upside down', 'All of the above are possible'],
+      a: 3, why: 'All valid. Easy fix in edit (rotate 180°) but prevent it by checking preview orientation every time you remount the phone.' },
+    { t: 'mc', q: 'Worst-case: every DJI Mic 2 has failed and you need audio NOW. Fallback?',
+      opts: ['Onboard iPhone mic with talent within 50 cm of the phone', 'Record to voice memo on the other phone, sync in post', 'Both of the above', 'Shoot silent and ADR later'],
+      a: 2, why: 'Both. Onboard mic at close range AND voice memo backup on the other phone. ADR is a last-last resort because timing never matches.' }
+  ]
+});
+
+// ---------- Final exam: 12 questions drawn from all modules ----------
+COURSE.finalExamPool = function() {
+  const all = [];
+  COURSE.modules.forEach(m => {
+    // Pick 2 to 3 questions from each module for final pool
+    m.pool.forEach(q => all.push({ ...q, moduleNum: m.num, moduleTitle: m.title }));
+  });
+  return all;
+};
+
+// ============================================================
+// STATE MANAGEMENT
+// ============================================================
+const STORAGE_KEY = 'chefly-shoot-course-v1';
+
+const defaultState = () => ({
+  enrolled: false,
+  name: '',
+  partner: '',
+  role: '',
+  startedAt: null,
+  pledge: false,
+  modules: {},      // { m0: { attempts: [...], passed: true, bestScore: 0.9 }, ... }
+  finalExam: null,  // { attempts: [...], passed: true, score: 0.88 }
+  certificate: null,// { serial: 'CHEFLY-...', issuedAt: '...', partnerSerial: null }
+  currentView: 'enrol'
+});
+
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultState();
+    return { ...defaultState(), ...JSON.parse(raw) };
+  } catch(e) {
+    return defaultState();
+  }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch(e) {
+    console.error('Could not save state', e);
+  }
+}
+
+function resetState() {
+  if (confirm('This will erase all progress, scores, and certificates for this browser. Continue?')) {
+    localStorage.removeItem(STORAGE_KEY);
+    state = defaultState();
+    render();
+  }
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function drawQuestions(pool, count) {
+  return shuffle(pool).slice(0, Math.min(count, pool.length));
+}
+
+function prepareQuestion(q) {
+  // For mc/ms/tf, shuffle options and remap the answer
+  if (q.t === 'mc' || q.t === 'tf') {
+    const indexed = q.opts.map((o,i) => ({ text: o, wasCorrect: i === q.a }));
+    const shuffled = shuffle(indexed);
+    return {
+      ...q,
+      opts: shuffled.map(s => s.text),
+      a: shuffled.findIndex(s => s.wasCorrect)
+    };
+  }
+  if (q.t === 'ms') {
+    const indexed = q.opts.map((o,i) => ({ text: o, wasCorrect: q.a.includes(i) }));
+    const shuffled = shuffle(indexed);
+    return {
+      ...q,
+      opts: shuffled.map(s => s.text),
+      a: shuffled.map((s,i) => s.wasCorrect ? i : -1).filter(i => i >= 0)
+    };
+  }
+  return q;
+}
+
+function gradeAnswer(q, answer) {
+  if (q.t === 'mc' || q.t === 'tf') {
+    return answer === q.a;
+  }
+  if (q.t === 'ms') {
+    if (!Array.isArray(answer)) return false;
+    const correct = q.a.slice().sort().join(',');
+    const given = answer.slice().sort().join(',');
+    return correct === given;
+  }
+  if (q.t === 'fill') {
+    if (typeof answer !== 'string') return false;
+    const normalised = answer.trim().toLowerCase();
+    return q.a.some(acc => acc.toLowerCase() === normalised);
+  }
+  return false;
+}
+
+function generateSerial(name, modules, finalScore) {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  const cleanName = (name || 'xxx').toLowerCase().replace(/[^a-z]/g,'').slice(0,3).padEnd(3,'x');
+  const scoreSum = Object.values(modules).reduce((s, m) => s + Math.round((m.bestScore || 0) * 100), 0) + Math.round((finalScore || 0) * 100);
+  const hash = scoreSum.toString(36).slice(-4).padStart(4, '0');
+  const rand = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  return `CHEFLY-${y}${m}${d}-${cleanName}-${hash}-${rand}`;
+}
+
+function fmtPct(n) {
+  return Math.round(n * 100) + '%';
+}
+
+// ============================================================
+// ROUTER
+// ============================================================
+function navigate(view, extra) {
+  state.currentView = view;
+  state.viewExtra = extra || null;
+  saveState();
+  render();
+  window.scrollTo(0, 0);
+}
+
+function render() {
+  const app = document.getElementById('app');
+  if (!state.enrolled) {
+    app.innerHTML = renderEnrol();
+    wireEnrol();
+    return;
+  }
+  const view = state.currentView || 'dashboard';
+  if (view === 'dashboard') { app.innerHTML = renderDashboard(); wireDashboard(); return; }
+  if (view === 'module')    { renderModuleIntro(state.viewExtra); return; }
+  if (view === 'quiz')      { renderQuiz(state.viewExtra); return; }
+  if (view === 'results')   { renderResults(state.viewExtra); return; }
+  if (view === 'final')     { renderFinalIntro(); return; }
+  if (view === 'finalQuiz') { renderFinalQuiz(); return; }
+  if (view === 'finalResults') { renderFinalResults(state.viewExtra); return; }
+  if (view === 'certificate') { renderCertificate(); wireCertificate(); return; }
+  app.innerHTML = renderDashboard();
+  wireDashboard();
+}
+
+// ============================================================
+// VIEW: ENROL
+// ============================================================
+function renderEnrol() {
+  return `
+    <section class="hero">
+      <div class="eyebrow">course · v1 · chefly · internal</div>
+      <h1>Shoot training certification</h1>
+      <p class="lead">Seven modules, a test after each one, a final exam, and a certificate with your name on it. Pass this course and we both know we have actually read the companion, not just skimmed it. <b>Pass mark: 80% per module, 85% on the final.</b></p>
+      <p class="small" style="opacity:.7;margin-top:6px;">Each quiz draws a random selection of questions from a larger pool. Retake as many times as you need, the questions change each time. Cheating via the other person\'s answers is hard because neither of you sees the full question list, and the questions shuffle.</p>
+
+      <form class="enrol" id="enrolForm" autocomplete="off">
+        <h3 style="margin:0 0 4px 0;font-family:'Fraunces',serif;font-weight:600;">Enrol</h3>
+        <p class="small" style="opacity:.7;margin:0 0 8px 0;">Your name lives on your certificate. It is locked once you start the first quiz.</p>
+
+        <label class="field">
+          <span>Your name</span>
+          <input type="text" name="name" required placeholder="e.g. James Blake" />
+        </label>
+
+        <label class="field">
+          <span>Your partner on this shoot (the other person who also has to pass)</span>
+          <input type="text" name="partner" required placeholder="e.g. Kaja" />
+        </label>
+
+        <label class="field">
+          <span>Your role on the day</span>
+          <select name="role" required>
+            <option value="">Choose one</option>
+            <option value="talent">Talent (on camera)</option>
+            <option value="operator">Operator (behind camera)</option>
+            <option value="both">Both</option>
+          </select>
+        </label>
+
+        <div class="pledge">
+          <label class="field" style="flex-direction:row;align-items:flex-start;gap:10px;">
+            <input type="checkbox" name="pledge" style="margin-top:3px;" required />
+            <span style="font-weight:500;">I pledge to take this course without looking up answers in the training companion while I am mid-quiz. I may re-read any section before starting a quiz or after finishing one. I understand this is an accountability tool between me and my shoot partner, and cheating only cheats them.</span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="margin-top:12px;align-self:flex-start;">Begin the course →</button>
+      </form>
+
+      <div class="small" style="margin-top:20px;opacity:.6;">
+        <b>For future hires:</b> anyone new who joins a shoot must complete this course before their first day on set. A signed certificate is the proof.
+      </div>
+    </section>
+  `;
+}
+
+function wireEnrol() {
+  const form = document.getElementById('enrolForm');
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const name = (fd.get('name') || '').toString().trim();
+    const partner = (fd.get('partner') || '').toString().trim();
+    const role = (fd.get('role') || '').toString();
+    const pledge = !!fd.get('pledge');
+    if (!name || !partner || !role || !pledge) return;
+    state.enrolled = true;
+    state.name = name;
+    state.partner = partner;
+    state.role = role;
+    state.pledge = true;
+    state.startedAt = new Date().toISOString();
+    state.currentView = 'dashboard';
+    saveState();
+    render();
+  });
+}
+
+// ============================================================
+// VIEW: DASHBOARD
+// ============================================================
+function renderDashboard() {
+  const passedModules = COURSE.modules.filter(m => state.modules[m.id] && state.modules[m.id].passed).length;
+  const allModulesPassed = passedModules === COURSE.modules.length;
+  const finalPassed = state.finalExam && state.finalExam.passed;
+  const certified = finalPassed && state.certificate;
+  const pctComplete = (passedModules / (COURSE.modules.length + 1)) * 100 + (finalPassed ? (100 / (COURSE.modules.length + 1)) : 0);
+
+  const modList = COURSE.modules.map(m => {
+    const s = state.modules[m.id];
+    const statusClass = s && s.passed ? 'pass' : (s ? 'try' : 'open');
+    const statusText = s && s.passed ? `Passed · best ${fmtPct(s.bestScore)}` : (s ? `Retry · best ${fmtPct(s.bestScore)}` : 'Start');
+    return `
+      <div class="mod ${s && s.passed ? 'is-passed' : ''}" data-mid="${m.id}">
+        <div class="mod-num">Module ${m.num}</div>
+        <div class="mod-title">${m.title}</div>
+        <div class="mod-blurb">${m.blurb}</div>
+        <div class="mod-foot">
+          <span class="mod-status mod-status--${statusClass}">${statusText}</span>
+          <a class="mod-cta" data-go="module" data-mid="${m.id}">${s && s.passed ? 'Retake →' : 'Open →'}</a>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <section class="hello">
+      <div class="hello-name">Hi ${escapeHtml(state.name)} ·</div>
+      <div>Partner on shoot: <b>${escapeHtml(state.partner)}</b> · Role: <b>${state.role === 'both' ? 'Talent + Operator' : state.role === 'talent' ? 'Talent' : 'Operator'}</b></div>
+      <div class="progress">
+        <div class="progress-bar" style="width:${pctComplete}%"></div>
+      </div>
+      <div class="small" style="opacity:.65;margin-top:6px;">${passedModules} of ${COURSE.modules.length} modules passed${finalPassed ? ' · final exam passed' : ''}${certified ? ' · certified' : ''}</div>
+    </section>
+
+    <section style="margin-top:28px;">
+      <h2>Modules</h2>
+      <div class="mod-list">${modList}</div>
+    </section>
+
+    <section class="capstone" style="margin-top:36px;">
+      <h2 style="margin:0 0 16px 0;">Capstone</h2>
+      <div class="cap-grid">
+        <div class="cap ${!allModulesPassed ? 'is-locked' : ''}">
+          <div class="cap-title">Final exam</div>
+          <div class="cap-blurb">12 questions drawn from all 7 modules. Pass mark 85%. Unlocks after every module is passed.</div>
+          <div class="cap-status">
+            ${finalPassed ? `<span class="mod-status mod-status--pass">Passed · ${fmtPct(state.finalExam.bestScore)}</span>` : (state.finalExam ? `<span class="mod-status mod-status--try">Retry · best ${fmtPct(state.finalExam.bestScore)}</span>` : `<span class="mod-status mod-status--${allModulesPassed ? 'open' : 'locked'}">${allModulesPassed ? 'Ready' : 'Locked'}</span>`)}
+            ${allModulesPassed ? `<a class="mod-cta" data-go="final">${finalPassed ? 'Retake →' : 'Begin →'}</a>` : ''}
+          </div>
+        </div>
+
+        <div class="cap ${!finalPassed ? 'is-locked' : ''}">
+          <div class="cap-title">Certificate</div>
+          <div class="cap-blurb">Printable certificate with a unique serial. Both partners paste each other\'s serial to finalise.</div>
+          <div class="cap-status">
+            ${certified ? `<span class="mod-status mod-status--pass">Issued</span><a class="mod-cta" data-go="certificate">View →</a>` : finalPassed ? `<span class="mod-status mod-status--open">Ready</span><a class="mod-cta" data-go="certificate">Issue →</a>` : `<span class="mod-status mod-status--locked">Locked</span>`}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="danger-zone" style="margin-top:32px;">
+      <a href="#" id="resetLink">Reset all progress (this browser only)</a>
+    </section>
+  `;
+}
+
+function wireDashboard() {
+  document.querySelectorAll('[data-go="module"]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.preventDefault();
+      navigate('module', el.getAttribute('data-mid'));
+    });
+  });
+  const finalBtn = document.querySelector('[data-go="final"]');
+  if (finalBtn) finalBtn.addEventListener('click', e => { e.preventDefault(); navigate('final'); });
+  const certBtn = document.querySelector('[data-go="certificate"]');
+  if (certBtn) certBtn.addEventListener('click', e => { e.preventDefault(); navigate('certificate'); });
+  const reset = document.getElementById('resetLink');
+  if (reset) reset.addEventListener('click', e => { e.preventDefault(); resetState(); });
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ============================================================
+// VIEW: MODULE INTRO
+// ============================================================
+function renderModuleIntro(mid) {
+  const m = COURSE.modules.find(x => x.id === mid);
+  if (!m) { navigate('dashboard'); return; }
+  const s = state.modules[mid];
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <section class="m-intro">
+      <a href="#" class="back-link" id="backBtn">← Back to dashboard</a>
+      <div class="eyebrow" style="margin-top:8px;">Module ${m.num}</div>
+      <h1>${m.title}</h1>
+      <p class="lead">${m.blurb}</p>
+      <div class="m-rules">
+        <div><b>${COURSE.drawPerModule}</b> questions drawn at random from a pool of ${m.pool.length}.</div>
+        <div>Pass mark: <b>${Math.round(COURSE.passModule * 100)}%</b>.</div>
+        <div>One question at a time. Options shuffle. You see the correct answer after each one.</div>
+        ${s ? `<div style="margin-top:8px;color:var(--accent);"><b>Your best so far:</b> ${fmtPct(s.bestScore)} across ${s.attempts.length} attempt${s.attempts.length === 1 ? '' : 's'}.</div>` : ''}
+      </div>
+      <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary" id="startQuizBtn">${s ? 'Retake quiz →' : 'Begin quiz →'}</button>
+        <a href="/training-companion.html#${m.id}" class="btn" target="_blank" rel="noopener">Re-read companion (new tab)</a>
+      </div>
+    </section>
+  `;
+  document.getElementById('backBtn').addEventListener('click', e => { e.preventDefault(); navigate('dashboard'); });
+  document.getElementById('startQuizBtn').addEventListener('click', () => {
+    const drawn = drawQuestions(m.pool, COURSE.drawPerModule).map(prepareQuestion);
+    state.currentQuiz = {
+      moduleId: mid,
+      questions: drawn,
+      current: 0,
+      answers: [],
+      showingFeedback: false
+    };
+    saveState();
+    navigate('quiz', mid);
+  });
+}
+
+// ============================================================
+// VIEW: QUIZ (module)
+// ============================================================
+function renderQuiz(mid) {
+  const q = state.currentQuiz;
+  if (!q || q.moduleId !== mid) { navigate('dashboard'); return; }
+  const m = COURSE.modules.find(x => x.id === mid);
+  renderQuizFrame(m.title, `Module ${m.num}`, q, false);
+}
+
+function renderFinalQuiz() {
+  const q = state.currentQuiz;
+  if (!q || q.moduleId !== 'final') { navigate('dashboard'); return; }
+  renderQuizFrame('Final exam', 'Capstone', q, true);
+}
+
+function renderQuizFrame(title, eyebrow, q, isFinal) {
+  const app = document.getElementById('app');
+  const question = q.questions[q.current];
+  const total = q.questions.length;
+  const n = q.current + 1;
+  const answer = q.answers[q.current];
+  const answered = answer !== undefined;
+
+  let body = '';
+  if (question.t === 'mc' || question.t === 'tf') {
+    body = question.opts.map((opt, i) => {
+      let cls = 'q-option';
+      if (answered) {
+        if (i === question.a) cls += ' is-correct';
+        else if (i === answer) cls += ' is-incorrect';
+      } else if (answer === i) {
+        cls += ' is-selected';
+      }
+      return `<div class="${cls}" data-opt="${i}">${escapeHtml(opt)}</div>`;
+    }).join('');
+  } else if (question.t === 'ms') {
+    const selected = Array.isArray(answer) ? answer : [];
+    body = question.opts.map((opt, i) => {
+      let cls = 'q-option';
+      if (answered && q.feedbackShown) {
+        const isCorrect = question.a.includes(i);
+        const wasSelected = selected.includes(i);
+        if (isCorrect && wasSelected) cls += ' is-correct';
+        else if (isCorrect && !wasSelected) cls += ' is-missed';
+        else if (!isCorrect && wasSelected) cls += ' is-incorrect';
+      } else if (selected.includes(i)) {
+        cls += ' is-selected';
+      }
+      return `<div class="${cls}" data-opt="${i}">${escapeHtml(opt)}</div>`;
+    }).join('');
+    body += `<div class="small" style="opacity:.6;margin-top:6px;">Select all that apply, then submit.</div>`;
+  } else if (question.t === 'fill') {
+    const val = answered ? answer : '';
+    const locked = answered && q.feedbackShown;
+    body = `
+      <div class="q-fill">
+        <input type="text" id="fillInput" value="${escapeHtml(val)}" ${locked ? 'disabled' : ''} placeholder="Type your answer" autocomplete="off" />
+      </div>
+    `;
+  }
+
+  let feedback = '';
+  if (answered && q.feedbackShown) {
+    const correct = gradeAnswer(question, answer);
+    feedback = `
+      <div class="q-verdict q-verdict--${correct ? 'right' : 'wrong'}">
+        ${correct ? '✓ Correct' : '✗ Not quite'}
+      </div>
+      <div class="q-explain">${escapeHtml(question.why)}</div>
+    `;
+  }
+
+  const nextLabel = q.current === total - 1 ? 'Finish quiz →' : 'Next question →';
+  const canSubmit = !q.feedbackShown && (question.t === 'ms' ? Array.isArray(answer) && answer.length > 0 : answered);
+  const canAdvance = q.feedbackShown;
+
+  app.innerHTML = `
+    <section class="m-intro">
+      <a href="#" class="back-link" id="backBtn">← Back to dashboard</a>
+      <div class="eyebrow" style="margin-top:8px;">${eyebrow}</div>
+      <h1 style="margin:6px 0 4px 0;">${escapeHtml(title)}</h1>
+      <div class="quiz-head">Question ${n} of ${total}</div>
+    </section>
+
+    <section class="q">
+      <div class="q-text">${escapeHtml(question.q)}</div>
+      <div class="q-options q-type--${question.t}">${body}</div>
+      ${feedback}
+      <div class="q-actions">
+        ${!q.feedbackShown ? `<button class="btn btn-primary" id="submitBtn" ${canSubmit ? '' : 'disabled'}>Submit answer</button>` : ''}
+        ${q.feedbackShown ? `<button class="btn btn-primary" id="nextBtn">${nextLabel}</button>` : ''}
+      </div>
+    </section>
+  `;
+
+  document.getElementById('backBtn').addEventListener('click', e => {
+    e.preventDefault();
+    if (confirm('Leave this attempt? Your progress on this quiz will be lost.')) {
+      state.currentQuiz = null;
+      saveState();
+      navigate('dashboard');
+    }
+  });
+
+  if (question.t === 'mc' || question.t === 'tf') {
+    document.querySelectorAll('.q-option').forEach(el => {
+      el.addEventListener('click', () => {
+        if (q.feedbackShown) return;
+        q.answers[q.current] = parseInt(el.getAttribute('data-opt'), 10);
+        saveState();
+        isFinal ? renderFinalQuiz() : renderQuiz(q.moduleId);
+      });
+    });
+  } else if (question.t === 'ms') {
+    document.querySelectorAll('.q-option').forEach(el => {
+      el.addEventListener('click', () => {
+        if (q.feedbackShown) return;
+        const idx = parseInt(el.getAttribute('data-opt'), 10);
+        const cur = Array.isArray(q.answers[q.current]) ? q.answers[q.current] : [];
+        const pos = cur.indexOf(idx);
+        if (pos >= 0) cur.splice(pos, 1); else cur.push(idx);
+        q.answers[q.current] = cur;
+        saveState();
+        isFinal ? renderFinalQuiz() : renderQuiz(q.moduleId);
+      });
+    });
+  } else if (question.t === 'fill') {
+    const inp = document.getElementById('fillInput');
+    if (inp) {
+      inp.addEventListener('input', () => {
+        q.answers[q.current] = inp.value;
+        saveState();
+      });
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !q.feedbackShown && inp.value.trim()) {
+          document.getElementById('submitBtn').click();
+        }
+      });
+      if (!q.feedbackShown) inp.focus();
+    }
+  }
+
+  const submit = document.getElementById('submitBtn');
+  if (submit) {
+    submit.addEventListener('click', () => {
+      q.feedbackShown = true;
+      saveState();
+      isFinal ? renderFinalQuiz() : renderQuiz(q.moduleId);
+    });
+  }
+
+  const next = document.getElementById('nextBtn');
+  if (next) {
+    next.addEventListener('click', () => {
+      q.feedbackShown = false;
+      q.current++;
+      if (q.current >= total) {
+        finishQuiz(isFinal);
+      } else {
+        saveState();
+        isFinal ? renderFinalQuiz() : renderQuiz(q.moduleId);
+      }
+    });
+  }
+}
+
+function finishQuiz(isFinal) {
+  const q = state.currentQuiz;
+  let right = 0;
+  const detail = q.questions.map((qu, i) => {
+    const correct = gradeAnswer(qu, q.answers[i]);
+    if (correct) right++;
+    return { question: qu, answer: q.answers[i], correct };
+  });
+  const score = right / q.questions.length;
+  const passThreshold = isFinal ? COURSE.passFinal : COURSE.passModule;
+  const passed = score >= passThreshold;
+  const attempt = { at: new Date().toISOString(), score, right, total: q.questions.length, passed, detail };
+
+  if (isFinal) {
+    const prev = state.finalExam || { attempts: [], bestScore: 0, passed: false };
+    prev.attempts.push(attempt);
+    prev.bestScore = Math.max(prev.bestScore, score);
+    prev.passed = prev.passed || passed;
+    state.finalExam = prev;
+    state.currentQuiz = null;
+    saveState();
+    navigate('finalResults', attempt);
+  } else {
+    const mid = q.moduleId;
+    const prev = state.modules[mid] || { attempts: [], bestScore: 0, passed: false };
+    prev.attempts.push(attempt);
+    prev.bestScore = Math.max(prev.bestScore, score);
+    prev.passed = prev.passed || passed;
+    state.modules[mid] = prev;
+    state.currentQuiz = null;
+    saveState();
+    navigate('results', { moduleId: mid, attempt });
+  }
+}
+
+// ============================================================
+// VIEW: MODULE RESULTS
+// ============================================================
+function renderResults(extra) {
+  const app = document.getElementById('app');
+  const m = COURSE.modules.find(x => x.id === extra.moduleId);
+  const a = extra.attempt;
+  const wrongs = a.detail.filter(d => !d.correct);
+
+  app.innerHTML = `
+    <section class="results results--${a.passed ? 'pass' : 'fail'}">
+      <div class="eyebrow">Module ${m.num} · Attempt ${state.modules[extra.moduleId].attempts.length}</div>
+      <h1>${a.passed ? 'Passed' : 'Not yet'}</h1>
+      <div class="score-big">${a.right} / ${a.total}  <span class="score-pct">${fmtPct(a.score)}</span></div>
+      <p class="lead" style="margin-top:10px;">
+        ${a.passed
+          ? `You beat the ${Math.round(COURSE.passModule * 100)}% pass mark. ${m.title} is done, unless you want to chase a perfect score.`
+          : `The pass mark is ${Math.round(COURSE.passModule * 100)}%. Re-read the companion section and try again, a new random draw of questions each time.`}
+      </p>
+    </section>
+
+    ${wrongs.length > 0 ? `
+      <section class="review">
+        <h2>What you got wrong (${wrongs.length})</h2>
+        ${wrongs.map(w => renderReviewCard(w)).join('')}
+      </section>
+    ` : `
+      <section class="review"><h2>Clean sweep</h2><p class="lead">Every question correct. Nothing to review.</p></section>
+    `}
+
+    <section style="margin-top:28px;display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-primary" id="retakeBtn">Retake module</button>
+      <button class="btn" id="dashBtn">Back to dashboard</button>
+      <a href="/training-companion.html" class="btn" target="_blank" rel="noopener">Re-read companion</a>
+    </section>
+  `;
+
+  document.getElementById('retakeBtn').addEventListener('click', () => {
+    const drawn = drawQuestions(m.pool, COURSE.drawPerModule).map(prepareQuestion);
+    state.currentQuiz = { moduleId: m.id, questions: drawn, current: 0, answers: [], showingFeedback: false };
+    saveState();
+    navigate('quiz', m.id);
+  });
+  document.getElementById('dashBtn').addEventListener('click', () => navigate('dashboard'));
+}
+
+function renderReviewCard(w) {
+  const q = w.question;
+  const a = w.answer;
+  let yourAnswer = '';
+  let correctAnswer = '';
+  if (q.t === 'mc' || q.t === 'tf') {
+    yourAnswer = a !== undefined ? q.opts[a] : '(no answer)';
+    correctAnswer = q.opts[q.a];
+  } else if (q.t === 'ms') {
+    yourAnswer = Array.isArray(a) && a.length ? a.map(i => q.opts[i]).join(', ') : '(nothing selected)';
+    correctAnswer = q.a.map(i => q.opts[i]).join(', ');
+  } else if (q.t === 'fill') {
+    yourAnswer = a || '(blank)';
+    correctAnswer = q.a[0];
+  }
+  return `
+    <div class="review-card">
+      <div class="review-q">${escapeHtml(q.q)}</div>
+      <div class="review-row"><span class="review-label">Your answer:</span> <span class="review-wrong">${escapeHtml(yourAnswer)}</span></div>
+      <div class="review-row"><span class="review-label">Correct:</span> <span class="review-right">${escapeHtml(correctAnswer)}</span></div>
+      <div class="review-why">${escapeHtml(q.why)}</div>
+    </div>
+  `;
+}
+
+// ============================================================
+// VIEW: FINAL EXAM
+// ============================================================
+function renderFinalIntro() {
+  const passedAll = COURSE.modules.every(m => state.modules[m.id] && state.modules[m.id].passed);
+  if (!passedAll) { navigate('dashboard'); return; }
+  const app = document.getElementById('app');
+  const prev = state.finalExam;
+  app.innerHTML = `
+    <section class="m-intro">
+      <a href="#" class="back-link" id="backBtn">← Back to dashboard</a>
+      <div class="eyebrow" style="margin-top:8px;">Capstone</div>
+      <h1>Final exam</h1>
+      <p class="lead">${COURSE.drawFinal} questions drawn from all seven modules. Pass mark <b>${Math.round(COURSE.passFinal * 100)}%</b>. This is the one where you prove you can hold the whole shoot-day picture in your head at once.</p>
+      <div class="m-rules">
+        <div>Questions shuffle, options shuffle.</div>
+        <div>No peeking. You already pledged.</div>
+        ${prev ? `<div style="margin-top:8px;color:var(--accent);"><b>Your best:</b> ${fmtPct(prev.bestScore)} across ${prev.attempts.length} attempt${prev.attempts.length === 1 ? '' : 's'}.</div>` : ''}
+      </div>
+      <div style="margin-top:20px;">
+        <button class="btn btn-primary" id="startFinalBtn">${prev ? 'Retake final →' : 'Begin final exam →'}</button>
+      </div>
+    </section>
+  `;
+  document.getElementById('backBtn').addEventListener('click', e => { e.preventDefault(); navigate('dashboard'); });
+  document.getElementById('startFinalBtn').addEventListener('click', () => {
+    const pool = COURSE.finalExamPool();
+    const drawn = drawQuestions(pool, COURSE.drawFinal).map(prepareQuestion);
+    state.currentQuiz = { moduleId: 'final', questions: drawn, current: 0, answers: [], showingFeedback: false };
+    saveState();
+    navigate('finalQuiz');
+  });
+}
+
+function renderFinalResults(attempt) {
+  const app = document.getElementById('app');
+  const a = attempt;
+  const wrongs = a.detail.filter(d => !d.correct);
+  app.innerHTML = `
+    <section class="results results--${a.passed ? 'pass' : 'fail'}">
+      <div class="eyebrow">Final exam · Attempt ${state.finalExam.attempts.length}</div>
+      <h1>${a.passed ? 'Certified' : 'Not yet'}</h1>
+      <div class="score-big">${a.right} / ${a.total}  <span class="score-pct">${fmtPct(a.score)}</span></div>
+      <p class="lead" style="margin-top:10px;">
+        ${a.passed
+          ? `You beat the ${Math.round(COURSE.passFinal * 100)}% pass mark. Issue your certificate below.`
+          : `The final exam pass mark is ${Math.round(COURSE.passFinal * 100)}%. Retake when you are ready.`}
+      </p>
+    </section>
+
+    ${wrongs.length > 0 ? `
+      <section class="review">
+        <h2>What you got wrong (${wrongs.length})</h2>
+        ${wrongs.map(w => renderReviewCard(w)).join('')}
+      </section>
+    ` : ''}
+
+    <section style="margin-top:28px;display:flex;gap:10px;flex-wrap:wrap;">
+      ${a.passed ? `<button class="btn btn-primary" id="issueBtn">Issue certificate →</button>` : `<button class="btn btn-primary" id="retakeBtn">Retake final</button>`}
+      <button class="btn" id="dashBtn">Back to dashboard</button>
+    </section>
+  `;
+
+  const dash = document.getElementById('dashBtn');
+  if (dash) dash.addEventListener('click', () => navigate('dashboard'));
+
+  const retake = document.getElementById('retakeBtn');
+  if (retake) retake.addEventListener('click', () => {
+    const pool = COURSE.finalExamPool();
+    const drawn = drawQuestions(pool, COURSE.drawFinal).map(prepareQuestion);
+    state.currentQuiz = { moduleId: 'final', questions: drawn, current: 0, answers: [], showingFeedback: false };
+    saveState();
+    navigate('finalQuiz');
+  });
+
+  const issue = document.getElementById('issueBtn');
+  if (issue) issue.addEventListener('click', () => {
+    if (!state.certificate) {
+      state.certificate = {
+        serial: generateSerial(state.name, state.modules, state.finalExam.bestScore),
+        issuedAt: new Date().toISOString(),
+        partnerSerial: null,
+        partnerName: state.partner
+      };
+      saveState();
+    }
+    navigate('certificate');
+  });
+}
+
+// ============================================================
+// VIEW: CERTIFICATE
+// ============================================================
+function renderCertificate() {
+  const app = document.getElementById('app');
+  if (!state.certificate) { navigate('dashboard'); return; }
+  const c = state.certificate;
+  const issued = new Date(c.issuedAt);
+  const dateStr = issued.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const overallScore = (() => {
+    const scores = Object.values(state.modules).map(m => m.bestScore);
+    scores.push(state.finalExam.bestScore);
+    const avg = scores.reduce((s,x) => s+x, 0) / scores.length;
+    return fmtPct(avg);
+  })();
+
+  app.innerHTML = `
+    <section class="cert-wrap">
+      <div class="cert">
+        <div class="cert-corner cert-corner--tl"></div>
+        <div class="cert-corner cert-corner--tr"></div>
+        <div class="cert-corner cert-corner--bl"></div>
+        <div class="cert-corner cert-corner--br"></div>
+
+        <div class="cert-eyebrow">Chefly · Shoot Training Certification</div>
+        <div class="cert-presents">This is to certify that</div>
+        <div class="cert-name">${escapeHtml(state.name)}</div>
+        <div class="cert-presents">has completed the seven-module Shoot Training Course and the Final Exam, proving working knowledge of camera angles, framing, lighting, audio, shoot sheets, and the five concepts in the Chefly shoot pack.</div>
+
+        <div class="cert-scores">
+          <div><b>Overall mark</b><br>${overallScore}</div>
+          <div><b>Final exam</b><br>${fmtPct(state.finalExam.bestScore)}</div>
+          <div><b>Role on set</b><br>${state.role === 'both' ? 'Talent + Operator' : state.role === 'talent' ? 'Talent' : 'Operator'}</div>
+        </div>
+
+        <div class="cert-footer">
+          <div>
+            <div class="cert-sig">${escapeHtml(state.name)}</div>
+            <div class="cert-sig-label">Trainee signature</div>
+          </div>
+          <div>
+            <div class="cert-sig">Chefly</div>
+            <div class="cert-sig-label">Issuing organisation</div>
+          </div>
+          <div>
+            <div class="cert-sig">${dateStr}</div>
+            <div class="cert-sig-label">Date issued</div>
+          </div>
+        </div>
+
+        <div class="cert-serial">
+          Serial: <span class="cert-serial-value">${c.serial}</span>
+        </div>
+
+        <div class="cosign">
+          <div class="cosign-head">Partner co-sign · ${escapeHtml(state.partner)}</div>
+          <div class="small" style="opacity:.75;margin-bottom:8px;">Once your shoot partner has passed their own course, paste their certificate serial below. Each of you signs the other\'s certificate. Neither is final without it.</div>
+          <div class="cosign-row">
+            <input type="text" id="partnerSerial" placeholder="CHEFLY-YYYYMMDD-xxx-xxxx-xxxx" value="${escapeHtml(c.partnerSerial || '')}" />
+            <button class="btn btn-primary" id="cosignBtn">Add partner serial</button>
+          </div>
+          ${c.partnerSerial ? `<div class="cosign-done">✓ Co-signed by ${escapeHtml(state.partner)} · ${escapeHtml(c.partnerSerial)}</div>` : ''}
+        </div>
+      </div>
+
+      <div class="cert-actions no-print">
+        <button class="btn btn-primary" onclick="window.print()">Print / Save as PDF</button>
+        <button class="btn" id="copySerialBtn">Copy my serial</button>
+        <button class="btn" id="dashFromCert">Back to dashboard</button>
+      </div>
+    </section>
+  `;
+}
+
+function wireCertificate() {
+  const btn = document.getElementById('cosignBtn');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const inp = document.getElementById('partnerSerial');
+      const val = (inp.value || '').trim();
+      if (!val) return;
+      if (!/^CHEFLY-\d{8}-[a-z]{3}-[a-z0-9]{4}-\d{4}$/i.test(val)) {
+        alert('That does not look like a valid Chefly certificate serial. Format should be CHEFLY-YYYYMMDD-xxx-xxxx-xxxx');
+        return;
+      }
+      if (val.toUpperCase() === (state.certificate.serial || '').toUpperCase()) {
+        alert('That is YOUR serial, not your partner\'s. Ask them for theirs.');
+        return;
+      }
+      state.certificate.partnerSerial = val;
+      saveState();
+      render();
+    });
+  }
+  const copy = document.getElementById('copySerialBtn');
+  if (copy) {
+    copy.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(state.certificate.serial);
+        copy.textContent = '✓ Copied';
+        setTimeout(() => { copy.textContent = 'Copy my serial'; }, 1500);
+      } catch(e) {
+        prompt('Copy this serial:', state.certificate.serial);
+      }
+    });
+  }
+  const dash = document.getElementById('dashFromCert');
+  if (dash) dash.addEventListener('click', () => navigate('dashboard'));
+}
+
+// ============================================================
+// INIT
+// ============================================================
+render();
+</script>
+
+</body>
+</html>
