@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Internal Shoot Pack / Chefly × Creative Kitchen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf9f7;--surface:#fff;--surface-alt:#f4f2ee;--surface-warm:#f9f5f0;
+  --ink:#1a1714;--ink-2:#5c564d;--ink-3:#8a8279;--ink-4:#b0a99e;
+  --accent:#b44d1e;--accent-light:#f4e6dc;--accent-dark:#8a3710;
+  --green:#2d6a4f;--green-light:#d8f3dc;
+  --blue:#1d4e89;--blue-light:#d0e2f4;
+  --amber:#92400e;--amber-light:#fef3c7;
+  --border:#e8e4de;--border-light:#f0ece6;
+  --radius:4px;--radius-lg:6px;
+  --shadow-sm:0 1px 2px rgba(26,23,20,.05);
+  --font-display:'Fraunces',Georgia,serif;--font-body:'DM Sans',system-ui,sans-serif;
+}
+html{font-size:14px;scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.2}
+a{color:var(--accent-dark);text-decoration:none}
+a:hover{text-decoration:underline}
+
+.page{max-width:1100px;margin:0 auto;padding:0 clamp(1rem,3vw,2rem) 3rem}
+
+/* Top bar */
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:.9rem 0;border-bottom:1px solid var(--border)}
+.topbar-brand{font-family:var(--font-display);font-size:.9rem;font-weight:700;color:var(--accent-dark)}
+.topbar-actions{display:flex;gap:.4rem;align-items:center}
+.btn{padding:.4rem .9rem;font-family:var(--font-body);font-size:.72rem;font-weight:600;border-radius:var(--radius);cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;border:1.5px solid var(--border);background:var(--surface);color:var(--ink-2)}
+.btn:hover{border-color:var(--ink-3);color:var(--ink)}
+.btn-primary{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark);text-decoration:none}
+
+/* Hub */
+.hub{padding:clamp(2rem,5vw,3.5rem) 0 2rem}
+.eyebrow{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent-dark);margin-bottom:.7rem}
+.hub h1{font-size:clamp(1.6rem,3.5vw,2.2rem);font-weight:800;letter-spacing:-.03em;margin-bottom:.4rem}
+.hub-sub{font-size:.92rem;color:var(--ink-2);max-width:640px;margin-bottom:1.4rem;line-height:1.6}
+.hub-meta{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:2rem}
+.chip{font-size:.68rem;font-weight:600;padding:.3rem .7rem;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--ink-2)}
+.chip.accent{background:var(--accent-light);border-color:var(--accent);color:var(--accent-dark)}
+
+/* Kit summary */
+.kit-summary{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem;margin-bottom:2rem}
+.kit-summary h3{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.7rem}
+.kit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.6rem .9rem;font-size:.76rem;color:var(--ink-2)}
+.kit-grid strong{display:block;color:var(--ink);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem}
+
+/* Sheet index cards */
+.sheet-index{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.6rem}
+.sheet-card{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);cursor:pointer;transition:all .15s}
+.sheet-card:hover{border-color:var(--accent);box-shadow:var(--shadow-sm)}
+.sheet-card.active{border-color:var(--accent);background:var(--accent-light)}
+.sheet-card-num{font-family:var(--font-display);font-size:1.1rem;font-weight:800;color:var(--ink-3);min-width:1.8rem}
+.sheet-card.active .sheet-card-num{color:var(--accent)}
+.sheet-card-info{flex:1;min-width:0}
+.sheet-card-title{font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sheet-card-meta{font-size:.68rem;color:var(--ink-3)}
+.sheet-card-arrow{font-size:.8rem;color:var(--ink-4);transition:color .15s}
+.sheet-card:hover .sheet-card-arrow{color:var(--accent)}
+
+/* Sheet view */
+.sheet-view{display:none;padding-top:1.5rem}
+.sheet-view.active{display:block}
+
+/* Sheet header */
+.sheet-head{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:1rem;padding-bottom:1rem;border-bottom:2px solid var(--ink);flex-wrap:wrap}
+.sheet-head-left{flex:1}
+.sheet-head-track{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;margin-bottom:.3rem;color:var(--accent-dark)}
+.sheet-head-title{font-size:clamp(1.1rem,2.5vw,1.5rem);font-weight:800;letter-spacing:-.02em;margin-bottom:.2rem}
+.sheet-head-concept{font-size:.82rem;color:var(--ink-2);max-width:560px;line-height:1.5}
+.sheet-head-right{display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;font-size:.72rem;color:var(--ink-3);flex-shrink:0}
+.sheet-head-right strong{color:var(--ink);font-weight:600}
+
+/* Script block */
+.script-block{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius-lg);padding:1rem 1.1rem;margin-bottom:1rem}
+.script-block h4{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.6rem}
+.script-line{display:grid;grid-template-columns:54px 1fr;gap:.7rem;padding:.35rem 0;border-bottom:1px dotted var(--border);font-size:.8rem;line-height:1.55}
+.script-line:last-child{border-bottom:none}
+.script-line .t{font-family:var(--font-display);font-weight:700;color:var(--accent);font-size:.72rem;padding-top:.12rem}
+.script-line .t.vo{color:var(--blue)}
+.script-line em{color:var(--ink-3);font-style:italic;font-size:.74rem}
+
+/* Reference strip */
+.ref-strip{background:var(--surface-warm);border:1px solid var(--border);border-radius:var(--radius-lg);padding:.7rem .9rem;margin-bottom:1rem;font-size:.75rem;color:var(--ink-2)}
+.ref-strip strong{color:var(--ink);font-weight:600}
+
+/* THE GRID */
+.shoot-grid{width:100%;border-collapse:collapse;border:2px solid var(--ink);font-size:.78rem}
+.shoot-grid th{background:var(--ink);color:var(--bg);font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.5rem .5rem;text-align:left;white-space:nowrap}
+.shoot-grid th:first-child{width:28px;text-align:center}
+.shoot-grid th:nth-child(2){width:28px;text-align:center}
+.shoot-grid td{padding:.5rem .5rem;border:1px solid var(--border);vertical-align:top;line-height:1.45}
+.shoot-grid tr:nth-child(even) td{background:var(--surface-alt)}
+.shoot-grid td:first-child{text-align:center;width:28px;vertical-align:middle}
+.shoot-grid td:first-child input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+.shoot-grid td:nth-child(2){text-align:center;font-family:var(--font-display);font-weight:700;color:var(--accent);width:28px}
+.shoot-grid td:nth-child(3){font-weight:500;min-width:180px}
+.shoot-grid td:nth-child(3) strong{display:block;font-weight:700;color:var(--ink);font-size:.8rem}
+.shoot-grid .col-dur{width:55px;text-align:center;font-family:var(--font-display);font-weight:600;white-space:nowrap}
+.shoot-grid .col-sm{font-size:.74rem;color:var(--ink-2)}
+.shoot-grid .section-row td{background:var(--surface-warm)!important;font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);padding:.4rem .5rem;border-top:2px solid var(--ink)}
+
+/* Sheet footer */
+.sheet-foot{margin-top:1rem;padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;font-size:.78rem}
+.sheet-foot-item label{display:block;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin-bottom:.15rem}
+.sheet-foot-item span{color:var(--ink)}
+
+/* Cover page (print only) */
+.cover-page{display:none}
+
+/* Print */
+@page{size:A4 landscape;margin:12mm 14mm 16mm 14mm}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  html{font-size:8.5px}
+  body{background:#fff}
+  .topbar,.hub,.no-print{display:none!important}
+  .page{max-width:none;padding:0}
+  .cover-page{display:flex!important}
+  .cover-page{flex-direction:column;justify-content:center;align-items:center;min-height:100vh;page-break-after:always;text-align:center;padding:20mm}
+  .cover-logo{font-family:var(--font-display);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:16mm}
+  .cover-title{font-family:var(--font-display);font-size:36px;font-weight:800;letter-spacing:-.03em;color:var(--ink);margin-bottom:4mm}
+  .cover-subtitle{font-size:11px;color:var(--ink-2);max-width:360px;line-height:1.6;margin-bottom:14mm}
+  .cover-meta{font-size:8px;color:var(--ink-3);line-height:2}
+  .cover-meta strong{color:var(--ink);font-weight:600}
+  .cover-toc{text-align:left;margin-top:10mm;border-top:1.5px solid var(--border);padding-top:6mm;width:300px}
+  .cover-toc-title{font-family:var(--font-display);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:4mm}
+  .cover-toc-row{display:flex;justify-content:space-between;align-items:baseline;padding:1.5mm 0;border-bottom:1px dotted var(--border)}
+  .cover-toc-row .toc-label{font-size:8.5px;font-weight:600;color:var(--ink)}
+  .cover-toc-row .toc-meta{font-size:7.5px;color:var(--ink-3);flex-shrink:0}
+  .cover-rule{width:60px;height:2px;background:var(--accent);border:none;margin:8mm auto}
+  .cover-confidential{font-size:7px;color:var(--ink-4);margin-top:8mm;letter-spacing:.05em;text-transform:uppercase}
+
+  .sheet-view{display:block!important;page-break-after:always}
+  .sheet-view:last-child{page-break-after:auto}
+  .sheet-head{margin-bottom:3mm;padding-bottom:2mm}
+  .sheet-head-track{font-size:6px}
+  .sheet-head-title{font-size:14px}
+  .sheet-head-concept{font-size:7.5px}
+  .sheet-head-right{font-size:6.5px}
+  .script-block{padding:2.5mm 3mm;margin-bottom:2.5mm;border-left-width:2px}
+  .script-block h4{font-size:6px;margin-bottom:1.5mm}
+  .script-line{font-size:7px;grid-template-columns:36px 1fr;gap:2mm;padding:1mm 0}
+  .script-line .t{font-size:6.5px}
+  .script-line em{font-size:6.5px}
+  .ref-strip{font-size:6.5px;padding:2mm 3mm;margin-bottom:2.5mm}
+  .shoot-grid{font-size:7px;border-width:1.5px}
+  .shoot-grid th{font-size:5.5px;padding:2mm 1.5mm}
+  .shoot-grid td{padding:1.8mm 1.5mm;line-height:1.35}
+  .shoot-grid td:first-child input[type=checkbox]{width:10px;height:10px}
+  .shoot-grid td:nth-child(3) strong{font-size:7.5px}
+  .shoot-grid .col-dur{font-size:7px}
+  .shoot-grid .col-sm{font-size:6.5px}
+  .sheet-foot{padding:2.5mm;gap:2mm;margin-top:2mm}
+  .sheet-foot-item label{font-size:5px}
+  .sheet-foot-item span{font-size:7px}
+  .sheet-foot::after{content:'Confidential. Chefly internal shoot pack.';grid-column:1/-1;font-size:6px;color:#8a8279;text-align:right;padding-top:1mm}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- TOPBAR -->
+  <div class="topbar no-print">
+    <div class="topbar-brand">Chefly · Internal Shoot Pack</div>
+    <div class="topbar-actions">
+      <a href="/format-brief.html" class="btn">← Format brief</a>
+      <a href="/shoot-sheets.html" class="btn">All shoot sheets</a>
+      <button class="btn btn-primary" onclick="window.print()">Print all</button>
+    </div>
+  </div>
+
+  <!-- HUB -->
+  <div class="hub">
+    <div class="eyebrow">Shoot pack · v1.0 · 19 apr 2026 · james + kaja</div>
+    <h1>Internal shoot pack</h1>
+    <p class="hub-sub">Five concepts, one shoot day, no creator fees. Built from the competitor winners in the format brief and locked to the kit we already own. Each sheet is printable, tickable, and reads top-down on set.</p>
+
+    <div class="hub-meta">
+      <span class="chip accent">5 concepts</span>
+      <span class="chip">1 shoot day</span>
+      <span class="chip">£0 further spend</span>
+      <span class="chip">Talent: James + Kaja</span>
+      <span class="chip">Location: home kitchen + office desk</span>
+    </div>
+
+    <!-- Kit summary -->
+    <div class="kit-summary">
+      <h3>Kit on hand for this pack</h3>
+      <div class="kit-grid">
+        <div><strong>Lighting</strong>Amaran 200x × 2, Dome III softbox, Lantern 26"</div>
+        <div><strong>Cameras</strong>iPhone 17 Pro Max × 2, iPhone 15 Pro Max</div>
+        <div><strong>Audio</strong>DJI Mic 2 (TX + 1 RX + case), iPhone onboard mic as backup</div>
+        <div><strong>Rigs</strong>ARKON Pro Stand HD8RV29 (overhead), ARKON Clamp Stand CLAMPRCB (with ring light), tripod + phone clamp</div>
+        <div><strong>Wearable</strong>SmallRig Magnetic Neck Mount (hands-POV, iPhone 17 Pro Max)</div>
+        <div><strong>Stabiliser</strong>DJI Osmo Mobile 6 (walk-and-talk only, everything else handheld or on rig)</div>
+      </div>
+    </div>
+
+    <!-- Sheet index -->
+    <div class="sheet-index">
+      <div class="sheet-card" data-sheet="c1" onclick="showSheet('c1')">
+        <div class="sheet-card-num">C1</div>
+        <div class="sheet-card-info">
+          <div class="sheet-card-title">Kaja chest-framed testimonial</div>
+          <div class="sheet-card-meta">P1 · 20 to 30s · dialogue-led</div>
+        </div>
+        <div class="sheet-card-arrow">→</div>
+      </div>
+      <div class="sheet-card" data-sheet="c2" onclick="showSheet('c2')">
+        <div class="sheet-card-num">C2</div>
+        <div class="sheet-card-info">
+          <div class="sheet-card-title">James founder talking head</div>
+          <div class="sheet-card-meta">P1 · 30 to 45s · dialogue-led</div>
+        </div>
+        <div class="sheet-card-arrow">→</div>
+      </div>
+      <div class="sheet-card" data-sheet="c3" onclick="showSheet('c3')">
+        <div class="sheet-card-num">C3</div>
+        <div class="sheet-card-info">
+          <div class="sheet-card-title">Hands-POV product demo</div>
+          <div class="sheet-card-meta">P1 · 15 to 20s · no dialogue</div>
+        </div>
+        <div class="sheet-card-arrow">→</div>
+      </div>
+      <div class="sheet-card" data-sheet="c4" onclick="showSheet('c4')">
+        <div class="sheet-card-num">C4</div>
+        <div class="sheet-card-info">
+          <div class="sheet-card-title">Offer-led static frame</div>
+          <div class="sheet-card-meta">P2 · 1:1 still · plus 3s push-in</div>
+        </div>
+        <div class="sheet-card-arrow">→</div>
+      </div>
+      <div class="sheet-card" data-sheet="c5" onclick="showSheet('c5')">
+        <div class="sheet-card-num">C5</div>
+        <div class="sheet-card-info">
+          <div class="sheet-card-title">Top-down food hero</div>
+          <div class="sheet-card-meta">P2 · 10s video + stills</div>
+        </div>
+        <div class="sheet-card-arrow">→</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COVER PAGE (print only) -->
+  <div class="cover-page">
+    <div class="cover-logo">Chefly × Creative Kitchen</div>
+    <div class="cover-title">Internal Shoot Pack</div>
+    <div class="cover-subtitle">Five concepts for a single in-house shoot day with James and Kaja. Built from the format brief competitor winners. Kit-locked, script-ready, tickable on set.</div>
+    <hr class="cover-rule">
+    <div class="cover-meta">
+      <div><strong>Prepared:</strong> 19 April 2026</div>
+      <div><strong>Talent:</strong> James, Kaja</div>
+      <div><strong>Duration:</strong> 1 shoot day, home kitchen + desk</div>
+      <div><strong>Further spend:</strong> £0 (kit complete)</div>
+    </div>
+    <div class="cover-toc">
+      <div class="cover-toc-title">Contents</div>
+      <div class="cover-toc-row"><span class="toc-label">C1 · Kaja chest-framed testimonial</span><span class="toc-meta">P1 · 20 to 30s</span></div>
+      <div class="cover-toc-row"><span class="toc-label">C2 · James founder talking head</span><span class="toc-meta">P1 · 30 to 45s</span></div>
+      <div class="cover-toc-row"><span class="toc-label">C3 · Hands-POV product demo</span><span class="toc-meta">P1 · 15 to 20s</span></div>
+      <div class="cover-toc-row"><span class="toc-label">C4 · Offer-led static frame</span><span class="toc-meta">P2 · 1:1 + 3s push</span></div>
+      <div class="cover-toc-row"><span class="toc-label">C5 · Top-down food hero</span><span class="toc-meta">P2 · 10s + stills</span></div>
+    </div>
+    <div class="cover-confidential">Confidential. For Chefly internal use.</div>
+  </div>
+
+  <!-- ═══════════ C1 ═══════════ -->
+  <div class="sheet-view" id="sheet-c1">
+    <div class="sheet-head">
+      <div class="sheet-head-left">
+        <div class="sheet-head-track">Concept 01 · Priority 1 · Dialogue-led</div>
+        <div class="sheet-head-title">Kaja chest-framed testimonial</div>
+        <div class="sheet-head-concept">Kaja talks directly to camera at chest height, phone handheld, natural daylight. The emotional driver: "I stopped thinking about food for the first time in years." Grounded, quiet, no music. Earns its cut.</div>
+      </div>
+      <div class="sheet-head-right">
+        <div><strong>Duration:</strong> 20 to 30s final</div>
+        <div><strong>Format:</strong> 9:16 vertical</div>
+        <div><strong>Location:</strong> Home kitchen</div>
+        <div><strong>Talent:</strong> Kaja</div>
+        <div><strong>Lead cam:</strong> iPhone 17 Pro Max (handheld by James)</div>
+      </div>
+    </div>
+
+    <div class="ref-strip"><strong>Reference:</strong> Simmer ad 1 (quiet handheld monologue, chest-framed) + Megan Petite Coach ad 3 (relief as the emotional payoff). Both scored for intimacy over polish. This one should feel found, not produced.</div>
+
+    <div class="script-block">
+      <h4>Script · Kaja · 28s target · draft, you edit</h4>
+      <div class="script-line"><span class="t">0:00</span><span>"I used to spend Sunday nights just <em>dreading</em> the week."</span></div>
+      <div class="script-line"><span class="t">0:04</span><span>"Not because of work. Because of <em>food</em>."</span></div>
+      <div class="script-line"><span class="t">0:08</span><span>"What am I eating tomorrow. What do I need to buy. Have I got protein in."</span></div>
+      <div class="script-line"><span class="t">0:13</span><span>"Every single night, the same loop."</span></div>
+      <div class="script-line"><span class="t">0:16</span><span>"Now it's just… there. Fridge. Done." <em>(small shrug, half-smile)</em></span></div>
+      <div class="script-line"><span class="t">0:20</span><span>"I haven't thought about dinner in six weeks."</span></div>
+      <div class="script-line"><span class="t">0:24</span><span>"And I didn't realise how much space that takes up until it was gone."</span></div>
+      <div class="script-line"><span class="t">0:28</span><span><em>Text overlay in post: "Chefly. Stop thinking about dinner."</em></span></div>
+    </div>
+
+    <table class="shoot-grid">
+      <thead>
+        <tr><th>✓</th><th>#</th><th>Action / description</th><th class="col-sm">Frame / angle</th><th class="col-dur">Dur</th><th class="col-sm">Audio / sound</th><th class="col-sm">Talent</th><th class="col-sm">Props / set</th><th class="col-sm">Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr class="section-row"><td colspan="9">Take one · full monologue straight through (aim for 3 usable takes)</td></tr>
+        <tr><td><input type="checkbox"></td><td>1</td><td><strong>Kaja to camera, chest-framed</strong>, full script straight through.</td><td class="col-sm">Handheld, chest height, slight lean in. 9:16. Kaja's eyes top third of frame.</td><td class="col-dur">30s</td><td class="col-sm">DJI Mic 2 TX clipped under collar. No music.</td><td class="col-sm">Kaja (James holds cam)</td><td class="col-sm">Branded container visible on counter behind, out of focus</td><td class="col-sm">Keep it <strong>quiet</strong>. No energy performance. Let the lines land.</td></tr>
+        <tr><td><input type="checkbox"></td><td>2</td><td><strong>Same take, angle switch:</strong> slightly wider, 3/4 angle.</td><td class="col-sm">Handheld, hip height looking up, 3/4 to Kaja's right shoulder.</td><td class="col-dur">30s</td><td class="col-sm">Same mic setup.</td><td class="col-sm">Kaja</td><td class="col-sm">Same set, unchanged</td><td class="col-sm">Covers cut-aways without reshooting lines.</td></tr>
+        <tr class="section-row"><td colspan="9">Cover · cut-aways and reaction beats</td></tr>
+        <tr><td><input type="checkbox"></td><td>3</td><td>Kaja looks out of window, thinking. No dialogue.</td><td class="col-sm">Side profile, shoulder in foreground, soft.</td><td class="col-dur">4s</td><td class="col-sm">Silent. Room tone only.</td><td class="col-sm">Kaja</td><td class="col-sm">Window light behind</td><td class="col-sm">Gives a safe cut point if a line overruns.</td></tr>
+        <tr><td><input type="checkbox"></td><td>4</td><td>Kaja opens fridge, containers already stocked.</td><td class="col-sm">Over-shoulder, phone handheld, follow her hand.</td><td class="col-dur">3s</td><td class="col-sm">Fridge open sound on.</td><td class="col-sm">Kaja</td><td class="col-sm">4 to 6 branded containers, label-forward</td><td class="col-sm">Don't stage too perfect. Lived-in.</td></tr>
+        <tr><td><input type="checkbox"></td><td>5</td><td>Kaja places container in microwave. Closes door.</td><td class="col-sm">Medium, straight-on, microwave in frame.</td><td class="col-dur">3s</td><td class="col-sm">Microwave beep on.</td><td class="col-sm">Kaja</td><td class="col-sm">One container + microwave</td><td class="col-sm">Reaction beat for the "Fridge. Done." line.</td></tr>
+        <tr><td><input type="checkbox"></td><td>6</td><td>Kaja eats, standing at counter, looking out window.</td><td class="col-sm">Medium, 3/4, natural daylight only.</td><td class="col-dur">4s</td><td class="col-sm">Silent or faint cutlery.</td><td class="col-sm">Kaja</td><td class="col-sm">Fork, container</td><td class="col-sm">The "quiet afterwards" shot. Earns the line.</td></tr>
+        <tr class="section-row"><td colspan="9">Lighting · daylight-led, Dome III soft fill</td></tr>
+        <tr><td><input type="checkbox"></td><td>7</td><td><strong>Set lighting:</strong> Amaran 200x + Dome III as key, camera-left 45°, 5600K. No rim. Window as practical behind.</td><td class="col-sm">—</td><td class="col-dur">—</td><td class="col-sm">—</td><td class="col-sm">—</td><td class="col-sm">Amaran 200x, Dome III</td><td class="col-sm">Very soft. If daylight is strong, skip Amaran and bounce off white wall.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="sheet-foot">
+      <div class="sheet-foot-item"><label>Wardrobe</label><span>Kaja's own. Plain, muted. No Chefly branding on person.</span></div>
+      <div class="sheet-foot-item"><label>Hero moment</label><span>The shrug + half-smile on "Fridge. Done."</span></div>
+      <div class="sheet-foot-item"><label>Do not</label><span>Overlay music. Use a tripod. Over-direct Kaja.</span></div>
+      <div class="sheet-foot-item"><label>Edit in</label><span>CapCut. No music. Text overlay on final line only.</span></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ C2 ═══════════ -->
+  <div class="sheet-view" id="sheet-c2">
+    <div class="sheet-head">
+      <div class="sheet-head-left">
+        <div class="sheet-head-track">Concept 02 · Priority 1 · Dialogue-led</div>
+        <div class="sheet-head-title">James founder talking head</div>
+        <div class="sheet-head-concept">James to camera, seated at desk, explains why Chefly exists. Founder candour, not a pitch. The selling point is the person, not the product. Shot on iPhone with DJI Mic, lit with the Lantern 26" as soft top key.</div>
+      </div>
+      <div class="sheet-head-right">
+        <div><strong>Duration:</strong> 30 to 45s final</div>
+        <div><strong>Format:</strong> 9:16 primary, 1:1 crop for cover</div>
+        <div><strong>Location:</strong> Office desk</div>
+        <div><strong>Talent:</strong> James</div>
+        <div><strong>Lead cam:</strong> iPhone 15 Pro Max on tripod</div>
+      </div>
+    </div>
+
+    <div class="ref-strip"><strong>Reference:</strong> Frive ad 4 (founder seated, mid-shot, looking off-camera slightly, no music, B-roll cut in). The format beats production polish because the person is the selling point. Don't perform.</div>
+
+    <div class="script-block">
+      <h4>Script · James · 42s target · draft, you edit</h4>
+      <div class="script-line"><span class="t">0:00</span><span>"I built Chefly because I was tired of pretending I'd meal prep on Sunday."</span></div>
+      <div class="script-line"><span class="t">0:05</span><span>"I'd buy the Tupperware. I'd write the list. I'd get to Sunday and just… order a curry."</span></div>
+      <div class="script-line"><span class="t">0:11</span><span>"And I'd start the week already behind on food."</span></div>
+      <div class="script-line"><span class="t">0:14</span><span>"What I actually wanted was someone to have done the thinking for me."</span></div>
+      <div class="script-line"><span class="t">0:19</span><span>"Not a ready meal. Not a delivery app."</span></div>
+      <div class="script-line"><span class="t">0:22</span><span>"Real food, cooked properly, protein hit, 90 seconds in the microwave."</span></div>
+      <div class="script-line"><span class="t">0:28</span><span>"So we made that. That's Chefly."</span></div>
+      <div class="script-line"><span class="t">0:32</span><span>"And if you're the person who keeps saying <em>next week I'll sort my food out</em>…"</span></div>
+      <div class="script-line"><span class="t">0:37</span><span>"You're my exact customer. Welcome."</span></div>
+      <div class="script-line"><span class="t">0:42</span><span><em>Text overlay in post: "Chefly. Food, already sorted." + CTA</em></span></div>
+    </div>
+
+    <table class="shoot-grid">
+      <thead>
+        <tr><th>✓</th><th>#</th><th>Action / description</th><th class="col-sm">Frame / angle</th><th class="col-dur">Dur</th><th class="col-sm">Audio / sound</th><th class="col-sm">Talent</th><th class="col-sm">Props / set</th><th class="col-sm">Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr class="section-row"><td colspan="9">A-cam · full monologue, seated at desk</td></tr>
+        <tr><td><input type="checkbox"></td><td>1</td><td><strong>James seated, mid-shot.</strong> Full script, straight through. 3 takes.</td><td class="col-sm">Tripod, eye level, 35mm equivalent. James looks slightly off-lens to James's left (not into lens).</td><td class="col-dur">45s × 3</td><td class="col-sm">DJI Mic 2 TX clipped under collar. RX into iPhone 15.</td><td class="col-sm">James</td><td class="col-sm">Desk, laptop closed, one branded container in frame (soft)</td><td class="col-sm">Do not memorise. Read the lines, then say them your way. Keep the pauses.</td></tr>
+        <tr><td><input type="checkbox"></td><td>2</td><td><strong>B-cam angle:</strong> same monologue, second take, 3/4 side angle.</td><td class="col-sm">iPhone 17 Pro Max on Arkon Clamp Stand clamped to shelf, 3/4 to James's right. Wider.</td><td class="col-dur">45s</td><td class="col-sm">Same mic, synced in post.</td><td class="col-sm">James</td><td class="col-sm">Same set</td><td class="col-sm">Clap hands once at takes start so editor can sync.</td></tr>
+        <tr class="section-row"><td colspan="9">B-roll · cut-away coverage (film after dialogue)</td></tr>
+        <tr><td><input type="checkbox"></td><td>3</td><td>James opens laptop, reads something on screen. Pull out a container from a bag.</td><td class="col-sm">Over-shoulder, handheld iPhone.</td><td class="col-dur">4s</td><td class="col-sm">Keyboard sound.</td><td class="col-sm">James</td><td class="col-sm">Laptop, container</td><td class="col-sm">Cuts behind "I'd buy the Tupperware. I'd write the list."</td></tr>
+        <tr><td><input type="checkbox"></td><td>4</td><td>Close on James's hands, holding a container, label forward.</td><td class="col-sm">Macro-ish, 50mm equiv, shallow.</td><td class="col-dur">3s</td><td class="col-sm">Silent.</td><td class="col-sm">James (hands)</td><td class="col-sm">Branded container</td><td class="col-sm">Cuts behind "Real food, cooked properly."</td></tr>
+        <tr><td><input type="checkbox"></td><td>5</td><td>James puts container in microwave, presses start, closes door.</td><td class="col-sm">Straight-on, waist height.</td><td class="col-dur">3s</td><td class="col-sm">Microwave beep on.</td><td class="col-sm">James</td><td class="col-sm">Microwave, container</td><td class="col-sm">Cuts behind "90 seconds in the microwave."</td></tr>
+        <tr><td><input type="checkbox"></td><td>6</td><td>James sits at desk, eats from container, looking at laptop.</td><td class="col-sm">Medium, eye level, soft daylight.</td><td class="col-dur">4s</td><td class="col-sm">Silent or faint cutlery.</td><td class="col-sm">James</td><td class="col-sm">Desk setup, container, fork</td><td class="col-sm">The "already sorted" shot. Quiet end.</td></tr>
+        <tr class="section-row"><td colspan="9">Lighting · top key, no hard shadows</td></tr>
+        <tr><td><input type="checkbox"></td><td>7</td><td><strong>Set lighting:</strong> Amaran 200x + Lantern 26" as top key, slightly camera-left, 4500K. Practical lamp in background for warmth. No rim.</td><td class="col-sm">—</td><td class="col-dur">—</td><td class="col-sm">—</td><td class="col-sm">—</td><td class="col-sm">Amaran 200x, Lantern 26"</td><td class="col-sm">Soft wrap on James's face. Drop Lantern low enough it doesn't catch in laptop screen.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="sheet-foot">
+      <div class="sheet-foot-item"><label>Wardrobe</label><span>James's own. T-shirt or casual shirt. No logos.</span></div>
+      <div class="sheet-foot-item"><label>Hero moment</label><span>"If you're the person who keeps saying <em>next week I'll sort my food out</em>… you're my exact customer."</span></div>
+      <div class="sheet-foot-item"><label>Do not</label><span>Read from autocue. Over-rehearse. Add stock music.</span></div>
+      <div class="sheet-foot-item"><label>Edit in</label><span>CapCut. Light underscore fine. Final 3s text card + CTA.</span></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ C3 ═══════════ -->
+  <div class="sheet-view" id="sheet-c3">
+    <div class="sheet-head">
+      <div class="sheet-head-left">
+        <div class="sheet-head-track">Concept 03 · Priority 1 · No dialogue</div>
+        <div class="sheet-head-title">Hands-POV product demo</div>
+        <div class="sheet-head-concept">First-person point of view: hands pulling a container from the fridge, peeling lid, microwave, eating at desk. Text overlays only. Uses the SmallRig neck mount for POV and the ARKON Pro Stand for overhead beats. Format-brief recipe in one shoot.</div>
+      </div>
+      <div class="sheet-head-right">
+        <div><strong>Duration:</strong> 15 to 20s final</div>
+        <div><strong>Format:</strong> 9:16 vertical</div>
+        <div><strong>Location:</strong> Kitchen + desk</div>
+        <div><strong>Talent:</strong> James or Kaja (hands only)</div>
+        <div><strong>Lead cam:</strong> iPhone 17 Pro Max on SmallRig neck mount</div>
+      </div>
+    </div>
+
+    <div class="ref-strip"><strong>Reference:</strong> Format-brief hand-demo POV row. The neck mount does the "you are the person eating this" work. Overhead shot via ARKON Pro Stand HD8RV29 covers the container reveal beat. No gimbal.</div>
+
+    <table class="shoot-grid">
+      <thead>
+        <tr><th>✓</th><th>#</th><th>Action / description</th><th class="col-sm">Frame / angle</th><th class="col-dur">Dur</th><th class="col-sm">Audio / sound</th><th class="col-sm">Talent</th><th class="col-sm">Props / set</th><th class="col-sm">Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr class="section-row"><td colspan="9">POV · neck mount, iPhone 17 Pro Max</td></tr>
+        <tr><td><input type="checkbox"></td><td>1</td><td><strong>Walk up to fridge</strong>, open door, reach for container.</td><td class="col-sm">Neck mount POV. Talent looks down at fridge.</td><td class="col-dur">3s</td><td class="col-sm">Fridge open sound. Foley only.</td><td class="col-sm">Hands only</td><td class="col-sm">Fridge stocked with 4 to 6 containers</td><td class="col-sm">Text overlay in post: <strong>"Thursday. 19:04."</strong></td></tr>
+        <tr><td><input type="checkbox"></td><td>2</td><td>Pull container out, label toward chest.</td><td class="col-sm">POV, looking down at hands.</td><td class="col-dur">2s</td><td class="col-sm">Foley.</td><td class="col-sm">Hands only</td><td class="col-sm">One container</td><td class="col-sm">Turn label into the camera naturally.</td></tr>
+        <tr><td><input type="checkbox"></td><td>3</td><td>Peel lid off. Steam rises.</td><td class="col-sm">POV, looking down at container.</td><td class="col-dur">2s</td><td class="col-sm">Peel foley, steam hiss.</td><td class="col-sm">Hands only</td><td class="col-sm">Container</td><td class="col-sm">Warm container first so steam visible.</td></tr>
+        <tr><td><input type="checkbox"></td><td>4</td><td>Put in microwave, close door, press start.</td><td class="col-sm">POV.</td><td class="col-dur">2s</td><td class="col-sm">Microwave beep.</td><td class="col-sm">Hands only</td><td class="col-sm">Microwave</td><td class="col-sm">Text overlay: <strong>"90 seconds."</strong></td></tr>
+        <tr class="section-row"><td colspan="9">Overhead · ARKON Pro Stand HD8RV29</td></tr>
+        <tr><td><input type="checkbox"></td><td>5</td><td><strong>Overhead reveal:</strong> container on desk, steaming. Fork enters frame, takes first bite.</td><td class="col-sm">ARKON overhead arm, iPhone 17 Pro Max pointing straight down. 9:16 crop.</td><td class="col-dur">3s</td><td class="col-sm">Foley. Subtle music drops in.</td><td class="col-sm">Hands only</td><td class="col-sm">Container + fork on desk</td><td class="col-sm">Text overlay: <strong>"50g protein. 450 cals."</strong></td></tr>
+        <tr><td><input type="checkbox"></td><td>6</td><td>Second bite, pulled up.</td><td class="col-sm">Same overhead.</td><td class="col-dur">2s</td><td class="col-sm">Music continuous.</td><td class="col-sm">Hands only</td><td class="col-sm">Same</td><td class="col-sm">Hold steady. Don't move the rig.</td></tr>
+        <tr class="section-row"><td colspan="9">Close · back to POV</td></tr>
+        <tr><td><input type="checkbox"></td><td>7</td><td>POV: put fork down, close laptop. Text card on black.</td><td class="col-sm">POV, looking down.</td><td class="col-dur">3s</td><td class="col-sm">Music out.</td><td class="col-sm">Hands only</td><td class="col-sm">Laptop, empty container</td><td class="col-sm">End card: <strong>"Chefly. Link in bio."</strong> + offer code.</td></tr>
+        <tr class="section-row"><td colspan="9">Lighting</td></tr>
+        <tr><td><input type="checkbox"></td><td>8</td><td><strong>Kitchen:</strong> daylight. No additional lights. <strong>Desk (overhead):</strong> Amaran 200x + Dome III, camera-right, high 45°, 5200K. Fill with ARKON Clamp Stand ring light from left, low power.</td><td class="col-sm">—</td><td class="col-dur">—</td><td class="col-sm">—</td><td class="col-sm">—</td><td class="col-sm">Amaran 200x, Dome III, ring light</td><td class="col-sm">Overhead needs the softbox otherwise food looks flat on iPhone sensor.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="sheet-foot">
+      <div class="sheet-foot-item"><label>Wardrobe</label><span>Plain top, no busy pattern (neck mount reads chest). Muted colour.</span></div>
+      <div class="sheet-foot-item"><label>Hero moment</label><span>Overhead first-bite pull. Slow and deliberate.</span></div>
+      <div class="sheet-foot-item"><label>Do not</label><span>Use the gimbal. Move your torso fast (POV shake is disorienting).</span></div>
+      <div class="sheet-foot-item"><label>Edit in</label><span>CapCut. Foley-heavy first half, music drops in on overhead reveal.</span></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ C4 ═══════════ -->
+  <div class="sheet-view" id="sheet-c4">
+    <div class="sheet-head">
+      <div class="sheet-head-left">
+        <div class="sheet-head-track">Concept 04 · Priority 2 · Static primary</div>
+        <div class="sheet-head-title">Offer-led static frame</div>
+        <div class="sheet-head-concept">Single hero composition: branded container front and centre, clear pricing overlay, high-contrast. Shot as a 1:1 still, also captured as a 3s slow push-in for feed / reel cover. Format-brief winner format. Repeatable template.</div>
+      </div>
+      <div class="sheet-head-right">
+        <div><strong>Deliverables:</strong> 1:1 still + 3s 9:16 video</div>
+        <div><strong>Format:</strong> 1:1 primary, 4:5, 9:16 cover</div>
+        <div><strong>Location:</strong> Kitchen counter (clean)</div>
+        <div><strong>Talent:</strong> None</div>
+        <div><strong>Lead cam:</strong> iPhone 17 Pro Max on tripod</div>
+      </div>
+    </div>
+
+    <div class="ref-strip"><strong>Reference:</strong> Simmer ad 6 (clean hero + bold pricing) + Huel ad 8 (tight crop, saturated colour, dominant CTA). Both test well as paid social statics. Template: 3 variants, same composition, 3 offers.</div>
+
+    <table class="shoot-grid">
+      <thead>
+        <tr><th>✓</th><th>#</th><th>Action / description</th><th class="col-sm">Frame / angle</th><th class="col-dur">Dur</th><th class="col-sm">Audio / sound</th><th class="col-sm">Talent</th><th class="col-sm">Props / set</th><th class="col-sm">Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr class="section-row"><td colspan="9">Hero still · 1:1 crop, variant A</td></tr>
+        <tr><td><input type="checkbox"></td><td>1</td><td><strong>Container front and centre.</strong> Lid off, food visible. Two supporting containers in soft focus behind.</td><td class="col-sm">Tripod, 35mm equiv, slight overhead (20°).</td><td class="col-dur">still</td><td class="col-sm">—</td><td class="col-sm">—</td><td class="col-sm">3 containers, 1 fork, clean counter</td><td class="col-sm">Shoot ProRAW on iPhone 17 Pro Max. Settings: ISO 64, 1/60, f/1.8. Check tripod level.</td></tr>
+        <tr><td><input type="checkbox"></td><td>2</td><td>Same frame, variant B: lid on, label forward. Hero container only.</td><td class="col-sm">Same tripod position, exact same angle.</td><td class="col-dur">still</td><td class="col-sm">—</td><td class="col-sm">—</td><td class="col-sm">1 container, label-forward</td><td class="col-sm">Don't move anything between A and B. Swap container only.</td></tr>
+        <tr><td><input type="checkbox"></td><td>3</td><td>Variant C: overhead top-down on same container.</td><td class="col-sm">ARKON Pro Stand, iPhone pointing straight down.</td><td class="col-dur">still</td><td class="col-sm">—</td><td class="col-sm">—</td><td class="col-sm">Same container, fork added</td><td class="col-sm">Gives us a square, a portrait, and a top-down from one reset.</td></tr>
+        <tr class="section-row"><td colspan="9">Motion · 3s slow push-in for reel cover</td></tr>
+        <tr><td><input type="checkbox"></td><td>4</td><td><strong>Handheld slow push-in</strong> on variant A composition. Start wide, end tight on label.</td><td class="col-sm">iPhone 17 Pro Max handheld, walk forward 50cm over 3s.</td><td class="col-dur">3s</td><td class="col-sm">Silent.</td><td class="col-sm">—</td><td class="col-sm">Same set</td><td class="col-sm">Shoot 3 takes. Pick the smoothest. No gimbal needed at this speed.</td></tr>
+        <tr class="section-row"><td colspan="9">Lighting · high contrast, single soft key</td></tr>
+        <tr><td><input type="checkbox"></td><td>5</td><td><strong>Set lighting:</strong> Amaran 200x + Lantern 26", camera-right, 45° high, 4800K. Black card camera-left for contrast. No fill.</td><td class="col-sm">—</td><td class="col-dur">—</td><td class="col-sm">—</td><td class="col-sm">—</td><td class="col-sm">Amaran, Lantern, black card</td><td class="col-sm">We want shadow on the container's left side. That's what sells the pricing overlay later.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="sheet-foot">
+      <div class="sheet-foot-item"><label>Overlay in post</label><span>Price ("£4.50 per meal" or current offer). Single line. Syne Extra Bold.</span></div>
+      <div class="sheet-foot-item"><label>Deliverables</label><span>1:1, 4:5, 9:16 still + 3s 9:16 video</span></div>
+      <div class="sheet-foot-item"><label>Do not</label><span>Add multiple text overlays. Use filters. Over-saturate.</span></div>
+      <div class="sheet-foot-item"><label>Export</label><span>ProRAW → Lightroom mobile → JPG + MP4 at native res.</span></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ C5 ═══════════ -->
+  <div class="sheet-view" id="sheet-c5">
+    <div class="sheet-head">
+      <div class="sheet-head-left">
+        <div class="sheet-head-track">Concept 05 · Priority 2 · Food hero</div>
+        <div class="sheet-head-title">Top-down food hero</div>
+        <div class="sheet-head-concept">Overhead, ARKON Pro Stand, Dome III soft key. 10s of food-only motion (steam, pour, fork pull) for use as a B-roll library across all paid social. Plus 3 stills from the same setup. Zero dialogue, zero talent in frame.</div>
+      </div>
+      <div class="sheet-head-right">
+        <div><strong>Duration:</strong> 10s video + 3 stills</div>
+        <div><strong>Format:</strong> 9:16 video, 1:1 stills</div>
+        <div><strong>Location:</strong> Kitchen counter</div>
+        <div><strong>Talent:</strong> None (hands only)</div>
+        <div><strong>Lead cam:</strong> iPhone 17 Pro Max on ARKON Pro Stand</div>
+      </div>
+    </div>
+
+    <div class="ref-strip"><strong>Reference:</strong> Format-brief food hero row. Hero B-roll is the compounding asset. One shoot, dozens of edits downstream. Keep composition clean, centre container, soft perimeter.</div>
+
+    <table class="shoot-grid">
+      <thead>
+        <tr><th>✓</th><th>#</th><th>Action / description</th><th class="col-sm">Frame / angle</th><th class="col-dur">Dur</th><th class="col-sm">Audio / sound</th><th class="col-sm">Talent</th><th class="col-sm">Props / set</th><th class="col-sm">Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr class="section-row"><td colspan="9">Video beats · 10s total, cut later</td></tr>
+        <tr><td><input type="checkbox"></td><td>1</td><td><strong>Container enters frame</strong> from right, lands centre. Lid on.</td><td class="col-sm">Overhead, ARKON Pro Stand, iPhone pointing straight down. 9:16.</td><td class="col-dur">2s</td><td class="col-sm">Foley: place sound.</td><td class="col-sm">Hands only</td><td class="col-sm">Container, wooden board underneath</td><td class="col-sm">Steady hand-off. No camera shake.</td></tr>
+        <tr><td><input type="checkbox"></td><td>2</td><td>Hands peel lid off. Steam rises.</td><td class="col-sm">Same overhead.</td><td class="col-dur">2s</td><td class="col-sm">Peel foley, steam hiss.</td><td class="col-sm">Hands only</td><td class="col-sm">Container</td><td class="col-sm">Warm container first so steam is visible to camera.</td></tr>
+        <tr><td><input type="checkbox"></td><td>3</td><td>Sauce poured over top from a small jug.</td><td class="col-sm">Same.</td><td class="col-dur">2s</td><td class="col-sm">Pour foley (enhanced).</td><td class="col-sm">Hands only</td><td class="col-sm">Container + sauce jug</td><td class="col-sm">Optional if meal already has sauce. Skip if not.</td></tr>
+        <tr><td><input type="checkbox"></td><td>4</td><td>Fork enters frame, takes first bite. Pull up.</td><td class="col-sm">Same.</td><td class="col-dur">2s</td><td class="col-sm">Foley.</td><td class="col-sm">Hand only</td><td class="col-sm">Fork</td><td class="col-sm">The money shot. Shoot 3 takes, pick cleanest.</td></tr>
+        <tr><td><input type="checkbox"></td><td>5</td><td>Slow 360 rotation around container (optional).</td><td class="col-sm">Same overhead, rotate the board under the camera.</td><td class="col-dur">2s</td><td class="col-sm">Music bed in post.</td><td class="col-sm">Hands</td><td class="col-sm">Turntable or lazy Susan if available</td><td class="col-sm">If no turntable, skip. Don't improvise a spin.</td></tr>
+        <tr class="section-row"><td colspan="9">Stills · 3 frames from same setup</td></tr>
+        <tr><td><input type="checkbox"></td><td>6</td><td><strong>Still 1:</strong> lid on, label visible from above.</td><td class="col-sm">Overhead.</td><td class="col-dur">still</td><td class="col-sm">—</td><td class="col-sm">—</td><td class="col-sm">Container closed</td><td class="col-sm">ProRAW. Don't touch.</td></tr>
+        <tr><td><input type="checkbox"></td><td>7</td><td>Still 2: lid off, food fully visible, no fork.</td><td class="col-sm">Overhead.</td><td class="col-dur">still</td><td class="col-sm">—</td><td class="col-sm">—</td><td class="col-sm">Container open</td><td class="col-sm">Prime hero for retailer decks.</td></tr>
+        <tr><td><input type="checkbox"></td><td>8</td><td>Still 3: lid off, fork resting on rim, slight tilt.</td><td class="col-sm">Overhead.</td><td class="col-dur">still</td><td class="col-sm">—</td><td class="col-sm">—</td><td class="col-sm">Container + fork</td><td class="col-sm">Gives editorial / lifestyle edit option.</td></tr>
+        <tr class="section-row"><td colspan="9">Lighting · overhead key only</td></tr>
+        <tr><td><input type="checkbox"></td><td>9</td><td><strong>Set lighting:</strong> Amaran 200x + Dome III, camera-left at 45°, 4500K. Lantern 26" as low fill camera-right, 1/4 power. Black card behind camera to keep contrast.</td><td class="col-sm">—</td><td class="col-dur">—</td><td class="col-sm">—</td><td class="col-sm">—</td><td class="col-sm">Amaran, Dome III, Lantern</td><td class="col-sm">Don't flatten the food. Keep one directional shadow.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="sheet-foot">
+      <div class="sheet-foot-item"><label>Deliverables</label><span>10s master 9:16 video + 3 stills (1:1 + 4:5 crops)</span></div>
+      <div class="sheet-foot-item"><label>Downstream use</label><span>B-roll bank for all paid social edits. Hero for retailer decks.</span></div>
+      <div class="sheet-foot-item"><label>Do not</label><span>Hand-hold. Change colour temperature mid-setup. Add garnish that isn't on-brand.</span></div>
+      <div class="sheet-foot-item"><label>Export</label><span>ProRAW stills, 4K60 video, pass to editor.</span></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showSheet(id) {
+  document.querySelectorAll('.sheet-view').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sheet-card').forEach(c => c.classList.remove('active'));
+  const el = document.getElementById('sheet-' + id);
+  if (el) {
+    el.classList.add('active');
+    const card = document.querySelector(`.sheet-card[data-sheet="${id}"]`);
+    if (card) card.classList.add('active');
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+</script>
+</body>
+</html>
