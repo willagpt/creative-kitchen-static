@@ -869,7 +869,12 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
             // Success path: close modal, no error.
             autoCloseModal = true
             if (source === 'meta_ad_library' && metaRows > 0) {
-              const authNote = authSource === 'app_token' ? ' (auto-auth)' : ''
+              const authNote =
+                authSource === 'system_user_token'
+                  ? ' (auto-auth)'
+                  : authSource === 'app_token'
+                    ? ' (app-token)'
+                    : ''
               setAddStatus(`Saved. Foreplay had no coverage, pulled ${metaRows} ads from Meta Ad Library${authNote}.`)
             } else {
               setAddStatus(`Saved. Pulled ${foreplayRows} ads from Foreplay.`)
@@ -879,7 +884,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
           } else if (data?.metaFallback?.attempted) {
             setAddError('Brand saved, but neither Foreplay nor Meta Ad Library returned ads for this page (UK reach).')
           } else if (data?.metaFallback?.reason === 'no_meta_credentials_available') {
-            setAddError('Foreplay returned 0 ads and no Meta credentials are configured server-side. Add META_APP_ID and META_APP_SECRET to Supabase secrets, or connect a Meta token (top right) as a one-off.')
+            setAddError('Foreplay returned 0 ads and no Meta credentials are configured server-side. Add META_SYSTEM_USER_TOKEN to Supabase secrets, or connect a Meta token (top right) as a one-off.')
           } else {
             setAddError('Brand saved, but no ads were returned. Try again or check the page ID.')
           }

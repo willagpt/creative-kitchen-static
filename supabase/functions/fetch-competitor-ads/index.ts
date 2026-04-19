@@ -6,9 +6,16 @@ const SUPABASE_URL = "https://ifrxylvoufncdxyltgqt.supabase.co";
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
 // Meta Ad Library auto-auth.
-// We prefer an app access token built from META_APP_ID|META_APP_SECRET
-// because app access tokens NEVER EXPIRE. If those env vars are missing we
-// fall back to a per-request user token supplied in the body (legacy path).
+// Preference order:
+//   1. META_SYSTEM_USER_TOKEN — Business Manager System User token. Never
+//      expires when configured with "Never" expiration. Inherits user-context
+//      permissions (ads_read), so it can call /ads_archive for any brand page.
+//      This is the production-standard path.
+//   2. META_APP_ID|META_APP_SECRET — app access token. Never expires but only
+//      works for political/electoral/issue ads in transparency-required
+//      countries. Kept as a no-op fallback for completeness.
+//   3. body-supplied user token — legacy per-request path.
+const META_SYSTEM_USER_TOKEN = Deno.env.get("META_SYSTEM_USER_TOKEN") || "";
 const META_APP_ID = Deno.env.get("META_APP_ID") || "";
 const META_APP_SECRET = Deno.env.get("META_APP_SECRET") || "";
 
@@ -16,9 +23,14 @@ const META_APP_SECRET = Deno.env.get("META_APP_SECRET") || "";
 const DEFAULT_CREDIT_BUDGET = 500;
 const DEFAULT_START_DATE = "2025-12-23";
 
-function resolveMetaToken(bodyToken: string): { token: string; source: "app_token" | "user_token" | "none" } {
+type MetaAuthSource = "system_user_token" | "app_token" | "user_token" | "none";
+
+function resolveMetaToken(bodyToken: string): { token: string; source: MetaAuthSource } {
+  if (META_SYSTEM_USER_TOKEN) {
+    return { token: META_SYSTEM_USER_TOKEN, source: "system_user_token" };
+  }
   if (META_APP_ID && META_APP_SECRET) {
-    // App access token format: "{APP_ID}|{APP_SECRET}". Never expires.
+    // App access token format: "{APP_ID}|{APP_SECRET}".
     return { token: `${META_APP_ID}|${META_APP_SECRET}`, source: "app_token" };
   }
   if (bodyToken) {
@@ -574,11 +586,13 @@ Deno.serve(async (req: Request) => {
     // -----------------------------------------------------------------
     // Meta Ad Library fallback
     // Trigger when Foreplay returned zero ads AND we have a page_id AND
-    // we can resolve a Meta token. Token resolution prefers the app access
-    // token (env META_APP_ID + META_APP_SECRET, never expires) and falls
-    // back to the per-request body token. Lets us cover brands Foreplay's
-    // Spyder index does not track without ever asking the user to paste
-    // a token.
+    // we can resolve a Meta token. Token resolution prefers the System
+    // User token (META_SYSTEM_USER_TOKEN, never expires, full ad library
+    // access for any brand page), falls back to the app access token
+    // (META_APP_ID + META_APP_SECRET, political ads only), then to the
+    // per-request body token. Lets us cover brands Foreplay's Spyder
+    // index does not track without ever asking the user to paste a
+    // token.
     // -----------------------------------------------------------------
     let metaFallback: Record<string, unknown> | null = null;
     const resolvedMeta = resolveMetaToken(metaToken);
