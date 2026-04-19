@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shoot Day Schedule · Chefly C1 to C5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf9f7;--surface:#fff;--surface-alt:#f4f2ee;--surface-warm:#f9f5f0;
+  --ink:#1a1714;--ink-2:#5c564d;--ink-3:#8a8279;--ink-4:#b0a99e;
+  --accent:#b44d1e;--accent-light:#f4e6dc;--accent-dark:#8a3710;
+  --green:#2d6a4f;--green-light:#d8f3dc;
+  --blue:#1d4e89;--blue-light:#d0e2f4;
+  --amber:#92400e;--amber-light:#fef3c7;
+  --red:#991b1b;--red-light:#fee2e2;
+  --border:#e8e4de;--border-light:#f0ece6;
+  --radius:4px;--radius-lg:6px;
+  --shadow-sm:0 1px 2px rgba(26,23,20,.05);
+  --font-display:'Fraunces',Georgia,serif;--font-body:'DM Sans',system-ui,sans-serif;
+}
+html{font-size:14px;scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4,h5{font-family:var(--font-display);font-weight:700;line-height:1.25}
+a{color:var(--accent-dark);text-decoration:none}
+a:hover{text-decoration:underline}
+.page{max-width:1040px;margin:0 auto;padding:0 clamp(1rem,3vw,2rem) 4rem}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:.9rem 0;border-bottom:1px solid var(--border);gap:.5rem;flex-wrap:wrap}
+.topbar-brand{font-family:var(--font-display);font-size:.9rem;font-weight:700;color:var(--accent-dark)}
+.topbar-actions{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+.btn{padding:.4rem .9rem;font-family:var(--font-body);font-size:.72rem;font-weight:600;border-radius:var(--radius);cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;border:1.5px solid var(--border);background:var(--surface);color:var(--ink-2)}
+.btn:hover{border-color:var(--ink-3);color:var(--ink)}
+.btn-primary{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark);text-decoration:none}
+.hero{padding:clamp(2rem,5vw,3.5rem) 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem}
+.eyebrow{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent-dark);margin-bottom:.7rem}
+.hero h1{font-size:clamp(1.7rem,4vw,2.4rem);font-weight:800;letter-spacing:-.025em;margin-bottom:.5rem}
+.hero-sub{font-size:.95rem;color:var(--ink-2);max-width:680px;line-height:1.7;margin-bottom:1rem}
+.hero-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem}
+.chip{font-size:.68rem;font-weight:600;padding:.3rem .7rem;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--ink-2)}
+.chip.accent{background:var(--accent-light);border-color:var(--accent);color:var(--accent-dark)}
+.chip.green{background:var(--green-light);border-color:var(--green);color:var(--green)}
+.chip.blue{background:var(--blue-light);border-color:var(--blue);color:var(--blue)}
+.chip.amber{background:var(--amber-light);border-color:var(--amber);color:var(--amber)}
+.module-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-bottom:2.5rem}
+.mm-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem}
+.mm-card h3{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.7rem}
+.mm-card ul{list-style:none;padding:0;margin:0}
+.mm-card li{font-size:.82rem;color:var(--ink);line-height:1.55;padding:.25rem 0;border-bottom:1px dotted var(--border)}
+.mm-card li:last-child{border-bottom:none}
+.mm-card li::before{content:'→  ';color:var(--accent);font-weight:700}
+.toc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.3rem;margin-bottom:2.5rem}
+.toc-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-2);margin-bottom:.7rem}
+.toc ol{padding-left:1.2rem;font-size:.86rem;line-height:1.9;columns:2;column-gap:1.5rem}
+@media (max-width:640px){.toc ol{columns:1}}
+.toc ol li{color:var(--ink-2)}
+.toc ol li a{font-weight:500}
+.section{margin-bottom:3rem;scroll-margin-top:1rem}
+.section-head{border-bottom:2px solid var(--ink);padding-bottom:.6rem;margin-bottom:1.3rem}
+.section-head .sh-tag{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent-dark);margin-bottom:.25rem;display:block}
+.section-head h2{font-size:clamp(1.35rem,3vw,1.8rem);font-weight:800;letter-spacing:-.02em;margin:0}
+.section-head .sh-sub{font-size:.85rem;color:var(--ink-2);margin-top:.4rem;max-width:620px}
+.prose p{font-size:.9rem;color:var(--ink-2);margin-bottom:.9rem;line-height:1.7}
+.prose p strong{color:var(--ink)}
+.prose ul,.prose ol{padding-left:1.3rem;margin-bottom:1rem}
+.prose li{font-size:.88rem;color:var(--ink-2);margin-bottom:.35rem;line-height:1.65}
+.prose li strong{color:var(--ink)}
+.prose h3{font-size:1.05rem;font-weight:700;margin:1.8rem 0 .6rem;color:var(--ink)}
+.cadence-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-bottom:1.5rem}
+.cad-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.2rem 1.3rem;position:relative}
+.cad-card.tier1{border-top:4px solid var(--accent)}
+.cad-card.tier2{border-top:4px solid var(--blue)}
+.cad-card.tier3{border-top:4px solid var(--green)}
+.cad-card .tier-label{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-3);margin-bottom:.3rem}
+.cad-card h4{font-size:1.05rem;font-weight:800;color:var(--ink);margin-bottom:.2rem;font-family:var(--font-display)}
+.cad-card .cad-freq{font-size:.75rem;color:var(--accent-dark);font-weight:600;margin-bottom:.7rem;text-transform:uppercase;letter-spacing:.05em}
+.cad-card p{font-size:.82rem;color:var(--ink-2);line-height:1.6;margin-bottom:.6rem}
+.cad-card ul{list-style:none;padding:0;margin:0 0 .6rem}
+.cad-card li{font-size:.78rem;color:var(--ink);padding:.2rem 0 .2rem 1rem;position:relative;line-height:1.5}
+.cad-card li::before{content:'·';position:absolute;left:.2rem;color:var(--accent);font-weight:800}
+.cad-output{font-size:.75rem;color:var(--ink-2);font-style:italic;padding-top:.5rem;border-top:1px dashed var(--border)}
+.cad-output strong{color:var(--accent-dark);font-style:normal}
+.schedule{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1rem}
+.schedule-head{background:var(--ink);color:var(--bg);padding:.9rem 1.2rem;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:.5rem}
+.schedule-head h4{font-family:var(--font-display);font-size:1.05rem;font-weight:700;margin:0;color:var(--bg)}
+.schedule-head .sch-meta{font-size:.72rem;color:var(--ink-4);letter-spacing:.05em}
+.sched-row{display:grid;grid-template-columns:110px 110px 1fr;gap:1rem;padding:.75rem 1.1rem;border-bottom:1px solid var(--border);font-size:.82rem;line-height:1.55}
+.sched-row:last-child{border-bottom:none}
+.sched-row:nth-child(even){background:var(--surface-alt)}
+.sched-row .sch-time{font-family:var(--font-display);font-weight:700;color:var(--accent);font-size:.86rem}
+.sched-row .sch-dur{font-size:.72rem;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding-top:.2rem}
+.sched-row .sch-body{color:var(--ink)}
+.sched-row .sch-body strong{color:var(--ink);font-weight:700}
+.sched-row .sch-body em{color:var(--ink-2);font-style:italic;font-size:.76rem;display:block;margin-top:.15rem}
+.sched-row.break{background:var(--surface-warm) !important}
+.sched-row.break .sch-body{color:var(--ink-2);font-style:italic}
+.sched-row.concept .sch-body{font-weight:600}
+.sched-tot{background:var(--accent-light);padding:.8rem 1.1rem;display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid var(--accent)}
+.sched-tot .tot-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--accent-dark)}
+.sched-tot .tot-val{font-family:var(--font-display);font-size:1.1rem;font-weight:800;color:var(--ink)}
+.split-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin:1rem 0}
+@media (max-width:720px){.split-grid{grid-template-columns:1fr}}
+.split-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.2rem 1.3rem}
+.split-card h4{font-family:var(--font-display);font-size:1.05rem;font-weight:700;margin-bottom:.3rem;color:var(--ink)}
+.split-card .sp-tag{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent-dark);margin-bottom:.3rem;display:block}
+.split-card p{font-size:.84rem;color:var(--ink-2);line-height:1.6;margin-bottom:.7rem}
+.split-card ul{list-style:none;padding:0;margin:0}
+.split-card li{font-size:.82rem;color:var(--ink);padding:.3rem 0;border-bottom:1px dotted var(--border);line-height:1.55}
+.split-card li:last-child{border-bottom:none}
+.split-card li strong{color:var(--accent-dark)}
+.qgate{background:var(--surface-warm);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.2rem;margin-bottom:1rem}
+.qgate h5{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.6rem}
+.qgate ul{list-style:none;padding:0;margin:0}
+.qgate li{font-size:.86rem;padding:.3rem 0;line-height:1.55;color:var(--ink);display:flex;gap:.5rem;align-items:flex-start}
+.qgate li::before{content:'☐';color:var(--accent);font-weight:700;font-size:1rem;line-height:1.3}
+.flag{background:var(--amber-light);border:1px solid var(--amber);border-left:4px solid var(--amber);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:.9rem 1.1rem;margin-bottom:.7rem}
+.flag h5{font-size:.82rem;font-weight:700;color:var(--amber);margin-bottom:.3rem;font-family:var(--font-display)}
+.flag p{font-size:.82rem;color:var(--ink);line-height:1.6;margin:0}
+.plain{background:var(--accent-light);border-left:4px solid var(--accent);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:.9rem 1.1rem;margin:1rem 0;font-size:.86rem;color:var(--ink);line-height:1.65}
+.plain strong{color:var(--accent-dark);display:block;font-size:.64rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem;font-weight:700}
+.vol-table{width:100%;border-collapse:collapse;border:1px solid var(--border);font-size:.82rem;margin:1rem 0}
+.vol-table th{background:var(--ink);color:var(--bg);font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.55rem .65rem;text-align:left}
+.vol-table td{padding:.6rem .65rem;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5}
+.vol-table tr:last-child td{border-bottom:none}
+.vol-table tr:nth-child(even) td{background:var(--surface-alt)}
+.vol-table td:first-child{font-weight:600;color:var(--ink)}
+.vol-table td.total{font-weight:700;color:var(--accent-dark);background:var(--accent-light) !important}
+.foot-nav{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.foot-nav a{font-size:.78rem}
+@page{size:A4 portrait;margin:14mm 16mm}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  html{font-size:10px}
+  .topbar,.no-print,.foot-nav{display:none!important}
+  .schedule,.cad-card,.split-card,.qgate,.vol-table{break-inside:avoid;page-break-inside:avoid}
+  .section{page-break-before:auto}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="topbar no-print">
+    <div class="topbar-brand">Chefly · Shoot Day Schedule</div>
+    <div class="topbar-actions">
+      <a href="/internal-shoot-pack.html" class="btn">Shoot pack</a>
+      <a href="/training-companion.html" class="btn">Training companion</a>
+      <a href="/training-course.html" class="btn">Course</a>
+      <a href="/training-pack-c1.html" class="btn">Training packs</a>
+      <a href="/format-brief.html" class="btn btn-primary">Format brief →</a>
+      <button class="btn" onclick="window.print()">Print</button>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow">scheduling guide · v1.0 · 19 apr 2026 · for james + kaja</div>
+    <h1>Shoot day schedule + cadence</h1>
+    <p class="hero-sub">Two honest schedules (day 1 first-timer vs day 3+ muscle memory), two split-day alternatives for lower cognitive load, a night-before prep checklist, and a monthly rhythm that keeps Meta fed without burning out either of you.</p>
+    <div class="hero-chips">
+      <span class="chip accent">Planning doc</span>
+      <span class="chip">C1 to C5 sequenced</span>
+      <span class="chip">Day 1: ~9 hrs</span>
+      <span class="chip green">Day 3+: ~6 hrs</span>
+      <span class="chip blue">Weekly + bi-weekly cadence</span>
+      <span class="chip amber">~50 creatives/month output</span>
+    </div>
+  </div>
+
+  <div class="module-meta">
+    <div class="mm-card">
+      <h3>The headline answer</h3>
+      <ul>
+        <li>Day 1: budget 9 hours, plan for a full day with a proper lunch</li>
+        <li>Day 3+: 6 hours end-to-end, genuinely half a day</li>
+        <li>Better path for first timers: split C1 + C2 from C3 + C4 + C5 across 2 half-days one week apart</li>
+        <li>Steady-state rhythm: 1 full shoot day every 2 weeks + 1 weekly 90-min C2 reaction shoot</li>
+      </ul>
+    </div>
+    <div class="mm-card">
+      <h3>Why the 4 hr 15 min figure is misleading</h3>
+      <ul>
+        <li>The 45-min blocks in each pack count on-the-clock filming only, not setup</li>
+        <li>Transitions between C1 and C2 alone eat 20 to 30 min (kit change, re-blocking)</li>
+        <li>Wardrobe changes between Kaja-on-camera and James-on-camera take 15 to 20 min</li>
+        <li>First-time learning tax is 50% on top of every block for shoot day 1</li>
+        <li>Charging, lunch, debrief and file transfer aren't in the 4:15 figure</li>
+      </ul>
+    </div>
+    <div class="mm-card">
+      <h3>What good looks like</h3>
+      <ul>
+        <li>Kit is charged and sets are dressed the night before, not the morning of</li>
+        <li>Transitions between concepts are under 15 min because the next setup is pre-prepped</li>
+        <li>No-one feels rushed on takes because buffer time is real</li>
+        <li>Files on Drive and labelled within 24 hours of wrap, every single time</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="toc">
+    <div class="toc-title">What's in this doc</div>
+    <ol>
+      <li><a href="#s1">01 · How often should we shoot? (the cadence)</a></li>
+      <li><a href="#s2">02 · Monthly creative output (what the rhythm yields)</a></li>
+      <li><a href="#s3">03 · Night-before prep checklist</a></li>
+      <li><a href="#s4">04 · Day 1 schedule · first-timer (9 hours)</a></li>
+      <li><a href="#s5">05 · Day 3+ schedule · muscle memory (6 hours)</a></li>
+      <li><a href="#s6">06 · Split-day alternative A: dialogue vs silent</a></li>
+      <li><a href="#s7">07 · Split-day alternative B: kitchen vs desk</a></li>
+      <li><a href="#s8">08 · Weekly C2 reaction shoot (90 min recurring)</a></li>
+      <li><a href="#s9">09 · Monthly creative review (no camera, 2 hrs)</a></li>
+      <li><a href="#s10">10 · Red flags: when to call the shoot</a></li>
+    </ol>
+  </div>
+
+  <!-- ────────── SECTION 1 ────────── -->
+  <div class="section" id="s1">
+    <div class="section-head">
+      <span class="sh-tag">01 · Cadence</span>
+      <h2>How often should we shoot?</h2>
+      <p class="sh-sub">A three-tier rhythm that matches your stage (pre-1,000 weekly customers, testing not scaling), beats Meta creative fatigue, and keeps both of you fresh.</p>
+    </div>
+
+    <div class="prose">
+      <p>Meta creative fatigue typically kicks in at 7 to 14 days on a single creative. That means your ad account needs roughly 2 to 3 fresh creatives entering the rotation every week to keep CPAs stable. The rhythm below produces ~50 new creatives per month, enough to rotate 2 to 3 fresh ads into Meta every week indefinitely.</p>
+
+      <div class="plain"><strong>Short version</strong>One 6-hour shoot day every 2 weeks, one 90-minute founder-head shoot every Friday, one 2-hour creative review the first Monday of every month. That's it.</div>
+    </div>
+
+    <div class="cadence-grid">
+      <div class="cad-card tier1">
+        <div class="tier-label">Tier 1 · core rhythm</div>
+        <h4>Weekly C2 reaction shoot</h4>
+        <div class="cad-freq">Every Friday · 90 min · James on camera</div>
+        <p>Fixed slot, same setup every week, low stress. Kaja stays off-camera, runs audio monitor and operates the second iPhone. Film 3 to 5 founder talking-head clips reacting to that week's news, trends, customer reviews, or offers.</p>
+        <ul>
+          <li>No wardrobe change (James wears Chefly navy crewneck every week)</li>
+          <li>Same desk, same 2 cameras, same DJI mic, same lighting</li>
+          <li>Script comes from Monday's Slack notes and that week's Meta data</li>
+          <li>Done in 90 min because there's no decision-making, just execute</li>
+        </ul>
+        <div class="cad-output">Output · <strong>3 to 5 C2 creatives per week</strong> · ~15 Meta exports after aspect resize</div>
+      </div>
+
+      <div class="cad-card tier2">
+        <div class="tier-label">Tier 2 · volume rhythm</div>
+        <h4>Bi-weekly full shoot day</h4>
+        <div class="cad-freq">Every other Tuesday · 6 hrs · both of you</div>
+        <p>The big batch. Run C1 to C5 back-to-back using the Day 3+ schedule below. This is where the testimonial, the hands-POV demo, the offer statics, and the overhead hero film come from. High output, high variety, only twice a month.</p>
+        <ul>
+          <li>Full kit setup, full wardrobe prep, full lunch break</li>
+          <li>Output is 15 to 20 ad-ready creatives per session, mixed across 5 formats</li>
+          <li>Aim for the last week of each month to have fresh hero creatives for month-end campaigns</li>
+          <li>Skip C1 (testimonial) on alternate sessions if Kaja is tired; re-run only C2+C3+C4+C5</li>
+        </ul>
+        <div class="cad-output">Output · <strong>15 to 20 mixed creatives per session</strong> · ~50 Meta exports after aspect resize</div>
+      </div>
+
+      <div class="cad-card tier3">
+        <div class="tier-label">Tier 3 · brain rhythm</div>
+        <h4>Monthly creative review</h4>
+        <div class="cad-freq">First Monday of month · 2 hrs · no camera</div>
+        <p>Desk work only. Review the last month's Meta performance data using the ad-kill-keep skill. Kill fatigued creatives. Approve the next 10 to 15 to enter rotation. Plan scripts and offers for the next two bi-weekly shoots.</p>
+        <ul>
+          <li>No shooting, no filming, no kit prep</li>
+          <li>Output is a prioritised script list and an offer calendar for the coming 4 weeks</li>
+          <li>This is where creative strategy gets decided, not on shoot day</li>
+          <li>Skipping this is how shoot days drift into "film whatever" territory</li>
+        </ul>
+        <div class="cad-output">Output · <strong>next month's shoot plan</strong> · kill list + script list</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ────────── SECTION 2 ────────── -->
+  <div class="section" id="s2">
+    <div class="section-head">
+      <span class="sh-tag">02 · Output</span>
+      <h2>What this rhythm yields every month</h2>
+      <p class="sh-sub">The maths behind the cadence so you can see why it's enough to beat creative fatigue.</p>
+    </div>
+
+    <table class="vol-table">
+      <thead>
+        <tr>
+          <th style="width:30%">Activity</th>
+          <th style="width:15%">Sessions/mo</th>
+          <th style="width:20%">Creatives/session</th>
+          <th style="width:15%">Unique /mo</th>
+          <th style="width:20%">Meta exports /mo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Weekly C2 reaction</td>
+          <td>4</td>
+          <td>3 to 5</td>
+          <td>~16</td>
+          <td>~48</td>
+        </tr>
+        <tr>
+          <td>Bi-weekly full shoot</td>
+          <td>2</td>
+          <td>15 to 20</td>
+          <td>~34</td>
+          <td>~102</td>
+        </tr>
+        <tr>
+          <td>Monthly review</td>
+          <td>1</td>
+          <td>0 (planning)</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td class="total">Monthly total</td>
+          <td class="total">7 sessions</td>
+          <td class="total">mixed</td>
+          <td class="total">~50</td>
+          <td class="total">~150</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="plain"><strong>Why 50 is enough</strong>Meta's rule of thumb is 2 to 3 fresh creatives per week to beat fatigue on a £30 to £100/day account. That's 8 to 12 per month. You'll produce ~50, so you can afford to be picky: only the top half go live, the bottom half stay in the library for later A/B tests.</div>
+  </div>
+
+  <!-- ────────── SECTION 3 ────────── -->
+  <div class="section" id="s3">
+    <div class="section-head">
+      <span class="sh-tag">03 · Night-before</span>
+      <h2>Prep checklist (do this the evening before)</h2>
+      <p class="sh-sub">The single biggest determinant of whether shoot day runs on schedule is how much you prep the night before. 30 minutes of prep saves 2 hours of set time.</p>
+    </div>
+
+    <div class="qgate">
+      <h5>Kit: charging</h5>
+      <ul>
+        <li>iPhone 17 Pro Max charged to 100%, off the cable by bedtime</li>
+        <li>Backup iPhone (or Kaja's phone) charged to 100% for C2 second-camera angle</li>
+        <li>Amaran 200x battery fully charged (overnight on charger)</li>
+        <li>Amaran Dome III and Lantern 26" ready to go (mains-powered, no battery needed)</li>
+        <li>DJI Mic 2 TX + RX charged (they share a case, just leave on the mat)</li>
+        <li>ARKON Pro Stand clamp tightened, arm tested (swing it through the overhead arc once)</li>
+        <li>SmallRig Magnetic Neck Mount strap adjusted, magnet test done</li>
+        <li>Manfrotto Compact Tripod legs clean, ball head locked</li>
+      </ul>
+    </div>
+
+    <div class="qgate">
+      <h5>Set dressing: kitchen</h5>
+      <ul>
+        <li>Counter wiped and crumb-free, 2 to 3 branded containers staged on the shelf behind</li>
+        <li>Fridge stocked with 4 to 6 Chefly containers, labels forward</li>
+        <li>Backdrop checked (wall free of distracting posters, plants arranged)</li>
+        <li>Mic placement marked with a faint pencil dot on Kaja's usual collar position</li>
+      </ul>
+    </div>
+
+    <div class="qgate">
+      <h5>Set dressing: desk</h5>
+      <ul>
+        <li>Desk cleared, oak chopping board ready, ivory linen runner folded nearby</li>
+        <li>Ramekin with parsley sprig wrapped in damp kitchen roll, in fridge</li>
+        <li>Fork and spoon polished with a dry cloth, fingerprints off</li>
+        <li>Amaran 200x and Lantern positions marked on the floor with gaffer tape</li>
+        <li>Black A4 card (flag for C4) in the props box, desk-side</li>
+        <li>X-Rite ColorChecker in its protective sleeve, desk-side</li>
+      </ul>
+    </div>
+
+    <div class="qgate">
+      <h5>Wardrobe + talent</h5>
+      <ul>
+        <li>Kaja's outfit for C1 hung, ironed, hair plan agreed (if a change is needed for C3)</li>
+        <li>James's Chefly navy crewneck washed, ironed, on a hanger</li>
+        <li>Both have drunk water, had dinner, are not hungover</li>
+        <li>Both have read the pack for whichever concept starts day one</li>
+      </ul>
+    </div>
+
+    <div class="qgate">
+      <h5>Food</h5>
+      <ul>
+        <li>Hero meal (the one you'll feature in C4 and C5) defrosted in fridge, ready for morning</li>
+        <li>One backup portion in the freezer in case of a reheat mistake</li>
+        <li>Microwave cleaned, plate inside swapped for a clean one</li>
+      </ul>
+    </div>
+
+    <div class="plain"><strong>If you only do one thing the night before</strong>Charge the batteries and dress the kitchen set. Everything else can be rescued in the morning. Dead batteries and a messy counter will cost you the full day.</div>
+  </div>
+
+  <!-- ────────── SECTION 4 ────────── -->
+  <div class="section" id="s4">
+    <div class="section-head">
+      <span class="sh-tag">04 · Day 1 schedule</span>
+      <h2>First-timer schedule (~9 hours)</h2>
+      <p class="sh-sub">The first time you run C1 to C5 back-to-back. Builds in a 50% learning-tax buffer on each block, a proper 45-minute lunch, and realistic transitions. Assumes you arrived with kit charged and sets dressed.</p>
+    </div>
+
+    <div class="schedule">
+      <div class="schedule-head">
+        <h4>Day 1 · First full run of C1 to C5</h4>
+        <span class="sch-meta">08:00 to 16:55 · total 8 hrs 55 min</span>
+      </div>
+
+      <div class="sched-row break">
+        <span class="sch-time">08:00</span>
+        <span class="sch-dur">30 min</span>
+        <span class="sch-body"><strong>Arrival + kit check.</strong> Final battery check, set-dressing audit, wardrobe on, Kaja hair/makeup touch-up. Walk through C1 pack once.<em>You're not rolling yet. Don't rush this.</em></span>
+      </div>
+
+      <div class="sched-row concept">
+        <span class="sch-time">08:30</span>
+        <span class="sch-dur">70 min</span>
+        <span class="sch-body"><strong>C1 · Kaja chest-framed testimonial</strong> (nominal 45 min + 25 min learning buffer). Handheld, one iPhone, 2 angles, 3 takes per angle, 4 silent cut-aways.<em>Kaja on camera. James shooter. Script in Kaja's earshot on a second phone.</em></span>
+      </div>
+
+      <div class="sched-row break">
+        <span class="sch-time">09:40</span>
+        <span class="sch-dur">20 min</span>
+        <span class="sch-body"><strong>Transition to C2.</strong> Kaja off-camera, James changes into Chefly navy crewneck. Strike handheld kit, set up 2 tripods, pair second iPhone, rig DJI mic on James, lighting shift for desk.</span>
+      </div>
+
+      <div class="sched-row concept">
+        <span class="sch-time">10:00</span>
+        <span class="sch-dur">90 min</span>
+        <span class="sch-body"><strong>C2 · James founder talking head</strong> (nominal 60 min + 30 min learning buffer). 2 cameras rolling simultaneously, script on iPad, 3 message variants per take.<em>James on camera. Kaja runs audio monitor and time-codes.</em></span>
+      </div>
+
+      <div class="sched-row break">
+        <span class="sch-time">11:30</span>
+        <span class="sch-dur">45 min</span>
+        <span class="sch-body"><strong>Lunch.</strong> Real lunch, off-set, away from the kit. Eat something warm, hydrate, review morning takes on the phone.<em>Do not skip on day 1. Everyone will underperform after 3 hours without food.</em></span>
+      </div>
+
+      <div class="sched-row break">
+        <span class="sch-time">12:15</span>
+        <span class="sch-dur">15 min</span>
+        <span class="sch-body"><strong>Transition to C3.</strong> Strip C2 desk kit, attach SmallRig Magnetic Neck Mount to Kaja, walk through to the kitchen, confirm neck-mount stability with the lean test.</span>
+      </div>
+
+      <div class="sched-row concept">
+        <span class="sch-time">12:30</span>
+        <span class="sch-dur">90 min</span>
+        <span class="sch-body"><strong>C3 · Hands-POV product demo</strong> (nominal 60 min + 30 min learning buffer). Part A kitchen POV (neck mount), Part B overhead desk (ARKON). Two locations, two rigs, one run.<em>Kaja's hands only. No dialogue. Edit-friendly continuous takes.</em></span>
+      </div>
+
+      <div class="sched-row break">
+        <span class="sch-time">14:00</span>
+        <span class="sch-dur">15 min</span>
+        <span class="sch-body"><strong>Transition to C4.</strong> ARKON stays. Swap iPhone from overhead to Manfrotto tripod, reposition to 25 degrees top-down, Lantern moves camera-right, black A4 flag in place, X-Rite card ready.</span>
+      </div>
+
+      <div class="sched-row concept">
+        <span class="sch-time">14:15</span>
+        <span class="sch-dur">60 min</span>
+        <span class="sch-body"><strong>C4 · Offer-led static frame</strong> (nominal 45 min + 15 min learning buffer). ProRAW stills of 3 variants, plus one 3-second push-in video take.<em>No talent. Both of you work the set and the camera together.</em></span>
+      </div>
+
+      <div class="sched-row break">
+        <span class="sch-time">15:15</span>
+        <span class="sch-dur">10 min</span>
+        <span class="sch-body"><strong>Transition to C5.</strong> Same desk, same two lights. Re-rig the iPhone to the ARKON Pro Stand overhead arm at 45 cm height, offset the key 60 degrees behind camera. Microwave the hero meal on standby.</span>
+      </div>
+
+      <div class="sched-row concept">
+        <span class="sch-time">15:25</span>
+        <span class="sch-dur">60 min</span>
+        <span class="sch-body"><strong>C5 · Top-down food hero</strong> (nominal 45 min + 15 min learning buffer). 3 video takes of the 10-second 5-beat sequence (reheat between takes), 3 ProRAW stills from the same rig.<em>Kaja's hands plate and serve. James calls the beats.</em></span>
+      </div>
+
+      <div class="sched-row break">
+        <span class="sch-time">16:25</span>
+        <span class="sch-dur">30 min</span>
+        <span class="sch-body"><strong>Wrap + Drive upload + debrief.</strong> Kit strike, files copied to Drive with clear naming (C1_kaja_testimonial_angle1_take3.mov), both of you sit down, note one thing that worked and one that didn't for next time.</span>
+      </div>
+    </div>
+
+    <div class="sched-tot">
+      <span class="tot-label">Total elapsed</span>
+      <span class="tot-val">8 hrs 55 min · full day</span>
+    </div>
+
+    <div class="plain"><strong>Day 1 verdict</strong>Plan this as a full working day. Don't book anything for the evening. Don't promise yourself you'll edit tonight. You'll be tired. Just back up the files, lay out tomorrow's clothes, go to bed.</div>
+  </div>
+
+  <!-- ────────── SECTION 5 ────────── -->
+  <div class="section" id="s5">
+    <div class="section-head">
+      <span class="sh-tag">05 · Day 3+ schedule</span>
+      <h2>Muscle-memory schedule (~6 hours)</h2>
+      <p class="sh-sub">Once you've shot C1 to C5 two or three times, the learning tax drops to zero and you can compress transitions. This is the "just over half a day" outcome.</p>
+    </div>
+
+    <div class="schedule">
+      <div class="schedule-head">
+        <h4>Day 3+ · Muscle-memory run</h4>
+        <span class="sch-meta">09:00 to 14:45 · total 5 hrs 45 min</span>
+      </div>
+
+      <div class="sched-row break">
+        <span class="sch-time">08:30</span>
+        <span class="sch-dur">30 min</span>
+        <span class="sch-body"><strong>Kit + wardrobe check.</strong> Batteries, Drive folder created, hair done, Kaja outfit on. Pre-shoot prep done the night before, so this is just a sanity pass.</span>
+      </div>
+
+      <div class="sched-row concept">
+        <span class="sch-time">09:00</span>
+        <span class="sch-dur">45 min</span>
+        <span class="sch-body"><strong>C1 · Kaja chest-framed testimonial.</strong> Running to the nominal pack time. 2 angles, 3 takes each, 4 cut-aways. No learning buffer needed.</span>
+      </div>
+
+      <div class="sched-row break">
+        <span class="sch-time">09:45</span>
+        <span class="sch-dur">15 min</span>
+        <span class="sch-body"><strong>Transition to C2.</strong> James changes, 2 tripods go up, DJI mic rigged. You know the order.</span>
+      </div>
+
+      <div class="sched-row concept">
+        <span class="sch-time">10:00</span>
+        <span class="sch-dur">60 min</span>
+        <span class="sch-body"><strong>C2 · James founder talking head.</strong> 2 cameras, script on iPad, 3 message variants.</span>
+      </div>
+
+      <div class="sched-row break">
+        <span class="sch-time">11:00</span>
+        <span class="sch-dur">10 min</span>
+        <span class="sch-body"><strong>Transition to C3.</strong> Neck mount on Kaja, lean test, move to kitchen.</span>
+      </div>
+
+      <div class="sched-row concept">
+        <span class="sch-time">11:10</span>
+        <span class="sch-dur">60 min</span>
+        <span class="sch-body"><strong>C3 · Hands-POV demo.</strong> Kitchen POV + overhead desk. Flow is familiar, no re-explanation needed.</span>
+      </div>
+
+      <div class="sched-row break">
+        <span class="sch-time">12:10</span>
+        <span class="sch-dur">30 min</span>
+        <span class="sch-body"><strong>Lunch.</strong> Short but real. Off-set, hydrate, glance at takes.</span>
+      </div>
+
+      <div class="sched-row break">
+        <span class="sch-time">12:40</span>
+        <span class="sch-dur">10 min</span>
+        <span class="sch-body"><strong>Transition to C4.</strong> Tripod reposition, Lantern camera-right, flag in, X-Rite card ready.</span>
+      </div>
+
+      <div class="sched-row concept">
+        <span class="sch-time">12:50</span>
+        <span class="sch-dur">45 min</span>
+        <span class="sch-body"><strong>C4 · Offer-led static.</strong> 3 variants ProRAW + one push-in. Both of you work the set together.</span>
+      </div>
+
+      <div class="sched-row break">
+        <span class="sch-time">13:35</span>
+        <span class="sch-dur">5 min</span>
+        <span class="sch-body"><strong>Transition to C5.</strong> Just the ARKON re-rig and the key light offset to 60 degrees behind. Micro-transition.</span>
+      </div>
+
+      <div class="sched-row concept">
+        <span class="sch-time">13:40</span>
+        <span class="sch-dur">45 min</span>
+        <span class="sch-body"><strong>C5 · Top-down food hero.</strong> 3 video takes, 3 stills. Reheat between takes for steam.</span>
+      </div>
+
+      <div class="sched-row break">
+        <span class="sch-time">14:25</span>
+        <span class="sch-dur">20 min</span>
+        <span class="sch-body"><strong>Wrap + Drive upload.</strong> Files copied, labels applied, one-line debrief.</span>
+      </div>
+    </div>
+
+    <div class="sched-tot">
+      <span class="tot-label">Total elapsed</span>
+      <span class="tot-val">6 hrs 15 min · just over half a day</span>
+    </div>
+
+    <div class="plain"><strong>Day 3+ verdict</strong>You're done by mid-afternoon. The rest of the day is yours. Edit tonight if you want, or leave it for tomorrow. This is the sustainable cadence you're aiming for.</div>
+  </div>
+
+  <!-- ────────── SECTION 6 ────────── -->
+  <div class="section" id="s6">
+    <div class="section-head">
+      <span class="sh-tag">06 · Split-day A</span>
+      <h2>Alternative A: dialogue vs silent split</h2>
+      <p class="sh-sub">Two half-days, one week apart. Best for first timers, because you separate the high-performance concepts (talking on camera) from the production concepts (no-one talking).</p>
+    </div>
+
+    <div class="split-grid">
+      <div class="split-card">
+        <span class="sp-tag">Half-day A · morning · ~4 hrs</span>
+        <h4>Dialogue shoot: C1 + C2</h4>
+        <p>Both concepts need scripts, performance, audio, multiple takes. Keep them together. You'll be mentally fried by lunch; that's fine, the second half-day is physical not verbal.</p>
+        <ul>
+          <li><strong>09:00 to 10:10</strong> · C1 Kaja testimonial (70 min)</li>
+          <li><strong>10:10 to 10:30</strong> · Transition (20 min)</li>
+          <li><strong>10:30 to 12:00</strong> · C2 James founder head (90 min)</li>
+          <li><strong>12:00 to 12:30</strong> · Wrap, debrief, file backup</li>
+        </ul>
+      </div>
+
+      <div class="split-card">
+        <span class="sp-tag">Half-day B · morning, ~1 week later · ~4 hrs</span>
+        <h4>Silent production: C3 + C4 + C5</h4>
+        <p>No scripts, no performance, no wardrobe changes. All three concepts share the desk, so transitions are fast. You can knock out 10 to 14 creatives in a morning.</p>
+        <ul>
+          <li><strong>09:00 to 10:30</strong> · C3 Hands-POV (90 min incl. transition)</li>
+          <li><strong>10:30 to 11:30</strong> · C4 Offer static (60 min)</li>
+          <li><strong>11:30 to 12:30</strong> · C5 Top-down hero (60 min)</li>
+          <li><strong>12:30 to 13:00</strong> · Wrap, debrief, file backup</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="plain"><strong>When to choose Split A</strong>Your first ever shoot. Or any shoot where Kaja is mentally tired and you don't want her to have to hold a script in her head for 6 straight hours. The gap between the two half-days lets you review the A footage before committing to B.</div>
+  </div>
+
+  <!-- ────────── SECTION 7 ────────── -->
+  <div class="section" id="s7">
+    <div class="section-head">
+      <span class="sh-tag">07 · Split-day B</span>
+      <h2>Alternative B: kitchen vs desk split</h2>
+      <p class="sh-sub">Same day, just organised by location. Cuts the kitchen→desk transition overhead by running all kitchen concepts first.</p>
+    </div>
+
+    <div class="split-grid">
+      <div class="split-card">
+        <span class="sp-tag">Block A · morning · ~3 hrs</span>
+        <h4>Kitchen block: C1 + C3 Part A</h4>
+        <p>Both shot in the same kitchen space. One set dress, one lighting setup (natural daylight for C3 POV, add Amaran for C1). No location change mid-block.</p>
+        <ul>
+          <li><strong>09:00 to 10:00</strong> · C1 Kaja testimonial (60 min)</li>
+          <li><strong>10:00 to 10:15</strong> · Transition: neck mount on Kaja</li>
+          <li><strong>10:15 to 11:00</strong> · C3 Part A kitchen POV (45 min)</li>
+          <li><strong>11:00 to 12:00</strong> · Lunch + desk set-up</li>
+        </ul>
+      </div>
+
+      <div class="split-card">
+        <span class="sp-tag">Block B · afternoon · ~3 hrs</span>
+        <h4>Desk block: C2 + C3 Part B + C4 + C5</h4>
+        <p>All four concepts use the same desk. Lights stay up. Only the camera rig changes per concept. Fastest possible sequencing.</p>
+        <ul>
+          <li><strong>12:00 to 13:15</strong> · C2 James founder head (75 min)</li>
+          <li><strong>13:15 to 13:45</strong> · C3 Part B overhead desk (30 min)</li>
+          <li><strong>13:45 to 14:30</strong> · C4 Offer static (45 min)</li>
+          <li><strong>14:30 to 15:15</strong> · C5 Top-down hero (45 min)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="plain"><strong>When to choose Split B</strong>You've done the shoots before and want the fastest possible full-day run. Total elapsed is ~6 hours 15 min (same as Day 3+), but transitions are 40% shorter because you eliminate the back-and-forth between kitchen and desk.</div>
+  </div>
+
+  <!-- ────────── SECTION 8 ────────── -->
+  <div class="section" id="s8">
+    <div class="section-head">
+      <span class="sh-tag">08 · Weekly C2</span>
+      <h2>The weekly 90-minute C2 reaction shoot</h2>
+      <p class="sh-sub">Fixed slot every Friday morning. Same setup every single time. This is the engine of your weekly Meta rotation.</p>
+    </div>
+
+    <div class="schedule">
+      <div class="schedule-head">
+        <h4>Weekly · Friday · 09:30 to 11:00</h4>
+        <span class="sch-meta">90 min total · James on camera · Kaja monitoring</span>
+      </div>
+
+      <div class="sched-row break">
+        <span class="sch-time">09:30</span>
+        <span class="sch-dur">15 min</span>
+        <span class="sch-body"><strong>Setup.</strong> Pull tripods from storage, set up in the same marked positions. DJI mic on James. Script list open on iPad. Desk cleared.</span>
+      </div>
+
+      <div class="sched-row concept">
+        <span class="sch-time">09:45</span>
+        <span class="sch-dur">60 min</span>
+        <span class="sch-body"><strong>Shoot.</strong> 3 to 5 script variants. Each variant: 2 cameras, 2 takes. Script changes weekly based on: (a) Monday's Meta performance review, (b) that week's customer reviews, (c) current offers, (d) any news or trends.</span>
+      </div>
+
+      <div class="sched-row break">
+        <span class="sch-time">10:45</span>
+        <span class="sch-dur">15 min</span>
+        <span class="sch-body"><strong>Wrap + Drive.</strong> Files copied and labelled. No edit today. Hand off to editor or queue for Saturday editing block.</span>
+      </div>
+    </div>
+
+    <div class="plain"><strong>Why this works</strong>The decisions are all made before you walk in: which offer to feature, which script to run, which angle. The shoot itself is execution. 60 minutes is plenty when you know exactly what you're saying.</div>
+  </div>
+
+  <!-- ────────── SECTION 9 ────────── -->
+  <div class="section" id="s9">
+    <div class="section-head">
+      <span class="sh-tag">09 · Monthly review</span>
+      <h2>Monthly creative review (no camera, 2 hours)</h2>
+      <p class="sh-sub">First Monday of every month. This is where the strategy for the next 4 weeks gets set. Skipping this is how shoot days drift into "film whatever, we'll figure it out in the edit" territory.</p>
+    </div>
+
+    <div class="prose">
+      <h3>Agenda (in order)</h3>
+      <ol>
+        <li><strong>Meta performance review (30 min).</strong> Run the ad-kill-keep skill on every live creative. Red = kill. Amber = watch. Green = keep. Output: a kill list and a keep list.</li>
+        <li><strong>Winning patterns (20 min).</strong> What did the top 3 creatives have in common? Hook type? Format? CTA? Write 2 sentences on the pattern.</li>
+        <li><strong>Losing patterns (10 min).</strong> What did the bottom 3 have in common? Same question, 2 sentences.</li>
+        <li><strong>Next 2 shoot plans (45 min).</strong> Decide the scripts, offers, and creative angles for the next 2 bi-weekly shoots. Write them down in shared Notes.</li>
+        <li><strong>Weekly C2 slate (15 min).</strong> List the 4 Friday scripts for the next month: what offer, what script beat, what hook.</li>
+      </ol>
+
+      <h3>Outputs</h3>
+      <ul>
+        <li>Kill list (creatives to pause in Meta Ads Manager today)</li>
+        <li>Keep list (creatives that stay live, with a note on what to watch for)</li>
+        <li>Next 2 bi-weekly shoot plans (locked scripts, locked offers)</li>
+        <li>Next 4 Friday C2 scripts (locked topics)</li>
+      </ul>
+
+      <div class="plain"><strong>Where this goes</strong>Save the outputs to a shared Notes doc called "Creative plan · [Month Year]". Reference it at every weekly shoot and every bi-weekly shoot. No script-by-the-seat-of-your-pants. You'll thank yourself on Friday morning when you can just walk in and shoot.</div>
+    </div>
+  </div>
+
+  <!-- ────────── SECTION 10 ────────── -->
+  <div class="section" id="s10">
+    <div class="section-head">
+      <span class="sh-tag">10 · Red flags</span>
+      <h2>When to call the shoot (don't grind through a bad day)</h2>
+      <p class="sh-sub">You'll save more money stopping early than pushing through. Bad takes are unusable and you'll know within the first 30 minutes whether the day is on or off.</p>
+    </div>
+
+    <div class="flag">
+      <h5>Red flag 1: Kaja or James is sick, tired, or stressed</h5>
+      <p>Performance concepts (C1, C2) amplify whatever energy is in the room. If either of you is running at 60%, the footage will look 60%. Reschedule to next week. The weekly C2 buffer means one missed week isn't catastrophic.</p>
+    </div>
+
+    <div class="flag">
+      <h5>Red flag 2: Technical issue by minute 30</h5>
+      <p>If the iPhone won't focus-lock, the DJI mic keeps cutting out, or a light won't fire by 30 minutes into setup, stop. Troubleshoot, if unresolved in another 30 minutes, call it. Most technical issues are battery-adjacent. Swap and retry. If still broken after 45 min total, you've lost the morning, push to afternoon or tomorrow.</p>
+    </div>
+
+    <div class="flag">
+      <h5>Red flag 3: The food looks wrong</h5>
+      <p>If the hero meal doesn't look appetising (colour off, portion wrong, steam not rising), do not shoot it. C4 and C5 are zero-salvage if the food is wrong in frame. Reheat, re-plate, rehearse off-camera, restart the block. Budget 15 min for a food reset; if it takes more than that, reschedule C4+C5 to the next shoot.</p>
+    </div>
+
+    <div class="flag">
+      <h5>Red flag 4: You can't agree on the script</h5>
+      <p>C2 is a talking-head, performance is everything. If James and Kaja start arguing about the script at 10:05, the take at 10:30 will be flat. Stop. Have the disagreement over lunch. Come back with one version. Don't film conflict into the frame.</p>
+    </div>
+
+    <div class="flag">
+      <h5>Red flag 5: You're 90 minutes behind schedule by concept 3</h5>
+      <p>If you hit C3 and you're 90+ min behind, drop C4 or C5 (not both). C5 is the biggest production lift, so dropping that first. Pushing all 5 concepts into a 10-hour day means the last 2 concepts will be rushed and weak. Better to ship 3 strong concepts than 5 mediocre ones.</p>
+    </div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="/internal-shoot-pack.html">← Back to the shoot pack</a>
+    <a href="/training-pack-c1.html">Start training pack C1 →</a>
+  </div>
+
+</div>
+</body>
+</html>
