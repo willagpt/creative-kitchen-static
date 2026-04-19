@@ -1,0 +1,1152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>chefly creative diversification brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #fff6ee;
+    --ink: #1a1815;
+    --ink-soft: #4a4540;
+    --ink-mute: #8a847c;
+    --line: #e8ddd0;
+    --line-soft: #f1e8dc;
+    --paper: #fffaf3;
+    --yellow: #ffd60a;
+    --sky: #5ccfff;
+    --green: #7fbf6a;
+    --red: #e86a5a;
+    --amber: #e8a15a;
+    --font-body: 'Inter', system-ui, sans-serif;
+    --font-head: 'Syne', 'Inter', sans-serif;
+    --font-serif: 'Instrument Serif', Georgia, serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: #2a7fb8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Layout */
+  .shell { display: grid; grid-template-columns: 1fr 380px; min-height: 100vh; }
+  @media (max-width: 1100px) {
+    .shell { grid-template-columns: 1fr; }
+    .drawer { position: fixed; right: 0; top: 0; bottom: 0; width: 100%; max-width: 420px; transform: translateX(100%); transition: transform 0.2s ease; z-index: 50; }
+    .drawer.open { transform: translateX(0); }
+    .drawer-close-mobile { display: inline-flex !important; }
+  }
+
+  /* Header */
+  .topbar {
+    position: sticky; top: 0; z-index: 30;
+    background: rgba(255, 246, 238, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+    padding: 12px 32px;
+    display: flex; align-items: center; gap: 18px;
+  }
+  .topbar-title { font-family: var(--font-head); font-weight: 800; font-size: 14px; letter-spacing: -0.01em; color: var(--ink); text-transform: lowercase; }
+  .topbar-title .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--yellow); margin-right: 8px; vertical-align: middle; }
+  .topbar-spacer { flex: 1; }
+  .presence { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-mute); }
+  .presence-avatars { display: flex; }
+  .avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: var(--font-head); font-weight: 700; font-size: 11px; text-transform: uppercase;
+    border: 2px solid var(--bg);
+    margin-left: -6px; position: relative;
+  }
+  .avatar:first-child { margin-left: 0; }
+  .avatar-james { background: var(--yellow); color: var(--ink); }
+  .avatar-kaja { background: var(--sky); color: var(--ink); }
+  .avatar-other { background: var(--line); color: var(--ink-soft); }
+  .avatar-live::after {
+    content: ''; position: absolute; bottom: -2px; right: -2px;
+    width: 9px; height: 9px; border-radius: 50%; background: var(--green); border: 2px solid var(--bg);
+  }
+  .topbar-btn {
+    background: transparent; border: 1px solid var(--line); border-radius: 20px;
+    padding: 6px 12px; font-size: 12px; color: var(--ink-soft); cursor: pointer; font-family: var(--font-body);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .topbar-btn:hover { background: var(--paper); border-color: var(--ink-mute); }
+
+  /* Main content column */
+  main { padding: 48px 56px 120px; max-width: 760px; margin: 0 auto; }
+  @media (max-width: 700px) { main { padding: 32px 20px 100px; } }
+
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-mute); margin-bottom: 14px;
+  }
+  h1 {
+    font-family: var(--font-head); font-weight: 800; font-size: 44px; line-height: 1.05;
+    letter-spacing: -0.02em; margin: 0 0 18px; text-transform: lowercase;
+  }
+  h1 em { font-family: var(--font-serif); font-weight: 400; font-style: italic; text-transform: none; }
+  .subline { font-family: var(--font-serif); font-size: 20px; line-height: 1.35; color: var(--ink-soft); font-style: italic; margin: 0 0 32px; }
+
+  .meta-row {
+    display: flex; gap: 24px; flex-wrap: wrap;
+    padding: 14px 0; margin: 32px 0 40px;
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    font-size: 13px; color: var(--ink-soft);
+  }
+  .meta-row b { font-weight: 600; color: var(--ink); }
+
+  h2 {
+    font-family: var(--font-head); font-weight: 800; font-size: 28px; line-height: 1.15;
+    letter-spacing: -0.01em; margin: 56px 0 14px; text-transform: lowercase;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  h2 .anchor-btn { margin-top: 8px; }
+
+  h3 {
+    font-family: var(--font-head); font-weight: 700; font-size: 18px; line-height: 1.3;
+    letter-spacing: -0.005em; margin: 32px 0 10px; text-transform: lowercase;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  h3 .anchor-btn { margin-top: 4px; }
+
+  p { margin: 0 0 16px; }
+  strong { font-weight: 600; }
+
+  ul { padding-left: 22px; margin: 0 0 18px; }
+  li { margin-bottom: 8px; }
+
+  /* Tables */
+  .tbl {
+    width: 100%; border-collapse: collapse; margin: 14px 0 28px;
+    font-size: 14px; background: var(--paper);
+    border: 1px solid var(--line); border-radius: 8px; overflow: hidden;
+  }
+  .tbl th, .tbl td {
+    padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line-soft);
+  }
+  .tbl th { background: #f8eedd; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); font-weight: 500; }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl td .num { font-family: var(--font-mono); font-size: 13px; }
+
+  /* Ad cards */
+  .ad-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 22px 24px;
+    margin: 16px 0 24px;
+    position: relative;
+  }
+  .ad-card .rank {
+    position: absolute; top: -12px; left: 18px;
+    background: var(--yellow); color: var(--ink);
+    padding: 4px 12px; border-radius: 12px;
+    font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+  }
+  .ad-card h4 {
+    font-family: var(--font-head); font-weight: 700; font-size: 18px;
+    margin: 6px 0 6px; line-height: 1.25; letter-spacing: -0.005em; text-transform: lowercase;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+  }
+  .ad-card h4 .anchor-btn { margin-top: 2px; flex-shrink: 0; }
+  .ad-card .duration {
+    font-family: var(--font-mono); font-size: 11px; color: var(--ink-mute);
+    letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 10px;
+  }
+  .ad-card .duration b { color: var(--ink); font-weight: 600; }
+  .ad-card p { font-size: 14px; line-height: 1.5; color: var(--ink-soft); margin-bottom: 10px; }
+  .ad-card .watch { font-size: 13px; color: var(--ink); padding: 10px 12px; background: #fff4e5; border-left: 3px solid var(--yellow); border-radius: 4px; margin-top: 10px; }
+  .ad-card .watch b { font-family: var(--font-head); font-weight: 700; text-transform: lowercase; }
+  .ad-card .cta-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 10px; padding: 7px 13px;
+    background: var(--ink); color: var(--bg);
+    border-radius: 18px; font-size: 12px; font-weight: 500;
+    text-decoration: none;
+  }
+  .ad-card .cta-link:hover { background: var(--ink-soft); text-decoration: none; }
+
+  /* Format priority list */
+  .priority-list { counter-reset: item; list-style: none; padding-left: 0; margin: 8px 0 24px; }
+  .priority-list li {
+    counter-increment: item; padding: 16px 18px 16px 64px;
+    margin-bottom: 10px; background: var(--paper);
+    border: 1px solid var(--line); border-radius: 10px; position: relative;
+  }
+  .priority-list li::before {
+    content: counter(item); position: absolute; left: 18px; top: 16px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--ink); color: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-head); font-weight: 800; font-size: 14px;
+  }
+  .priority-list b { font-family: var(--font-head); text-transform: lowercase; font-size: 15px; }
+
+  /* Callouts */
+  .callout {
+    background: #fff1d4; border-left: 3px solid var(--yellow);
+    padding: 14px 18px; margin: 18px 0 24px; border-radius: 0 8px 8px 0;
+    font-size: 14px;
+  }
+  .callout-sky { background: #e5f5ff; border-left-color: var(--sky); }
+
+  /* Anchor comment button */
+  .anchor-btn {
+    background: transparent; border: none; cursor: pointer;
+    width: 28px; height: 28px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--ink-mute); position: relative;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+  .anchor-btn:hover { background: var(--line); color: var(--ink); }
+  .anchor-btn svg { width: 16px; height: 16px; }
+  .anchor-btn .cnt {
+    position: absolute; top: -2px; right: -2px;
+    min-width: 16px; height: 16px; padding: 0 4px;
+    background: var(--red); color: white; border-radius: 8px;
+    font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--bg);
+  }
+  .anchor-btn.active { background: var(--yellow); color: var(--ink); }
+
+  /* Drawer (comments panel) */
+  .drawer {
+    background: var(--paper);
+    border-left: 1px solid var(--line);
+    display: flex; flex-direction: column;
+    height: 100vh; position: sticky; top: 0;
+  }
+  .drawer-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .drawer-title { font-family: var(--font-head); font-weight: 700; font-size: 14px; text-transform: lowercase; }
+  .drawer-scope {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+    color: var(--ink-mute); text-transform: uppercase; margin-top: 4px;
+  }
+  .drawer-close-mobile {
+    display: none; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 50%; border: none;
+    background: var(--line); color: var(--ink); cursor: pointer;
+  }
+  .drawer-filters {
+    display: flex; gap: 6px; padding: 12px 20px; border-bottom: 1px solid var(--line-soft);
+    font-size: 12px;
+  }
+  .drawer-filter {
+    padding: 5px 11px; border-radius: 14px;
+    background: transparent; border: 1px solid var(--line); color: var(--ink-soft);
+    cursor: pointer; font-family: var(--font-body);
+  }
+  .drawer-filter.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  .drawer-body {
+    flex: 1; overflow-y: auto; padding: 18px 20px;
+  }
+  .drawer-empty {
+    text-align: center; padding: 48px 16px;
+    color: var(--ink-mute); font-size: 14px;
+  }
+  .drawer-empty .icon { font-size: 32px; margin-bottom: 10px; opacity: 0.5; }
+
+  .comment {
+    padding: 14px 14px 10px;
+    border-radius: 10px;
+    background: var(--bg);
+    border: 1px solid var(--line-soft);
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .comment.resolved { opacity: 0.55; }
+  .comment-head {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+  }
+  .comment .avatar { margin: 0; width: 22px; height: 22px; font-size: 10px; border-width: 0; }
+  .comment-author { font-weight: 600; font-size: 13px; text-transform: lowercase; }
+  .comment-time { font-size: 11px; color: var(--ink-mute); font-family: var(--font-mono); }
+  .comment-scope {
+    font-size: 10px; color: var(--ink-mute); font-family: var(--font-mono);
+    padding: 2px 6px; background: var(--line-soft); border-radius: 4px;
+    margin-left: auto; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .comment-body { font-size: 14px; line-height: 1.45; color: var(--ink); word-wrap: break-word; }
+  .comment-actions {
+    display: flex; gap: 10px; margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid var(--line-soft);
+    font-size: 11px; font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .comment-action {
+    background: transparent; border: none; color: var(--ink-mute);
+    cursor: pointer; padding: 2px 0; font-family: inherit; font-size: inherit; letter-spacing: inherit; text-transform: inherit;
+  }
+  .comment-action:hover { color: var(--ink); }
+  .comment-action.resolved-state { color: var(--green); }
+
+  .comment-jump {
+    position: absolute; top: 8px; right: 8px;
+    background: transparent; border: none; cursor: pointer;
+    width: 20px; height: 20px; color: var(--ink-mute);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .comment-jump:hover { color: var(--ink); }
+
+  /* Compose */
+  .compose {
+    border-top: 1px solid var(--line);
+    padding: 14px 20px 18px;
+    background: var(--paper);
+  }
+  .compose-scope {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em;
+    color: var(--ink-mute); text-transform: uppercase; margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .compose-scope .clear-btn {
+    font-size: 10px; background: transparent; border: none;
+    color: var(--ink-mute); cursor: pointer; font-family: inherit;
+    text-transform: inherit; letter-spacing: inherit;
+  }
+  .compose-scope .clear-btn:hover { color: var(--ink); }
+  .compose textarea {
+    width: 100%; min-height: 64px; max-height: 180px;
+    padding: 10px 12px; font-size: 14px; font-family: var(--font-body);
+    border: 1px solid var(--line); border-radius: 8px;
+    resize: vertical; background: var(--bg); color: var(--ink);
+    line-height: 1.45;
+  }
+  .compose textarea:focus { outline: none; border-color: var(--ink); }
+  .compose-foot {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 8px; font-size: 11px; color: var(--ink-mute); font-family: var(--font-mono);
+  }
+  .compose-submit {
+    background: var(--ink); color: var(--bg); border: none;
+    padding: 7px 14px; border-radius: 18px;
+    font-family: var(--font-body); font-size: 13px; font-weight: 500;
+    cursor: pointer;
+  }
+  .compose-submit:disabled { background: var(--line); color: var(--ink-mute); cursor: not-allowed; }
+
+  /* Author modal */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(26, 24, 21, 0.55);
+    display: flex; align-items: center; justify-content: center; z-index: 100;
+    backdrop-filter: blur(4px);
+  }
+  .modal {
+    background: var(--paper); border-radius: 16px; padding: 28px 28px 24px;
+    width: 340px; max-width: calc(100vw - 32px);
+    border: 1px solid var(--line);
+  }
+  .modal h3 { font-family: var(--font-head); font-weight: 800; font-size: 20px; margin: 0 0 6px; text-transform: lowercase; }
+  .modal p { font-size: 13px; color: var(--ink-mute); margin-bottom: 18px; }
+  .modal-btns { display: flex; flex-direction: column; gap: 8px; }
+  .author-btn {
+    padding: 12px 16px; border: 1px solid var(--line); border-radius: 10px;
+    background: var(--bg); cursor: pointer; text-align: left;
+    display: flex; align-items: center; gap: 12px;
+    font-family: var(--font-body); font-size: 14px;
+  }
+  .author-btn:hover { border-color: var(--ink); background: var(--paper); }
+  .author-btn .avatar { margin: 0; border-width: 0; width: 34px; height: 34px; font-size: 13px; }
+  .modal input {
+    padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
+    font-family: var(--font-body); font-size: 14px; background: var(--bg);
+    margin-top: 4px;
+  }
+  .modal input:focus { outline: none; border-color: var(--ink); }
+
+  /* Section highlighting when scope is active */
+  section.scoped[data-scoped="true"] {
+    background: rgba(255, 214, 10, 0.08);
+    border-radius: 12px;
+    padding: 12px 16px; margin-left: -16px; margin-right: -16px;
+    transition: background 0.3s;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--bg);
+    padding: 10px 18px; border-radius: 20px; font-size: 13px;
+    z-index: 200; opacity: 0; transition: opacity 0.2s;
+    font-family: var(--font-body);
+  }
+  .toast.show { opacity: 1; }
+
+  /* Footer meta */
+  .footer-meta {
+    margin-top: 80px; padding: 24px 0; border-top: 1px solid var(--line);
+    font-size: 12px; color: var(--ink-mute); font-family: var(--font-mono);
+    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+
+  /* FAB for mobile */
+  .drawer-fab {
+    display: none;
+    position: fixed; bottom: 20px; right: 20px;
+    width: 56px; height: 56px; border-radius: 28px;
+    background: var(--ink); color: var(--bg);
+    border: none; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    z-index: 40;
+    align-items: center; justify-content: center;
+  }
+  .drawer-fab .cnt {
+    position: absolute; top: -4px; right: -4px;
+    background: var(--red); color: white;
+    min-width: 20px; height: 20px; padding: 0 5px;
+    border-radius: 10px; border: 2px solid var(--bg);
+    font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+  @media (max-width: 1100px) { .drawer-fab { display: flex; } }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <div>
+    <header class="topbar">
+      <div class="topbar-title"><span class="dot"></span>chefly. creative diversification brief</div>
+      <div class="topbar-spacer"></div>
+      <div class="presence">
+        <span id="presence-text">loading&hellip;</span>
+        <span class="presence-avatars" id="presence-avatars"></span>
+      </div>
+      <button class="topbar-btn" id="change-author-btn" title="switch viewer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 2l7 4v6c0 5-3.5 9-7 10-3.5-1-7-5-7-10V6l7-4z"/></svg>
+        <span id="topbar-author-name">&nbsp;</span>
+      </button>
+    </header>
+
+    <main>
+      <div class="eyebrow">brief · 18 apr 2026 · draft for james + kaja</div>
+      <h1>format gap.<br/>a <em>reclamation</em> plan.</h1>
+      <p class="subline">chefly popularised the 2021 category. the imitators moved on to UGC and talking-head. this doc names the winners worth studying and the formats worth stealing back.</p>
+
+      <div class="meta-row">
+        <div><b>author</b> · ad-creative-review skill</div>
+        <div><b>stage</b> · pre-1,000 weekly customers</div>
+        <div><b>pairs with</b> · 6-chefly-ad-concepts-v2.md</div>
+      </div>
+
+      <section class="scoped" data-anchor="story">
+        <h2>the one-paragraph story
+          <button class="anchor-btn" data-anchor="story" aria-label="comments on this section">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </h2>
+        <p>Chefly ran a single creative format from 2021 to 2026: lifestyle shots with food close-ups. That format popularised the category. The imitators (Simmer, Calo UK, Frive, Your Heights) showed up later with more money and moved to UGC, founder talking-head, and offer-led static while Chefly kept running the 2021 playbook. Of the 20 recent competitor videos that have gone through ai-analyse-video v3, <strong>50% are UGC-primary, 35% are talking-head-primary, 10% are lifestyle-primary, 5% are b-roll-heavy</strong>. The lifestyle format still appears across competitor work, but as a <em>secondary</em> format stacked under UGC or talking-head. Chefly is the only brand in its set running lifestyle as a standalone primary. That is the gap.</p>
+      </section>
+
+      <section class="scoped" data-anchor="gap">
+        <h2>the format gap, in numbers
+          <button class="anchor-btn" data-anchor="gap" aria-label="comments on this section">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </h2>
+        <p>Data source: <code>video_analyses</code> filtered to <code>primary_format IS NOT NULL</code>, 20 rows, Chefly competitors only.</p>
+        <table class="tbl">
+          <thead><tr><th>primary_format</th><th>count</th><th>%</th><th>who runs it</th></tr></thead>
+          <tbody>
+            <tr><td>UGC</td><td class="num">10</td><td class="num">50%</td><td>Simmer, Frive, Calo UK</td></tr>
+            <tr><td>talking-head</td><td class="num">7</td><td class="num">35%</td><td>Simmer, Frive, Your Heights</td></tr>
+            <tr><td>lifestyle</td><td class="num">2</td><td class="num">10%</td><td>Simmer (secondary-heavy)</td></tr>
+            <tr><td>b-roll-heavy</td><td class="num">1</td><td class="num">5%</td><td>Simmer</td></tr>
+          </tbody>
+        </table>
+
+        <p>Static landscape, <code>display_format = 'IMAGE'</code>, last 90 days:</p>
+        <table class="tbl">
+          <thead><tr><th>brand</th><th>total statics</th><th>currently active</th><th>longest run</th></tr></thead>
+          <tbody>
+            <tr><td>Calo UK</td><td class="num">54</td><td class="num">30</td><td class="num">8 days</td></tr>
+            <tr><td>Your Heights</td><td class="num">17</td><td class="num">6</td><td class="num">18 days</td></tr>
+            <tr><td>Simmer</td><td class="num">18</td><td class="num">6</td><td class="num">63 days</td></tr>
+            <tr><td>Huel</td><td class="num">14</td><td class="num">14</td><td class="num">33 days</td></tr>
+            <tr><td>Frive</td><td class="num">9</td><td class="num">0</td><td class="num">43 days</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout">
+          <strong>Huel is the outlier.</strong> 14 statics live right now, all 33 days old, all offer-led. Simmer's longest static, "Food That Supports You", ran 63 days before retiring 11 Apr. Chefly statics in last 90 days: close to zero.
+        </div>
+      </section>
+
+      <section class="scoped" data-anchor="ads">
+        <h2>reference ads to watch
+          <button class="anchor-btn" data-anchor="ads" aria-label="comments on this section">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </h2>
+        <p>Pick one per format and watch it on a phone, sound on. These are the watching-list, not the copying-list.</p>
+
+        <h3>format 1: UGC (creator-led, phone-shot feel)
+          <button class="anchor-btn" data-anchor="format-ugc" aria-label="comments on UGC format">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </h3>
+
+        <div class="ad-card scoped" data-anchor="ad-1">
+          <span class="rank">ad 1</span>
+          <h4>simmer, "one less thing to think about"
+            <button class="anchor-btn" data-anchor="ad-1" aria-label="comments on ad 1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </button>
+          </h4>
+          <div class="duration">running · <b>83 days</b> · UGC + lifestyle</div>
+          <p>Creator holds the sleeve in hand, eats on camera, talks about the mental load of meal planning.</p>
+          <div class="watch"><b>what to watch.</b> the opening 2 seconds (hook shot), how the sleeve is shown (product reveal timing), the shift from creator-face to food close-up.</div>
+          <a class="cta-link" href="https://www.facebook.com/ads/library/?id=658894047249834" target="_blank" rel="noopener">open in meta ad library →</a>
+        </div>
+
+        <div class="ad-card scoped" data-anchor="ad-2">
+          <span class="rank">ad 2</span>
+          <h4>frive, nigel benn testimonial
+            <button class="anchor-btn" data-anchor="ad-2" aria-label="comments on ad 2">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </button>
+          </h4>
+          <div class="duration">running · <b>44 days</b> · UGC + b-roll</div>
+          <p>Named celebrity as creator (boxer Nigel Benn).</p>
+          <div class="watch"><b>what to watch.</b> how they frame the authority angle without making it feel scripted. chefly could do this with any named UK athlete, nutritionist, or PT on the customer list.</div>
+          <a class="cta-link" href="https://www.facebook.com/ads/library/?id=1411996790671981" target="_blank" rel="noopener">open in meta ad library →</a>
+        </div>
+
+        <h3>format 2: talking-head / founder
+          <button class="anchor-btn" data-anchor="format-th" aria-label="comments on talking-head format">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </h3>
+
+        <div class="ad-card scoped" data-anchor="ad-3">
+          <span class="rank">ad 3</span>
+          <h4>simmer, "healthy eating made easy"
+            <button class="anchor-btn" data-anchor="ad-3" aria-label="comments on ad 3">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </button>
+          </h4>
+          <div class="duration">running · <b>87 days</b>, still active · talking-head + b-roll</div>
+          <p>The longest-running tagged video in the dataset.</p>
+          <div class="watch"><b>what to watch.</b> how the speaker's script maps to AIDA beats (usually 2s hook, 3s problem, 4s solution reveal, 3s proof, 2s CTA). <strong>this is the single most important watch on this list.</strong></div>
+          <a class="cta-link" href="https://www.facebook.com/ads/library/?id=664081870023230" target="_blank" rel="noopener">open in meta ad library →</a>
+        </div>
+
+        <div class="ad-card scoped" data-anchor="ad-4">
+          <span class="rank">ad 4</span>
+          <h4>frive, founder-led
+            <button class="anchor-btn" data-anchor="ad-4" aria-label="comments on ad 4">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </button>
+          </h4>
+          <div class="duration">running · <b>47 days</b> · talking-head + lifestyle</div>
+          <p>Founder on camera, kitchen or office backdrop.</p>
+          <div class="watch"><b>what to watch.</b> the "who am i and why you should trust me" structure in the first 5 seconds, then the pivot to product.</div>
+          <a class="cta-link" href="https://www.facebook.com/ads/library/?id=1583733762832620" target="_blank" rel="noopener">open in meta ad library →</a>
+        </div>
+
+        <div class="ad-card scoped" data-anchor="ad-5">
+          <span class="rank">ad 5</span>
+          <h4>your heights, founder with name-drops
+            <button class="anchor-btn" data-anchor="ad-5" aria-label="comments on ad 5">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </button>
+          </h4>
+          <div class="duration">running · <b>18 days</b> · talking-head + b-roll</div>
+          <p>Name-drops Stephen Fry and Steven Bartlett as customers.</p>
+          <div class="watch"><b>what to watch.</b> how name-dropping is woven in, not as a boast, as a credibility prop mid-script.</div>
+          <a class="cta-link" href="https://www.facebook.com/ads/library/?id=3311713725654249" target="_blank" rel="noopener">open in meta ad library →</a>
+        </div>
+
+        <h3>format 3: offer-led static
+          <button class="anchor-btn" data-anchor="format-static" aria-label="comments on static format">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </h3>
+
+        <div class="ad-card scoped" data-anchor="ad-6">
+          <span class="rank">ad 6</span>
+          <h4>simmer, "food that supports you"
+            <button class="anchor-btn" data-anchor="ad-6" aria-label="comments on ad 6">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </button>
+          </h4>
+          <div class="duration">running · <b>63 days</b> (retired 11 apr) · hero image + benefit-stacked copy</div>
+          <div class="watch"><b>what to watch.</b> composition at thumbnail size, how the value prop lives in the image without needing body copy.</div>
+          <a class="cta-link" href="https://www.facebook.com/ads/library/?id=26203258305965650" target="_blank" rel="noopener">open in meta ad library →</a>
+        </div>
+
+        <div class="ad-card scoped" data-anchor="ad-7">
+          <span class="rank">ad 7</span>
+          <h4>simmer, "open. heat. eat. that's it." (recipe-box callout)
+            <button class="anchor-btn" data-anchor="ad-7" aria-label="comments on ad 7">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </button>
+          </h4>
+          <div class="duration">running · <b>33 days</b> across 5 DCO copies</div>
+          <p>Body copy opens: <em>"We got called out by a recipe box company last month. They said they're cheaper. They're right. By about £1. What they didn't mention: ❌ Their meals take 45 minutes to cook&hellip;"</em></p>
+          <div class="watch"><b>what to watch.</b> the named-objection hook, the bullet list with emoji check/cross, the price-honesty pivot. this is the strongest persuasion architecture in the static set.</div>
+          <a class="cta-link" href="https://www.facebook.com/ads/library/?id=661033423534024" target="_blank" rel="noopener">open in meta ad library →</a>
+        </div>
+
+        <div class="ad-card scoped" data-anchor="ad-8">
+          <span class="rank">ad 8</span>
+          <h4>huel, "40g of protein. ready in seconds."
+            <button class="anchor-btn" data-anchor="ad-8" aria-label="comments on ad 8">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </button>
+          </h4>
+          <div class="duration">running · <b>33 days</b>, still active · single product hero, massive numeric claim</div>
+          <div class="watch"><b>what to watch.</b> the confidence of leading with one number. huel has 14 of these live right now. that's a pattern, not a one-off.</div>
+          <a class="cta-link" href="https://www.facebook.com/ads/library/?id=1751725389141329" target="_blank" rel="noopener">open in meta ad library →</a>
+        </div>
+      </section>
+
+      <section class="scoped" data-anchor="priority">
+        <h2>format priority, next 60 days
+          <button class="anchor-btn" data-anchor="priority" aria-label="comments on priority">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </h2>
+        <ol class="priority-list">
+          <li><b>talking-head with james on camera.</b> highest evidence weight. simmer's 87-day winner is this format. frive and your heights both run founder-led. chefly has the actual founder story (pioneered the category in 2021) that no imitator can claim. script structure from ad 3 and ad 4.</li>
+          <li><b>offer-led static using the d3.2 sleeve.</b> cheapest to test, fastest to iterate, strongest for retargeting. chefly brand system already has the visual building blocks: hot yellow #FFD60A, sky blue #5CCFFF, cream sticker #FFF6EE, syne extra bold for the number, instrument serif for the support line. adapt the huel numeric-claim pattern to a chefly-specific stat.</li>
+          <li><b>UGC with named creator or customer.</b> higher production lift, but frive's nigel benn ad proves the playbook. chefly's customer list almost certainly has 2 to 3 people with enough audience or credibility to be the on-camera voice.</li>
+          <li><b>lifestyle as secondary.</b> keep producing these, but stack them as supporting cuts inside a UGC or talking-head edit (mapped to creative kitchen FOOD and LIFE clip categories).</li>
+        </ol>
+      </section>
+
+      <section class="scoped" data-anchor="production">
+        <h2>production notes per format
+          <button class="anchor-btn" data-anchor="production" aria-label="comments on production">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </h2>
+
+        <h3>talking-head
+          <button class="anchor-btn" data-anchor="prod-th" aria-label="comments on talking-head production">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </h3>
+        <ul>
+          <li><b>setting.</b> james in a kitchen or office, warm natural light, not studio white. cream-adjacent backdrop. hand-held or tripod.</li>
+          <li><b>wardrobe.</b> plain tonal top, no logo.</li>
+          <li><b>overlay text style.</b> syne extra bold for hook line (2 to 4 words max), instrument serif for supporting clause. all lowercase with full stops.</li>
+          <li><b>hook line examples.</b> "we started this in 2021." / "no chopping. no cooking. no dishes." / "one less thing to think about."</li>
+          <li><b>shot sequence (10s AIDA).</b> 0 to 2s founder hook, 2 to 5s problem or origin story, 5 to 8s product reveal (close-up of sleeve + tray), 8 to 10s CTA card with offer.</li>
+          <li><b>creative kitchen clip mapping.</b> new HOOK shot required (founder piece to camera), existing FOOD + PROD clips for product reveal, CTA clip exists.</li>
+        </ul>
+
+        <h3>offer-led static (1:1 square)
+          <button class="anchor-btn" data-anchor="prod-static" aria-label="comments on static production">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </h3>
+        <ul>
+          <li><b>hero.</b> single d3.2 sleeve in hand or on tray, shot flat or 45-degree.</li>
+          <li><b>headline placement.</b> top-left or top-centre, syne extra bold, hot yellow #FFD60A on cream, 70 to 90px equivalent.</li>
+          <li><b>subheadline.</b> instrument serif italic, sky blue #5CCFFF.</li>
+          <li><b>body copy.</b> 3 to 5 bullet points with ✅ and ❌ emoji, bullet copy in primary text field on meta feed (not on image).</li>
+          <li><b>objection-first hook.</b> "they said we're more expensive. they're right. by about £2. here's what that £2 gets you: ✅ ready in 3 minutes (not 45)&hellip;"</li>
+          <li><b>safe-zone.</b> keep headline and CTA inside the 1:1 centre square for 4:5 and 1:1 crops.</li>
+        </ul>
+
+        <h3>UGC (9:16 vertical)
+          <button class="anchor-btn" data-anchor="prod-ugc" aria-label="comments on UGC production">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </h3>
+        <ul>
+          <li><b>camera.</b> shot on iphone, not studio camera. vertical. hand-held.</li>
+          <li><b>opening.</b> first 2 seconds must be creator face-to-camera, not product.</li>
+          <li><b>caption overlay.</b> platform-native font (instagram/tiktok default) for the first 3 to 5 seconds so it reads as organic, then switch to syne overlay for the branded CTA card at the end.</li>
+          <li><b>creator brief length.</b> max 60 seconds of footage, cut to 15 or 20 seconds for the ad.</li>
+          <li><b>creative kitchen clip mapping.</b> new HOOK + VAR shots required (creator content), existing FOOD clips for cutaways, existing CTA for end card.</li>
+        </ul>
+      </section>
+
+      <section class="scoped" data-anchor="blockers">
+        <h2>what i still need from james
+          <button class="anchor-btn" data-anchor="blockers" aria-label="comments on blockers">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </h2>
+        <div class="callout callout-sky">
+          <ol style="padding-left: 18px; margin: 0;">
+            <li style="margin-bottom: 8px;"><strong>which chefly meta ad account is the active one?</strong> 10+ chefly-named accounts exist. needed for the 90-day baseline pull (CPA, ROAS, impressions) so we can set kill + graduation criteria for the new formats.</li>
+            <li style="margin-bottom: 8px;"><strong>what did "stealth ads" actually mean</strong> in the 2025 to early 2026 test? anti-ad styling? low-production phone footage? founder face? different positioning? knowing what flopped tells us whether to retry with better execution or drop it.</li>
+            <li style="margin-bottom: 0;"><strong>permission to populate <code>brand_guidelines</code></strong> with the tone-of-voice, colour palette, and typography rules from the d3.2 brand system. currently only <code>packaging_format: sleeve</code> is set. once populated, generate-ad-prompt v29 picks it up automatically.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="scoped" data-anchor="ladders">
+        <h2>how this ladders into the 6-concept brief
+          <button class="anchor-btn" data-anchor="ladders" aria-label="comments on ladders">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </h2>
+        <p>The <code>6-chefly-ad-concepts-v2.md</code> concepts were written before we had format-level evidence from ai-analyse-video v3. They are frive-adjacent (lifestyle split-screen, monday-morning in-context). They work, and concept 1 "The Split" is the obvious first static to ship because it slots into format 3 above. But the talking-head founder format (format 2) is not represented in the 6-concept brief, and that is the single strongest evidence signal in the dataset. <strong>Add it as concept 7 before we start producing.</strong></p>
+      </section>
+
+      <div class="footer-meta">
+        <div>data source · supabase <code>video_analyses</code> + <code>competitor_ads</code></div>
+        <div>comments sync live · auto-save on</div>
+      </div>
+    </main>
+  </div>
+
+  <aside class="drawer" id="drawer">
+    <div class="drawer-header">
+      <div>
+        <div class="drawer-title">comments</div>
+        <div class="drawer-scope" id="drawer-scope">all sections</div>
+      </div>
+      <button class="drawer-close-mobile" id="drawer-close-mobile" aria-label="close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="drawer-filters">
+      <button class="drawer-filter active" data-filter="open">open</button>
+      <button class="drawer-filter" data-filter="resolved">resolved</button>
+      <button class="drawer-filter" data-filter="all">all</button>
+    </div>
+    <div class="drawer-body" id="drawer-body">
+      <div class="drawer-empty">
+        <div class="icon">💬</div>
+        <div>loading comments&hellip;</div>
+      </div>
+    </div>
+    <div class="compose">
+      <div class="compose-scope">
+        <span id="compose-scope-label">commenting on: all sections</span>
+        <button class="clear-btn" id="clear-scope-btn" style="display: none;">clear scope</button>
+      </div>
+      <textarea id="compose-text" placeholder="add a note for james + kaja&hellip;"></textarea>
+      <div class="compose-foot">
+        <span id="draft-status">&nbsp;</span>
+        <button class="compose-submit" id="submit-btn" disabled>post</button>
+      </div>
+    </div>
+  </aside>
+
+  <button class="drawer-fab" id="drawer-fab" aria-label="open comments">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <span class="cnt" id="fab-cnt" style="display: none;">0</span>
+  </button>
+</div>
+
+<div id="modal-root"></div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+
+  const SUPABASE_URL = 'https://ifrxylvoufncdxyltgqt.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA';
+  const BRIEF_ID = 'chefly-format-diversification-v1';
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    realtime: { params: { eventsPerSecond: 10 } }
+  });
+
+  let author = localStorage.getItem('brief_author') || '';
+  let activeScope = null; // null = all sections
+  let activeFilter = 'open';
+  let comments = [];
+
+  /* ---------- author picker ---------- */
+  function showAuthorModal() {
+    const root = document.getElementById('modal-root');
+    root.innerHTML = `
+      <div class="modal-backdrop">
+        <div class="modal">
+          <h3>who's commenting?</h3>
+          <p>pick your name so comments are attributed correctly. you can change this anytime.</p>
+          <div class="modal-btns">
+            <button class="author-btn" data-author="james"><span class="avatar avatar-james">j</span> james</button>
+            <button class="author-btn" data-author="kaja"><span class="avatar avatar-kaja">k</span> kaja</button>
+            <button class="author-btn" data-author="__other"><span class="avatar avatar-other">?</span> someone else</button>
+          </div>
+          <div id="other-wrap" style="display: none; margin-top: 12px;">
+            <input id="other-name" type="text" placeholder="your name" maxlength="40" style="width: 100%;" />
+            <button class="compose-submit" id="other-confirm" style="margin-top: 8px; width: 100%;">continue</button>
+          </div>
+        </div>
+      </div>`;
+    root.querySelectorAll('.author-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const name = btn.dataset.author;
+        if (name === '__other') {
+          root.querySelector('.modal-btns').style.display = 'none';
+          root.querySelector('#other-wrap').style.display = 'block';
+          root.querySelector('#other-name').focus();
+        } else {
+          setAuthor(name);
+        }
+      });
+    });
+    const otherConfirm = root.querySelector('#other-confirm');
+    if (otherConfirm) {
+      otherConfirm.addEventListener('click', () => {
+        const name = root.querySelector('#other-name').value.trim().toLowerCase();
+        if (name) setAuthor(name);
+      });
+      root.querySelector('#other-name').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') otherConfirm.click();
+      });
+    }
+  }
+
+  function setAuthor(name) {
+    author = name;
+    localStorage.setItem('brief_author', name);
+    document.getElementById('modal-root').innerHTML = '';
+    document.getElementById('topbar-author-name').textContent = name;
+    refreshSubmitState();
+    setupPresence();
+  }
+
+  /* ---------- presence ---------- */
+  let presenceChannel = null;
+  function setupPresence() {
+    if (presenceChannel) supabase.removeChannel(presenceChannel);
+    presenceChannel = supabase.channel(`brief_presence_${BRIEF_ID}`, {
+      config: { presence: { key: author + ':' + Math.random().toString(36).slice(2,8) } }
+    });
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => renderPresence(presenceChannel.presenceState()))
+      .on('presence', { event: 'join' }, () => renderPresence(presenceChannel.presenceState()))
+      .on('presence', { event: 'leave' }, () => renderPresence(presenceChannel.presenceState()))
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presenceChannel.track({ name: author, at: new Date().toISOString() });
+        }
+      });
+  }
+
+  function renderPresence(state) {
+    const users = new Set();
+    Object.values(state).forEach(arr => arr.forEach(u => users.add(u.name)));
+    const arr = [...users];
+    const text = document.getElementById('presence-text');
+    const avatars = document.getElementById('presence-avatars');
+    if (arr.length <= 1) {
+      text.textContent = 'you are the only one here';
+    } else {
+      text.textContent = `${arr.length} viewers`;
+    }
+    avatars.innerHTML = arr.slice(0, 4).map(name => {
+      const cls = name === 'james' ? 'avatar-james' : name === 'kaja' ? 'avatar-kaja' : 'avatar-other';
+      const initial = name[0] || '?';
+      return `<span class="avatar ${cls} avatar-live" title="${escapeHtml(name)}">${escapeHtml(initial)}</span>`;
+    }).join('');
+  }
+
+  /* ---------- data ---------- */
+  async function loadComments() {
+    const { data, error } = await supabase
+      .from('brief_comments')
+      .select('*')
+      .eq('brief_id', BRIEF_ID)
+      .order('created_at', { ascending: true });
+    if (error) { console.error(error); return; }
+    comments = data || [];
+    renderAll();
+  }
+
+  function subscribeRealtime() {
+    supabase
+      .channel(`brief_comments_${BRIEF_ID}`)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'brief_comments',
+        filter: `brief_id=eq.${BRIEF_ID}`
+      }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          if (!comments.find(c => c.id === payload.new.id)) comments.push(payload.new);
+        } else if (payload.eventType === 'UPDATE') {
+          const i = comments.findIndex(c => c.id === payload.new.id);
+          if (i >= 0) comments[i] = payload.new;
+        } else if (payload.eventType === 'DELETE') {
+          comments = comments.filter(c => c.id !== payload.old.id);
+        }
+        renderAll();
+      })
+      .subscribe();
+  }
+
+  async function postComment(body) {
+    const { error } = await supabase
+      .from('brief_comments')
+      .insert({
+        brief_id: BRIEF_ID,
+        anchor_id: activeScope || 'top',
+        author,
+        body: body.trim()
+      });
+    if (error) { showToast('couldn\'t post: ' + error.message); return false; }
+    localStorage.removeItem(`draft_${BRIEF_ID}_${activeScope || 'top'}`);
+    showToast('posted');
+    return true;
+  }
+
+  async function toggleResolve(id) {
+    const c = comments.find(x => x.id === id);
+    if (!c) return;
+    const { error } = await supabase
+      .from('brief_comments')
+      .update({ resolved: !c.resolved })
+      .eq('id', id);
+    if (error) showToast('couldn\'t update: ' + error.message);
+  }
+
+  /* ---------- render ---------- */
+  function renderAll() {
+    renderCommentCounts();
+    renderDrawer();
+    updateFabCount();
+  }
+
+  function commentsForScope(scope) {
+    if (!scope) return comments;
+    return comments.filter(c => c.anchor_id === scope);
+  }
+
+  function renderCommentCounts() {
+    document.querySelectorAll('.anchor-btn[data-anchor]').forEach(btn => {
+      const anchor = btn.dataset.anchor;
+      const cnt = comments.filter(c => c.anchor_id === anchor && !c.resolved).length;
+      btn.querySelector('.cnt')?.remove();
+      if (cnt > 0) {
+        const span = document.createElement('span');
+        span.className = 'cnt';
+        span.textContent = cnt;
+        btn.appendChild(span);
+      }
+      btn.classList.toggle('active', activeScope === anchor);
+    });
+    // highlight section
+    document.querySelectorAll('section.scoped, .ad-card.scoped').forEach(el => {
+      el.dataset.scoped = (activeScope === el.dataset.anchor) ? 'true' : 'false';
+    });
+  }
+
+  function renderDrawer() {
+    const body = document.getElementById('drawer-body');
+    let list = commentsForScope(activeScope);
+    if (activeFilter === 'open') list = list.filter(c => !c.resolved);
+    else if (activeFilter === 'resolved') list = list.filter(c => c.resolved);
+    list = [...list].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    document.getElementById('drawer-scope').textContent = activeScope ? `on: ${activeScope}` : 'all sections';
+    document.getElementById('compose-scope-label').textContent = activeScope
+      ? `commenting on: ${activeScope}`
+      : 'commenting on: all sections';
+    document.getElementById('clear-scope-btn').style.display = activeScope ? 'inline' : 'none';
+
+    if (!list.length) {
+      body.innerHTML = `
+        <div class="drawer-empty">
+          <div class="icon">💬</div>
+          <div>${activeScope ? 'no comments on this section yet.' : 'no comments yet. start the thread.'}</div>
+        </div>`;
+      return;
+    }
+
+    body.innerHTML = list.map(c => {
+      const authorClass = c.author === 'james' ? 'avatar-james' : c.author === 'kaja' ? 'avatar-kaja' : 'avatar-other';
+      return `
+        <div class="comment ${c.resolved ? 'resolved' : ''}" data-id="${c.id}">
+          <button class="comment-jump" data-jump="${escapeAttr(c.anchor_id)}" title="jump to section">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l10-10"/><polyline points="7 7 17 7 17 17"/></svg>
+          </button>
+          <div class="comment-head">
+            <span class="avatar ${authorClass}">${escapeHtml((c.author || '?')[0])}</span>
+            <span class="comment-author">${escapeHtml(c.author || 'anon')}</span>
+            <span class="comment-time">${formatTime(c.created_at)}</span>
+            ${!activeScope ? `<span class="comment-scope">${escapeHtml(c.anchor_id)}</span>` : ''}
+          </div>
+          <div class="comment-body">${escapeHtml(c.body)}</div>
+          <div class="comment-actions">
+            <button class="comment-action ${c.resolved ? 'resolved-state' : ''}" data-resolve="${c.id}">
+              ${c.resolved ? '↺ reopen' : '✓ resolve'}
+            </button>
+          </div>
+        </div>`;
+    }).join('');
+
+    body.querySelectorAll('[data-resolve]').forEach(btn => {
+      btn.addEventListener('click', () => toggleResolve(btn.dataset.resolve));
+    });
+    body.querySelectorAll('[data-jump]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const a = btn.dataset.jump;
+        scrollToAnchor(a);
+        setScope(a);
+      });
+    });
+  }
+
+  function updateFabCount() {
+    const n = comments.filter(c => !c.resolved).length;
+    const el = document.getElementById('fab-cnt');
+    if (n > 0) { el.style.display = 'flex'; el.textContent = n; }
+    else el.style.display = 'none';
+  }
+
+  function scrollToAnchor(anchor) {
+    const el = document.querySelector(`[data-anchor="${anchor}"]`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function setScope(anchor) {
+    activeScope = anchor;
+    renderAll();
+    // restore draft for this scope
+    const key = `draft_${BRIEF_ID}_${anchor || 'top'}`;
+    document.getElementById('compose-text').value = localStorage.getItem(key) || '';
+    refreshSubmitState();
+  }
+
+  /* ---------- events ---------- */
+  document.querySelectorAll('.anchor-btn[data-anchor]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setScope(btn.dataset.anchor);
+      // on mobile, open the drawer
+      if (window.innerWidth <= 1100) document.getElementById('drawer').classList.add('open');
+    });
+  });
+
+  document.querySelectorAll('.drawer-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.drawer-filter').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+      renderDrawer();
+    });
+  });
+
+  document.getElementById('clear-scope-btn').addEventListener('click', () => setScope(null));
+
+  document.getElementById('change-author-btn').addEventListener('click', () => showAuthorModal());
+
+  const textarea = document.getElementById('compose-text');
+  textarea.addEventListener('input', () => {
+    refreshSubmitState();
+    const key = `draft_${BRIEF_ID}_${activeScope || 'top'}`;
+    if (textarea.value.trim()) {
+      localStorage.setItem(key, textarea.value);
+      flashDraftSaved();
+    } else {
+      localStorage.removeItem(key);
+      document.getElementById('draft-status').textContent = '';
+    }
+  });
+  textarea.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      submit();
+    }
+  });
+
+  document.getElementById('submit-btn').addEventListener('click', submit);
+
+  async function submit() {
+    const t = textarea.value.trim();
+    if (!t) return;
+    if (!author) { showAuthorModal(); return; }
+    const ok = await postComment(t);
+    if (ok) {
+      textarea.value = '';
+      refreshSubmitState();
+      document.getElementById('draft-status').textContent = '';
+    }
+  }
+
+  function refreshSubmitState() {
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = !textarea.value.trim() || !author;
+  }
+
+  let draftFlashTimer;
+  function flashDraftSaved() {
+    const el = document.getElementById('draft-status');
+    el.textContent = 'draft saved';
+    clearTimeout(draftFlashTimer);
+    draftFlashTimer = setTimeout(() => { el.textContent = ''; }, 1500);
+  }
+
+  document.getElementById('drawer-fab').addEventListener('click', () => {
+    document.getElementById('drawer').classList.toggle('open');
+  });
+  document.getElementById('drawer-close-mobile').addEventListener('click', () => {
+    document.getElementById('drawer').classList.remove('open');
+  });
+
+  /* ---------- helpers ---------- */
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function escapeAttr(s) { return escapeHtml(s).replace(/"/g, '&quot;'); }
+  function formatTime(iso) {
+    const d = new Date(iso);
+    const diff = (Date.now() - d.getTime()) / 1000;
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+    if (diff < 604800) return `${Math.floor(diff/86400)}d ago`;
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  /* ---------- bootstrap ---------- */
+  if (!author) {
+    showAuthorModal();
+  } else {
+    document.getElementById('topbar-author-name').textContent = author;
+    setupPresence();
+  }
+
+  // restore top-level draft
+  const topKey = `draft_${BRIEF_ID}_top`;
+  if (localStorage.getItem(topKey)) {
+    textarea.value = localStorage.getItem(topKey);
+  }
+  refreshSubmitState();
+
+  loadComments().then(subscribeRealtime);
+
+  // refresh time labels every minute
+  setInterval(() => { if (!document.hidden) renderDrawer(); }, 60 * 1000);
+</script>
+
+</body>
+</html>
