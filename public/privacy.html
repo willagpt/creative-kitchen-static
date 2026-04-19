@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy Policy — Creative Kitchen (Willa Ltd)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --cream: #faf6ee;
+      --ink: #1c1614;
+      --ink-soft: #3a2f2a;
+      --muted: #776a5f;
+      --amber: #8b6f3e;
+      --rule: #d6cab1;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--cream); color: var(--ink); }
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      font-size: 16px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 56px 24px 80px; }
+    h1 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 44px; line-height: 1.1; margin: 0 0 8px; letter-spacing: -0.01em; }
+    h2 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 26px; line-height: 1.2; margin: 36px 0 8px; letter-spacing: -0.01em; }
+    p, li { color: var(--ink-soft); }
+    .meta { color: var(--muted); font-size: 14px; margin: 0 0 32px; padding-bottom: 16px; border-bottom: 1px solid var(--rule); }
+    a { color: var(--amber); text-decoration: underline; text-underline-offset: 3px; }
+    ul { padding-left: 22px; }
+    ul li { margin: 6px 0; }
+    .small { color: var(--muted); font-size: 13px; }
+    footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 13px; }
+    .nav { margin-bottom: 32px; }
+    .nav a { margin-right: 16px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="nav">
+      <a href="/">Home</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/terms.html">Terms</a>
+    </div>
+    <h1>Privacy Policy</h1>
+    <p class="meta">Last updated: 19 April 2026 · Effective: 19 April 2026</p>
+
+    <p>This Privacy Policy explains how <strong>Willa Ltd</strong> ("Willa", "we", "us") collects, uses, and stores information in connection with the <strong>Creative Kitchen</strong> internal marketing analytics tool ("the Service") hosted at <a href="https://creative-kitchen-static.vercel.app">creative-kitchen-static.vercel.app</a>.</p>
+
+    <h2>1. Who we are</h2>
+    <p>Willa Ltd is a private limited company incorporated in England and Wales. The Service is operated by Willa Ltd's marketing team for our own internal use. We are the data controller for any personal data processed through the Service.</p>
+    <p>You can contact us about this policy at <a href="mailto:james@freebirdburritos.com">james@freebirdburritos.com</a>.</p>
+
+    <h2>2. Who can use the Service</h2>
+    <p>The Service is an internal tool. It is not offered to consumers, third parties, or the general public. Access is restricted to authenticated members of Willa Ltd's marketing workspace via Supabase row-level security.</p>
+
+    <h2>3. What we collect</h2>
+    <p>We collect two categories of data:</p>
+    <ul>
+      <li><strong>Authentication data</strong> for Willa staff using the Service: email address, workspace role (owner / editor / viewer), and session metadata. Stored in Supabase Auth.</li>
+      <li><strong>Public competitor advertising data</strong> retrieved from third-party sources, namely the Foreplay API and (subject to Meta's approval) the Meta Ad Library API. This includes ad creative, page name, page ID, ad copy, run dates, impression and spend ranges, and ad delivery countries. All of this is information that any member of the public can view in the public Meta Ad Library.</li>
+    </ul>
+    <p>We do <strong>not</strong> collect personal data from consumers, end users of advertised brands, or anyone outside Willa Ltd's marketing team.</p>
+
+    <h2>4. How we use it</h2>
+    <p>We process this data only to:</p>
+    <ul>
+      <li>Authenticate Willa staff into the Service.</li>
+      <li>Display competitor ad creative and metadata to Willa's internal marketing team for trend analysis and creative strategy.</li>
+      <li>Generate aggregated reports on competitor activity for our own internal planning.</li>
+    </ul>
+    <p>We do not sell, rent, or commercialise the data. We do not share it outside Willa Ltd. We do not use it for advertising targeting against consumers.</p>
+
+    <h2>5. Legal basis (UK GDPR)</h2>
+    <p>For staff authentication data, our legal basis is the performance of our employment contract with each staff member and our legitimate interest in operating internal tools securely (Article 6(1)(b) and 6(1)(f) UK GDPR).</p>
+    <p>For competitor ad data, our legal basis is our legitimate interest in conducting market research using publicly available information (Article 6(1)(f) UK GDPR). The data we ingest is already published by Meta and the underlying advertisers in the public Meta Ad Library.</p>
+
+    <h2>6. How long we keep it</h2>
+    <p>Staff authentication data is retained for as long as the staff member has an active Willa workspace, and deleted within 30 days of off-boarding.</p>
+    <p>Competitor ad data is retained for trend analysis. Brand owners can request removal of their pages from our tracked list (see Section 9).</p>
+
+    <h2>7. Where it lives</h2>
+    <p>All data is stored in <strong>Supabase</strong> (project ref <code>ifrxylvoufncdxyltgqt</code>) hosted in the EU. The application is deployed via <strong>Vercel</strong>. Heavy video processing runs on a <strong>Railway</strong> microservice. Each provider has its own privacy practices that we rely on for sub-processing.</p>
+
+    <h2>8. Sharing</h2>
+    <p>We do not share data with third parties for their own purposes. We use sub-processors to operate the Service: Supabase (database, authentication, edge functions), Vercel (hosting), Railway (video processing), Anthropic (AI analysis), Foreplay (third-party ad library), Meta (Ad Library API), and Apify (organic post ingestion).</p>
+
+    <h2>9. Your rights</h2>
+    <p>If you are a member of Willa staff, you can request access to, correction of, or deletion of your personal data by emailing <a href="mailto:james@freebirdburritos.com">james@freebirdburritos.com</a>.</p>
+    <p>If you are a brand owner whose Facebook Page is tracked by Creative Kitchen and you would like that page removed from our tracked list, email <a href="mailto:james@freebirdburritos.com">james@freebirdburritos.com</a>. We will remove it within 7 working days. Note that Creative Kitchen only stores data already publicly available in the Meta Ad Library.</p>
+    <p>You also have the right to lodge a complaint with the UK Information Commissioner's Office (<a href="https://ico.org.uk">ico.org.uk</a>).</p>
+
+    <h2>10. Cookies</h2>
+    <p>The Service uses only first-party cookies required for authentication. We do not use advertising cookies or third-party tracking on the Service.</p>
+
+    <h2>11. Children</h2>
+    <p>The Service is an internal business tool not directed at children. We do not knowingly collect personal data from anyone under 18.</p>
+
+    <h2>12. Changes</h2>
+    <p>We may update this Privacy Policy from time to time. The "Last updated" date at the top of the page reflects the most recent revision. Substantive changes will be communicated to Willa staff via internal channels.</p>
+
+    <h2>13. Contact</h2>
+    <p>Privacy questions: <a href="mailto:james@freebirdburritos.com">james@freebirdburritos.com</a><br>Postal address available on request.</p>
+
+    <footer>
+      © 2026 Willa Ltd · <a href="/terms.html">Terms of Service</a> · <a href="/privacy.html">Privacy Policy</a>
+    </footer>
+  </div>
+</body>
+</html>
