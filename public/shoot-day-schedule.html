@@ -127,6 +127,21 @@ a:hover{text-decoration:underline}
 .vol-table tr:nth-child(even) td{background:var(--surface-alt)}
 .vol-table td:first-child{font-weight:600;color:var(--ink)}
 .vol-table td.total{font-weight:700;color:var(--accent-dark);background:var(--accent-light) !important}
+.weekstrip{display:grid;grid-template-columns:repeat(7,1fr);gap:.35rem;margin:1.2rem 0 .2rem;border:1px solid var(--border);border-radius:var(--radius-lg);padding:.5rem;background:var(--surface)}
+.weekstrip .wday{text-align:center;padding:.55rem .2rem;border-radius:calc(var(--radius-lg) - 2px);font-size:.7rem;line-height:1.35;background:var(--surface-alt);color:var(--ink-3)}
+.weekstrip .wday .wd-name{display:block;font-weight:700;color:var(--ink);text-transform:uppercase;letter-spacing:.06em;font-size:.62rem;margin-bottom:.2rem}
+.weekstrip .wday.rest{background:#efe9e3;color:var(--ink-3)}
+.weekstrip .wday.rest .wd-name{color:var(--ink-2)}
+.weekstrip .wday.active{background:var(--accent-light);color:var(--ink)}
+.weekstrip .wday.active .wd-name{color:var(--accent-dark)}
+.weekstrip .wday.soft{background:var(--surface-warm);color:var(--ink-2)}
+.weekstrip .wday.soft .wd-name{color:var(--ink-2)}
+.wk-legend{font-size:.7rem;color:var(--ink-3);display:flex;gap:1rem;flex-wrap:wrap;margin-top:.2rem}
+.wk-legend span{display:inline-flex;align-items:center;gap:.35rem}
+.wk-legend i{display:inline-block;width:.7rem;height:.7rem;border-radius:2px;border:1px solid var(--border)}
+.wk-legend i.rest{background:#efe9e3}
+.wk-legend i.active{background:var(--accent-light)}
+.wk-legend i.soft{background:var(--surface-warm)}
 .foot-nav{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 .foot-nav a{font-size:.78rem}
 @page{size:A4 portrait;margin:14mm 16mm}
@@ -155,7 +170,7 @@ a:hover{text-decoration:underline}
   </div>
 
   <div class="hero">
-    <div class="eyebrow">scheduling guide · v1.0 · 19 apr 2026 · for james + kaja</div>
+    <div class="eyebrow">scheduling guide · v1.1 · 19 apr 2026 · for james + kaja · no mon/tue filming</div>
     <h1>Shoot day schedule + cadence</h1>
     <p class="hero-sub">Two honest schedules (day 1 first-timer vs day 3+ muscle memory), two split-day alternatives for lower cognitive load, a night-before prep checklist, and a monthly rhythm that keeps Meta fed without burning out either of you.</p>
     <div class="hero-chips">
@@ -226,7 +241,7 @@ a:hover{text-decoration:underline}
     <div class="prose">
       <p>Meta creative fatigue typically kicks in at 7 to 14 days on a single creative. That means your ad account needs roughly 2 to 3 fresh creatives entering the rotation every week to keep CPAs stable. The rhythm below produces ~50 new creatives per month, enough to rotate 2 to 3 fresh ads into Meta every week indefinitely.</p>
 
-      <div class="plain"><strong>Short version</strong>One 6-hour shoot day every 2 weeks, one 90-minute founder-head shoot every Friday, one 2-hour creative review the first Monday of every month. That's it.</div>
+      <div class="plain"><strong>Short version</strong>One 6-hour shoot day every other Wednesday, one 90-minute founder-head shoot every Friday, one 2-hour creative review the first Thursday of every month. No Monday or Tuesday filming. That's it.</div>
     </div>
 
     <div class="cadence-grid">
@@ -238,7 +253,7 @@ a:hover{text-decoration:underline}
         <ul>
           <li>No wardrobe change (James wears Chefly navy crewneck every week)</li>
           <li>Same desk, same 2 cameras, same DJI mic, same lighting</li>
-          <li>Script comes from Monday's Slack notes and that week's Meta data</li>
+          <li>Script comes from Wednesday's Slack notes and that week's Meta data</li>
           <li>Done in 90 min because there's no decision-making, just execute</li>
         </ul>
         <div class="cad-output">Output · <strong>3 to 5 C2 creatives per week</strong> · ~15 Meta exports after aspect resize</div>
@@ -247,12 +262,12 @@ a:hover{text-decoration:underline}
       <div class="cad-card tier2">
         <div class="tier-label">Tier 2 · volume rhythm</div>
         <h4>Bi-weekly full shoot day</h4>
-        <div class="cad-freq">Every other Tuesday · 6 hrs · both of you</div>
+        <div class="cad-freq">Every other Wednesday · 6 hrs · both of you</div>
         <p>The big batch. Run C1 to C5 back-to-back using the Day 3+ schedule below. This is where the testimonial, the hands-POV demo, the offer statics, and the overhead hero film come from. High output, high variety, only twice a month.</p>
         <ul>
           <li>Full kit setup, full wardrobe prep, full lunch break</li>
           <li>Output is 15 to 20 ad-ready creatives per session, mixed across 5 formats</li>
-          <li>Aim for the last week of each month to have fresh hero creatives for month-end campaigns</li>
+          <li>Wednesday works because food is freshest mid-week and Thursday is left clear for edit + approval before Friday's C2</li>
           <li>Skip C1 (testimonial) on alternate sessions if Kaja is tired; re-run only C2+C3+C4+C5</li>
         </ul>
         <div class="cad-output">Output · <strong>15 to 20 mixed creatives per session</strong> · ~50 Meta exports after aspect resize</div>
@@ -261,7 +276,7 @@ a:hover{text-decoration:underline}
       <div class="cad-card tier3">
         <div class="tier-label">Tier 3 · brain rhythm</div>
         <h4>Monthly creative review</h4>
-        <div class="cad-freq">First Monday of month · 2 hrs · no camera</div>
+        <div class="cad-freq">First Thursday of month · 2 hrs · no camera</div>
         <p>Desk work only. Review the last month's Meta performance data using the ad-kill-keep skill. Kill fatigued creatives. Approve the next 10 to 15 to enter rotation. Plan scripts and offers for the next two bi-weekly shoots.</p>
         <ul>
           <li>No shooting, no filming, no kit prep</li>
@@ -271,6 +286,21 @@ a:hover{text-decoration:underline}
         </ul>
         <div class="cad-output">Output · <strong>next month's shoot plan</strong> · kill list + script list</div>
       </div>
+    </div>
+
+    <div class="weekstrip" aria-label="Weekly camera days at a glance">
+      <div class="wday rest"><span class="wd-name">Mon</span>no camera</div>
+      <div class="wday rest"><span class="wd-name">Tue</span>no camera</div>
+      <div class="wday active"><span class="wd-name">Wed</span>full shoot<br><span style="font-size:.6rem;opacity:.7">(bi-weekly, 6 hrs)</span></div>
+      <div class="wday soft"><span class="wd-name">Thu</span>edit + approve<br><span style="font-size:.6rem;opacity:.7">(review 1st Thu)</span></div>
+      <div class="wday active"><span class="wd-name">Fri</span>weekly C2<br><span style="font-size:.6rem;opacity:.7">(90 min)</span></div>
+      <div class="wday rest"><span class="wd-name">Sat</span>edit block</div>
+      <div class="wday rest"><span class="wd-name">Sun</span>off</div>
+    </div>
+    <div class="wk-legend" aria-hidden="true">
+      <span><i class="active"></i> camera day</span>
+      <span><i class="soft"></i> desk / review</span>
+      <span><i class="rest"></i> no camera</span>
     </div>
   </div>
 
@@ -680,7 +710,7 @@ a:hover{text-decoration:underline}
       <div class="sched-row concept">
         <span class="sch-time">09:45</span>
         <span class="sch-dur">60 min</span>
-        <span class="sch-body"><strong>Shoot.</strong> 3 to 5 script variants. Each variant: 2 cameras, 2 takes. Script changes weekly based on: (a) Monday's Meta performance review, (b) that week's customer reviews, (c) current offers, (d) any news or trends.</span>
+        <span class="sch-body"><strong>Shoot.</strong> 3 to 5 script variants. Each variant: 2 cameras, 2 takes. Script changes weekly based on: (a) Wednesday's Meta performance review, (b) that week's customer reviews, (c) current offers, (d) any news or trends.</span>
       </div>
 
       <div class="sched-row break">
@@ -698,7 +728,7 @@ a:hover{text-decoration:underline}
     <div class="section-head">
       <span class="sh-tag">09 · Monthly review</span>
       <h2>Monthly creative review (no camera, 2 hours)</h2>
-      <p class="sh-sub">First Monday of every month. This is where the strategy for the next 4 weeks gets set. Skipping this is how shoot days drift into "film whatever, we'll figure it out in the edit" territory.</p>
+      <p class="sh-sub">First Thursday of every month. Desk work only, no Monday or Tuesday touch. This is where the strategy for the next 4 weeks gets set. Skipping this is how shoot days drift into "film whatever, we'll figure it out in the edit" territory.</p>
     </div>
 
     <div class="prose">
