@@ -28,6 +28,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
   const [addLoading, setAddLoading] = useState(false)
   const [addError, setAddError] = useState(null)
   const [addStatus, setAddStatus] = useState('')
+  const [addLink, setAddLink] = useState(null) // { href, label } when a Meta Ad Library link should be shown
   const [showAddForm, setShowAddForm] = useState(false)
   const [modalAd, setModalAd] = useState(null)
   const [loadingStatus, setLoadingStatus] = useState('')
@@ -812,6 +813,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
     if (!addInput.trim()) return
     setAddLoading(true)
     setAddError(null)
+    setAddLink(null)
     setAddStatus('Resolving name...')
     try {
       const pageId = extractPageId(addInput)
@@ -834,13 +836,13 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
       setFollowedBrands(prev => [nb, ...prev])
       setAddInput('')
 
-      // Auto-trigger Foreplay fetch back to 23 Dec 2025
-      // The edge function automatically falls back to Meta Ad Library when
-      // Foreplay has no coverage. It uses the server-side app access token
-      // (META_APP_ID + META_APP_SECRET secrets) which never expires, so the
-      // user does not need to paste a Meta token. If those secrets are not
-      // set, the function falls back to a body-supplied user token.
-      setAddStatus('Pulling ads from Foreplay since 23 Dec 2025 (may take a minute). Auto-falls back to Meta Ad Library if Foreplay has no coverage.')
+      // Auto-trigger Foreplay fetch back to 23 Dec 2025.
+      // When Foreplay has no coverage we surface a direct Meta Ad Library
+      // link in the modal instead of calling Meta's API. The Ads Archive
+      // endpoint requires Meta app review, which is in flight; the link
+      // path is gated by the META_AD_LIBRARY_ENABLED edge function flag
+      // and stays off until approval lands.
+      setAddStatus('Pulling ads from Foreplay since 23 Dec 2025 (may take a minute).')
       let autoCloseModal = false
       try {
         const res = await fetch(FOREPLAY_FN_URL, {
@@ -865,6 +867,11 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
           const source = data?.source || 'foreplay'
           const authSource = data?.metaFallback?.authSource
 
+          const fallbackLink = data?.metaFallback?.metaAdLibraryUrl || null
+          if (fallbackLink) {
+            setAddLink({ href: fallbackLink, label: 'Open in Meta Ad Library' })
+          }
+
           if (totalRows > 0) {
             // Success path: close modal, no error.
             autoCloseModal = true
@@ -879,12 +886,14 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
             } else {
               setAddStatus(`Saved. Pulled ${foreplayRows} ads from Foreplay.`)
             }
+          } else if (data?.metaFallback?.reason === 'meta_app_review_pending') {
+            setAddError('Foreplay has no coverage for this brand yet. Meta Ad Library API access is pending app review, so you can view the live ads directly in Meta Ad Library using the link below.')
           } else if (data?.metaFallback?.attempted && data.metaFallback.error) {
-            setAddError(`Foreplay returned 0 ads. Meta fallback failed: ${String(data.metaFallback.error).slice(0, 160)}`)
+            setAddError(`Foreplay returned 0 ads and Meta fallback failed: ${String(data.metaFallback.error).slice(0, 160)}. Try the Meta Ad Library link below.`)
           } else if (data?.metaFallback?.attempted) {
-            setAddError('Brand saved, but neither Foreplay nor Meta Ad Library returned ads for this page (UK reach).')
+            setAddError('Brand saved, but neither Foreplay nor Meta Ad Library returned ads for this page (UK reach). Try the Meta Ad Library link below.')
           } else if (data?.metaFallback?.reason === 'no_meta_credentials_available') {
-            setAddError('Foreplay returned 0 ads and no Meta credentials are configured server-side. Add META_SYSTEM_USER_TOKEN to Supabase secrets, or connect a Meta token (top right) as a one-off.')
+            setAddError('Foreplay returned 0 ads and no Meta credentials are configured server-side. View the brand directly in Meta Ad Library using the link below.')
           } else {
             setAddError('Brand saved, but no ads were returned. Try again or check the page ID.')
           }
@@ -1439,7 +1448,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
       </div>
 
       {showAddForm && (
-        <div className="ca-add-modal-bg" onMouseDown={e => { if (e.target === e.currentTarget && !addLoading) { setShowAddForm(false); setAddInput(''); setAddError(null); setAddStatus('') } }}>
+        <div className="ca-add-modal-bg" onMouseDown={e => { if (e.target === e.currentTarget && !addLoading) { setShowAddForm(false); setAddInput(''); setAddError(null); setAddStatus(''); setAddLink(null) } }}>
           <div className="ca-add-modal" onClick={e => e.stopPropagation()}>
             <h3>Add Competitor</h3>
             <p className="ca-add-modal-desc">Enter a Facebook Page ID or Ad Library URL</p>
@@ -1455,8 +1464,19 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
             />
             {addStatus && <p className="ca-add-status" style={{margin:'8px 0 0',padding:'8px 10px',borderRadius:6,background:'rgba(120,180,255,0.08)',color:'#9ec5ff',fontSize:13,lineHeight:1.4}}>{addStatus}</p>}
             {addError && <p className="ca-add-err">{addError}</p>}
+            {addLink && (
+              <a
+                href={addLink.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ca-add-link"
+                style={{display:'inline-block',marginTop:8,padding:'8px 12px',borderRadius:6,background:'rgba(120,180,255,0.12)',color:'#9ec5ff',fontSize:13,fontWeight:600,textDecoration:'none',border:'1px solid rgba(120,180,255,0.25)'}}
+              >
+                {addLink.label} →
+              </a>
+            )}
             <div className="ca-add-modal-btns">
-              <button onClick={() => { setShowAddForm(false); setAddInput(''); setAddError(null); setAddStatus('') }} className="ca-btn-ghost">{addLoading ? 'Close' : 'Cancel'}</button>
+              <button onClick={() => { setShowAddForm(false); setAddInput(''); setAddError(null); setAddStatus(''); setAddLink(null) }} className="ca-btn-ghost">{addLoading ? 'Close' : 'Cancel'}</button>
               <button onClick={handleAddBrand} disabled={addLoading || !addInput.trim()} className="ca-btn-primary">{addLoading ? 'Working...' : 'Add Competitor'}</button>
             </div>
           </div>
