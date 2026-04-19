@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Training Pack · C3 · Hands-POV product demo / Chefly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf9f7;--surface:#fff;--surface-alt:#f4f2ee;--surface-warm:#f9f5f0;
+  --ink:#1a1714;--ink-2:#5c564d;--ink-3:#8a8279;--ink-4:#b0a99e;
+  --accent:#b44d1e;--accent-light:#f4e6dc;--accent-dark:#8a3710;
+  --green:#2d6a4f;--green-light:#d8f3dc;
+  --blue:#1d4e89;--blue-light:#d0e2f4;
+  --amber:#92400e;--amber-light:#fef3c7;
+  --red:#991b1b;--red-light:#fee2e2;
+  --border:#e8e4de;--border-light:#f0ece6;
+  --radius:4px;--radius-lg:6px;
+  --shadow-sm:0 1px 2px rgba(26,23,20,.05);
+  --font-display:'Fraunces',Georgia,serif;--font-body:'DM Sans',system-ui,sans-serif;
+}
+html{font-size:14px;scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4,h5{font-family:var(--font-display);font-weight:700;line-height:1.25}
+a{color:var(--accent-dark);text-decoration:none}
+a:hover{text-decoration:underline}
+.page{max-width:1040px;margin:0 auto;padding:0 clamp(1rem,3vw,2rem) 4rem}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:.9rem 0;border-bottom:1px solid var(--border);gap:.5rem;flex-wrap:wrap}
+.topbar-brand{font-family:var(--font-display);font-size:.9rem;font-weight:700;color:var(--accent-dark)}
+.topbar-actions{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+.btn{padding:.4rem .9rem;font-family:var(--font-body);font-size:.72rem;font-weight:600;border-radius:var(--radius);cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;border:1.5px solid var(--border);background:var(--surface);color:var(--ink-2)}
+.btn:hover{border-color:var(--ink-3);color:var(--ink)}
+.btn-primary{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark);text-decoration:none}
+.hero{padding:clamp(2rem,5vw,3.5rem) 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem}
+.eyebrow{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent-dark);margin-bottom:.7rem}
+.hero h1{font-size:clamp(1.7rem,4vw,2.4rem);font-weight:800;letter-spacing:-.025em;margin-bottom:.5rem}
+.hero-sub{font-size:.95rem;color:var(--ink-2);max-width:680px;line-height:1.7;margin-bottom:1rem}
+.hero-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem}
+.chip{font-size:.68rem;font-weight:600;padding:.3rem .7rem;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--ink-2)}
+.chip.accent{background:var(--accent-light);border-color:var(--accent);color:var(--accent-dark)}
+.chip.green{background:var(--green-light);border-color:var(--green);color:var(--green)}
+.chip.blue{background:var(--blue-light);border-color:var(--blue);color:var(--blue)}
+.module-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-bottom:2.5rem}
+.mm-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem}
+.mm-card h3{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.7rem}
+.mm-card ul{list-style:none;padding:0;margin:0}
+.mm-card li{font-size:.82rem;color:var(--ink);line-height:1.55;padding:.25rem 0;border-bottom:1px dotted var(--border)}
+.mm-card li:last-child{border-bottom:none}
+.mm-card li::before{content:'→  ';color:var(--accent);font-weight:700}
+.toc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.3rem;margin-bottom:2.5rem}
+.toc-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-2);margin-bottom:.7rem}
+.toc ol{padding-left:1.2rem;font-size:.86rem;line-height:1.9;columns:2;column-gap:1.5rem}
+@media (max-width:640px){.toc ol{columns:1}}
+.toc ol li{color:var(--ink-2)}
+.toc ol li a{font-weight:500}
+.section{margin-bottom:3rem;scroll-margin-top:1rem}
+.section-head{border-bottom:2px solid var(--ink);padding-bottom:.6rem;margin-bottom:1.3rem}
+.section-head .sh-tag{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent-dark);margin-bottom:.25rem;display:block}
+.section-head h2{font-size:clamp(1.35rem,3vw,1.8rem);font-weight:800;letter-spacing:-.02em;margin:0}
+.section-head .sh-sub{font-size:.85rem;color:var(--ink-2);margin-top:.4rem;max-width:620px}
+.prose p{font-size:.9rem;color:var(--ink-2);margin-bottom:.9rem;line-height:1.7}
+.prose p strong{color:var(--ink)}
+.prose ul,.prose ol{padding-left:1.3rem;margin-bottom:1rem}
+.prose li{font-size:.88rem;color:var(--ink-2);margin-bottom:.35rem;line-height:1.65}
+.prose li strong{color:var(--ink)}
+.prose h3{font-size:1.05rem;font-weight:700;margin:1.8rem 0 .6rem;color:var(--ink)}
+.kit-table{width:100%;border-collapse:collapse;border:1px solid var(--border);font-size:.82rem;margin-bottom:1rem}
+.kit-table th{background:var(--ink);color:var(--bg);font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.55rem .65rem;text-align:left}
+.kit-table td{padding:.6rem .65rem;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5}
+.kit-table tr:last-child td{border-bottom:none}
+.kit-table tr:nth-child(even) td{background:var(--surface-alt)}
+.kit-table td:first-child{font-weight:600;color:var(--ink);min-width:150px}
+.kit-table td:nth-child(2){color:var(--ink-2)}
+.diagram-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin:1.2rem 0}
+.diagram-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem;text-align:center}
+.diagram-card svg{max-width:100%;height:auto;display:block;margin:0 auto .6rem}
+.diagram-card .dc-label{font-size:.82rem;font-weight:700;color:var(--ink);margin-bottom:.2rem;font-family:var(--font-display)}
+.diagram-card .dc-note{font-size:.72rem;color:var(--ink-3);line-height:1.5}
+.shot-grid{display:grid;grid-template-columns:1fr;gap:.9rem;margin-bottom:1.2rem}
+.shot-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem;display:grid;grid-template-columns:60px 1fr;gap:1rem}
+.shot-card .sc-num{font-family:var(--font-display);font-size:1.8rem;font-weight:800;color:var(--accent);line-height:1}
+.shot-card .sc-body h4{font-size:1rem;font-weight:700;color:var(--ink);margin-bottom:.35rem}
+.shot-card .sc-body .sc-meta{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.6rem}
+.shot-card .sc-body .sc-meta .chip{font-size:.64rem;padding:.15rem .5rem}
+.shot-card .sc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.5rem .9rem;font-size:.78rem;color:var(--ink-2);margin-bottom:.6rem}
+.shot-card .sc-grid strong{display:block;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:.1rem}
+.shot-card .sc-why{background:var(--surface-warm);border-left:3px solid var(--accent);padding:.55rem .8rem;border-radius:0 var(--radius) var(--radius) 0;font-size:.8rem;color:var(--ink);line-height:1.55;margin-bottom:.5rem}
+.shot-card .sc-why strong{color:var(--accent-dark);display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.15rem;font-weight:700}
+.shot-card .sc-fail{background:var(--red-light);border-left:3px solid var(--red);padding:.5rem .8rem;border-radius:0 var(--radius) var(--radius) 0;font-size:.78rem;color:var(--ink);line-height:1.55}
+.shot-card .sc-fail strong{color:var(--red);display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.15rem;font-weight:700}
+.timing{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1rem}
+.timing-row{display:grid;grid-template-columns:110px 1fr;gap:1rem;padding:.8rem 1rem;border-bottom:1px solid var(--border)}
+.timing-row:last-child{border-bottom:none}
+.timing-row:nth-child(even){background:var(--surface-alt)}
+.timing-row .t-min{font-family:var(--font-display);font-weight:700;color:var(--accent);font-size:.82rem;line-height:1.3}
+.timing-row .t-min .t-label{display:block;font-family:var(--font-body);font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:.1rem}
+.timing-row .t-body{font-size:.84rem;color:var(--ink);line-height:1.6}
+.timing-row .t-body strong{color:var(--ink);font-weight:600}
+.dodont{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.dodont-block{padding:1rem 1.1rem;border-radius:var(--radius-lg);border:1px solid}
+.dodont-do{background:var(--green-light);border-color:var(--green)}
+.dodont-dont{background:var(--red-light);border-color:var(--red)}
+.dodont-block h5{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem}
+.dodont-do h5{color:var(--green)}
+.dodont-dont h5{color:var(--red)}
+.dodont-block ul{padding-left:1rem;margin:0;list-style:none}
+.dodont-block li{font-size:.82rem;color:var(--ink);margin-bottom:.3rem;padding-left:.9rem;position:relative;line-height:1.55}
+.dodont-do li::before{content:'✓';color:var(--green);font-weight:700;position:absolute;left:0}
+.dodont-dont li::before{content:'✕';color:var(--red);font-weight:700;position:absolute;left:0}
+@media (max-width:640px){.dodont{grid-template-columns:1fr}}
+.qgate{background:var(--surface-warm);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.2rem;margin-bottom:1rem}
+.qgate h5{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.6rem}
+.qgate ul{list-style:none;padding:0;margin:0}
+.qgate li{font-size:.86rem;padding:.3rem 0;line-height:1.55;color:var(--ink);display:flex;gap:.5rem;align-items:flex-start}
+.qgate li::before{content:'☐';color:var(--accent);font-weight:700;font-size:1rem;line-height:1.3}
+.mistake{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--amber);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:.9rem 1.1rem;margin-bottom:.7rem}
+.mistake h5{font-size:.82rem;font-weight:700;color:var(--amber);margin-bottom:.3rem;font-family:var(--font-display)}
+.mistake p{font-size:.82rem;color:var(--ink);line-height:1.6;margin:0}
+.mistake .rescue{margin-top:.4rem;padding-top:.4rem;border-top:1px dashed var(--border);font-size:.8rem;color:var(--ink-2)}
+.mistake .rescue strong{color:var(--green);text-transform:uppercase;letter-spacing:.08em;font-size:.62rem;display:block;margin-bottom:.15rem;font-weight:700}
+.script{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius-lg);padding:1.1rem 1.3rem;margin-bottom:1rem}
+.script-line{display:grid;grid-template-columns:60px 1fr;gap:1rem;padding:.6rem 0;border-bottom:1px dotted var(--border)}
+.script-line:last-child{border-bottom:none}
+.script-line .t{font-family:var(--font-display);font-weight:700;color:var(--accent);font-size:.78rem;padding-top:.1rem}
+.script-line .l{font-size:.88rem;line-height:1.6;color:var(--ink)}
+.script-line .l em{color:var(--ink-3);font-style:italic;font-size:.8rem}
+.script-line .note{display:block;margin-top:.35rem;font-size:.74rem;color:var(--ink-2);background:var(--surface-warm);padding:.35rem .6rem;border-radius:var(--radius);border-left:2px solid var(--accent-light)}
+.script-line .note::before{content:'director note · ';font-weight:700;color:var(--accent-dark);text-transform:uppercase;letter-spacing:.08em;font-size:.62rem}
+.quiz{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.2rem 1.3rem;margin-bottom:1rem;counter-reset:qcount}
+.quiz h5{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.8rem}
+.quiz-q{padding:.7rem 0;border-bottom:1px dotted var(--border)}
+.quiz-q:last-child{border-bottom:none}
+.quiz-q .q{font-size:.86rem;font-weight:600;color:var(--ink);margin-bottom:.4rem;line-height:1.5}
+.quiz-q .q::before{content:counter(qcount) '.  ';counter-increment:qcount;color:var(--accent);font-family:var(--font-display);font-weight:700}
+.quiz-q details summary{cursor:pointer;font-size:.76rem;color:var(--accent-dark);font-weight:600;padding:.25rem 0;user-select:none;list-style:none}
+.quiz-q details summary::-webkit-details-marker{display:none}
+.quiz-q details summary::before{content:'▸ ';transition:transform .15s}
+.quiz-q details[open] summary::before{content:'▾ '}
+.quiz-q details .a{font-size:.82rem;color:var(--ink-2);line-height:1.6;padding:.5rem .7rem;background:var(--surface-warm);border-radius:var(--radius);margin-top:.3rem}
+.quiz-q details .a strong{color:var(--ink)}
+.plain{background:var(--accent-light);border-left:4px solid var(--accent);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:.9rem 1.1rem;margin:1rem 0;font-size:.86rem;color:var(--ink);line-height:1.65}
+.plain strong{color:var(--accent-dark);display:block;font-size:.64rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem;font-weight:700}
+.foot-nav{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.foot-nav a{font-size:.78rem}
+@page{size:A4 portrait;margin:14mm 16mm}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  html{font-size:10px}
+  .topbar,.no-print,.foot-nav{display:none!important}
+  .shot-card,.timing,.kit-table,.diagram-card,.qgate,.quiz,.mistake{break-inside:avoid;page-break-inside:avoid}
+  .section{page-break-before:auto}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="topbar no-print">
+    <div class="topbar-brand">Chefly · Training Pack · C3</div>
+    <div class="topbar-actions">
+      <a href="/training-pack-c2.html" class="btn">← C2</a>
+      <a href="/internal-shoot-pack.html" class="btn">Shoot pack</a>
+      <a href="/training-companion.html" class="btn">Training companion</a>
+      <a href="/training-course.html" class="btn">Take the course</a>
+      <a href="/training-pack-c4.html" class="btn btn-primary">Next: C4 →</a>
+      <button class="btn" onclick="window.print()">Print</button>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow">training pack · c3 · v1.0 · 19 apr 2026 · for kaja (hands on camera) + james (behind cam)</div>
+    <h1>C3 · Hands-POV product demo</h1>
+    <p class="hero-sub">Two sequential setups, zero dialogue. Kaja's hands do all the acting. Step one: a chest-mounted POV of the kitchen pass. Step two: an overhead desk pass. The goal is 15 to 20 seconds of satisfying, tactile product demo that cuts like butter.</p>
+    <div class="hero-chips">
+      <span class="chip accent">Priority 3</span>
+      <span class="chip">Silent · foley only</span>
+      <span class="chip">2 setups · sequential</span>
+      <span class="chip">POV + overhead</span>
+      <span class="chip">15 to 20s final</span>
+      <span class="chip">~60 min on set</span>
+      <span class="chip green">Difficulty: medium</span>
+    </div>
+  </div>
+
+  <div class="module-meta">
+    <div class="mm-card">
+      <h3>Learning goals</h3>
+      <ul>
+        <li>Rig the SmallRig Magnetic Neck Mount on Kaja's chest and frame a usable POV shot</li>
+        <li>Mount the ARKON Pro Stand overhead for a clean top-down desk pass</li>
+        <li>Light two very different setups with the same two lights, swapping position between them</li>
+        <li>Plan a 6-beat action sequence that the editor can cut into a tight 15s spot</li>
+        <li>Record foley (opening, peeling, scraping, microwave, cutlery) as the audio bed</li>
+      </ul>
+    </div>
+    <div class="mm-card">
+      <h3>Pre-requisites</h3>
+      <ul>
+        <li>C1 and C2 wrapped. Audio kit should already be packed up.</li>
+        <li>Read Training Companion Parts 2, 3, 4 and Part 5 §C3</li>
+        <li>Both iPhones at 50%+ charge. Neck mount and ARKON Pro Stand physically on set.</li>
+        <li>Kaja has practiced the action once without recording — get the beats into her hands</li>
+      </ul>
+    </div>
+    <div class="mm-card">
+      <h3>What you'll deliver</h3>
+      <ul>
+        <li>3 POV passes of the 5-beat kitchen action (unbox, microwave, scrape, plate, fork)</li>
+        <li>3 overhead passes of the desk pass (container placed, lid off, fork down, eating frame)</li>
+        <li>Clean foley for every touch and movement — no voiceover, no music yet</li>
+        <li>One macro beat of steam rising as the lid comes off (this sells the whole thing)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="toc">
+    <div class="toc-title">What's in this pack</div>
+    <ol>
+      <li><a href="#s1">01 · Concept brief and why this format wins</a></li>
+      <li><a href="#s2">02 · Kit breakdown (2 rigs, 1 ring light)</a></li>
+      <li><a href="#s3">03 · Framing, camera settings, and crop</a></li>
+      <li><a href="#s4">04 · Lighting setup, step by step</a></li>
+      <li><a href="#s5">05 · Audio: foley-only recording</a></li>
+      <li><a href="#s6">06 · Wardrobe, hands, and set dressing</a></li>
+      <li><a href="#s7">07 · The beat sheet (no script, action only)</a></li>
+      <li><a href="#s8">08 · Shot-by-shot breakdown</a></li>
+      <li><a href="#s9">09 · Minute-by-minute timing plan</a></li>
+      <li><a href="#s10">10 · Quality gates (you're done when...)</a></li>
+      <li><a href="#s11">11 · Common mistakes and how to rescue them</a></li>
+      <li><a href="#s12">12 · Post-production handoff</a></li>
+      <li><a href="#s13">13 · Self-check (5 questions)</a></li>
+    </ol>
+  </div>
+
+  <div class="section" id="s1">
+    <div class="section-head">
+      <span class="sh-tag">01 · Concept</span>
+      <h2>What we're making and why it works</h2>
+      <p class="sh-sub">No face. No voice. Just hands doing the work. The product is the star.</p>
+    </div>
+    <div class="prose">
+      <p>C3 is the <strong>hands-POV product demo</strong>: a silent, texture-heavy 15 to 20 second showpiece that answers the unspoken question "what does using this actually look like?" Every cut is an action. Every sound is a touch or a microwave beep. The whole ad lives on foley and motion.</p>
+      <p>We're shooting it in <strong>two sequential setups</strong>, not simultaneous. First setup is a chest-mounted POV in the kitchen, with Kaja's hands opening the box, loading the microwave, and lifting the lid. Second setup is an overhead desk pass where her hands place the heated container down, peel it back, and pick up a fork. Same container, same meal, two totally different visual languages that cut together beautifully.</p>
+      <div class="plain"><strong>Plain-english summary</strong>Kaja puts on a chest mount and films her own hands cooking. Then we put an iPhone above the desk and film her hands eating. No talking. Just motion and sound. The editor lays a beat under it.</div>
+      <h3>Reference winners this pattern came from</h3>
+      <ul>
+        <li><strong>Simmer ad 3</strong> — chest-mounted POV of unboxing and microwave. Scored top-quintile for shot variety and completion rate.</li>
+        <li><strong>Huel morning routine ad</strong> — overhead desk pass with a single ring light. Zero voiceover. Foley + beat did all the work.</li>
+        <li>Both ads succeeded because the viewer unconsciously imagines themselves doing it. POV is the most first-person format on social.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section" id="s2">
+    <div class="section-head">
+      <span class="sh-tag">02 · Kit</span>
+      <h2>Kit breakdown</h2>
+      <p class="sh-sub">Two rigs because we need two very different perspectives. The lights travel between setups.</p>
+    </div>
+    <table class="kit-table">
+      <thead>
+        <tr><th>Item</th><th>Role on C3</th><th>Where / how</th><th>Common mistake</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>iPhone 17 Pro Max</td>
+          <td>Camera (both setups)</td>
+          <td>Mounted on neck rig for setup 1. Mounted on ARKON Pro Stand overhead for setup 2.</td>
+          <td>Swapping to a different phone between setups. Keep it on the same phone for colour consistency in the edit.</td>
+        </tr>
+        <tr>
+          <td>SmallRig Magnetic Neck Mount</td>
+          <td>Setup 1 · POV</td>
+          <td>Worn by Kaja, centred on her sternum. iPhone clipped facing forward at chest height.</td>
+          <td>Wearing it too low. Phone ends up pointing at the floor. Adjust strap so the phone is horizontal at chest.</td>
+        </tr>
+        <tr>
+          <td>ARKON Pro Stand</td>
+          <td>Setup 2 · Overhead</td>
+          <td>Weighted base on the floor, arm extended over the desk. Phone mounted horizontal-facing-down, 70 to 90cm above the desk surface.</td>
+          <td>Arm not counterweighted. Stand tips forward. Always test with the iPhone attached before rolling.</td>
+        </tr>
+        <tr>
+          <td>ARKON Clamp Stand</td>
+          <td>Ring light support (both setups)</td>
+          <td>Clamped to a nearby counter or shelf. Small ring light attached, arm extended toward the action.</td>
+          <td>Clamping to something flimsy. A wobbly light is a flickering light. Clamp to solid wood or metal.</td>
+        </tr>
+        <tr>
+          <td>Ring light (small)</td>
+          <td>Key light on action</td>
+          <td>Setup 1: lit from above-right, angled down at the container. Setup 2: directly above-forward, pointed at desk.</td>
+          <td>Too close. You'll get a hot reflection on the container lid. Pull it back 30cm until the reflection is soft.</td>
+        </tr>
+        <tr>
+          <td>Amaran 200x + Dome III</td>
+          <td>Ambient fill, both setups</td>
+          <td>Positioned as a background wash. In kitchen: lights the back wall. At desk: lights the area behind the laptop.</td>
+          <td>Using it as key light. The ring light is the key. The Amaran is the wash around it.</td>
+        </tr>
+        <tr>
+          <td>Lantern 26"</td>
+          <td>Not used on C3</td>
+          <td>In its case. Keep it packed.</td>
+          <td>Adding it because you have it. Kills the intimacy of the close-up.</td>
+        </tr>
+        <tr>
+          <td>DJI Mic 2</td>
+          <td>Not used on C3</td>
+          <td>Packed away. Foley is recorded by iPhone onboard mic.</td>
+          <td>Clipping it on "just in case". It picks up breathing, cloth rustle, footsteps. Disaster.</td>
+        </tr>
+        <tr>
+          <td>Chefly container + utensils</td>
+          <td>Hero of the shot</td>
+          <td>One sealed container, one heated container, a fork, a cutting board, a fresh cloth.</td>
+          <td>Using the same container for both cold and hot beats. The editor needs to see the lid go on AND come off clean.</td>
+        </tr>
+        <tr>
+          <td>Nail/hands check</td>
+          <td>Kaja's hands are on screen for 20s</td>
+          <td>Clean, trimmed, no chipped polish. If polished, plain single-colour only.</td>
+          <td>Chipped or grubby nails. The eye lands on them immediately and it kills the appetite appeal.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section" id="s3">
+    <div class="section-head">
+      <span class="sh-tag">03 · Framing and camera</span>
+      <h2>Framing, settings, and crop</h2>
+      <p class="sh-sub">POV is full-width 9:16. Overhead is also 9:16, cropped in on the desk action.</p>
+    </div>
+
+    <div class="diagram-row">
+      <div class="diagram-card">
+        <svg viewBox="0 0 180 320" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="4" width="172" height="312" fill="none" stroke="#1a1714" stroke-width="2"/>
+          <rect x="30" y="200" width="120" height="70" fill="#d8f3dc" stroke="#1a1714" stroke-width="1"/>
+          <text x="64" y="240" font-family="DM Sans" font-size="8" font-weight="700">COUNTERTOP</text>
+          <rect x="60" y="170" width="60" height="40" fill="#b44d1e" stroke="#1a1714" stroke-width="1"/>
+          <text x="68" y="195" font-family="DM Sans" font-size="7" fill="#faf9f7">CONTAINER</text>
+          <path d="M 80 270 L 60 290 L 68 310" stroke="#f4e6dc" stroke-width="16" stroke-linecap="round"/>
+          <path d="M 100 270 L 120 290 L 112 310" stroke="#f4e6dc" stroke-width="16" stroke-linecap="round"/>
+          <text x="10" y="20" font-family="DM Sans" font-size="7" fill="#5c564d">POV · chest mount · 9:16</text>
+          <text x="10" y="155" font-family="DM Sans" font-size="7" fill="#b44d1e" font-weight="700">Hands enter from bottom</text>
+        </svg>
+        <div class="dc-label">POV · chest mount</div>
+        <div class="dc-note">Container sits on the countertop, middle of frame. Kaja's hands enter from the bottom of the frame. Eye-line is natural because it's literally her sightline.</div>
+      </div>
+      <div class="diagram-card">
+        <svg viewBox="0 0 180 320" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="4" width="172" height="312" fill="none" stroke="#1a1714" stroke-width="2"/>
+          <rect x="4" y="4" width="172" height="312" fill="#5c564d"/>
+          <circle cx="90" cy="170" r="48" fill="#b44d1e" stroke="#1a1714" stroke-width="1.5"/>
+          <circle cx="90" cy="170" r="38" fill="#8a3710"/>
+          <text x="70" y="175" font-family="DM Sans" font-size="9" font-weight="700" fill="#faf9f7">MEAL</text>
+          <path d="M 40 230 Q 46 280 40 315" stroke="#f4e6dc" stroke-width="14" stroke-linecap="round"/>
+          <path d="M 140 230 Q 134 280 140 315" stroke="#f4e6dc" stroke-width="14" stroke-linecap="round"/>
+          <line x1="140" y1="245" x2="170" y2="275" stroke="#8a8279" stroke-width="3"/>
+          <text x="136" y="260" font-family="DM Sans" font-size="7" fill="#faf9f7">fork</text>
+          <text x="10" y="20" font-family="DM Sans" font-size="7" fill="#faf9f7">Overhead · ARKON Pro · 9:16</text>
+          <text x="10" y="310" font-family="DM Sans" font-size="7" fill="#faf9f7">Meal centred. Hands on edges.</text>
+        </svg>
+        <div class="dc-label">Overhead · ARKON Pro Stand</div>
+        <div class="dc-note">Looking straight down at the desk. Container dead centre. Kaja's hands come in from left and right edges of the frame. Dark desk surface for contrast.</div>
+      </div>
+    </div>
+
+    <h3>Camera settings · iPhone 17 Pro Max, both setups</h3>
+    <table class="kit-table">
+      <thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Mode</td><td>Video</td><td>Obvious but check. The ARKON overhead is easy to bump into stills mode by accident.</td></tr>
+        <tr><td>Resolution</td><td>4K</td><td>Lets the editor reframe or crop in for the 15s cut.</td></tr>
+        <tr><td>Frame rate</td><td>30fps (setup 1), 60fps (setup 2 only)</td><td>Setup 2 gets 60fps so the editor can slow down any single beat to 50% for impact. Setup 1 is 30 to match C1/C2.</td></tr>
+        <tr><td>Lens</td><td>1x (setup 1), 1x or 2x (setup 2 — test)</td><td>POV = 1x so it feels natural. Overhead may need 2x depending on ARKON arm reach; test in preview.</td></tr>
+        <tr><td>HDR Video</td><td>OFF</td><td>Same reason as C1/C2. Matches the campaign look.</td></tr>
+        <tr><td>Audio input</td><td>iPhone onboard</td><td>Foley from the phone. DJI mic picks up too much body noise on a chest mount.</td></tr>
+        <tr><td>Exposure lock</td><td>Long-press on the container before rolling</td><td>Stops it hunting as Kaja's hand passes under the ring light.</td></tr>
+        <tr><td>Focus</td><td>Lock by tap-and-hold on container</td><td>Critical on overhead. Hands passing through the frame will re-focus chaos without a lock.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section" id="s4">
+    <div class="section-head">
+      <span class="sh-tag">04 · Lighting</span>
+      <h2>Lighting, step by step</h2>
+      <p class="sh-sub">Small ring light does the hero work. Amaran is background wash. Two lights, two positions between setups.</p>
+    </div>
+
+    <div class="diagram-row">
+      <div class="diagram-card">
+        <svg viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="10" width="300" height="200" fill="#f4f2ee" stroke="#1a1714" stroke-width="1.5"/>
+          <rect x="60" y="130" width="200" height="40" fill="#e8e4de" stroke="#1a1714" stroke-width="1"/>
+          <text x="130" y="155" font-family="DM Sans" font-size="8" font-weight="700">COUNTERTOP</text>
+          <rect x="135" y="118" width="50" height="20" fill="#b44d1e" stroke="#1a1714" stroke-width="1"/>
+          <text x="140" y="131" font-family="DM Sans" font-size="6" fill="#faf9f7" font-weight="700">container</text>
+          <circle cx="215" cy="60" r="16" fill="#fff" stroke="#b44d1e" stroke-width="2"/>
+          <circle cx="215" cy="60" r="10" fill="none" stroke="#b44d1e" stroke-width="2"/>
+          <text x="198" y="36" font-family="DM Sans" font-size="7" font-weight="700" fill="#b44d1e">RING LIGHT</text>
+          <path d="M 213 74 L 175 116" stroke="#b44d1e" stroke-width="1" stroke-dasharray="3,3"/>
+          <rect x="40" y="40" width="36" height="50" fill="#fef3c7" stroke="#92400e" stroke-width="1.5"/>
+          <text x="28" y="34" font-family="DM Sans" font-size="7" font-weight="700" fill="#92400e">AMARAN</text>
+          <text x="24" y="100" font-family="DM Sans" font-size="7" fill="#92400e">wall wash</text>
+          <path d="M 76 70 L 300 70" stroke="#92400e" stroke-width="1" stroke-dasharray="2,2"/>
+          <circle cx="160" cy="188" r="8" fill="#1a1714"/>
+          <text x="148" y="206" font-family="DM Sans" font-size="7" fill="#1a1714" font-weight="700">KAJA (POV cam)</text>
+        </svg>
+        <div class="dc-label">Setup 1 · kitchen POV</div>
+        <div class="dc-note">Ring light above-right, lighting the container. Amaran lights the back wall for depth and colour. Kaja stands at the counter with the chest mount on.</div>
+      </div>
+      <div class="diagram-card">
+        <svg viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="10" width="300" height="200" fill="#f4f2ee" stroke="#1a1714" stroke-width="1.5"/>
+          <rect x="80" y="120" width="160" height="80" fill="#5c564d" stroke="#1a1714" stroke-width="1"/>
+          <text x="135" y="166" font-family="DM Sans" font-size="8" font-weight="700" fill="#faf9f7">DESK</text>
+          <rect x="135" y="145" width="50" height="30" fill="#b44d1e" stroke="#1a1714" stroke-width="1"/>
+          <text x="140" y="163" font-family="DM Sans" font-size="6" fill="#faf9f7" font-weight="700">container</text>
+          <rect x="148" y="40" width="28" height="14" fill="#1d4e89" stroke="#1a1714" stroke-width="1"/>
+          <text x="130" y="36" font-family="DM Sans" font-size="6" font-weight="700" fill="#1d4e89">iPhone overhead</text>
+          <path d="M 162 54 L 162 144" stroke="#1d4e89" stroke-width="1" stroke-dasharray="2,2"/>
+          <circle cx="215" cy="60" r="16" fill="#fff" stroke="#b44d1e" stroke-width="2"/>
+          <circle cx="215" cy="60" r="10" fill="none" stroke="#b44d1e" stroke-width="2"/>
+          <text x="198" y="36" font-family="DM Sans" font-size="7" font-weight="700" fill="#b44d1e">RING LIGHT</text>
+          <path d="M 213 74 L 180 140" stroke="#b44d1e" stroke-width="1" stroke-dasharray="3,3"/>
+          <rect x="40" y="110" width="26" height="40" fill="#fef3c7" stroke="#92400e" stroke-width="1.5"/>
+          <text x="22" y="104" font-family="DM Sans" font-size="7" font-weight="700" fill="#92400e">AMARAN</text>
+          <text x="22" y="164" font-family="DM Sans" font-size="7" fill="#92400e">ambient</text>
+        </svg>
+        <div class="dc-label">Setup 2 · overhead desk</div>
+        <div class="dc-note">iPhone overhead on ARKON Pro Stand. Ring light above-right of the desk, pointed down at the container. Amaran camera-left as soft ambient.</div>
+      </div>
+    </div>
+
+    <h3>Step by step · setup 1 (POV kitchen)</h3>
+    <ol class="prose">
+      <li><strong>Put the neck mount on Kaja first.</strong> Adjust strap so the iPhone sits horizontal at mid-sternum height, roughly 20cm below her chin. Lock the ball joint once level.</li>
+      <li><strong>Pre-run the action.</strong> Kaja opens the container, puts it in the microwave, closes the door, presses start. James watches the live preview on a second phone over AirDrop Mirror (if unavailable, watch the iPhone's flipped-selfie screen when possible). Correct any head-tilt so the frame stays level.</li>
+      <li><strong>Rig the ring light.</strong> Clamp to counter edge camera-right (from Kaja's POV, upper-right of her frame). Angle down 45°, 5600K, 40% brightness.</li>
+      <li><strong>Set the Amaran + Dome III</strong> aimed at the back wall, 2m from Kaja, 5600K, 30%. No direct shot at Kaja.</li>
+      <li><strong>Kill overhead kitchen lights.</strong> Always.</li>
+      <li><strong>One dry run.</strong> Kaja performs the full 5-beat action silently, start to finish, without rolling. This trains her hands so the real take is fluid.</li>
+    </ol>
+
+    <h3>Step by step · setup 2 (overhead desk)</h3>
+    <ol class="prose">
+      <li><strong>Take the iPhone off the neck mount.</strong> Remove the mount. Take a 30-second break for Kaja.</li>
+      <li><strong>Set up the ARKON Pro Stand</strong> next to the desk. Extend the arm so the iPhone sits centred above the desk, roughly 70 to 90cm above the container. Phone in portrait (not landscape) pointing straight down.</li>
+      <li><strong>Preview and level the camera.</strong> The container should be dead-centre. Any tilt and the shot looks wrong. Most ARKON arms have a small bubble or you can eyeball a straight line against the desk edge.</li>
+      <li><strong>Move the ring light</strong> to camera-right of the desk, above and slightly forward. 5600K, 40%. Hot-spot check: move it until reflection on the container lid is soft, not mirror.</li>
+      <li><strong>Move the Amaran</strong> to camera-left of the desk, 2m back, pointed at the area beyond the container (not at it). 30%.</li>
+      <li><strong>Lock focus and exposure on the container</strong> in the iPhone camera preview before rolling.</li>
+    </ol>
+    <div class="plain"><strong>Rule of thumb</strong>If the ring light is reflected as a bright ring on the container lid, it's too close or too direct. Move it back 20cm and angle slightly off-axis until the reflection disappears.</div>
+  </div>
+
+  <div class="section" id="s5">
+    <div class="section-head">
+      <span class="sh-tag">05 · Audio</span>
+      <h2>Foley-only audio</h2>
+      <p class="sh-sub">Every sound the viewer hears comes from the action. No voice. No music (yet). The phone's onboard mic is doing all the work.</p>
+    </div>
+    <ol class="prose">
+      <li><strong>No DJI mic on this shoot.</strong> Pack it away. The chest mount pressed against the TX box creates body rumble.</li>
+      <li><strong>Kitchen must be silent</strong> except for the action. Fridge unplugged for 10 minutes. Boiler off. Any fan off.</li>
+      <li><strong>James cannot speak</strong> during any take. Not even a whispered "okay". The onboard mic will catch him.</li>
+      <li><strong>Kaja's feet matter.</strong> Socks only, no hard-soled shoes. A footfall across a wooden floor will wreck the take.</li>
+      <li><strong>Deliberately sound the action.</strong> The click of the microwave button. The plastic peel of the lid. The soft thud of the fork going down. Let them happen cleanly, slightly slower than real life.</li>
+      <li><strong>Between each action beat, hold for 1 second.</strong> Gives the editor a clean gap to trim to.</li>
+      <li><strong>Playback check on AirPods after every take.</strong> Listen for breath, clothing rustle, or anything that isn't the action. If you hear it, re-take.</li>
+    </ol>
+    <div class="plain"><strong>Back-up plan</strong>If the kitchen cannot be made silent (flatmate, street noise), record the action silently and add foley in post from free libraries. Keep the real foley as a reference track for timing.</div>
+  </div>
+
+  <div class="section" id="s6">
+    <div class="section-head">
+      <span class="sh-tag">06 · Hands, wardrobe and set</span>
+      <h2>Hands, wardrobe and set dressing</h2>
+      <p class="sh-sub">Kaja's hands are the face of this ad. Everything they touch needs to look clean and real.</p>
+    </div>
+    <div class="dodont">
+      <div class="dodont-block dodont-do">
+        <h5>Do</h5>
+        <ul>
+          <li>Clean, trimmed nails. No polish, or plain single-colour only (nude, cream).</li>
+          <li>Hands recently moisturised — dry skin on camera looks dusty</li>
+          <li>Sleeves that end at wrist or are pushed to forearm. Plain colour, no cuffs.</li>
+          <li>A real wooden cutting board, not a stylised prop board</li>
+          <li>A clean, dry, neutral-colour tea towel placed off-frame but within reach</li>
+          <li>Utensils are normal kitchen cutlery, not stylised food-photography silverware</li>
+          <li>Dark or neutral desk surface for the overhead pass (contrast with the container)</li>
+        </ul>
+      </div>
+      <div class="dodont-block dodont-dont">
+        <h5>Don't</h5>
+        <ul>
+          <li>Chipped polish, paint, food stains, or plasters</li>
+          <li>Loose bracelets, rings on every finger, or a watch with a bright face</li>
+          <li>Baggy sleeves that swing into frame</li>
+          <li>Shiny, reflective, or patterned desk surface that reflects the ring light</li>
+          <li>Wet hands that leave water marks on the container or desk</li>
+          <li>A fork with food residue already on it — pre-clean everything</li>
+          <li>Paper towel, kitchen roll, or plastic wrap visible in the frame</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="s7">
+    <div class="section-head">
+      <span class="sh-tag">07 · Beat sheet</span>
+      <h2>The beat sheet, no script</h2>
+      <p class="sh-sub">There is no dialogue. There are beats. Kaja performs the same beats in both setups, different angles.</p>
+    </div>
+    <div class="script">
+      <div class="script-line">
+        <div class="t">Beat 1</div>
+        <div class="l">Hands enter frame. Container placed on surface.
+          <span class="note">Slow placement. Both hands holding the container. Don't slide it, set it down. The thud is usable.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">Beat 2</div>
+        <div class="l">Lid peeled back.
+          <span class="note">One single peel motion, diagonal from one corner. Hold the lid up at the end so it's readable in frame for half a second.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">Beat 3</div>
+        <div class="l">Container into microwave, door closed, button pressed, door reopened.
+          <span class="note">SETUP 1 ONLY. Do each sub-action with a full visible beat between them. Don't rush. The button-press is the audio payoff.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">Beat 4</div>
+        <div class="l">Lid lifted. Steam rises.
+          <span class="note">This is the money beat of the ad. Hold the lid up for a full 2 seconds. Steam needs a clean dark background to read. Pause before the next beat.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">Beat 5</div>
+        <div class="l">Fork picked up, one cut into the food, one bite prep.
+          <span class="note">Close-up on the food surface. If there's a glossy sauce, angle the fork so it catches the ring light briefly.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">Beat 6</div>
+        <div class="l">Fork comes down. Frame holds empty for 1 second.
+          <span class="note">SETUP 2 ONLY. Final frame is the empty desk with the fork resting on the container edge. This is the landing for the end card in post.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">End</div>
+        <div class="l"><em>Text overlay in post: "90 seconds. No thinking."</em>
+          <span class="note">Added in CapCut. Syne Extra Bold. Cream on near-black. Fades in on beat 6's held frame.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="s8">
+    <div class="section-head">
+      <span class="sh-tag">08 · Shot breakdown</span>
+      <h2>Shot-by-shot</h2>
+      <p class="sh-sub">Six shots across two setups. The steam-rising macro is the hinge of the whole ad.</p>
+    </div>
+
+    <div class="shot-grid">
+
+      <div class="shot-card">
+        <div class="sc-num">1</div>
+        <div class="sc-body">
+          <h4>POV · container placement (kitchen)</h4>
+          <div class="sc-meta">
+            <span class="chip accent">Neck mount</span>
+            <span class="chip">9:16</span>
+            <span class="chip">4K 30fps</span>
+            <span class="chip">3 takes</span>
+          </div>
+          <div class="sc-grid">
+            <div><strong>Kit</strong>iPhone 17 Pro Max on SmallRig Magnetic Neck Mount</div>
+            <div><strong>On camera</strong>Kaja's hands and container</div>
+            <div><strong>Behind camera</strong>James watches live preview, calls quietly-via-sign if anything is off</div>
+            <div><strong>Lighting</strong>Ring light camera-upper-right + Amaran back wall</div>
+            <div><strong>Audio</strong>iPhone onboard. Foley.</div>
+            <div><strong>Format</strong>4K 30fps, 1x lens, locked AE/AF, WB 5600K</div>
+          </div>
+          <div class="sc-why"><strong>Why this shot</strong>Opens the ad. Establishes the first-person viewpoint immediately. "You" are doing this.</div>
+          <div class="sc-fail"><strong>Failure mode</strong>Kaja looks down too sharply and the frame tilts. Practice keeping her head level so only her eyes look down, not her neck.</div>
+        </div>
+      </div>
+
+      <div class="shot-card">
+        <div class="sc-num">2</div>
+        <div class="sc-body">
+          <h4>POV · microwave loading</h4>
+          <div class="sc-meta">
+            <span class="chip accent">Neck mount</span>
+            <span class="chip">9:16</span>
+            <span class="chip">4K 30fps</span>
+            <span class="chip">3 takes</span>
+          </div>
+          <div class="sc-grid">
+            <div><strong>Kit</strong>Same neck mount rig</div>
+            <div><strong>On camera</strong>Kaja's hands, microwave interior</div>
+            <div><strong>Action</strong>Container placed inside, door closed, button pressed. Step back. Door reopened at the microwave beep.</div>
+            <div><strong>Audio</strong>Microwave door thunk + beep. Usable as-is.</div>
+          </div>
+          <div class="sc-why"><strong>Why this shot</strong>The sound of the microwave is one of the most familiar audio cues in ready-meal content. The viewer recognises it before they've thought about it.</div>
+          <div class="sc-fail"><strong>Failure mode</strong>Kaja's hands shake slightly as she presses the button because the neck mount is unfamiliar. Take 2 is always cleaner. Plan for 3.</div>
+        </div>
+      </div>
+
+      <div class="shot-card">
+        <div class="sc-num">3</div>
+        <div class="sc-body">
+          <h4>POV · lid lift and steam macro</h4>
+          <div class="sc-meta">
+            <span class="chip accent">Neck mount</span>
+            <span class="chip blue">Hero macro</span>
+            <span class="chip">3 takes + 1 back-up</span>
+          </div>
+          <div class="sc-grid">
+            <div><strong>Kit</strong>Same neck mount rig. Consider a dark cloth laid behind the container to make steam readable.</div>
+            <div><strong>On camera</strong>Kaja's hand on lid, steam rising from meal</div>
+            <div><strong>Action</strong>Lid lifted single motion, held high for 2 full seconds. Steam needs time to rise.</div>
+            <div><strong>Audio</strong>Plastic peel only. No voice.</div>
+          </div>
+          <div class="sc-why"><strong>Why this shot</strong>THE hero beat. Sells the "hot, ready, real food" proposition in one silent frame. Editor will slow this beat to 75% for impact.</div>
+          <div class="sc-fail"><strong>Failure mode</strong>Background is too bright and steam disappears. Place a dark cloth, board, or apron just behind the container so steam has contrast to rise against.</div>
+        </div>
+      </div>
+
+      <div class="shot-card">
+        <div class="sc-num">4</div>
+        <div class="sc-body">
+          <h4>Overhead · container lands on desk</h4>
+          <div class="sc-meta">
+            <span class="chip accent">ARKON Pro Stand</span>
+            <span class="chip">9:16</span>
+            <span class="chip">4K 60fps</span>
+            <span class="chip">3 takes</span>
+          </div>
+          <div class="sc-grid">
+            <div><strong>Kit</strong>iPhone 17 Pro Max on ARKON Pro Stand, 80cm above desk</div>
+            <div><strong>On camera</strong>Desk, container placed centre, hands entering from L/R edges</div>
+            <div><strong>Action</strong>Both hands place the heated container dead-centre. Hands retreat.</div>
+            <div><strong>Audio</strong>Thud of container on desk, good foley.</div>
+          </div>
+          <div class="sc-why"><strong>Why this shot</strong>Pivot from kitchen to desk. Signals "meal is ready, let's eat". The overhead is visually distinct from the POV so the cut feels deliberate.</div>
+          <div class="sc-fail"><strong>Failure mode</strong>Container lands off-centre. Chalk-mark the exact spot on the desk for consistent placement across takes.</div>
+        </div>
+      </div>
+
+      <div class="shot-card">
+        <div class="sc-num">5</div>
+        <div class="sc-body">
+          <h4>Overhead · lid peel + fork pickup</h4>
+          <div class="sc-meta">
+            <span class="chip accent">ARKON Pro Stand</span>
+            <span class="chip">9:16</span>
+            <span class="chip">4K 60fps</span>
+            <span class="chip">3 takes</span>
+          </div>
+          <div class="sc-grid">
+            <div><strong>Kit</strong>Same overhead rig</div>
+            <div><strong>On camera</strong>Lid peel, hand entering from right with fork</div>
+            <div><strong>Action</strong>Left hand peels lid from far corner. Lid is placed off-frame. Right hand picks up fork, enters frame.</div>
+            <div><strong>Audio</strong>Lid peel + cutlery pickup foley.</div>
+          </div>
+          <div class="sc-why"><strong>Why this shot</strong>Shows the food itself. This is the first reveal of the actual meal in the ad — the editor might use this as the 0:08 moment.</div>
+          <div class="sc-fail"><strong>Failure mode</strong>Lid casts a shadow across the food as it peels. Have Kaja lift the lid up and away (not sideways) so the shadow clears quickly.</div>
+        </div>
+      </div>
+
+      <div class="shot-card">
+        <div class="sc-num">6</div>
+        <div class="sc-body">
+          <h4>Overhead · bite + rest frame</h4>
+          <div class="sc-meta">
+            <span class="chip accent">ARKON Pro Stand</span>
+            <span class="chip">9:16</span>
+            <span class="chip">4K 60fps</span>
+            <span class="chip">3 takes</span>
+          </div>
+          <div class="sc-grid">
+            <div><strong>Kit</strong>Same overhead rig</div>
+            <div><strong>On camera</strong>Fork cutting into food, bite taken off-frame, fork rested back on container edge</div>
+            <div><strong>Action</strong>One cut into food, lift off-frame (imply bite), return fork to rest position. Hold empty frame 1s.</div>
+            <div><strong>Audio</strong>Cutlery on ceramic/plastic. Final hold is silent.</div>
+          </div>
+          <div class="sc-why"><strong>Why this shot</strong>The rest frame is the landing point for the end card in post. Text overlay "90 seconds. No thinking." fades in on this beat.</div>
+          <div class="sc-fail"><strong>Failure mode</strong>Fork returns to wrong angle, different from previous takes, and the cut from take 3 to take 1 becomes impossible. Mark the rest angle with a post-it on the desk edge.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="section" id="s9">
+    <div class="section-head">
+      <span class="sh-tag">09 · Timing plan</span>
+      <h2>Minute-by-minute on the day</h2>
+      <p class="sh-sub">60 minutes from "ready to start C3" to wrap. Setup 1 to setup 2 swap-over is the hardest moment, plan for it.</p>
+    </div>
+    <div class="timing">
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">min 0 to 10</span>Setup 1 rig</div>
+        <div class="t-body">Fit neck mount on Kaja, level the iPhone. Clamp ring light to counter camera-right. Position Amaran on back wall. Silence kitchen — unplug fridge, boiler off. Dry-run the 5-beat action once without recording.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">min 10 to 25</span>Setup 1 shoot</div>
+        <div class="t-body">Shoot shots 1 to 3. Three takes per shot. Playback check between each for head-tilt, audio, and focus. The lid-lift macro (shot 3) gets an extra back-up take — it's the hero beat.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">min 25 to 35</span>Swap to setup 2</div>
+        <div class="t-body">Remove neck mount. Kaja breaks for water. James dismantles ring light from kitchen clamp, rigs ARKON Pro Stand overhead at the desk. Moves Amaran to desk-left. Re-clamps ring light to desk-side. Levels the overhead phone. Pre-rolls and confirms the desk is centred and the container spot is marked.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">min 35 to 50</span>Setup 2 shoot</div>
+        <div class="t-body">Shoot shots 4 to 6. Three takes per shot. Playback check for hand-edge symmetry and rest-frame consistency. Reheat the container between takes if needed — only beat 4 onwards uses "hot" food.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">min 50 to 60</span>Review + wrap</div>
+        <div class="t-body">AirDrop all files off the iPhone. Label C3-POV-N, C3-OH-N (where N is the shot number). Confirm audio is clean. Confirm the steam beat is in the can. Take down lights, pack kit.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="s10">
+    <div class="section-head">
+      <span class="sh-tag">10 · Quality gates</span>
+      <h2>You're done when...</h2>
+      <p class="sh-sub">Do not wrap until all of these are ticked.</p>
+    </div>
+    <div class="qgate">
+      <h5>C3 sign-off checklist</h5>
+      <ul>
+        <li>3 usable POV takes for each of shots 1, 2, 3</li>
+        <li>3 usable overhead takes for each of shots 4, 5, 6</li>
+        <li>Steam is visibly readable on at least one take of shot 3 (the lid-lift macro)</li>
+        <li>Container lands on the same chalked spot for all overhead takes</li>
+        <li>No voiceovers, footsteps, fridge hum, or external noise audible on playback</li>
+        <li>Kaja's hands are clean, moisturised, and identical across all takes (no visible food smudge between takes)</li>
+        <li>Files labelled C3-POV-1 to C3-POV-3 and C3-OH-4 to C3-OH-6, AirDropped off the phone</li>
+        <li>Overhead iPhone is confirmed level — container is a clean rectangle, not a trapezoid, in the final footage</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section" id="s11">
+    <div class="section-head">
+      <span class="sh-tag">11 · Common mistakes + rescues</span>
+      <h2>What usually goes wrong and how to fix it fast</h2>
+    </div>
+
+    <div class="mistake">
+      <h5>Neck mount tilts as Kaja moves</h5>
+      <p>Frame drifts from level to leaning across the take. Especially on longer actions like the microwave loading.</p>
+      <div class="rescue"><strong>Rescue</strong>Re-level the ball joint between every take, not every shot. Kaja consciously holds her chest square and moves only her arms, not her torso. If it persists, strap the mount tighter and add a shim of folded cloth under the base.</div>
+    </div>
+
+    <div class="mistake">
+      <h5>Steam doesn't read on camera</h5>
+      <p>You can see it in the room but it disappears in the frame.</p>
+      <div class="rescue"><strong>Rescue</strong>Three fixes: (1) place a dark cloth/board behind the container so steam has contrast, (2) wait until the meal is piping hot — re-microwave for 30s if needed, (3) lower the ring light slightly so it backlights the steam rather than washing it out.</div>
+    </div>
+
+    <div class="mistake">
+      <h5>Overhead iPhone is not truly level</h5>
+      <p>Container looks like a trapezoid in the frame. Editor can see the skew immediately.</p>
+      <div class="rescue"><strong>Rescue</strong>Before rolling, place a square piece of paper on the desk and check that all 4 edges are parallel to the iPhone screen edges in preview. Adjust ARKON ball joint until they are. Most ARKON heads have a locking dial — tighten it after levelling.</div>
+    </div>
+
+    <div class="mistake">
+      <h5>Hot reflection of the ring light on the container lid</h5>
+      <p>A bright circular highlight dominates the frame. Un-fixable in post without cropping.</p>
+      <div class="rescue"><strong>Rescue</strong>Move the ring light further away (pull back 30cm) and angle it off-axis by 15°. Test in preview. The reflection should soften into a diffuse glow, not a mirror.</div>
+    </div>
+
+    <div class="mistake">
+      <h5>Audio picks up breathing or fabric rustle</h5>
+      <p>A low "ch-ch" or "hhh" sound under the foley. Wrecks the silence.</p>
+      <div class="rescue"><strong>Rescue</strong>Neck mount sits too high against Kaja's shirt collar. Lower the strap by a few cm so the iPhone isn't touching fabric. Kaja breathes through her nose between beats, not her mouth.</div>
+    </div>
+
+    <div class="mistake">
+      <h5>Fork rest-frame angle is different on every take</h5>
+      <p>Editor can't match cuts at the end of the ad.</p>
+      <div class="rescue"><strong>Rescue</strong>Put a small dot of masking tape on the desk where the fork handle should rest. Kaja drops the fork to the mark every time. Removes guesswork.</div>
+    </div>
+  </div>
+
+  <div class="section" id="s12">
+    <div class="section-head">
+      <span class="sh-tag">12 · Post-production handoff</span>
+      <h2>What the editor needs and what not to add</h2>
+    </div>
+    <table class="kit-table">
+      <thead><tr><th>Item</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Files</td><td>Camera originals .mov. Labelled C3-POV-1 to C3-POV-3 (shots 1 to 3) and C3-OH-4 to C3-OH-6 (shots 4 to 6). Multiple takes named -takeN.</td></tr>
+        <tr><td>Edit tool</td><td>CapCut. Simple cut-and-foley edit.</td></tr>
+        <tr><td>Cut structure</td><td>POV → overhead → POV steam macro → overhead lid peel → overhead bite → rest frame for end card. Each beat 2 to 3 seconds. Total 15 to 20 seconds.</td></tr>
+        <tr><td>Hero beat</td><td>Shot 3 (lid lift + steam). Slow this to 75% for 2 seconds. Only slow it once. If you slow everything the ad feels stoned.</td></tr>
+        <tr><td>Music</td><td>Low-BPM organic beat bed (licensed or royalty-free). Comes in at 0:03. Fades out on the rest frame.</td></tr>
+        <tr><td>Foley</td><td>Keep all on-set foley. Augment with free foley (microwave beep, fork-on-ceramic) only if on-set audio has a dropout.</td></tr>
+        <tr><td>Text overlay</td><td>Only "90 seconds. No thinking." on the rest frame. Syne Extra Bold. Cream on near-black. No other text anywhere.</td></tr>
+        <tr><td>Captions</td><td>None. There is no dialogue. Do not add explainer captions.</td></tr>
+        <tr><td>Length</td><td>15 to 20 seconds. Not a second longer. This is a quick-hit format.</td></tr>
+        <tr><td>Exports</td><td>9:16 master 1080x1920 H.264 10 Mbps. 1:1 square 1080x1080 variant for feed.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section" id="s13">
+    <div class="section-head">
+      <span class="sh-tag">13 · Self-check</span>
+      <h2>Quick self-check</h2>
+      <p class="sh-sub">Five questions. Try them before opening the answers.</p>
+    </div>
+    <div class="quiz">
+      <h5>Before you shoot, can you answer these?</h5>
+
+      <div class="quiz-q">
+        <div class="q">Why don't we use the DJI Mic 2 on this shoot?</div>
+        <details><summary>Show answer</summary>
+          <div class="a"><strong>Answer:</strong> The chest mount presses the TX box against Kaja's body and introduces rumble, fabric rustle, and breath. The onboard iPhone mic, combined with a silent kitchen, produces cleaner foley for this format.</div>
+        </details>
+      </div>
+
+      <div class="quiz-q">
+        <div class="q">Which shot is the "hero beat" and why?</div>
+        <details><summary>Show answer</summary>
+          <div class="a"><strong>Answer:</strong> Shot 3, the POV lid-lift with steam rising. It sells "hot, ready, real food" in one silent visual and is the moment the ad emotionally pivots from process to payoff. The editor will slow this one beat to 75% for impact.</div>
+        </details>
+      </div>
+
+      <div class="quiz-q">
+        <div class="q">How do you know the overhead iPhone is truly level before rolling shot 4?</div>
+        <details><summary>Show answer</summary>
+          <div class="a"><strong>Answer:</strong> Place a square piece of paper on the desk. Its four edges should be parallel to the iPhone screen edges in preview. If they're not, adjust the ARKON ball joint until they are and lock it. A trapezoid frame is unfixable in post.</div>
+        </details>
+      </div>
+
+      <div class="quiz-q">
+        <div class="q">Why is the container placement marked with chalk on the desk?</div>
+        <details><summary>Show answer</summary>
+          <div class="a"><strong>Answer:</strong> So the container lands in the same spot on every take. If it drifts, the editor can't match-cut between takes and the cut feels like a mistake. Same reason the fork rest-position gets a masking-tape mark.</div>
+        </details>
+      </div>
+
+      <div class="quiz-q">
+        <div class="q">Steam isn't reading on camera in shot 3. Give two fixes.</div>
+        <details><summary>Show answer</summary>
+          <div class="a"><strong>Answer:</strong> (1) Place a dark cloth or board behind the container so steam has contrast to rise against. (2) Re-heat the meal until piping hot — steam needs real heat. Third option: lower the ring light slightly so it backlights the steam instead of washing it.</div>
+        </details>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="foot-nav no-print">
+    <a href="/training-pack-c2.html" class="btn">← Previous module: C2 · James founder talking head</a>
+    <a href="/training-pack-c4.html" class="btn btn-primary">Next module: C4 · Offer-led static frame →</a>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Training Pack · C2 · James founder talking head / Chefly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf9f7;--surface:#fff;--surface-alt:#f4f2ee;--surface-warm:#f9f5f0;
+  --ink:#1a1714;--ink-2:#5c564d;--ink-3:#8a8279;--ink-4:#b0a99e;
+  --accent:#b44d1e;--accent-light:#f4e6dc;--accent-dark:#8a3710;
+  --green:#2d6a4f;--green-light:#d8f3dc;
+  --blue:#1d4e89;--blue-light:#d0e2f4;
+  --amber:#92400e;--amber-light:#fef3c7;
+  --red:#991b1b;--red-light:#fee2e2;
+  --border:#e8e4de;--border-light:#f0ece6;
+  --radius:4px;--radius-lg:6px;
+  --shadow-sm:0 1px 2px rgba(26,23,20,.05);
+  --font-display:'Fraunces',Georgia,serif;--font-body:'DM Sans',system-ui,sans-serif;
+}
+html{font-size:14px;scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4,h5{font-family:var(--font-display);font-weight:700;line-height:1.25}
+a{color:var(--accent-dark);text-decoration:none}
+a:hover{text-decoration:underline}
+.page{max-width:1040px;margin:0 auto;padding:0 clamp(1rem,3vw,2rem) 4rem}
+
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:.9rem 0;border-bottom:1px solid var(--border);gap:.5rem;flex-wrap:wrap}
+.topbar-brand{font-family:var(--font-display);font-size:.9rem;font-weight:700;color:var(--accent-dark)}
+.topbar-actions{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+.btn{padding:.4rem .9rem;font-family:var(--font-body);font-size:.72rem;font-weight:600;border-radius:var(--radius);cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;border:1.5px solid var(--border);background:var(--surface);color:var(--ink-2)}
+.btn:hover{border-color:var(--ink-3);color:var(--ink)}
+.btn-primary{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark);text-decoration:none}
+
+.hero{padding:clamp(2rem,5vw,3.5rem) 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem}
+.eyebrow{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent-dark);margin-bottom:.7rem}
+.hero h1{font-size:clamp(1.7rem,4vw,2.4rem);font-weight:800;letter-spacing:-.025em;margin-bottom:.5rem}
+.hero-sub{font-size:.95rem;color:var(--ink-2);max-width:680px;line-height:1.7;margin-bottom:1rem}
+.hero-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem}
+.chip{font-size:.68rem;font-weight:600;padding:.3rem .7rem;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--ink-2)}
+.chip.accent{background:var(--accent-light);border-color:var(--accent);color:var(--accent-dark)}
+.chip.green{background:var(--green-light);border-color:var(--green);color:var(--green)}
+.chip.blue{background:var(--blue-light);border-color:var(--blue);color:var(--blue)}
+
+.module-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-bottom:2.5rem}
+.mm-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem}
+.mm-card h3{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.7rem}
+.mm-card ul{list-style:none;padding:0;margin:0}
+.mm-card li{font-size:.82rem;color:var(--ink);line-height:1.55;padding:.25rem 0;border-bottom:1px dotted var(--border)}
+.mm-card li:last-child{border-bottom:none}
+.mm-card li::before{content:'→  ';color:var(--accent);font-weight:700}
+
+.toc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.3rem;margin-bottom:2.5rem}
+.toc-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-2);margin-bottom:.7rem}
+.toc ol{padding-left:1.2rem;font-size:.86rem;line-height:1.9;columns:2;column-gap:1.5rem}
+@media (max-width:640px){.toc ol{columns:1}}
+.toc ol li{color:var(--ink-2)}
+.toc ol li a{font-weight:500}
+
+.section{margin-bottom:3rem;scroll-margin-top:1rem}
+.section-head{border-bottom:2px solid var(--ink);padding-bottom:.6rem;margin-bottom:1.3rem}
+.section-head .sh-tag{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent-dark);margin-bottom:.25rem;display:block}
+.section-head h2{font-size:clamp(1.35rem,3vw,1.8rem);font-weight:800;letter-spacing:-.02em;margin:0}
+.section-head .sh-sub{font-size:.85rem;color:var(--ink-2);margin-top:.4rem;max-width:620px}
+
+.prose p{font-size:.9rem;color:var(--ink-2);margin-bottom:.9rem;line-height:1.7}
+.prose p strong{color:var(--ink)}
+.prose ul,.prose ol{padding-left:1.3rem;margin-bottom:1rem}
+.prose li{font-size:.88rem;color:var(--ink-2);margin-bottom:.35rem;line-height:1.65}
+.prose li strong{color:var(--ink)}
+.prose h3{font-size:1.05rem;font-weight:700;margin:1.8rem 0 .6rem;color:var(--ink)}
+
+.kit-table{width:100%;border-collapse:collapse;border:1px solid var(--border);font-size:.82rem;margin-bottom:1rem}
+.kit-table th{background:var(--ink);color:var(--bg);font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.55rem .65rem;text-align:left}
+.kit-table td{padding:.6rem .65rem;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5}
+.kit-table tr:last-child td{border-bottom:none}
+.kit-table tr:nth-child(even) td{background:var(--surface-alt)}
+.kit-table td:first-child{font-weight:600;color:var(--ink);min-width:150px}
+.kit-table td:nth-child(2){color:var(--ink-2)}
+
+.diagram-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin:1.2rem 0}
+.diagram-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem;text-align:center}
+.diagram-card svg{max-width:100%;height:auto;display:block;margin:0 auto .6rem}
+.diagram-card .dc-label{font-size:.82rem;font-weight:700;color:var(--ink);margin-bottom:.2rem;font-family:var(--font-display)}
+.diagram-card .dc-note{font-size:.72rem;color:var(--ink-3);line-height:1.5}
+
+.shot-grid{display:grid;grid-template-columns:1fr;gap:.9rem;margin-bottom:1.2rem}
+.shot-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem;display:grid;grid-template-columns:60px 1fr;gap:1rem}
+.shot-card .sc-num{font-family:var(--font-display);font-size:1.8rem;font-weight:800;color:var(--accent);line-height:1}
+.shot-card .sc-body h4{font-size:1rem;font-weight:700;color:var(--ink);margin-bottom:.35rem}
+.shot-card .sc-body .sc-meta{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.6rem}
+.shot-card .sc-body .sc-meta .chip{font-size:.64rem;padding:.15rem .5rem}
+.shot-card .sc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.5rem .9rem;font-size:.78rem;color:var(--ink-2);margin-bottom:.6rem}
+.shot-card .sc-grid strong{display:block;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:.1rem}
+.shot-card .sc-why{background:var(--surface-warm);border-left:3px solid var(--accent);padding:.55rem .8rem;border-radius:0 var(--radius) var(--radius) 0;font-size:.8rem;color:var(--ink);line-height:1.55;margin-bottom:.5rem}
+.shot-card .sc-why strong{color:var(--accent-dark);display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.15rem;font-weight:700}
+.shot-card .sc-fail{background:var(--red-light);border-left:3px solid var(--red);padding:.5rem .8rem;border-radius:0 var(--radius) var(--radius) 0;font-size:.78rem;color:var(--ink);line-height:1.55}
+.shot-card .sc-fail strong{color:var(--red);display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.15rem;font-weight:700}
+
+.timing{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1rem}
+.timing-row{display:grid;grid-template-columns:110px 1fr;gap:1rem;padding:.8rem 1rem;border-bottom:1px solid var(--border)}
+.timing-row:last-child{border-bottom:none}
+.timing-row:nth-child(even){background:var(--surface-alt)}
+.timing-row .t-min{font-family:var(--font-display);font-weight:700;color:var(--accent);font-size:.82rem;line-height:1.3}
+.timing-row .t-min .t-label{display:block;font-family:var(--font-body);font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:.1rem}
+.timing-row .t-body{font-size:.84rem;color:var(--ink);line-height:1.6}
+.timing-row .t-body strong{color:var(--ink);font-weight:600}
+
+.dodont{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.dodont-block{padding:1rem 1.1rem;border-radius:var(--radius-lg);border:1px solid}
+.dodont-do{background:var(--green-light);border-color:var(--green)}
+.dodont-dont{background:var(--red-light);border-color:var(--red)}
+.dodont-block h5{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem}
+.dodont-do h5{color:var(--green)}
+.dodont-dont h5{color:var(--red)}
+.dodont-block ul{padding-left:1rem;margin:0;list-style:none}
+.dodont-block li{font-size:.82rem;color:var(--ink);margin-bottom:.3rem;padding-left:.9rem;position:relative;line-height:1.55}
+.dodont-do li::before{content:'✓';color:var(--green);font-weight:700;position:absolute;left:0}
+.dodont-dont li::before{content:'✕';color:var(--red);font-weight:700;position:absolute;left:0}
+@media (max-width:640px){.dodont{grid-template-columns:1fr}}
+
+.qgate{background:var(--surface-warm);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.2rem;margin-bottom:1rem}
+.qgate h5{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.6rem}
+.qgate ul{list-style:none;padding:0;margin:0}
+.qgate li{font-size:.86rem;padding:.3rem 0;line-height:1.55;color:var(--ink);display:flex;gap:.5rem;align-items:flex-start}
+.qgate li::before{content:'☐';color:var(--accent);font-weight:700;font-size:1rem;line-height:1.3}
+
+.mistake{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--amber);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:.9rem 1.1rem;margin-bottom:.7rem}
+.mistake h5{font-size:.82rem;font-weight:700;color:var(--amber);margin-bottom:.3rem;font-family:var(--font-display)}
+.mistake p{font-size:.82rem;color:var(--ink);line-height:1.6;margin:0}
+.mistake .rescue{margin-top:.4rem;padding-top:.4rem;border-top:1px dashed var(--border);font-size:.8rem;color:var(--ink-2)}
+.mistake .rescue strong{color:var(--green);text-transform:uppercase;letter-spacing:.08em;font-size:.62rem;display:block;margin-bottom:.15rem;font-weight:700}
+
+.script{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius-lg);padding:1.1rem 1.3rem;margin-bottom:1rem}
+.script-line{display:grid;grid-template-columns:60px 1fr;gap:1rem;padding:.6rem 0;border-bottom:1px dotted var(--border)}
+.script-line:last-child{border-bottom:none}
+.script-line .t{font-family:var(--font-display);font-weight:700;color:var(--accent);font-size:.78rem;padding-top:.1rem}
+.script-line .l{font-size:.88rem;line-height:1.6;color:var(--ink)}
+.script-line .l em{color:var(--ink-3);font-style:italic;font-size:.8rem}
+.script-line .note{display:block;margin-top:.35rem;font-size:.74rem;color:var(--ink-2);background:var(--surface-warm);padding:.35rem .6rem;border-radius:var(--radius);border-left:2px solid var(--accent-light)}
+.script-line .note::before{content:'director note · ';font-weight:700;color:var(--accent-dark);text-transform:uppercase;letter-spacing:.08em;font-size:.62rem}
+
+.quiz{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.2rem 1.3rem;margin-bottom:1rem;counter-reset:qcount}
+.quiz h5{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.8rem}
+.quiz-q{padding:.7rem 0;border-bottom:1px dotted var(--border)}
+.quiz-q:last-child{border-bottom:none}
+.quiz-q .q{font-size:.86rem;font-weight:600;color:var(--ink);margin-bottom:.4rem;line-height:1.5}
+.quiz-q .q::before{content:counter(qcount) '.  ';counter-increment:qcount;color:var(--accent);font-family:var(--font-display);font-weight:700}
+.quiz-q details summary{cursor:pointer;font-size:.76rem;color:var(--accent-dark);font-weight:600;padding:.25rem 0;user-select:none;list-style:none}
+.quiz-q details summary::-webkit-details-marker{display:none}
+.quiz-q details summary::before{content:'▸ ';transition:transform .15s}
+.quiz-q details[open] summary::before{content:'▾ '}
+.quiz-q details .a{font-size:.82rem;color:var(--ink-2);line-height:1.6;padding:.5rem .7rem;background:var(--surface-warm);border-radius:var(--radius);margin-top:.3rem}
+.quiz-q details .a strong{color:var(--ink)}
+
+.plain{background:var(--accent-light);border-left:4px solid var(--accent);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:.9rem 1.1rem;margin:1rem 0;font-size:.86rem;color:var(--ink);line-height:1.65}
+.plain strong{color:var(--accent-dark);display:block;font-size:.64rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem;font-weight:700}
+
+.foot-nav{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.foot-nav a{font-size:.78rem}
+
+@page{size:A4 portrait;margin:14mm 16mm}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  html{font-size:10px}
+  .topbar,.no-print,.foot-nav{display:none!important}
+  .shot-card,.timing,.kit-table,.diagram-card,.qgate,.quiz,.mistake{break-inside:avoid;page-break-inside:avoid}
+  .section{page-break-before:auto}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- TOPBAR -->
+  <div class="topbar no-print">
+    <div class="topbar-brand">Chefly · Training Pack · C2</div>
+    <div class="topbar-actions">
+      <a href="/training-pack-c1.html" class="btn">← C1</a>
+      <a href="/internal-shoot-pack.html" class="btn">Shoot pack</a>
+      <a href="/training-companion.html" class="btn">Training companion</a>
+      <a href="/training-course.html" class="btn">Take the course</a>
+      <a href="/training-pack-c3.html" class="btn btn-primary">Next: C3 →</a>
+      <button class="btn" onclick="window.print()">Print</button>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="eyebrow">training pack · c2 · v1.0 · 19 apr 2026 · for james (lead + on cam) + kaja (behind cam)</div>
+    <h1>C2 · James founder talking head</h1>
+    <p class="hero-sub">Two cameras rolling, one honest founder monologue. A longer-form piece where James tells his own story in his own voice, with B-cam coverage ready to cut to. This pack walks the dual-camera setup, clap-sync, lighting, and the 42-second script beat by beat.</p>
+    <div class="hero-chips">
+      <span class="chip accent">Priority 2</span>
+      <span class="chip">Dialogue-led</span>
+      <span class="chip">2 cameras · simultaneous</span>
+      <span class="chip">Tripod A + clamp B</span>
+      <span class="chip">30 to 45s final</span>
+      <span class="chip">~60 min on set</span>
+      <span class="chip green">Difficulty: medium</span>
+    </div>
+  </div>
+
+  <!-- MODULE META -->
+  <div class="module-meta">
+    <div class="mm-card">
+      <h3>Learning goals</h3>
+      <ul>
+        <li>Set two iPhones rolling simultaneously and keep them in sync with a clap</li>
+        <li>Position a 3/4 B-cam so the editor has a genuinely different angle to cut to</li>
+        <li>Light a talking head with a top-key softbox so it reads like window light, not a studio</li>
+        <li>Route DJI Mic 2 to a single camera on purpose (A-cam) and plan around B-cam having no mic</li>
+        <li>Coach James out of "founder voice" and into "coffee chat" voice</li>
+      </ul>
+    </div>
+    <div class="mm-card">
+      <h3>Pre-requisites</h3>
+      <ul>
+        <li>C1 complete and wrapped (same audio kit is re-used here)</li>
+        <li>Read Training Companion Parts 1, 2, 3 and Part 5 §C2</li>
+        <li>Both iPhones charged above 80%. Both tripods/clamps physically on the set.</li>
+        <li>James has rehearsed the 42s script aloud once, not memorised</li>
+      </ul>
+    </div>
+    <div class="mm-card">
+      <h3>What you'll deliver</h3>
+      <ul>
+        <li>3 clean A-cam takes of the 42s monologue (tripod, dead-on eye level, mic'd)</li>
+        <li>3 clean B-cam takes of the same script (clamp, 3/4 to James's right, silent)</li>
+        <li>4 silent B-roll beats: laptop + container, hands on the box, microwave beep, eating at desk</li>
+        <li>A clap at the head of every simultaneous take so the editor can sync A and B in one click</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">What's in this pack</div>
+    <ol>
+      <li><a href="#s1">01 · Concept brief and why this format wins</a></li>
+      <li><a href="#s2">02 · Kit breakdown (two cameras, one mic)</a></li>
+      <li><a href="#s3">03 · Framing, camera settings, and crop</a></li>
+      <li><a href="#s4">04 · Lighting setup step by step</a></li>
+      <li><a href="#s5">05 · Audio + clap-sync procedure</a></li>
+      <li><a href="#s6">06 · Wardrobe and set dressing</a></li>
+      <li><a href="#s7">07 · The 42s script, annotated</a></li>
+      <li><a href="#s8">08 · Shot-by-shot breakdown</a></li>
+      <li><a href="#s9">09 · Minute-by-minute timing plan</a></li>
+      <li><a href="#s10">10 · Quality gates (you're done when...)</a></li>
+      <li><a href="#s11">11 · Common mistakes and how to rescue them</a></li>
+      <li><a href="#s12">12 · Post-production handoff</a></li>
+      <li><a href="#s13">13 · Self-check (5 questions)</a></li>
+    </ol>
+  </div>
+
+  <!-- S1 CONCEPT -->
+  <div class="section" id="s1">
+    <div class="section-head">
+      <span class="sh-tag">01 · Concept</span>
+      <h2>What we're making and why it works</h2>
+      <p class="sh-sub">The founder story carries this ad. James on camera, talking plainly. The two-camera rig is in service of the edit, not the look.</p>
+    </div>
+    <div class="prose">
+      <p>C2 is the <strong>founder talking head</strong>: 30 to 45 seconds of James speaking straight to camera about why Chefly exists and why he eats the same thing himself. It is the longest monologue we shoot all day and the one that carries the most weight on trust.</p>
+      <p>Two cameras run at the same time. <strong>A-cam</strong> is the spine: an iPhone 15 Pro Max on a tripod, dead-on eye level, microphone on James. <strong>B-cam</strong> is the cut: an iPhone 17 Pro Max clamped off to James's right shoulder at a 3/4 angle, wider, silent. Both record the whole take. One clap at the top of every take lets the editor snap them together in a single click.</p>
+      <p>The reason we shoot two cameras for this one and only this one is the length. A 42-second monologue is too long to sit on a single angle. The editor needs a second angle to cut to, and that angle has to exist in the same take (not a second take) for the line to land.</p>
+      <div class="plain"><strong>Plain-english summary</strong>James sits at his desk, two phones rolling, DJI mic on him. He claps once at the start, tells his 42-second story, holds the last look for 2 seconds, and stops both phones. Do that three times. Done.</div>
+      <h3>Reference winners this pattern came from</h3>
+      <ul>
+        <li><strong>Your Heights ad 2</strong> — founder monologue, desk setup, two-angle cut. Scored well for founder trust.</li>
+        <li><strong>Frive founder clip</strong> — same two-cam treatment, A-cam dead-on + B-cam 3/4. Their cut at 0:14 is exactly the move we're setting up for.</li>
+        <li>Both ads keep the camera still on both angles. No zoom, no push-in. The movement is in the edit, not the lens.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- S2 KIT -->
+  <div class="section" id="s2">
+    <div class="section-head">
+      <span class="sh-tag">02 · Kit</span>
+      <h2>Kit breakdown</h2>
+      <p class="sh-sub">Two cameras, one mic, one big light, one small lantern. Everything has a job. Clap-sync is the glue.</p>
+    </div>
+    <table class="kit-table">
+      <thead>
+        <tr><th>Item</th><th>Role on C2</th><th>Where / how</th><th>Common mistake</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>iPhone 15 Pro Max</td>
+          <td>A-cam · spine</td>
+          <td>On the tripod, dead-on eye level. Back camera. 4K, 30fps. DJI Mic 2 RX plugged in.</td>
+          <td>Rolling B-cam but forgetting A-cam. Always start A-cam first, always stop it last.</td>
+        </tr>
+        <tr>
+          <td>iPhone 17 Pro Max</td>
+          <td>B-cam · coverage</td>
+          <td>On the ARKON Clamp Stand, clamped to desk edge or bookcase. 3/4 to James's right (his 4 o'clock). 4K, 30fps.</td>
+          <td>Clamping it so it wobbles when anyone walks past. Test it before rolling.</td>
+        </tr>
+        <tr>
+          <td>Tripod</td>
+          <td>A-cam support</td>
+          <td>Set to James's eye-line height when he's sitting. Centre column locked, legs wide for stability.</td>
+          <td>Tripod set too low so the camera is looking up at James. Makes him look imposing. Eye level, every time.</td>
+        </tr>
+        <tr>
+          <td>ARKON Pro Clamp Stand</td>
+          <td>B-cam support</td>
+          <td>Clamped onto a desk edge or shelf at James's 4 o'clock. Arm extended 40 to 60cm toward him. Phone landscape? No, portrait.</td>
+          <td>Using the arm in landscape by default. B-cam should still be 9:16 portrait so it cuts cleanly against A-cam.</td>
+        </tr>
+        <tr>
+          <td>DJI Mic 2 · TX</td>
+          <td>James's audio</td>
+          <td>Clipped under his collar, mic bead pointing up. Transmitter in back pocket or waistband. Route to A-cam only.</td>
+          <td>Plugging RX into B-cam "for safety". Then A-cam has no audio and the edit falls apart. One mic, one cam, on purpose.</td>
+        </tr>
+        <tr>
+          <td>DJI Mic 2 · RX</td>
+          <td>Audio receiver</td>
+          <td>Plugged directly into A-cam's USB-C port. Confirm A-cam's audio input is set to the RX in iPhone settings.</td>
+          <td>Forgetting to select the RX as the audio source on A-cam. iPhone defaults back to onboard mic.</td>
+        </tr>
+        <tr>
+          <td>Amaran 200x</td>
+          <td>Top key light</td>
+          <td>Overhead, boomed from a stand or clamped high. Pointed down at 45° toward James's forehead. 5600K. Through Dome III.</td>
+          <td>Positioning it dead-overhead. That makes under-eye shadows. 45° from front-above is the sweet spot.</td>
+        </tr>
+        <tr>
+          <td>Dome III softbox</td>
+          <td>Diffuser on Amaran</td>
+          <td>Front grid fitted. Broad face pointing down-forward at James.</td>
+          <td>No front diffusion fitted, so the beam is still hard. Double-check the grid + diffusion are on.</td>
+        </tr>
+        <tr>
+          <td>Lantern 26"</td>
+          <td>Soft fill</td>
+          <td>Camera-left, at James's shoulder height, 2m away. Daylight 5600K, 10 to 15% brightness. Kills under-chin shadow.</td>
+          <td>Turning it too high. It's fill, not key. If you can tell it's on, it's too bright.</td>
+        </tr>
+        <tr>
+          <td>Laptop + container</td>
+          <td>Set dressing</td>
+          <td>Open MacBook on the desk, Chefly container placed beside or on top. Shot 3 B-roll hero.</td>
+          <td>Closed laptop. It reads like a staged prop. Open it, have a real tab loaded (spreadsheet, email, anything).</td>
+        </tr>
+        <tr>
+          <td>Chair</td>
+          <td>James's seat</td>
+          <td>Office chair, rolled back an inch so he's not leaning into the desk. Back upright.</td>
+          <td>Chair too low. James slumps. Every sentence lands flat. Raise the chair.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- S3 FRAMING -->
+  <div class="section" id="s3">
+    <div class="section-head">
+      <span class="sh-tag">03 · Framing and camera</span>
+      <h2>Framing, settings, and crop</h2>
+      <p class="sh-sub">A-cam: tight chest crop, dead-on. B-cam: wider 3/4, shows more of the desk. Both 9:16 portrait.</p>
+    </div>
+
+    <div class="diagram-row">
+      <div class="diagram-card">
+        <svg viewBox="0 0 180 320" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="4" width="172" height="312" fill="none" stroke="#1a1714" stroke-width="2"/>
+          <line x1="4" y1="108" x2="176" y2="108" stroke="#b44d1e" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="4" y1="212" x2="176" y2="212" stroke="#b44d1e" stroke-width="1" stroke-dasharray="3,3"/>
+          <circle cx="90" cy="130" r="36" fill="#f4e6dc" stroke="#1a1714" stroke-width="1.5"/>
+          <circle cx="80" cy="122" r="3" fill="#1a1714"/>
+          <circle cx="100" cy="122" r="3" fill="#1a1714"/>
+          <path d="M 78 143 Q 90 150 102 143" stroke="#1a1714" stroke-width="1.5" fill="none"/>
+          <path d="M 55 170 Q 55 200 60 240 L 120 240 Q 125 200 125 170 L 125 167 Q 108 175 90 175 Q 72 175 55 167 Z" fill="#8a8279" stroke="#1a1714" stroke-width="1.5"/>
+          <rect x="30" y="232" width="120" height="36" fill="#5c564d" stroke="#1a1714" stroke-width="1"/>
+          <text x="36" y="252" font-family="DM Sans" font-size="7" fill="#faf9f7">desk + laptop edge</text>
+          <text x="10" y="100" font-family="DM Sans" font-size="7" fill="#b44d1e" font-weight="700">EYES TOP THIRD</text>
+          <text x="10" y="20" font-family="DM Sans" font-size="7" fill="#5c564d">A-cam · 9:16 · dead-on</text>
+        </svg>
+        <div class="dc-label">A-cam · tripod, dead-on</div>
+        <div class="dc-note">iPhone 15 Pro Max on tripod. Eye level. Chest-up crop. James looks straight down the lens. This is the spine of the edit.</div>
+      </div>
+      <div class="diagram-card">
+        <svg viewBox="0 0 180 320" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="4" width="172" height="312" fill="none" stroke="#1a1714" stroke-width="2"/>
+          <line x1="4" y1="108" x2="176" y2="108" stroke="#b44d1e" stroke-width="1" stroke-dasharray="3,3"/>
+          <ellipse cx="105" cy="145" rx="28" ry="34" fill="#f4e6dc" stroke="#1a1714" stroke-width="1.5"/>
+          <circle cx="99" cy="138" r="2.5" fill="#1a1714"/>
+          <circle cx="117" cy="138" r="2.5" fill="#1a1714"/>
+          <path d="M 96 156 Q 108 162 120 156" stroke="#1a1714" stroke-width="1.5" fill="none"/>
+          <path d="M 68 180 Q 62 210 70 252 L 145 252 Q 152 220 148 190 Q 130 200 105 200 Q 85 200 68 180 Z" fill="#8a8279" stroke="#1a1714" stroke-width="1.5"/>
+          <rect x="20" y="248" width="140" height="36" fill="#5c564d" stroke="#1a1714" stroke-width="1"/>
+          <text x="26" y="268" font-family="DM Sans" font-size="7" fill="#faf9f7">desk + container visible</text>
+          <rect x="32" y="226" width="30" height="22" fill="#b44d1e" stroke="#1a1714" stroke-width="1"/>
+          <text x="36" y="240" font-family="DM Sans" font-size="6" fill="#faf9f7">container</text>
+          <text x="10" y="100" font-family="DM Sans" font-size="7" fill="#b44d1e" font-weight="700">EYES TOP THIRD</text>
+          <text x="10" y="20" font-family="DM Sans" font-size="7" fill="#5c564d">B-cam · 9:16 · 3/4 right</text>
+        </svg>
+        <div class="dc-label">B-cam · clamp, 3/4 right</div>
+        <div class="dc-note">iPhone 17 Pro Max on ARKON Clamp Stand. James's 4 o'clock. Wider than A-cam. Container visible on the desk. Silent.</div>
+      </div>
+    </div>
+
+    <h3>Camera settings · both phones</h3>
+    <table class="kit-table">
+      <thead><tr><th>Setting</th><th>A-cam (iPhone 15)</th><th>B-cam (iPhone 17)</th></tr></thead>
+      <tbody>
+        <tr><td>Mode</td><td>Video</td><td>Video</td></tr>
+        <tr><td>Resolution</td><td>4K</td><td>4K</td></tr>
+        <tr><td>Frame rate</td><td>30fps</td><td>30fps (must match)</td></tr>
+        <tr><td>Lens</td><td>1x (main)</td><td>1x (main)</td></tr>
+        <tr><td>Orientation</td><td>Portrait, 9:16</td><td>Portrait, 9:16</td></tr>
+        <tr><td>HDR Video</td><td>OFF</td><td>OFF (must match A-cam)</td></tr>
+        <tr><td>Stabilisation</td><td>ON (default)</td><td>ON (default)</td></tr>
+        <tr><td>Audio input</td><td>DJI Mic 2 RX (external, selected in Settings)</td><td>Onboard — but muted in edit. Don't rely on it.</td></tr>
+        <tr><td>Exposure lock</td><td>Long-press on James's face, lock AE/AF</td><td>Long-press on James's face, lock AE/AF</td></tr>
+        <tr><td>White balance</td><td>Auto (first take), then lock to match</td><td>Lock to match A-cam (5600K) so skin tones line up in the cut</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- S4 LIGHTING -->
+  <div class="section" id="s4">
+    <div class="section-head">
+      <span class="sh-tag">04 · Lighting</span>
+      <h2>Lighting setup, step by step</h2>
+      <p class="sh-sub">Top key + small fill. Two lights, both daylight. Treat the Amaran as an overhead skylight.</p>
+    </div>
+
+    <div class="diagram-row">
+      <div class="diagram-card">
+        <svg viewBox="0 0 320 230" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="10" width="300" height="210" fill="none" stroke="#1a1714" stroke-width="1.5"/>
+          <rect x="120" y="170" width="90" height="40" fill="#e8e4de" stroke="#1a1714" stroke-width="1"/>
+          <text x="140" y="194" font-family="DM Sans" font-size="8" font-weight="700">DESK</text>
+          <circle cx="165" cy="145" r="20" fill="#f4e6dc" stroke="#1a1714" stroke-width="1.5"/>
+          <text x="156" y="150" font-family="DM Sans" font-size="9" font-weight="700">JAMES</text>
+          <rect x="130" y="40" width="70" height="30" fill="#fef3c7" stroke="#92400e" stroke-width="1.5"/>
+          <text x="132" y="34" font-family="DM Sans" font-size="7" font-weight="700" fill="#92400e">AMARAN + DOME III</text>
+          <text x="135" y="88" font-family="DM Sans" font-size="7" fill="#92400e">top key · 45° down</text>
+          <path d="M 165 72 L 165 124" stroke="#b44d1e" stroke-width="1" stroke-dasharray="3,3"/>
+          <rect x="55" y="115" width="30" height="42" fill="#d8f3dc" stroke="#2d6a4f" stroke-width="1.5"/>
+          <text x="40" y="108" font-family="DM Sans" font-size="7" font-weight="700" fill="#2d6a4f">LANTERN 26"</text>
+          <text x="44" y="172" font-family="DM Sans" font-size="7" fill="#2d6a4f">soft fill · low</text>
+          <path d="M 85 140 L 144 145" stroke="#2d6a4f" stroke-width="1" stroke-dasharray="3,3"/>
+          <circle cx="168" cy="208" r="6" fill="#b44d1e"/>
+          <text x="156" y="226" font-family="DM Sans" font-size="7" fill="#b44d1e" font-weight="700">A-CAM (tripod)</text>
+          <rect x="225" y="150" width="8" height="16" fill="#1d4e89"/>
+          <text x="238" y="160" font-family="DM Sans" font-size="7" fill="#1d4e89" font-weight="700">B-CAM</text>
+          <text x="238" y="170" font-family="DM Sans" font-size="6" fill="#1d4e89">(clamp, 4 o'clock)</text>
+          <path d="M 230 158 L 188 148" stroke="#1d4e89" stroke-width="1" stroke-dasharray="3,3"/>
+        </svg>
+        <div class="dc-label">Top-down plan · two cams, two lights</div>
+        <div class="dc-note">Amaran overhead as top key. Lantern 26" camera-left as soft fill. A-cam on tripod dead-on. B-cam clamped at James's 4 o'clock.</div>
+      </div>
+    </div>
+
+    <h3>Step by step</h3>
+    <ol class="prose">
+      <li><strong>Place James in his chair first.</strong> Desk in front of him, laptop open, Chefly container to his left. Get him comfortable before you touch a single light.</li>
+      <li><strong>Boom the Amaran 200x overhead.</strong> Roughly 30cm in front of James's forehead and 30cm above his head. Pointed down and slightly forward at 45°.</li>
+      <li><strong>Fit the Dome III softbox</strong> with its front diffusion grid. The broad face must point down at James.</li>
+      <li><strong>Set the Amaran to 5600K (daylight) and 25 to 35% brightness.</strong> Look for soft light across James's forehead with just enough shadow under his nose to add shape.</li>
+      <li><strong>Check for raccoon eyes.</strong> If James's eye sockets are dark pits, the light is too steep. Lower the Amaran stand by 10cm or step it forward 20cm and re-check.</li>
+      <li><strong>Add the Lantern 26" as fill.</strong> Camera-left, roughly at James's shoulder height, 2m from him. Daylight 5600K, 10 to 15%. It should soften the under-chin shadow and add a second catch-light in his eyes.</li>
+      <li><strong>Kill the overhead kitchen/office lights.</strong> Tungsten ceiling lights will colour-clash with the 5600K rig and tint James orange on camera.</li>
+      <li><strong>Walk a loop around James with your phone in camera preview.</strong> Both on A-cam eye-line and B-cam 4 o'clock. Confirm no hot-spot on the forehead, no nose shadow across the lip, and catch-lights in both eyes.</li>
+    </ol>
+    <div class="plain"><strong>Rule of thumb</strong>Top key = shape. Fill = softness. If the shape is dramatic it's "interrogation". If there's no shape at all it's "passport photo". Aim in between.</div>
+  </div>
+
+  <!-- S5 AUDIO -->
+  <div class="section" id="s5">
+    <div class="section-head">
+      <span class="sh-tag">05 · Audio + clap sync</span>
+      <h2>Audio setup and clap-sync procedure</h2>
+      <p class="sh-sub">Mic goes to A-cam only, on purpose. The clap is what makes the two-camera edit possible.</p>
+    </div>
+
+    <h3>Audio routing</h3>
+    <ol class="prose">
+      <li><strong>DJI Mic 2 RX into A-cam (iPhone 15) USB-C.</strong> Not B-cam. Not "both, for safety". One route, one source of truth.</li>
+      <li><strong>TX on James.</strong> Clip under the collar, cable tucked, transmitter in his back pocket.</li>
+      <li><strong>Confirm on A-cam:</strong> open camera, start a dummy recording, speak, stop, play back. You should hear James clearly through the DJI. If you hear the iPhone onboard mic instead, stop and fix the input source in iPhone Settings before rolling.</li>
+      <li><strong>B-cam records onboard audio.</strong> That audio is throwaway. It exists only as a back-up scratch track in case the DJI fails mid-take.</li>
+    </ol>
+
+    <h3>Clap sync</h3>
+    <ol class="prose">
+      <li><strong>At the head of every take:</strong> Kaja taps record on A-cam first, then B-cam, then steps back into frame.</li>
+      <li><strong>Kaja stands between the two cameras,</strong> in a spot where she is visible to both, and claps once sharply. Not polite. Not soft. One real clap.</li>
+      <li><strong>Kaja says "rolling, clap, take one"</strong> out loud, claps, steps out of frame.</li>
+      <li><strong>James waits 2 seconds,</strong> then begins the monologue.</li>
+      <li><strong>At the end of the take,</strong> James holds the last look for a 2-second beat. Kaja stops B-cam first, A-cam second (mirror of start).</li>
+    </ol>
+
+    <div class="plain"><strong>Why the clap matters</strong>The editor drags both clips into CapCut, finds the clap spike on A-cam's waveform, finds the visual clap on B-cam, aligns them, and the two angles are synced to the millisecond. No clap? You'll spend 20 minutes nudging B-cam back and forth and it'll still drift over 42 seconds.</div>
+  </div>
+
+  <!-- S6 WARDROBE -->
+  <div class="section" id="s6">
+    <div class="section-head">
+      <span class="sh-tag">06 · Wardrobe and set</span>
+      <h2>Wardrobe and set dressing</h2>
+      <p class="sh-sub">James looks like a working founder, not a model. Desk looks like a desk someone actually works at.</p>
+    </div>
+    <div class="dodont">
+      <div class="dodont-block dodont-do">
+        <h5>Do</h5>
+        <ul>
+          <li>A plain T-shirt or casual shirt, stone, navy, or charcoal</li>
+          <li>Hair the way you'd wear it to a team meeting</li>
+          <li>Laptop open with a real spreadsheet, email, or Asana tab loaded</li>
+          <li>A single Chefly container on the desk, lid off, fork beside it</li>
+          <li>A mug of coffee (half-full) to the right of the laptop</li>
+          <li>One small plant or a book behind you for depth</li>
+        </ul>
+      </div>
+      <div class="dodont-block dodont-dont">
+        <h5>Don't</h5>
+        <ul>
+          <li>A logo tee. Any logo, including Chefly. It dates the video immediately.</li>
+          <li>Busy patterns or stripes. They alias badly on camera and pull focus.</li>
+          <li>A closed laptop or a staged-empty desk. Reads fake instantly.</li>
+          <li>Over-styled food. No garnish. No perfect fork angle.</li>
+          <li>A cluttered background with 6+ objects. Messy reads chaotic, not real.</li>
+          <li>Loud backdrop art. Anything eye-catching behind James will steal the shot.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- S7 SCRIPT -->
+  <div class="section" id="s7">
+    <div class="section-head">
+      <span class="sh-tag">07 · Script</span>
+      <h2>The 42s script, annotated</h2>
+      <p class="sh-sub">James, say this once to rehearse. Do not memorise. The goal is coffee-chat voice, not podcast host voice.</p>
+    </div>
+    <div class="script">
+      <div class="script-line">
+        <div class="t">0:00</div>
+        <div class="l">"I started Chefly because I was sick of thinking about food."
+          <span class="note">Open with a full stop, not a rising intonation. You are stating a fact, not pitching.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">0:04</div>
+        <div class="l">"I run a business. I've got two kids. I don't have the bandwidth to plan three meals a day."
+          <span class="note">Count it on your fingers in your head. Small, real. If your hand moves slightly at "two kids" it lands better on B-cam.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">0:10</div>
+        <div class="l">"And every week it was the same loop: what do I cook, have I got the stuff in, is it actually healthy."
+          <span class="note">Three beats, slight pickup in pace. Don't sigh at the end even if you want to. Let the line carry the frustration.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">0:17</div>
+        <div class="l">"So we built Chefly for people like me."
+          <span class="note">Slow down. Eye contact. This is the hinge of the whole script.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">0:20</div>
+        <div class="l">"Twelve meals in a box, built with real ingredients, portioned so the macros actually make sense."
+          <span class="note">Hand gesture allowed here. One small tap on the container. Don't lift it to the camera.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">0:26</div>
+        <div class="l">"You heat it up in 90 seconds, you eat it at your desk, you go back to doing what you actually care about."
+          <span class="note">Three "you" beats. Keep them even. Glance at the laptop on "at your desk" if it feels natural. Don't force it.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">0:33</div>
+        <div class="l">"I eat this same box every week. Not because I have to. Because I don't want to think about dinner anymore."
+          <span class="note">Land on "dinner anymore". Small smile allowed but only after the word lands.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">0:40</div>
+        <div class="l">"You're my exact customer. Welcome."
+          <span class="note">The sign-off. Hold the look for a full two seconds after "Welcome" before anyone moves. This is the frame the editor will end on.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">0:42</div>
+        <div class="l"><em>Text overlay in post: "Chefly. Built for busy. Chosen by the founder."</em>
+          <span class="note">Added in CapCut. Syne Extra Bold. Cream on near-black end card. Logo bottom-right.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S8 SHOTS -->
+  <div class="section" id="s8">
+    <div class="section-head">
+      <span class="sh-tag">08 · Shot breakdown</span>
+      <h2>Shot-by-shot</h2>
+      <p class="sh-sub">Six shots. Two are the simultaneous monologue. Four are B-roll beats for the editor to cut to.</p>
+    </div>
+
+    <div class="shot-grid">
+
+      <div class="shot-card">
+        <div class="sc-num">1</div>
+        <div class="sc-body">
+          <h4>A-cam monologue · tripod, dead-on</h4>
+          <div class="sc-meta">
+            <span class="chip accent">Tripod</span>
+            <span class="chip">9:16</span>
+            <span class="chip">Eye level</span>
+            <span class="chip">42s rolled, 3 takes</span>
+          </div>
+          <div class="sc-grid">
+            <div><strong>Kit</strong>iPhone 15 Pro Max on tripod, DJI Mic 2 RX in USB-C</div>
+            <div><strong>On camera</strong>James</div>
+            <div><strong>Behind camera</strong>Kaja (also running B-cam + clap)</div>
+            <div><strong>Lighting</strong>Amaran top key + Lantern 26" camera-left fill</div>
+            <div><strong>Audio</strong>DJI TX on James, RX to A-cam</div>
+            <div><strong>Format</strong>4K 30fps, 1x lens, SDR, locked AE/AF</div>
+          </div>
+          <div class="sc-why"><strong>Why this shot</strong>This is the spine. The editor will build the cut around the best A-cam take and only cut to B-cam for variety on specific beats.</div>
+          <div class="sc-fail"><strong>Failure mode</strong>Camera tilts up slightly across the 42s because the tripod head wasn't locked. Always lock the head and test-tilt before rolling.</div>
+        </div>
+      </div>
+
+      <div class="shot-card">
+        <div class="sc-num">2</div>
+        <div class="sc-body">
+          <h4>B-cam monologue · clamp, 3/4 right, silent</h4>
+          <div class="sc-meta">
+            <span class="chip accent">Clamp</span>
+            <span class="chip">9:16</span>
+            <span class="chip">Wider, 3/4</span>
+            <span class="chip">42s rolled, same 3 takes</span>
+          </div>
+          <div class="sc-grid">
+            <div><strong>Kit</strong>iPhone 17 Pro Max on ARKON Clamp Stand</div>
+            <div><strong>On camera</strong>James</div>
+            <div><strong>Behind camera</strong>Kaja</div>
+            <div><strong>Lighting</strong>Shared rig. Don't touch.</div>
+            <div><strong>Audio</strong>Onboard only. Throwaway. Do not rely on.</div>
+            <div><strong>Format</strong>4K 30fps, 1x lens, SDR, locked AE/AF, WB matched to A-cam</div>
+          </div>
+          <div class="sc-why"><strong>Why this shot</strong>Gives the editor a second angle to cut to at 0:17 ("So we built Chefly...") and 0:33 ("I eat this same box..."). Both hinge beats benefit from the angle change.</div>
+          <div class="sc-fail"><strong>Failure mode</strong>White balance drifts off A-cam so James's skin tone changes on every cut. Lock white balance manually to match, do not leave on Auto.</div>
+        </div>
+      </div>
+
+      <div class="shot-card">
+        <div class="sc-num">3</div>
+        <div class="sc-body">
+          <h4>Hero B-roll · laptop + container</h4>
+          <div class="sc-meta">
+            <span class="chip">Silent</span>
+            <span class="chip blue">4s</span>
+            <span class="chip">Static tripod</span>
+          </div>
+          <div class="sc-grid">
+            <div><strong>Kit</strong>iPhone 17 Pro Max, tripod or handheld, wider lens OK</div>
+            <div><strong>On camera</strong>James's hands only. Laptop keyboard, open Chefly container beside it.</div>
+            <div><strong>Action</strong>James types one line, pauses, reaches for the container, takes a bite.</div>
+            <div><strong>Audio</strong>Room tone only.</div>
+          </div>
+          <div class="sc-why"><strong>Why this shot</strong>Proof beat. Cuts in on the "eat it at your desk" line at 0:26. Sells the "real founder, real desk" framing in a single shot.</div>
+          <div class="sc-fail"><strong>Failure mode</strong>Container looks staged with pristine fork placement. Mess it up slightly before rolling. A slightly askew lid reads real.</div>
+        </div>
+      </div>
+
+      <div class="shot-card">
+        <div class="sc-num">4</div>
+        <div class="sc-body">
+          <h4>Close-up B-roll · hands on the box</h4>
+          <div class="sc-meta">
+            <span class="chip">Silent</span>
+            <span class="chip blue">3s</span>
+            <span class="chip">Macro / 2x</span>
+          </div>
+          <div class="sc-grid">
+            <div><strong>Kit</strong>iPhone 17 Pro Max, 2x lens, handheld close</div>
+            <div><strong>On camera</strong>James's hands opening the lid of a Chefly container</div>
+            <div><strong>Action</strong>One peel, one pause. Don't pan, don't zoom.</div>
+            <div><strong>Audio</strong>Foley only. The lid-peel is usable.</div>
+          </div>
+          <div class="sc-why"><strong>Why this shot</strong>A texture beat the editor can drop in anywhere. Feels tactile. Proves it's a real container, not CGI.</div>
+          <div class="sc-fail"><strong>Failure mode</strong>Focus hunts on the 2x lens. Tap to focus on the lid before rolling, then lock.</div>
+        </div>
+      </div>
+
+      <div class="shot-card">
+        <div class="sc-num">5</div>
+        <div class="sc-body">
+          <h4>Microwave beep B-roll</h4>
+          <div class="sc-meta">
+            <span class="chip">Natural sound</span>
+            <span class="chip blue">3s</span>
+            <span class="chip">Medium straight-on</span>
+          </div>
+          <div class="sc-grid">
+            <div><strong>Kit</strong>iPhone 17 Pro Max, handheld</div>
+            <div><strong>On camera</strong>James + microwave</div>
+            <div><strong>Action</strong>Places container in microwave, closes door, presses the button. Beep.</div>
+            <div><strong>Audio</strong>Microwave beep kept in. Don't cut it out in post.</div>
+          </div>
+          <div class="sc-why"><strong>Why this shot</strong>Visually lands "90 seconds" at 0:26. Compounds with the C1 microwave beat for campaign consistency.</div>
+          <div class="sc-fail"><strong>Failure mode</strong>Auto-exposure hunts when microwave interior light turns on. Lock exposure on James's face before rolling.</div>
+        </div>
+      </div>
+
+      <div class="shot-card">
+        <div class="sc-num">6</div>
+        <div class="sc-body">
+          <h4>Eating at the desk</h4>
+          <div class="sc-meta">
+            <span class="chip">Silent</span>
+            <span class="chip blue">4s</span>
+            <span class="chip">Medium 3/4</span>
+          </div>
+          <div class="sc-grid">
+            <div><strong>Kit</strong>iPhone 17 Pro Max, handheld or on B-cam clamp</div>
+            <div><strong>On camera</strong>James, container, fork, laptop in soft background focus</div>
+            <div><strong>Action</strong>James takes a bite, glances at the laptop, eats one more mouthful.</div>
+            <div><strong>Audio</strong>Cutlery foley only. No dialogue.</div>
+          </div>
+          <div class="sc-why"><strong>Why this shot</strong>The visual proof that he does actually eat it. Cuts in at 0:33 or under the end card.</div>
+          <div class="sc-fail"><strong>Failure mode</strong>James looks directly at the camera while eating. Feels staged. Keep eyes on the laptop or the container.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- S9 TIMING -->
+  <div class="section" id="s9">
+    <div class="section-head">
+      <span class="sh-tag">09 · Timing plan</span>
+      <h2>Minute-by-minute on the day</h2>
+      <p class="sh-sub">60 minutes from "ready to start C2" to wrap. C1 should already be done and cleared.</p>
+    </div>
+    <div class="timing">
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">min 0 to 15</span>Setup</div>
+        <div class="t-body"><strong>Kaja</strong> mounts the Amaran overhead and rigs the Lantern 26" camera-left. <strong>James</strong> sets the desk: laptop open on a real tab, Chefly container out, mug to the right. <strong>Kaja</strong> locks the tripod for A-cam at eye level and clamps the ARKON at 4 o'clock for B-cam.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">min 15 to 20</span>Test</div>
+        <div class="t-body">Record 20s of dummy audio on A-cam with DJI mic. Play back on AirPods. Confirm the RX is the source, not the onboard mic. Match B-cam white balance to A-cam. Do a clap test — clap audible on A-cam waveform.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">min 20 to 40</span>Monologue · 3 takes</div>
+        <div class="t-body">Kaja taps A-cam record, then B-cam record, claps once, says "rolling, clap, take one", steps out. James delivers the full 42s script. Holds the last look for 2s. Kaja stops B-cam, then A-cam. Reset, water, go again. Three takes total. Between takes, scrub A-cam audio waveform to confirm no rustle.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">min 40 to 55</span>B-roll</div>
+        <div class="t-body">Shoot shots 3 to 6 in order. ~3 minutes of set + shoot per beat, 30 seconds of playback check, move on. Don't second-guess.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">min 55 to 60</span>Review + wrap</div>
+        <div class="t-body">Kaja AirDrops all A-cam + B-cam files off both phones. Files labelled C2-A-takeN.mov, C2-B-takeN.mov, C2-BR-1 to C2-BR-4. Confirm clap is visible in each take's waveform. Confirm the hero line at 0:33 has at least one great A-cam take.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S10 QUALITY GATES -->
+  <div class="section" id="s10">
+    <div class="section-head">
+      <span class="sh-tag">10 · Quality gates</span>
+      <h2>You're done when...</h2>
+      <p class="sh-sub">Do not wrap until all of these are ticked.</p>
+    </div>
+    <div class="qgate">
+      <h5>C2 sign-off checklist</h5>
+      <ul>
+        <li>3 complete A-cam takes of the full 42s script, eye-level, dead-on, locked tripod</li>
+        <li>3 matching B-cam takes of the same three takes, 3/4 right, locked clamp</li>
+        <li>Every take has an audible clap at the head, visible on A-cam waveform</li>
+        <li>DJI mic audio on the primary A-cam takes is clean on AirPod playback</li>
+        <li>B-cam onboard audio exists as scratch back-up (do not rely on it, just confirm it's there)</li>
+        <li>White balance matches between A-cam and B-cam — James's skin looks the same on both</li>
+        <li>All four B-roll beats captured (laptop + container, hands on box, microwave beep, eating)</li>
+        <li>The sign-off line "You're my exact customer. Welcome." has at least one A-cam take worth showing a stranger, with a clean 2-second hold after "Welcome"</li>
+        <li>Files transferred off both phones and labelled correctly</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- S11 MISTAKES -->
+  <div class="section" id="s11">
+    <div class="section-head">
+      <span class="sh-tag">11 · Common mistakes + rescues</span>
+      <h2>What usually goes wrong and how to fix it fast</h2>
+    </div>
+
+    <div class="mistake">
+      <h5>B-cam and A-cam won't sync in the edit</h5>
+      <p>Editor can't find the sync point. The clap was too soft, or the cameras were rolling long before the clap so the waveform peak is ambiguous.</p>
+      <div class="rescue"><strong>Rescue</strong>Go back, re-roll the takes with a louder, single, sharp clap right at the top after both cameras are rolling. One clap only. Don't "test-clap" beforehand or the editor will align to the wrong one.</div>
+    </div>
+
+    <div class="mistake">
+      <h5>James sounds like he's reading</h5>
+      <p>Voice lifts into "pitch mode". Pace is even and deliberate. Sentences all end on the same note.</p>
+      <div class="rescue"><strong>Rescue</strong>Kaja says: "tell me about it the way you'd tell your co-founder over a pint. I'm not writing it down." Immediate re-take. First take after a pattern-break is almost always the keeper.</div>
+    </div>
+
+    <div class="mistake">
+      <h5>Overhead Amaran casts a nose-shadow across his lip</h5>
+      <p>Classic problem with top-keys too steep. Shadow of the nose lands on the upper lip and the delivery looks sinister.</p>
+      <div class="rescue"><strong>Rescue</strong>Either lower the Amaran by 15cm so the angle becomes more frontal, or step it forward 20cm so it's less directly overhead. Re-check in A-cam preview.</div>
+    </div>
+
+    <div class="mistake">
+      <h5>B-cam loses focus mid-take</h5>
+      <p>Autofocus hunts when James shifts forward or back in the chair.</p>
+      <div class="rescue"><strong>Rescue</strong>Before rolling B-cam, tap-and-hold on James's face in the camera preview until AE/AF LOCK appears. Focus is now pinned. Do this on both cams, every take.</div>
+    </div>
+
+    <div class="mistake">
+      <h5>The laptop screen reflects in James's glasses (if worn)</h5>
+      <p>Very distracting on A-cam. Editor can't save it.</p>
+      <div class="rescue"><strong>Rescue</strong>Close the laptop halfway or dim the screen to 20%. Alternatively, tilt the laptop screen forward 10° so its glare bounces down, not toward the camera.</div>
+    </div>
+
+    <div class="mistake">
+      <h5>The sign-off line falls flat in every take</h5>
+      <p>"You're my exact customer. Welcome." gets read too formal. Or too smiley. Either kills it.</p>
+      <div class="rescue"><strong>Rescue</strong>Have James say the line to Kaja (not the camera) as if she'd just walked up to his desk. Shoot that delivery. Then have him repeat it once to the lens. The second take will carry the warmth of the first.</div>
+    </div>
+  </div>
+
+  <!-- S12 POST -->
+  <div class="section" id="s12">
+    <div class="section-head">
+      <span class="sh-tag">12 · Post-production handoff</span>
+      <h2>What the editor needs and what not to add</h2>
+    </div>
+    <table class="kit-table">
+      <thead><tr><th>Item</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Files</td><td>Camera originals .mov from both iPhones. Labelled C2-A-takeN, C2-B-takeN (same take number on both), C2-BR-1 to C2-BR-4.</td></tr>
+        <tr><td>Edit tool</td><td>CapCut or DaVinci Resolve. DaVinci if you want better colour-match between A and B cams.</td></tr>
+        <tr><td>Sync</td><td>Import A-cam + matched B-cam into a linked pair. Snap to the clap peak on A-cam waveform. Mute B-cam audio permanently.</td></tr>
+        <tr><td>Cut structure</td><td>A-cam is the spine. Cut to B-cam at 0:17 ("So we built Chefly...") and at 0:33 ("I eat this same box..."). Drop B-roll shot 3 under 0:26 ("eat it at your desk"). End on A-cam 2-second hold.</td></tr>
+        <tr><td>Music</td><td>Soft ambient bed under the B-roll at 0:26. Comes up 2dB under the final line. Silence elsewhere.</td></tr>
+        <tr><td>Text overlay</td><td>Only the final card. "Chefly. Built for busy. Chosen by the founder." Syne Extra Bold, cream on near-black. Logo bottom-right.</td></tr>
+        <tr><td>Captions</td><td>Yes, burn-in. Dialogue only. Low third, Syne Extra Bold, cream. No over-highlighting of words — James carries the emphasis.</td></tr>
+        <tr><td>Length</td><td>30 to 45 seconds. If you're over 45, cut B-roll time first, then tighten the 0:10 to 0:17 section.</td></tr>
+        <tr><td>Exports</td><td>9:16 master 1080x1920, H.264 10 Mbps. 1:1 square variant at 1080x1080 for feed.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- S13 SELF-CHECK -->
+  <div class="section" id="s13">
+    <div class="section-head">
+      <span class="sh-tag">13 · Self-check</span>
+      <h2>Quick self-check</h2>
+      <p class="sh-sub">Five questions. Try them before opening the answers.</p>
+    </div>
+    <div class="quiz">
+      <h5>Before you shoot, can you answer these?</h5>
+
+      <div class="quiz-q">
+        <div class="q">Why does the DJI Mic 2 RX plug into A-cam only, not both cameras?</div>
+        <details><summary>Show answer</summary>
+          <div class="a"><strong>Answer:</strong> One route, one source of truth. If you split the mic across both, you introduce two audio tracks that can drift and you risk one of them being lower quality. Onboard audio on B-cam is a scratch back-up; the edit uses only A-cam's DJI track.</div>
+        </details>
+      </div>
+
+      <div class="quiz-q">
+        <div class="q">Kaja claps before both cameras are recording. What's the consequence?</div>
+        <details><summary>Show answer</summary>
+          <div class="a"><strong>Answer:</strong> The clap ends up on only one camera's audio/video, or on neither. The editor has no common sync point and will have to nudge clips by eye across 42 seconds — which always drifts. Always roll A-cam first, then B-cam, then clap.</div>
+        </details>
+      </div>
+
+      <div class="quiz-q">
+        <div class="q">Why do we lock white balance on B-cam instead of leaving it on Auto?</div>
+        <details><summary>Show answer</summary>
+          <div class="a"><strong>Answer:</strong> Auto white balance drifts as James moves or as sunlight through a window shifts. When the editor cuts from A-cam to B-cam mid-sentence, James's skin tone changes and it looks like a different shot. Lock WB to match A-cam (5600K) and the cut is invisible.</div>
+        </details>
+      </div>
+
+      <div class="quiz-q">
+        <div class="q">On which two lines is the editor most likely to cut from A-cam to B-cam, and why?</div>
+        <details><summary>Show answer</summary>
+          <div class="a"><strong>Answer:</strong> 0:17 ("So we built Chefly for people like me") and 0:33 ("I eat this same box every week"). Both are hinge beats — the script turns here. An angle change on a hinge makes the turn feel more intentional.</div>
+        </details>
+      </div>
+
+      <div class="quiz-q">
+        <div class="q">If the DJI Mic 2 fails mid-take and you don't realise until playback, what's your rescue?</div>
+        <details><summary>Show answer</summary>
+          <div class="a"><strong>Answer:</strong> Pull the onboard audio from B-cam and use it as the master audio. Quality drops but the take is usable. Sync it to A-cam's clap. This is why B-cam rolls onboard audio even though we "throw it away" on purpose.</div>
+        </details>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER NAV -->
+  <div class="foot-nav no-print">
+    <a href="/training-pack-c1.html" class="btn">← Previous module: C1 · Kaja chest-framed testimonial</a>
+    <a href="/training-pack-c3.html" class="btn btn-primary">Next module: C3 · Hands-POV product demo →</a>
+  </div>
+
+</div>
+</body>
+</html>

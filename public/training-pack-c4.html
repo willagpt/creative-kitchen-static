@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Training Pack · C4 · Offer-led static frame / Chefly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf9f7;--surface:#fff;--surface-alt:#f4f2ee;--surface-warm:#f9f5f0;
+  --ink:#1a1714;--ink-2:#5c564d;--ink-3:#8a8279;--ink-4:#b0a99e;
+  --accent:#b44d1e;--accent-light:#f4e6dc;--accent-dark:#8a3710;
+  --green:#2d6a4f;--green-light:#d8f3dc;
+  --blue:#1d4e89;--blue-light:#d0e2f4;
+  --amber:#92400e;--amber-light:#fef3c7;
+  --red:#991b1b;--red-light:#fee2e2;
+  --border:#e8e4de;--border-light:#f0ece6;
+  --radius:4px;--radius-lg:6px;
+  --shadow-sm:0 1px 2px rgba(26,23,20,.05);
+  --font-display:'Fraunces',Georgia,serif;--font-body:'DM Sans',system-ui,sans-serif;
+}
+html{font-size:14px;scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4,h5{font-family:var(--font-display);font-weight:700;line-height:1.25}
+a{color:var(--accent-dark);text-decoration:none}
+a:hover{text-decoration:underline}
+.page{max-width:1040px;margin:0 auto;padding:0 clamp(1rem,3vw,2rem) 4rem}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:.9rem 0;border-bottom:1px solid var(--border);gap:.5rem;flex-wrap:wrap}
+.topbar-brand{font-family:var(--font-display);font-size:.9rem;font-weight:700;color:var(--accent-dark)}
+.topbar-actions{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+.btn{padding:.4rem .9rem;font-family:var(--font-body);font-size:.72rem;font-weight:600;border-radius:var(--radius);cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;border:1.5px solid var(--border);background:var(--surface);color:var(--ink-2)}
+.btn:hover{border-color:var(--ink-3);color:var(--ink)}
+.btn-primary{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark);text-decoration:none}
+.hero{padding:clamp(2rem,5vw,3.5rem) 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem}
+.eyebrow{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent-dark);margin-bottom:.7rem}
+.hero h1{font-size:clamp(1.7rem,4vw,2.4rem);font-weight:800;letter-spacing:-.025em;margin-bottom:.5rem}
+.hero-sub{font-size:.95rem;color:var(--ink-2);max-width:680px;line-height:1.7;margin-bottom:1rem}
+.hero-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem}
+.chip{font-size:.68rem;font-weight:600;padding:.3rem .7rem;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--ink-2)}
+.chip.accent{background:var(--accent-light);border-color:var(--accent);color:var(--accent-dark)}
+.chip.green{background:var(--green-light);border-color:var(--green);color:var(--green)}
+.chip.blue{background:var(--blue-light);border-color:var(--blue);color:var(--blue)}
+.module-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-bottom:2.5rem}
+.mm-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem}
+.mm-card h3{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.7rem}
+.mm-card ul{list-style:none;padding:0;margin:0}
+.mm-card li{font-size:.82rem;color:var(--ink);line-height:1.55;padding:.25rem 0;border-bottom:1px dotted var(--border)}
+.mm-card li:last-child{border-bottom:none}
+.mm-card li::before{content:'→  ';color:var(--accent);font-weight:700}
+.toc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.3rem;margin-bottom:2.5rem}
+.toc-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-2);margin-bottom:.7rem}
+.toc ol{padding-left:1.2rem;font-size:.86rem;line-height:1.9;columns:2;column-gap:1.5rem}
+@media (max-width:640px){.toc ol{columns:1}}
+.toc ol li{color:var(--ink-2)}
+.toc ol li a{font-weight:500}
+.section{margin-bottom:3rem;scroll-margin-top:1rem}
+.section-head{border-bottom:2px solid var(--ink);padding-bottom:.6rem;margin-bottom:1.3rem}
+.section-head .sh-tag{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent-dark);margin-bottom:.25rem;display:block}
+.section-head h2{font-size:clamp(1.35rem,3vw,1.8rem);font-weight:800;letter-spacing:-.02em;margin:0}
+.section-head .sh-sub{font-size:.85rem;color:var(--ink-2);margin-top:.4rem;max-width:620px}
+.prose p{font-size:.9rem;color:var(--ink-2);margin-bottom:.9rem;line-height:1.7}
+.prose p strong{color:var(--ink)}
+.prose ul,.prose ol{padding-left:1.3rem;margin-bottom:1rem}
+.prose li{font-size:.88rem;color:var(--ink-2);margin-bottom:.35rem;line-height:1.65}
+.prose li strong{color:var(--ink)}
+.prose h3{font-size:1.05rem;font-weight:700;margin:1.8rem 0 .6rem;color:var(--ink)}
+.kit-table{width:100%;border-collapse:collapse;border:1px solid var(--border);font-size:.82rem;margin-bottom:1rem}
+.kit-table th{background:var(--ink);color:var(--bg);font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.55rem .65rem;text-align:left}
+.kit-table td{padding:.6rem .65rem;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5}
+.kit-table tr:last-child td{border-bottom:none}
+.kit-table tr:nth-child(even) td{background:var(--surface-alt)}
+.kit-table td:first-child{font-weight:600;color:var(--ink);min-width:150px}
+.kit-table td:nth-child(2){color:var(--ink-2)}
+.diagram-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin:1.2rem 0}
+.diagram-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem;text-align:center}
+.diagram-card svg{max-width:100%;height:auto;display:block;margin:0 auto .6rem}
+.diagram-card .dc-label{font-size:.82rem;font-weight:700;color:var(--ink);margin-bottom:.2rem;font-family:var(--font-display)}
+.diagram-card .dc-note{font-size:.72rem;color:var(--ink-3);line-height:1.5}
+.shot-grid{display:grid;grid-template-columns:1fr;gap:.9rem;margin-bottom:1.2rem}
+.shot-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem;display:grid;grid-template-columns:60px 1fr;gap:1rem}
+.shot-card .sc-num{font-family:var(--font-display);font-size:1.8rem;font-weight:800;color:var(--accent);line-height:1}
+.shot-card .sc-body h4{font-size:1rem;font-weight:700;color:var(--ink);margin-bottom:.35rem}
+.shot-card .sc-body .sc-meta{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.6rem}
+.shot-card .sc-body .sc-meta .chip{font-size:.64rem;padding:.15rem .5rem}
+.shot-card .sc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.5rem .9rem;font-size:.78rem;color:var(--ink-2);margin-bottom:.6rem}
+.shot-card .sc-grid strong{display:block;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:.1rem}
+.shot-card .sc-why{background:var(--surface-warm);border-left:3px solid var(--accent);padding:.55rem .8rem;border-radius:0 var(--radius) var(--radius) 0;font-size:.8rem;color:var(--ink);line-height:1.55;margin-bottom:.5rem}
+.shot-card .sc-why strong{color:var(--accent-dark);display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.15rem;font-weight:700}
+.shot-card .sc-fail{background:var(--red-light);border-left:3px solid var(--red);padding:.5rem .8rem;border-radius:0 var(--radius) var(--radius) 0;font-size:.78rem;color:var(--ink);line-height:1.55}
+.shot-card .sc-fail strong{color:var(--red);display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.15rem;font-weight:700}
+.timing{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1rem}
+.timing-row{display:grid;grid-template-columns:110px 1fr;gap:1rem;padding:.8rem 1rem;border-bottom:1px solid var(--border)}
+.timing-row:last-child{border-bottom:none}
+.timing-row:nth-child(even){background:var(--surface-alt)}
+.timing-row .t-min{font-family:var(--font-display);font-weight:700;color:var(--accent);font-size:.82rem;line-height:1.3}
+.timing-row .t-min .t-label{display:block;font-family:var(--font-body);font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:.1rem}
+.timing-row .t-body{font-size:.84rem;color:var(--ink);line-height:1.6}
+.timing-row .t-body strong{color:var(--ink);font-weight:600}
+.dodont{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.dodont-block{padding:1rem 1.1rem;border-radius:var(--radius-lg);border:1px solid}
+.dodont-do{background:var(--green-light);border-color:var(--green)}
+.dodont-dont{background:var(--red-light);border-color:var(--red)}
+.dodont-block h5{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem}
+.dodont-do h5{color:var(--green)}
+.dodont-dont h5{color:var(--red)}
+.dodont-block ul{padding-left:1rem;margin:0;list-style:none}
+.dodont-block li{font-size:.82rem;color:var(--ink);margin-bottom:.3rem;padding-left:.9rem;position:relative;line-height:1.55}
+.dodont-do li::before{content:'✓';color:var(--green);font-weight:700;position:absolute;left:0}
+.dodont-dont li::before{content:'✕';color:var(--red);font-weight:700;position:absolute;left:0}
+@media (max-width:640px){.dodont{grid-template-columns:1fr}}
+.qgate{background:var(--surface-warm);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.2rem;margin-bottom:1rem}
+.qgate h5{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.6rem}
+.qgate ul{list-style:none;padding:0;margin:0}
+.qgate li{font-size:.86rem;padding:.3rem 0;line-height:1.55;color:var(--ink);display:flex;gap:.5rem;align-items:flex-start}
+.qgate li::before{content:'☐';color:var(--accent);font-weight:700;font-size:1rem;line-height:1.3}
+.mistake{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--amber);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:.9rem 1.1rem;margin-bottom:.7rem}
+.mistake h5{font-size:.82rem;font-weight:700;color:var(--amber);margin-bottom:.3rem;font-family:var(--font-display)}
+.mistake p{font-size:.82rem;color:var(--ink);line-height:1.6;margin:0}
+.mistake .rescue{margin-top:.4rem;padding-top:.4rem;border-top:1px dashed var(--border);font-size:.8rem;color:var(--ink-2)}
+.mistake .rescue strong{color:var(--green);text-transform:uppercase;letter-spacing:.08em;font-size:.62rem;display:block;margin-bottom:.15rem;font-weight:700}
+.script{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius-lg);padding:1.1rem 1.3rem;margin-bottom:1rem}
+.script-line{display:grid;grid-template-columns:60px 1fr;gap:1rem;padding:.6rem 0;border-bottom:1px dotted var(--border)}
+.script-line:last-child{border-bottom:none}
+.script-line .t{font-family:var(--font-display);font-weight:700;color:var(--accent);font-size:.78rem;padding-top:.1rem}
+.script-line .l{font-size:.88rem;line-height:1.6;color:var(--ink)}
+.script-line .l em{color:var(--ink-3);font-style:italic;font-size:.8rem}
+.script-line .note{display:block;margin-top:.35rem;font-size:.74rem;color:var(--ink-2);background:var(--surface-warm);padding:.35rem .6rem;border-radius:var(--radius);border-left:2px solid var(--accent-light)}
+.script-line .note::before{content:'director note · ';font-weight:700;color:var(--accent-dark);text-transform:uppercase;letter-spacing:.08em;font-size:.62rem}
+.quiz{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.2rem 1.3rem;margin-bottom:1rem;counter-reset:qcount}
+.quiz h5{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.8rem}
+.quiz-q{padding:.7rem 0;border-bottom:1px dotted var(--border)}
+.quiz-q:last-child{border-bottom:none}
+.quiz-q .q{font-size:.86rem;font-weight:600;color:var(--ink);margin-bottom:.4rem;line-height:1.5}
+.quiz-q .q::before{content:counter(qcount) '.  ';counter-increment:qcount;color:var(--accent);font-family:var(--font-display);font-weight:700}
+.quiz-q details summary{cursor:pointer;font-size:.76rem;color:var(--accent-dark);font-weight:600;padding:.25rem 0;user-select:none;list-style:none}
+.quiz-q details summary::-webkit-details-marker{display:none}
+.quiz-q details summary::before{content:'▸ ';transition:transform .15s}
+.quiz-q details[open] summary::before{content:'▾ '}
+.quiz-q details .a{font-size:.82rem;color:var(--ink-2);line-height:1.6;padding:.5rem .7rem;background:var(--surface-warm);border-radius:var(--radius);margin-top:.3rem}
+.quiz-q details .a strong{color:var(--ink)}
+.plain{background:var(--accent-light);border-left:4px solid var(--accent);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:.9rem 1.1rem;margin:1rem 0;font-size:.86rem;color:var(--ink);line-height:1.65}
+.plain strong{color:var(--accent-dark);display:block;font-size:.64rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem;font-weight:700}
+.foot-nav{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.foot-nav a{font-size:.78rem}
+@page{size:A4 portrait;margin:14mm 16mm}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  html{font-size:10px}
+  .topbar,.no-print,.foot-nav{display:none!important}
+  .shot-card,.timing,.kit-table,.diagram-card,.qgate,.quiz,.mistake{break-inside:avoid;page-break-inside:avoid}
+  .section{page-break-before:auto}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="topbar no-print">
+    <div class="topbar-brand">Chefly · Training Pack · C4</div>
+    <div class="topbar-actions">
+      <a href="/training-pack-c3.html" class="btn">← C3</a>
+      <a href="/internal-shoot-pack.html" class="btn">Shoot pack</a>
+      <a href="/training-companion.html" class="btn">Training companion</a>
+      <a href="/training-course.html" class="btn">Take the course</a>
+      <a href="/training-pack-c5.html" class="btn btn-primary">Next: C5 →</a>
+      <button class="btn" onclick="window.print()">Print</button>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow">training pack · c4 · v1.0 · 19 apr 2026 · for kaja (stylist) + james (shooter)</div>
+    <h1>C4 · Offer-led static frame</h1>
+    <p class="hero-sub">Three carefully composed still photographs and one three-second push-in. No talking, no motion, no stylists on set. Just the product, the offer text, and light that makes the container look genuinely appetising. This is the lowest-variance format we run, and it is the highest-ROI one when it wins.</p>
+    <div class="hero-chips">
+      <span class="chip accent">Priority 4</span>
+      <span class="chip">Stills + 3s push-in</span>
+      <span class="chip">1 setup · fixed</span>
+      <span class="chip">ProRAW</span>
+      <span class="chip">3 variants + 1 video</span>
+      <span class="chip">~45 min on set</span>
+      <span class="chip green">Difficulty: low to medium</span>
+    </div>
+  </div>
+
+  <div class="module-meta">
+    <div class="mm-card">
+      <h3>Learning goals</h3>
+      <ul>
+        <li>Set up a locked-off tripod frame that will not drift between the stills and the push-in</li>
+        <li>Light a packaged food container with a softbox pair and a flag so the sleeve reads on camera</li>
+        <li>Use ProRAW for the stills and 4K 30fps for the push-in, understanding why each setting matters</li>
+        <li>Style the container, the backdrop, and the foreground props so the hero reads in 0.3 seconds</li>
+        <li>Shoot three colour-consistent variants that the paid-media editor can test against each other</li>
+      </ul>
+    </div>
+    <div class="mm-card">
+      <h3>Pre-requisites</h3>
+      <ul>
+        <li>C1 to C3 wrapped. The microphone kit is packed away. You need a quiet, still environment.</li>
+        <li>Read Training Companion Parts 2 (light), 3 (camera), and Part 5 §C4</li>
+        <li>iPhone 17 Pro Max charged past 40% and set to ProRAW + 48MP for the stills</li>
+        <li>Kaja has the container prepared, plated, and garnished before the camera goes on</li>
+      </ul>
+    </div>
+    <div class="mm-card">
+      <h3>What you'll deliver</h3>
+      <ul>
+        <li>3 ProRAW stills at 48MP: straight-on hero, three-quarter angled hero, tight close-up on the food</li>
+        <li>1 three-second push-in video (4K 30fps, locked start and end) for the performance-media cutdown</li>
+        <li>A colour-locked reference still (shot first) that every subsequent frame matches for white balance</li>
+        <li>All four assets delivered in the shared Drive folder, labelled and tagged, within 24 hours</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="toc">
+    <div class="toc-title">What's in this pack</div>
+    <ol>
+      <li><a href="#s1">01 · Concept brief and why this format wins</a></li>
+      <li><a href="#s2">02 · Kit breakdown (tripod, 2 lights, 1 flag)</a></li>
+      <li><a href="#s3">03 · Framing, camera settings, and ProRAW</a></li>
+      <li><a href="#s4">04 · Lighting setup, step by step</a></li>
+      <li><a href="#s5">05 · Food styling and set dressing</a></li>
+      <li><a href="#s6">06 · Wardrobe (props only · no people)</a></li>
+      <li><a href="#s7">07 · The three stills, briefed</a></li>
+      <li><a href="#s8">08 · Shot-by-shot breakdown</a></li>
+      <li><a href="#s9">09 · Minute-by-minute timing plan</a></li>
+      <li><a href="#s10">10 · Quality gates (you're done when...)</a></li>
+      <li><a href="#s11">11 · Common mistakes and how to rescue them</a></li>
+      <li><a href="#s12">12 · Post-production handoff</a></li>
+      <li><a href="#s13">13 · Self-check (5 questions)</a></li>
+    </ol>
+  </div>
+
+  <div class="section" id="s1">
+    <div class="section-head">
+      <span class="sh-tag">01 · Concept</span>
+      <h2>What we're making and why it works</h2>
+      <p class="sh-sub">Three still frames plus a gentle 3s push-in. This is the offer ad that runs under paid media.</p>
+    </div>
+    <div class="prose">
+      <p>C4 is the <strong>offer-led static frame</strong>: the format that lets the performance-media team test a headline, a price, and a product shot against each other without needing a person on camera. The creative has to carry all the emotional load through lighting, composition, and styling. When it works, it is the cheapest format to produce and the easiest to iterate.</p>
+      <p>We are shooting one locked tripod angle with one light recipe and two small changes. The camera never moves during the stills. Between frames Kaja rotates the container or swaps a prop, and we fire the shutter again. For the video we press record, wait a beat, Kaja steps out of frame, and the camera pushes in three seconds on a second tripod tap-focus. That is it. No zoom, no pan, no walking.</p>
+      <div class="plain"><strong>Plain-english summary</strong>Tripod. Container on a board. Two softboxes. Kaja styles the food. James presses the shutter three times for stills, then records one short push-in video. Job done in 45 minutes.</div>
+      <h3>Reference winners this pattern came from</h3>
+      <ul>
+        <li><strong>Huel £20 off ad</strong> — single locked frame, two colour variants, offer text overlaid in post. Ran for 9 months.</li>
+        <li><strong>Allplants hero ad</strong> — three-quarter angled container on a linen napkin, warm key left, cool fill right. 4.2x ROAS.</li>
+        <li>Both ads succeeded because the product was the subject and the offer was the message. There was nothing to argue with.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section" id="s2">
+    <div class="section-head">
+      <span class="sh-tag">02 · Kit</span>
+      <h2>Kit breakdown</h2>
+      <p class="sh-sub">One camera, one tripod, two lights, one flag, one board. That is the whole list.</p>
+    </div>
+    <div class="prose">
+      <table class="kit-table">
+        <thead>
+          <tr><th>Item</th><th>Purpose</th><th>Settings / notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>iPhone 17 Pro Max</td><td>Stills + push-in video</td><td>ProRAW 48MP for stills. 4K 30fps for video. Airplane mode. Auto brightness off.</td></tr>
+          <tr><td>Manfrotto Compact Tripod</td><td>Locks the camera off at desk height</td><td>Centre column extended ~12cm. All three legs splayed wide for stability. Bubble level centred.</td></tr>
+          <tr><td>Amaran 200x</td><td>Main key light, camera-right at 45°</td><td>Mounted on C-stand. 5600K. 70 to 80% brightness. Through the Lantern 26".</td></tr>
+          <tr><td>Aputure Lantern 26"</td><td>Softens the key, wraps the container</td><td>Slides over the Amaran. Keep the skirt on to stop light spilling onto the backdrop.</td></tr>
+          <tr><td>Amaran Dome III</td><td>Fill light, camera-left at 30°</td><td>5600K. 30 to 40% brightness. This is the soft shadow-side fill.</td></tr>
+          <tr><td>Black flag (A4 card)</td><td>Controls spill from the fill light</td><td>Held by a magic arm on a mini stand. Stops the fill light from hitting the front of the container.</td></tr>
+          <tr><td>Styling board</td><td>Surface for the container</td><td>Use the warm oak chopping board. Position the long edge parallel to the camera.</td></tr>
+          <tr><td>Colour checker card</td><td>White balance reference</td><td>Shoot one frame with the X-Rite card in shot, then pull it out. All later frames match it in Lightroom.</td></tr>
+          <tr><td>Grey or ivory backdrop</td><td>Clean background</td><td>Use the ivory linen pinned to the wall. No creases. Iron beforehand if needed.</td></tr>
+        </tbody>
+      </table>
+      <p>Kit we are <strong>not</strong> using on this shoot: the DJI Mic 2, the ARKON Pro Stand, the SmallRig Neck Mount, the B-cam, or anything on wheels. This is a still, quiet, locked setup. If it moves, it is the wrong kit for C4.</p>
+    </div>
+  </div>
+
+  <div class="section" id="s3">
+    <div class="section-head">
+      <span class="sh-tag">03 · Framing</span>
+      <h2>Framing, camera settings, and ProRAW</h2>
+      <p class="sh-sub">One locked frame, three micro-adjustments, zero handheld.</p>
+    </div>
+    <div class="prose">
+      <p>The camera goes on the tripod at desk height, looking down at roughly 25 to 30 degrees. The container sits centre-frame. There is breathing room above for a headline overlay and below for the offer text. Left and right margins are loose enough that we can later crop to 1:1 or 4:5 without losing the hero.</p>
+      <p>The key to C4 is <strong>ProRAW</strong>. This is Apple's 48MP uncompressed format. It captures ~50x more colour data than the standard HEIC JPEG. This matters because the performance-media editor is going to push the colour, pull the shadows, and overlay bright offer text. JPEG will fall apart. ProRAW will not.</p>
+      <p><strong>Camera settings:</strong></p>
+      <ul>
+        <li>Mode: Photo → ProRAW MAX (48MP)</li>
+        <li>Lens: 1x (main sensor, not the telephoto)</li>
+        <li>Focus: tap the hot spot on the container lid and lock with long-press (AE/AF lock)</li>
+        <li>Exposure: pull the sun slider <strong>down one stop</strong> from auto — underexpose slightly, recover in RAW</li>
+        <li>Aspect ratio: 4:3 (widest native, crop later)</li>
+        <li>Grid: ON (rule of thirds)</li>
+        <li>Live Photo: OFF</li>
+      </ul>
+      <p><strong>Video settings</strong> (for the 3s push-in only):</p>
+      <ul>
+        <li>Mode: Video → 4K at 30fps</li>
+        <li>HDR: OFF (the editor does not want to fight Dolby Vision)</li>
+        <li>Stabilisation: OFF (we are locked on a tripod, it will add digital drift)</li>
+      </ul>
+      <div class="diagram-row">
+        <div class="diagram-card">
+          <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+            <rect x="5" y="5" width="290" height="190" fill="#faf9f7" stroke="#1a1714" stroke-width="2"/>
+            <line x1="5" y1="70" x2="295" y2="70" stroke="#b0a99e" stroke-width="1" stroke-dasharray="3,3"/>
+            <line x1="5" y1="133" x2="295" y2="133" stroke="#b0a99e" stroke-width="1" stroke-dasharray="3,3"/>
+            <line x1="102" y1="5" x2="102" y2="195" stroke="#b0a99e" stroke-width="1" stroke-dasharray="3,3"/>
+            <line x1="198" y1="5" x2="198" y2="195" stroke="#b0a99e" stroke-width="1" stroke-dasharray="3,3"/>
+            <rect x="95" y="78" width="110" height="55" rx="6" fill="#b44d1e" stroke="#8a3710" stroke-width="1.5"/>
+            <rect x="100" y="83" width="100" height="10" fill="#f4e6dc"/>
+            <text x="150" y="115" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#faf9f7" font-weight="700">CHEFLY</text>
+            <ellipse cx="150" cy="170" rx="90" ry="14" fill="none" stroke="#8a8279" stroke-width="1" stroke-dasharray="2,2"/>
+            <text x="150" y="32" text-anchor="middle" font-family="Fraunces, serif" font-size="11" fill="#1a1714" font-weight="700">HEADLINE ZONE</text>
+            <text x="150" y="190" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#5c564d">offer text zone</text>
+          </svg>
+          <div class="dc-label">Straight-on hero</div>
+          <div class="dc-note">Centre-frame container. Headline breathing room above. Offer zone below.</div>
+        </div>
+        <div class="diagram-card">
+          <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+            <rect x="5" y="5" width="290" height="190" fill="#faf9f7" stroke="#1a1714" stroke-width="2"/>
+            <line x1="5" y1="70" x2="295" y2="70" stroke="#b0a99e" stroke-width="1" stroke-dasharray="3,3"/>
+            <line x1="5" y1="133" x2="295" y2="133" stroke="#b0a99e" stroke-width="1" stroke-dasharray="3,3"/>
+            <line x1="102" y1="5" x2="102" y2="195" stroke="#b0a99e" stroke-width="1" stroke-dasharray="3,3"/>
+            <line x1="198" y1="5" x2="198" y2="195" stroke="#b0a99e" stroke-width="1" stroke-dasharray="3,3"/>
+            <polygon points="90,135 215,135 225,85 80,85" fill="#b44d1e" stroke="#8a3710" stroke-width="1.5"/>
+            <polygon points="90,135 215,135 215,125 90,125" fill="#8a3710"/>
+            <polygon points="95,90 220,90 220,83 95,83" fill="#f4e6dc"/>
+            <text x="155" y="113" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#faf9f7" font-weight="700">CHEFLY</text>
+            <circle cx="250" cy="150" r="10" fill="#d8f3dc" stroke="#2d6a4f" stroke-width="1"/>
+            <text x="250" y="170" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="7" fill="#2d6a4f">garnish</text>
+          </svg>
+          <div class="dc-label">3/4 angled hero</div>
+          <div class="dc-note">Same height, container rotated 25°. Shows depth and the sleeve edge.</div>
+        </div>
+        <div class="diagram-card">
+          <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+            <rect x="5" y="5" width="290" height="190" fill="#faf9f7" stroke="#1a1714" stroke-width="2"/>
+            <line x1="5" y1="70" x2="295" y2="70" stroke="#b0a99e" stroke-width="1" stroke-dasharray="3,3"/>
+            <line x1="5" y1="133" x2="295" y2="133" stroke="#b0a99e" stroke-width="1" stroke-dasharray="3,3"/>
+            <line x1="102" y1="5" x2="102" y2="195" stroke="#b0a99e" stroke-width="1" stroke-dasharray="3,3"/>
+            <line x1="198" y1="5" x2="198" y2="195" stroke="#b0a99e" stroke-width="1" stroke-dasharray="3,3"/>
+            <ellipse cx="150" cy="105" rx="135" ry="60" fill="#92400e" stroke="#1a1714" stroke-width="1.5"/>
+            <ellipse cx="130" cy="90" rx="25" ry="20" fill="#2d6a4f"/>
+            <ellipse cx="175" cy="115" rx="22" ry="18" fill="#d8f3dc"/>
+            <ellipse cx="110" cy="125" rx="15" ry="12" fill="#b44d1e"/>
+            <ellipse cx="190" cy="85" rx="18" ry="14" fill="#f4e6dc"/>
+            <circle cx="150" cy="100" r="3" fill="#1a1714"/>
+          </svg>
+          <div class="dc-label">Close-up on food</div>
+          <div class="dc-note">Container fills frame. Texture, garnish, and grain read hero.</div>
+        </div>
+      </div>
+      <p><strong>Tripod discipline.</strong> Once the tripod is locked, do not touch it. If you need to rotate the container, rotate the container. If you need to change focus, tap-focus on the screen. If the tripod moves between frames, the colour correction will not match between stills, and the editor will be unable to use them as a consistent set.</p>
+    </div>
+  </div>
+
+  <div class="section" id="s4">
+    <div class="section-head">
+      <span class="sh-tag">04 · Lighting</span>
+      <h2>Lighting setup, step by step</h2>
+      <p class="sh-sub">Two softboxes, one flag. Key at camera-right, fill at camera-left, flag blocking spill. 5600K across both.</p>
+    </div>
+    <div class="prose">
+      <p>Static food advertising lives or dies on light quality. The camera does not forgive harsh shadows or mixed colour temperatures. We are running a <strong>soft key-and-fill</strong> recipe that gives the container a clear directional light, a shadow side that still reads detail, and a clean backdrop with no hot-spot falloff.</p>
+      <ol>
+        <li><strong>Mount the Amaran 200x on the C-stand</strong> at camera-right, angled in at 45 degrees, and about 80cm from the container. Slide the Lantern 26" over it. Leave the skirt on. Dial to 70%.</li>
+        <li><strong>Set up the Amaran Dome III on a mini stand</strong> at camera-left, angled in at 30 degrees, about 60cm from the container. Dial to 30 to 40%. This is the fill, it should not compete with the key.</li>
+        <li><strong>Clip the black A4 card</strong> to a magic arm between the Dome III and the camera. Position it so it blocks the fill from hitting the front face of the container. You want the front face lit by the key only.</li>
+        <li><strong>Check the white balance</strong>. Both lights must be at 5600K. If one drifts to 5000K the container sleeve colour will shift across the three stills and the editor will have to re-grade each separately.</li>
+        <li><strong>Light-meter with the iPhone</strong>. Tap on the container lid. Pull the sun slider down one stop. The container should read slightly underexposed on the phone screen. In ProRAW that pulls back beautifully in post.</li>
+        <li><strong>Look for hot spots on the backdrop</strong>. If the linen has a brighter patch behind the container, nudge the key light 10cm higher or flag it with a second card.</li>
+      </ol>
+      <div class="diagram-row">
+        <div class="diagram-card">
+          <svg viewBox="0 0 320 260" xmlns="http://www.w3.org/2000/svg">
+            <rect x="5" y="5" width="310" height="250" fill="#faf9f7" stroke="#b0a99e" stroke-width="1"/>
+            <rect x="8" y="8" width="304" height="30" fill="#f4f2ee"/>
+            <text x="160" y="28" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#1a1714" font-weight="700">IVORY LINEN BACKDROP</text>
+            <rect x="90" y="110" width="140" height="50" rx="6" fill="#b44d1e" stroke="#1a1714" stroke-width="1.5"/>
+            <text x="160" y="140" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="8" fill="#faf9f7" font-weight="700">CONTAINER</text>
+            <rect x="60" y="100" width="200" height="70" fill="none" stroke="#8a8279" stroke-width="1" stroke-dasharray="4,3"/>
+            <text x="160" y="180" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="7" fill="#5c564d">oak chopping board</text>
+            <rect x="265" y="80" width="30" height="45" rx="4" fill="#fef3c7" stroke="#92400e" stroke-width="1.5"/>
+            <text x="280" y="103" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="7" fill="#92400e" font-weight="700">KEY</text>
+            <text x="280" y="113" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="6" fill="#92400e">Lantern 26"</text>
+            <text x="280" y="140" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="6" fill="#8a8279">200x @ 70%</text>
+            <line x1="265" y1="102" x2="220" y2="125" stroke="#92400e" stroke-width="1" stroke-dasharray="2,2"/>
+            <rect x="25" y="95" width="22" height="35" rx="4" fill="#d0e2f4" stroke="#1d4e89" stroke-width="1.5"/>
+            <text x="36" y="115" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="7" fill="#1d4e89" font-weight="700">FILL</text>
+            <text x="36" y="145" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="6" fill="#8a8279">Dome III @ 35%</text>
+            <line x1="47" y1="115" x2="85" y2="125" stroke="#1d4e89" stroke-width="1" stroke-dasharray="2,2"/>
+            <line x1="70" y1="108" x2="70" y2="135" stroke="#1a1714" stroke-width="3"/>
+            <text x="70" y="150" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="6" fill="#1a1714" font-weight="700">flag</text>
+            <circle cx="160" cy="220" r="10" fill="#1a1714"/>
+            <text x="160" y="240" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="8" fill="#1a1714" font-weight="700">iPhone 17 Pro Max</text>
+            <line x1="160" y1="210" x2="160" y2="175" stroke="#1a1714" stroke-width="1" stroke-dasharray="3,3"/>
+          </svg>
+          <div class="dc-label">Lighting plan (top-down)</div>
+          <div class="dc-note">Key camera-right, fill + flag camera-left, clean ivory backdrop.</div>
+        </div>
+        <div class="diagram-card">
+          <svg viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg">
+            <rect x="5" y="5" width="310" height="210" fill="#faf9f7" stroke="#b0a99e" stroke-width="1"/>
+            <rect x="5" y="180" width="310" height="35" fill="#8a8279"/>
+            <text x="160" y="202" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="8" fill="#faf9f7" font-weight="700">floor</text>
+            <rect x="130" y="145" width="60" height="35" rx="4" fill="#b44d1e" stroke="#1a1714" stroke-width="1.5"/>
+            <text x="160" y="167" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="7" fill="#faf9f7" font-weight="700">container</text>
+            <rect x="110" y="175" width="100" height="8" fill="#92400e"/>
+            <rect x="245" y="60" width="35" height="55" rx="5" fill="#fef3c7" stroke="#92400e" stroke-width="1.5"/>
+            <text x="262" y="92" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="7" fill="#92400e" font-weight="700">KEY</text>
+            <line x1="245" y1="115" x2="175" y2="155" stroke="#92400e" stroke-width="1" stroke-dasharray="3,2"/>
+            <text x="212" y="140" font-family="DM Sans, sans-serif" font-size="6" fill="#92400e">45°</text>
+            <rect x="40" y="85" width="25" height="40" rx="4" fill="#d0e2f4" stroke="#1d4e89" stroke-width="1.5"/>
+            <text x="52" y="110" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="7" fill="#1d4e89" font-weight="700">FILL</text>
+            <line x1="65" y1="125" x2="140" y2="160" stroke="#1d4e89" stroke-width="1" stroke-dasharray="3,2"/>
+            <text x="100" y="155" font-family="DM Sans, sans-serif" font-size="6" fill="#1d4e89">30°</text>
+            <rect x="95" y="130" width="5" height="40" fill="#1a1714"/>
+            <text x="97" y="185" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="6" fill="#1a1714">flag</text>
+            <circle cx="75" cy="185" r="3" fill="#1a1714"/>
+            <line x1="75" y1="185" x2="75" y2="155" stroke="#1a1714" stroke-width="1" stroke-dasharray="2,2"/>
+            <polygon points="40,155 95,155 95,160 40,160" fill="#1a1714"/>
+            <text x="67" y="172" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="7" fill="#1a1714" font-weight="700">tripod</text>
+          </svg>
+          <div class="dc-label">Lighting plan (side view)</div>
+          <div class="dc-note">Key elevated at 45°, fill lower at 30°, flag between fill and front of container.</div>
+        </div>
+      </div>
+      <div class="dodont">
+        <div class="dodont-block dodont-do">
+          <h5>Do</h5>
+          <ul>
+            <li>Run both lights at 5600K — daylight-matched</li>
+            <li>Keep the key noticeably brighter than the fill (at least 2:1)</li>
+            <li>Under-expose one stop and recover in RAW</li>
+            <li>Shoot the colour checker first, then pull it out</li>
+          </ul>
+        </div>
+        <div class="dodont-block dodont-dont">
+          <h5>Don't</h5>
+          <ul>
+            <li>Mix colour temps — don't use a tungsten fill</li>
+            <li>Let fill catch the front face of the container</li>
+            <li>Turn on the room overheads — they will pollute the backdrop</li>
+            <li>Bump exposure in ProCamera once locked</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="s5">
+    <div class="section-head">
+      <span class="sh-tag">05 · Styling</span>
+      <h2>Food styling and set dressing</h2>
+      <p class="sh-sub">If the food doesn't look good, the light won't save you.</p>
+    </div>
+    <div class="prose">
+      <p>This format lives entirely on how the container reads in the frame. Kaja handles all of the styling before James turns on the camera, and the camera does not go on the tripod until the food is plated. That sequence matters: if we set lights first and style second, we invariably re-light, which eats 20 minutes.</p>
+      <h3>Plating rules for C4</h3>
+      <ul>
+        <li><strong>Pick the meal that holds its shape</strong>. Curries are a disaster. Rice bowls and pasta work. The Mediterranean-style dishes photograph best.</li>
+        <li><strong>Rotate the sleeve so the logo reads</strong>. The Chefly wordmark should be visible but not centred. Usually one-third from the left edge.</li>
+        <li><strong>Add a garnish on top of the food itself</strong>: a sprig of parsley, a crack of pepper, a lemon wedge on the side. This gives the frame a colour pop and a texture focal point.</li>
+        <li><strong>Leave one prop in the frame</strong>: a linen napkin folded loosely to the left, or a fork resting on the board. Two props and the frame feels staged. None and it feels empty.</li>
+        <li><strong>Wipe the sleeve edge</strong>. Any fingerprint or sauce smear will multiply at 48MP.</li>
+      </ul>
+      <h3>What is on the table</h3>
+      <ul>
+        <li>The oak chopping board (long edge parallel to camera)</li>
+        <li>The heated Chefly container with food plated in it</li>
+        <li>One linen napkin, folded loose, to camera-left</li>
+        <li>One garnish element on the food</li>
+        <li>Nothing else. No water glass, no bread, no kitchen clutter.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section" id="s6">
+    <div class="section-head">
+      <span class="sh-tag">06 · Wardrobe</span>
+      <h2>Wardrobe (props only · no people)</h2>
+      <p class="sh-sub">No one is in shot. But the board, sleeve, and napkin are.</p>
+    </div>
+    <div class="prose">
+      <p>C4 has no person in frame, so "wardrobe" is really <strong>prop wardrobe</strong>. The three items in shot are the container, the board, and the napkin. Every other format uses natural textures, so these have to feel of a piece with them.</p>
+      <ul>
+        <li><strong>Container</strong> — Chefly branded sleeve, unblemished. If the sleeve is creased, swap it.</li>
+        <li><strong>Board</strong> — warm oak chopping board. No cutting marks visible in frame. Lightly oiled with unscented mineral oil before the shoot so it reads rich on camera.</li>
+        <li><strong>Napkin</strong> — unbleached linen, ivory or oatmeal. Never white-white, never patterned. Slightly rumpled, not folded crisp.</li>
+        <li><strong>Garnish</strong> — green (parsley, thyme, rocket) or citrus (lemon wedge). Never red (visual clash with the accent orange).</li>
+      </ul>
+      <div class="plain"><strong>Why props matter for a no-face format</strong>Every visual decision has to carry the emotional load. A clean, warm oak board says "I care about what I eat". A creased sleeve says "I microwaved this at my desk". You are directing a story with three objects.</div>
+    </div>
+  </div>
+
+  <div class="section" id="s7">
+    <div class="section-head">
+      <span class="sh-tag">07 · The three stills</span>
+      <h2>The three stills, briefed</h2>
+      <p class="sh-sub">There is no dialogue to write. The brief is visual: the what, the why, and the composition rule.</p>
+    </div>
+    <div class="prose">
+      <p>Below are the three stills you will deliver. Shoot them in this order — the straight-on frame first because it is the fastest to match in post if anything drifts. Each takes 5 to 10 minutes and the light setup should not change between them.</p>
+    </div>
+    <div class="script">
+      <div class="script-line">
+        <div class="t">Still 1</div>
+        <div class="l"><strong>Straight-on hero</strong> — container centre-frame, camera at 25° top-down angle. Headline space above, offer space below. <em>Shoot 3 frames, 1 second apart. Best one wins.</em><span class="note">This is the one the performance-media team will use 80% of the time. Nail this and the day is won.</span></div>
+      </div>
+      <div class="script-line">
+        <div class="t">Still 2</div>
+        <div class="l"><strong>Three-quarter angled hero</strong> — rotate the container 25 to 30 degrees clockwise. Same camera, same lights, same exposure. Garnish now visible on the side. <em>Shoot 3 frames.</em><span class="note">Do not move the camera. Only rotate the container. This keeps the frames colour-consistent.</span></div>
+      </div>
+      <div class="script-line">
+        <div class="t">Still 3</div>
+        <div class="l"><strong>Close-up on food</strong> — push the tripod in, or swap to 2x lens. Container fills frame, food texture and garnish dominate. The sleeve is a small frame element, not the hero. <em>Shoot 3 frames, tap-focus on the garnish.</em><span class="note">This is the texture shot the editor uses in carousels. The sleeve should not read in this frame — only the food.</span></div>
+      </div>
+      <div class="script-line">
+        <div class="t">Video</div>
+        <div class="l"><strong>3-second push-in</strong> — return to the straight-on frame. Record for 4 seconds (1s buffer start and end). Very gentle forward tripod push or zoom crop in edit. <em>No handheld. No pan. No camera move.</em><span class="note">If you can't push in physically, shoot it static. The editor will add a slow digital push. It is often more stable.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="s8">
+    <div class="section-head">
+      <span class="sh-tag">08 · Shot breakdown</span>
+      <h2>Shot-by-shot breakdown</h2>
+      <p class="sh-sub">Every frame we need to walk off set with.</p>
+    </div>
+    <div class="shot-grid">
+      <div class="shot-card">
+        <div class="sc-num">01</div>
+        <div class="sc-body">
+          <h4>Colour reference frame</h4>
+          <div class="sc-meta"><span class="chip blue">Reference only</span><span class="chip">1 frame</span><span class="chip">ProRAW</span></div>
+          <div class="sc-grid">
+            <div><strong>Who</strong>No one</div>
+            <div><strong>Camera</strong>Tripod locked</div>
+            <div><strong>Kit</strong>X-Rite card in frame</div>
+            <div><strong>Lens</strong>1x main</div>
+          </div>
+          <div class="sc-why"><strong>Why</strong>This single frame is the white balance anchor. Every later still in Lightroom snaps to this one. Do not skip it.</div>
+          <div class="sc-fail"><strong>Fail looks like</strong>No reference frame. 30 minutes of colour-matching per still in post.</div>
+        </div>
+      </div>
+      <div class="shot-card">
+        <div class="sc-num">02</div>
+        <div class="sc-body">
+          <h4>Straight-on hero</h4>
+          <div class="sc-meta"><span class="chip accent">Hero still</span><span class="chip">3 frames</span><span class="chip">ProRAW MAX</span></div>
+          <div class="sc-grid">
+            <div><strong>Who</strong>No one in shot</div>
+            <div><strong>Camera</strong>25° top-down, centred</div>
+            <div><strong>Kit</strong>Tripod, key+fill+flag</div>
+            <div><strong>Focus</strong>Container lid centre</div>
+          </div>
+          <div class="sc-why"><strong>Why</strong>The hero. The straight-on frame is the easiest for the editor to overlay headlines and offer text onto. It gets the most impressions.</div>
+          <div class="sc-fail"><strong>Fail looks like</strong>Headline overlay covers the garnish. Container off-centre by 20%. Background has a hot-spot.</div>
+        </div>
+      </div>
+      <div class="shot-card">
+        <div class="sc-num">03</div>
+        <div class="sc-body">
+          <h4>Three-quarter angled hero</h4>
+          <div class="sc-meta"><span class="chip accent">Variant still</span><span class="chip">3 frames</span><span class="chip">ProRAW MAX</span></div>
+          <div class="sc-grid">
+            <div><strong>Who</strong>Kaja rotates container</div>
+            <div><strong>Camera</strong>Do not move tripod</div>
+            <div><strong>Kit</strong>Same lights, same exposure</div>
+            <div><strong>Focus</strong>Container lid front edge</div>
+          </div>
+          <div class="sc-why"><strong>Why</strong>The angle adds depth and shows the sleeve side. Tests well against the straight-on hero in the ad account.</div>
+          <div class="sc-fail"><strong>Fail looks like</strong>Tripod has moved 2cm. Background no longer lines up. Frames cannot be A/B tested.</div>
+        </div>
+      </div>
+      <div class="shot-card">
+        <div class="sc-num">04</div>
+        <div class="sc-body">
+          <h4>Close-up on food</h4>
+          <div class="sc-meta"><span class="chip accent">Texture still</span><span class="chip">3 frames</span><span class="chip">2x lens or tripod push</span></div>
+          <div class="sc-grid">
+            <div><strong>Who</strong>No one in shot</div>
+            <div><strong>Camera</strong>Push in physically or 2x</div>
+            <div><strong>Kit</strong>Same lights, check highlights</div>
+            <div><strong>Focus</strong>On the garnish</div>
+          </div>
+          <div class="sc-why"><strong>Why</strong>The editor uses this for carousels and second-frame beats. Texture sells appetite.</div>
+          <div class="sc-fail"><strong>Fail looks like</strong>Garnish out of focus. Highlight on the sauce blown out. Tight crop cuts the sleeve awkwardly.</div>
+        </div>
+      </div>
+      <div class="shot-card">
+        <div class="sc-num">05</div>
+        <div class="sc-body">
+          <h4>3-second push-in video</h4>
+          <div class="sc-meta"><span class="chip blue">Video</span><span class="chip">1 take</span><span class="chip">4K 30fps</span></div>
+          <div class="sc-grid">
+            <div><strong>Who</strong>No one in shot</div>
+            <div><strong>Camera</strong>Static tripod or gentle push</div>
+            <div><strong>Kit</strong>Same light recipe, stabilisation OFF</div>
+            <div><strong>Focus</strong>Locked on container lid</div>
+          </div>
+          <div class="sc-why"><strong>Why</strong>A subtle push-in gives the paid-media edit a "breath of life" beat that static frames can't provide. One take is enough.</div>
+          <div class="sc-fail"><strong>Fail looks like</strong>Shaky push. Focus hunting. Digital stabilisation kicks in and introduces a wobble.</div>
+        </div>
+      </div>
+      <div class="shot-card">
+        <div class="sc-num">06</div>
+        <div class="sc-body">
+          <h4>Safety wide (optional)</h4>
+          <div class="sc-meta"><span class="chip">Backup</span><span class="chip">1 frame</span><span class="chip">ProRAW</span></div>
+          <div class="sc-grid">
+            <div><strong>Who</strong>No one in shot</div>
+            <div><strong>Camera</strong>Pull back 20cm</div>
+            <div><strong>Kit</strong>Same setup</div>
+            <div><strong>Focus</strong>On the container lid</div>
+          </div>
+          <div class="sc-why"><strong>Why</strong>Wider framing gives the editor crop flexibility. If the feed needs a 16:9 version later, we have it without a reshoot.</div>
+          <div class="sc-fail"><strong>Fail looks like</strong>Forgetting this frame. Editor requests a wider crop six months later, and we cannot deliver.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="s9">
+    <div class="section-head">
+      <span class="sh-tag">09 · Timing plan</span>
+      <h2>Minute-by-minute timing plan</h2>
+      <p class="sh-sub">45 minutes on set. Styling first, camera second, tripod last.</p>
+    </div>
+    <div class="timing">
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">Minute</span>00 to 10</div>
+        <div class="t-body"><strong>Kaja styles the food</strong>. Container warmed, plated, garnish added, sleeve wiped. Oak board oiled. Napkin loosely folded. Nothing else on the table. James stays out of the kitchen.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">Minute</span>10 to 18</div>
+        <div class="t-body"><strong>James sets up lighting</strong>. Amaran 200x on C-stand camera-right with Lantern 26". Dome III on mini stand camera-left. Black flag on magic arm. Both lights at 5600K. Key 70%, fill 35%.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">Minute</span>18 to 22</div>
+        <div class="t-body"><strong>James sets up the tripod and camera</strong>. Tripod at desk height, 25° top-down angle. iPhone 17 Pro Max in ProRAW MAX. 4:3 aspect ratio. Airplane mode on. AE/AF lock on container lid.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">Minute</span>22 to 25</div>
+        <div class="t-body"><strong>White balance test</strong>. Place X-Rite card in shot. Shoot one frame. Check the colour on a laptop. Adjust key/fill colour temperature if needed. Pull card out.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">Minute</span>25 to 30</div>
+        <div class="t-body"><strong>Still 1: straight-on hero</strong>. Shoot 3 frames. Check on laptop. Confirm composition, exposure, focus on container lid.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">Minute</span>30 to 35</div>
+        <div class="t-body"><strong>Still 2: 3/4 angled</strong>. Kaja rotates container 25°. Tripod and lights stay put. James shoots 3 frames.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">Minute</span>35 to 40</div>
+        <div class="t-body"><strong>Still 3: close-up</strong>. Push tripod forward 15cm or switch to 2x lens. Tap-focus on garnish. Shoot 3 frames.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">Minute</span>40 to 43</div>
+        <div class="t-body"><strong>Video: 3s push-in</strong>. Pull tripod back to the straight-on position. Switch to 4K 30fps. Press record. Wait 1 second. If doing a physical push, begin gentle forward motion. Stop after 4 seconds.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">Minute</span>43 to 45</div>
+        <div class="t-body"><strong>Wrap and review</strong>. Scrub through all frames on the laptop. Confirm white balance is consistent across all four assets. Shoot safety wide frame (shot 06) if time permits.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="s10">
+    <div class="section-head">
+      <span class="sh-tag">10 · Quality gates</span>
+      <h2>You're done when...</h2>
+      <p class="sh-sub">Tick every box before striking the set.</p>
+    </div>
+    <div class="qgate">
+      <h5>Image quality gates</h5>
+      <ul>
+        <li>All 3 stills are in ProRAW MAX (48MP, .dng file extension)</li>
+        <li>The X-Rite reference frame was shot first and is labelled <em>ref-01.dng</em></li>
+        <li>White balance is consistent across all frames (colour picker on the sleeve should return the same RGB values)</li>
+        <li>Container lid is in sharp focus across all three stills</li>
+        <li>No shadow on the front face of the container from the fill light (the flag is doing its job)</li>
+      </ul>
+    </div>
+    <div class="qgate">
+      <h5>Composition gates</h5>
+      <ul>
+        <li>Headline space above the container is at least 25% of the frame</li>
+        <li>Offer space below is at least 20% of the frame</li>
+        <li>The Chefly wordmark is visible and readable in the straight-on and 3/4 frames</li>
+        <li>The garnish is in shot in all three stills</li>
+        <li>No tripod shadow in frame</li>
+      </ul>
+    </div>
+    <div class="qgate">
+      <h5>Video gates</h5>
+      <ul>
+        <li>Video is 3 to 4 seconds long (we'll trim the handles in post)</li>
+        <li>No handheld shake, no digital stabilisation wobble</li>
+        <li>Exposure matches the straight-on still (same key and fill settings)</li>
+        <li>Audio is silent or an ambient room tone (no speech, no TV)</li>
+      </ul>
+    </div>
+    <div class="qgate">
+      <h5>Handoff gates</h5>
+      <ul>
+        <li>All 12+ still frames exported from the phone to the Drive folder within 2 hours</li>
+        <li>Video pushed to Drive in original 4K, not re-compressed to 1080p</li>
+        <li>Folder labelled <em>/shoots/c4-offer-static/2026-04-dd/</em> with today's date</li>
+        <li>Kit packed down and returned to its labelled Pelican case</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section" id="s11">
+    <div class="section-head">
+      <span class="sh-tag">11 · Mistakes</span>
+      <h2>Common mistakes and how to rescue them</h2>
+      <p class="sh-sub">The six traps that will kill a C4 shoot, and how to get out of them.</p>
+    </div>
+    <div class="mistake">
+      <h5>Mixed colour temperatures</h5>
+      <p>Key is at 5600K but the fill drifted to 4800K — you didn't notice until reviewing on a laptop. The container sleeve now reads orange on one side and green on the other.</p>
+      <div class="rescue"><strong>Rescue</strong>Re-shoot the fill-side frames. You have time — the key is still locked. Do not try to "fix in post" across three different stills. It takes longer than a 10-minute re-shoot.</div>
+    </div>
+    <div class="mistake">
+      <h5>Tripod nudged between frames</h5>
+      <p>Someone brushed the tripod between still 2 and still 3. The framing shifted by 2cm and the close-up crop no longer matches the hero.</p>
+      <div class="rescue"><strong>Rescue</strong>Re-shoot still 3 from scratch. The close-up is only one frame — you can afford the 3-minute reset.</div>
+    </div>
+    <div class="mistake">
+      <h5>Overexposed sleeve</h5>
+      <p>You didn't pull the sun slider down one stop. The white areas of the sleeve are blown out and cannot be recovered.</p>
+      <div class="rescue"><strong>Rescue</strong>Drop exposure in ProCamera (drag the sun slider down to -1.3) and re-shoot. ProRAW can recover about a stop of highlight detail but cannot recover "pure white".</div>
+    </div>
+    <div class="mistake">
+      <h5>Garnish wilted</h5>
+      <p>The parsley was fine when Kaja plated it 20 minutes ago. By the time you shot still 3, it had curled and browned under the key light.</p>
+      <div class="rescue"><strong>Rescue</strong>Fresh sprig, 30 seconds. Always keep a backup garnish in the fridge during a C4 shoot. Never shoot still 3 with styled greens older than 15 minutes.</div>
+    </div>
+    <div class="mistake">
+      <h5>Reflection of the camera in the sleeve</h5>
+      <p>The Chefly sleeve has a glossy laminated finish. The iPhone lens is now visible as a small dark rectangle on the foreground edge of the container.</p>
+      <div class="rescue"><strong>Rescue</strong>Tilt the container 3 to 5 degrees toward camera-right so the glossy face angles the reflection away from the lens. If the reflection persists, add a piece of black card between the camera and the container below frame to kill the specular.</div>
+    </div>
+    <div class="mistake">
+      <h5>Backdrop crease</h5>
+      <p>The ivory linen has a horizontal crease behind the container. At 48MP it will dominate the frame and distract from the product.</p>
+      <div class="rescue"><strong>Rescue</strong>Iron the linen (steam iron, lowest setting). If no iron: re-pin tight and angle a light into the backdrop to wash out subtle shadows. Do not try to remove creases in Lightroom — the pixel clone will show in any social feed at 100% zoom.</div>
+    </div>
+  </div>
+
+  <div class="section" id="s12">
+    <div class="section-head">
+      <span class="sh-tag">12 · Post</span>
+      <h2>Post-production handoff</h2>
+      <p class="sh-sub">What you hand over and what happens to it next.</p>
+    </div>
+    <div class="prose">
+      <p>C4 has the cleanest handoff of any format we shoot. Three stills, one video, one reference card, one folder. That's it.</p>
+      <h3>Exports</h3>
+      <ul>
+        <li>Transfer all ProRAW .dng files from the phone to the iMac via AirDrop or Files. Do <strong>not</strong> convert to JPEG on the phone.</li>
+        <li>Drop the video into the same folder as the original 4K .mov file. Again, no pre-compression.</li>
+        <li>Include the reference frame and the colour checker frame. The editor snaps white balance from those.</li>
+      </ul>
+      <h3>Folder structure</h3>
+      <ul>
+        <li><strong>Folder:</strong> <em>/shoots/c4-offer-static/2026-04-19/</em></li>
+        <li><strong>Files:</strong> <em>ref-01.dng, still-01-hero.dng (x3), still-02-angle.dng (x3), still-03-closeup.dng (x3), video-01-pushin.mov</em></li>
+        <li><strong>Naming:</strong> underscores no spaces, stamp the shoot date, keep the naming exactly this way</li>
+      </ul>
+      <h3>What happens next</h3>
+      <ul>
+        <li>Editor opens the reference frame in Lightroom, pulls the white balance eyedropper on the grey square of the X-Rite card</li>
+        <li>That WB is synced across all 9 stills. Colour-grade is minor — maybe +10 warmth and a touch of clarity</li>
+        <li>Stills go into the Meta Ads library as image variants for paid campaigns</li>
+        <li>Video gets a slow digital push or a gentle zoom-in effect in Final Cut, trimmed to 3s, and pushed as a video asset</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section" id="s13">
+    <div class="section-head">
+      <span class="sh-tag">13 · Self-check</span>
+      <h2>Self-check quiz (5 questions)</h2>
+      <p class="sh-sub">Close the tab and answer from memory. Open the answer only after you've committed.</p>
+    </div>
+    <div class="quiz">
+      <h5>C4 self-check — you should score 5/5 before running this format solo</h5>
+      <div class="quiz-q">
+        <div class="q">Why do we shoot in ProRAW and not standard JPEG/HEIC?</div>
+        <details>
+          <summary>Reveal answer</summary>
+          <div class="a"><strong>ProRAW captures roughly 50x more colour data at 48MP.</strong> This matters because the editor is going to push shadow detail, warm the colour, and overlay bright offer text. A JPEG file would fall apart under those adjustments and show banding in the sleeve gradient. ProRAW carries the detail through grading.</div>
+        </details>
+      </div>
+      <div class="quiz-q">
+        <div class="q">Why does the reference colour checker frame go first?</div>
+        <details>
+          <summary>Reveal answer</summary>
+          <div class="a"><strong>Because every later frame anchors its white balance to this one.</strong> In Lightroom the editor eyedroppers the grey card, then syncs that WB across all nine hero stills. If you forget to shoot it, each still has to be colour-matched by eye — about 30 minutes of unnecessary post work per still.</div>
+        </details>
+      </div>
+      <div class="quiz-q">
+        <div class="q">What is the flag doing in our light recipe?</div>
+        <details>
+          <summary>Reveal answer</summary>
+          <div class="a"><strong>The black A4 card flag sits between the fill light and the camera.</strong> Its job is to stop the fill from hitting the front face of the container, so the front face is lit by the key only. This creates a clean directional shadow on the container that signals "product" rather than "lit object".</div>
+        </details>
+      </div>
+      <div class="quiz-q">
+        <div class="q">Why don't we move the tripod between still 1 and still 2?</div>
+        <details>
+          <summary>Reveal answer</summary>
+          <div class="a"><strong>So the editor can A/B test them.</strong> When the camera is in exactly the same position, the two stills differ only by the angle of the container. The editor can overlay one on top of the other in the ad account, run them against each other, and attribute any performance difference purely to the composition change. If the camera has moved, other variables sneak in.</div>
+        </details>
+      </div>
+      <div class="quiz-q">
+        <div class="q">Why do we turn off iPhone stabilisation for the push-in video?</div>
+        <details>
+          <summary>Reveal answer</summary>
+          <div class="a"><strong>Because the camera is already locked on a tripod, so there is no shake to correct.</strong> Stabilisation kicks in and introduces a subtle digital drift: it thinks it is correcting motion that isn't there, and warps the frame slightly. On a 3-second push-in that drift reads as a wobble in the edit, which is the one thing the format must not have.</div>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="/training-pack-c3.html">← Previous: C3 Hands-POV product demo</a>
+    <a href="/training-pack-c5.html" class="btn btn-primary">Next: C5 Top-down food hero →</a>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Training Pack · C1 · Kaja chest-framed testimonial / Chefly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf9f7;--surface:#fff;--surface-alt:#f4f2ee;--surface-warm:#f9f5f0;
+  --ink:#1a1714;--ink-2:#5c564d;--ink-3:#8a8279;--ink-4:#b0a99e;
+  --accent:#b44d1e;--accent-light:#f4e6dc;--accent-dark:#8a3710;
+  --green:#2d6a4f;--green-light:#d8f3dc;
+  --blue:#1d4e89;--blue-light:#d0e2f4;
+  --amber:#92400e;--amber-light:#fef3c7;
+  --red:#991b1b;--red-light:#fee2e2;
+  --border:#e8e4de;--border-light:#f0ece6;
+  --radius:4px;--radius-lg:6px;
+  --shadow-sm:0 1px 2px rgba(26,23,20,.05);
+  --font-display:'Fraunces',Georgia,serif;--font-body:'DM Sans',system-ui,sans-serif;
+}
+html{font-size:14px;scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4,h5{font-family:var(--font-display);font-weight:700;line-height:1.25}
+a{color:var(--accent-dark);text-decoration:none}
+a:hover{text-decoration:underline}
+.page{max-width:1040px;margin:0 auto;padding:0 clamp(1rem,3vw,2rem) 4rem}
+
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:.9rem 0;border-bottom:1px solid var(--border);gap:.5rem;flex-wrap:wrap}
+.topbar-brand{font-family:var(--font-display);font-size:.9rem;font-weight:700;color:var(--accent-dark)}
+.topbar-actions{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+.btn{padding:.4rem .9rem;font-family:var(--font-body);font-size:.72rem;font-weight:600;border-radius:var(--radius);cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;border:1.5px solid var(--border);background:var(--surface);color:var(--ink-2)}
+.btn:hover{border-color:var(--ink-3);color:var(--ink)}
+.btn-primary{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark);text-decoration:none}
+
+.hero{padding:clamp(2rem,5vw,3.5rem) 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem}
+.eyebrow{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent-dark);margin-bottom:.7rem}
+.hero h1{font-size:clamp(1.7rem,4vw,2.4rem);font-weight:800;letter-spacing:-.025em;margin-bottom:.5rem}
+.hero-sub{font-size:.95rem;color:var(--ink-2);max-width:680px;line-height:1.7;margin-bottom:1rem}
+.hero-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem}
+.chip{font-size:.68rem;font-weight:600;padding:.3rem .7rem;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--ink-2)}
+.chip.accent{background:var(--accent-light);border-color:var(--accent);color:var(--accent-dark)}
+.chip.green{background:var(--green-light);border-color:var(--green);color:var(--green)}
+.chip.blue{background:var(--blue-light);border-color:var(--blue);color:var(--blue)}
+
+.module-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-bottom:2.5rem}
+.mm-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem}
+.mm-card h3{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.7rem}
+.mm-card ul{list-style:none;padding:0;margin:0}
+.mm-card li{font-size:.82rem;color:var(--ink);line-height:1.55;padding:.25rem 0;border-bottom:1px dotted var(--border)}
+.mm-card li:last-child{border-bottom:none}
+.mm-card li::before{content:'→  ';color:var(--accent);font-weight:700}
+
+.toc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.3rem;margin-bottom:2.5rem}
+.toc-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-2);margin-bottom:.7rem}
+.toc ol{padding-left:1.2rem;font-size:.86rem;line-height:1.9;columns:2;column-gap:1.5rem}
+@media (max-width:640px){.toc ol{columns:1}}
+.toc ol li{color:var(--ink-2)}
+.toc ol li a{font-weight:500}
+
+.section{margin-bottom:3rem;scroll-margin-top:1rem}
+.section-head{border-bottom:2px solid var(--ink);padding-bottom:.6rem;margin-bottom:1.3rem}
+.section-head .sh-tag{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent-dark);margin-bottom:.25rem;display:block}
+.section-head h2{font-size:clamp(1.35rem,3vw,1.8rem);font-weight:800;letter-spacing:-.02em;margin:0}
+.section-head .sh-sub{font-size:.85rem;color:var(--ink-2);margin-top:.4rem;max-width:620px}
+
+.prose p{font-size:.9rem;color:var(--ink-2);margin-bottom:.9rem;line-height:1.7}
+.prose p strong{color:var(--ink)}
+.prose ul,.prose ol{padding-left:1.3rem;margin-bottom:1rem}
+.prose li{font-size:.88rem;color:var(--ink-2);margin-bottom:.35rem;line-height:1.65}
+.prose li strong{color:var(--ink)}
+.prose h3{font-size:1.05rem;font-weight:700;margin:1.8rem 0 .6rem;color:var(--ink)}
+
+/* Kit table */
+.kit-table{width:100%;border-collapse:collapse;border:1px solid var(--border);font-size:.82rem;margin-bottom:1rem}
+.kit-table th{background:var(--ink);color:var(--bg);font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.55rem .65rem;text-align:left}
+.kit-table td{padding:.6rem .65rem;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5}
+.kit-table tr:last-child td{border-bottom:none}
+.kit-table tr:nth-child(even) td{background:var(--surface-alt)}
+.kit-table td:first-child{font-weight:600;color:var(--ink);min-width:150px}
+.kit-table td:nth-child(2){color:var(--ink-2)}
+
+/* Diagrams */
+.diagram-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin:1.2rem 0}
+.diagram-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem;text-align:center}
+.diagram-card svg{max-width:100%;height:auto;display:block;margin:0 auto .6rem}
+.diagram-card .dc-label{font-size:.82rem;font-weight:700;color:var(--ink);margin-bottom:.2rem;font-family:var(--font-display)}
+.diagram-card .dc-note{font-size:.72rem;color:var(--ink-3);line-height:1.5}
+
+/* Shot cards */
+.shot-grid{display:grid;grid-template-columns:1fr;gap:.9rem;margin-bottom:1.2rem}
+.shot-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem;display:grid;grid-template-columns:60px 1fr;gap:1rem}
+.shot-card .sc-num{font-family:var(--font-display);font-size:1.8rem;font-weight:800;color:var(--accent);line-height:1}
+.shot-card .sc-body h4{font-size:1rem;font-weight:700;color:var(--ink);margin-bottom:.35rem}
+.shot-card .sc-body .sc-meta{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.6rem}
+.shot-card .sc-body .sc-meta .chip{font-size:.64rem;padding:.15rem .5rem}
+.shot-card .sc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.5rem .9rem;font-size:.78rem;color:var(--ink-2);margin-bottom:.6rem}
+.shot-card .sc-grid strong{display:block;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:.1rem}
+.shot-card .sc-why{background:var(--surface-warm);border-left:3px solid var(--accent);padding:.55rem .8rem;border-radius:0 var(--radius) var(--radius) 0;font-size:.8rem;color:var(--ink);line-height:1.55;margin-bottom:.5rem}
+.shot-card .sc-why strong{color:var(--accent-dark);display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.15rem;font-weight:700}
+.shot-card .sc-fail{background:var(--red-light);border-left:3px solid var(--red);padding:.5rem .8rem;border-radius:0 var(--radius) var(--radius) 0;font-size:.78rem;color:var(--ink);line-height:1.55}
+.shot-card .sc-fail strong{color:var(--red);display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.15rem;font-weight:700}
+
+/* Timing plan */
+.timing{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1rem}
+.timing-row{display:grid;grid-template-columns:110px 1fr;gap:1rem;padding:.8rem 1rem;border-bottom:1px solid var(--border)}
+.timing-row:last-child{border-bottom:none}
+.timing-row:nth-child(even){background:var(--surface-alt)}
+.timing-row .t-min{font-family:var(--font-display);font-weight:700;color:var(--accent);font-size:.82rem;line-height:1.3}
+.timing-row .t-min .t-label{display:block;font-family:var(--font-body);font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:.1rem}
+.timing-row .t-body{font-size:.84rem;color:var(--ink);line-height:1.6}
+.timing-row .t-body strong{color:var(--ink);font-weight:600}
+
+/* Dos and don'ts */
+.dodont{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.dodont-block{padding:1rem 1.1rem;border-radius:var(--radius-lg);border:1px solid}
+.dodont-do{background:var(--green-light);border-color:var(--green)}
+.dodont-dont{background:var(--red-light);border-color:var(--red)}
+.dodont-block h5{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem}
+.dodont-do h5{color:var(--green)}
+.dodont-dont h5{color:var(--red)}
+.dodont-block ul{padding-left:1rem;margin:0;list-style:none}
+.dodont-block li{font-size:.82rem;color:var(--ink);margin-bottom:.3rem;padding-left:.9rem;position:relative;line-height:1.55}
+.dodont-do li::before{content:'✓';color:var(--green);font-weight:700;position:absolute;left:0}
+.dodont-dont li::before{content:'✕';color:var(--red);font-weight:700;position:absolute;left:0}
+@media (max-width:640px){.dodont{grid-template-columns:1fr}}
+
+/* Quality gate checklist */
+.qgate{background:var(--surface-warm);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.2rem;margin-bottom:1rem}
+.qgate h5{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.6rem}
+.qgate ul{list-style:none;padding:0;margin:0}
+.qgate li{font-size:.86rem;padding:.3rem 0;line-height:1.55;color:var(--ink);display:flex;gap:.5rem;align-items:flex-start}
+.qgate li::before{content:'☐';color:var(--accent);font-weight:700;font-size:1rem;line-height:1.3}
+
+/* Mistake rescues */
+.mistake{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--amber);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:.9rem 1.1rem;margin-bottom:.7rem}
+.mistake h5{font-size:.82rem;font-weight:700;color:var(--amber);margin-bottom:.3rem;font-family:var(--font-display)}
+.mistake p{font-size:.82rem;color:var(--ink);line-height:1.6;margin:0}
+.mistake .rescue{margin-top:.4rem;padding-top:.4rem;border-top:1px dashed var(--border);font-size:.8rem;color:var(--ink-2)}
+.mistake .rescue strong{color:var(--green);text-transform:uppercase;letter-spacing:.08em;font-size:.62rem;display:block;margin-bottom:.15rem;font-weight:700}
+
+/* Script block (annotated) */
+.script{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius-lg);padding:1.1rem 1.3rem;margin-bottom:1rem}
+.script-line{display:grid;grid-template-columns:60px 1fr;gap:1rem;padding:.6rem 0;border-bottom:1px dotted var(--border)}
+.script-line:last-child{border-bottom:none}
+.script-line .t{font-family:var(--font-display);font-weight:700;color:var(--accent);font-size:.78rem;padding-top:.1rem}
+.script-line .l{font-size:.88rem;line-height:1.6;color:var(--ink)}
+.script-line .l em{color:var(--ink-3);font-style:italic;font-size:.8rem}
+.script-line .note{display:block;margin-top:.35rem;font-size:.74rem;color:var(--ink-2);background:var(--surface-warm);padding:.35rem .6rem;border-radius:var(--radius);border-left:2px solid var(--accent-light)}
+.script-line .note::before{content:'director note · ';font-weight:700;color:var(--accent-dark);text-transform:uppercase;letter-spacing:.08em;font-size:.62rem}
+
+/* Self check */
+.quiz{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.2rem 1.3rem;margin-bottom:1rem}
+.quiz h5{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:.8rem}
+.quiz-q{padding:.7rem 0;border-bottom:1px dotted var(--border)}
+.quiz-q:last-child{border-bottom:none}
+.quiz-q .q{font-size:.86rem;font-weight:600;color:var(--ink);margin-bottom:.4rem;line-height:1.5}
+.quiz-q .q::before{content:counter(qcount) '.  ';counter-increment:qcount;color:var(--accent);font-family:var(--font-display);font-weight:700}
+.quiz-q details summary{cursor:pointer;font-size:.76rem;color:var(--accent-dark);font-weight:600;padding:.25rem 0;user-select:none;list-style:none}
+.quiz-q details summary::-webkit-details-marker{display:none}
+.quiz-q details summary::before{content:'▸ ';transition:transform .15s}
+.quiz-q details[open] summary::before{content:'▾ '}
+.quiz-q details .a{font-size:.82rem;color:var(--ink-2);line-height:1.6;padding:.5rem .7rem;background:var(--surface-warm);border-radius:var(--radius);margin-top:.3rem}
+.quiz-q details .a strong{color:var(--ink)}
+.quiz{counter-reset:qcount}
+
+/* Plain english box */
+.plain{background:var(--accent-light);border-left:4px solid var(--accent);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:.9rem 1.1rem;margin:1rem 0;font-size:.86rem;color:var(--ink);line-height:1.65}
+.plain strong{color:var(--accent-dark);display:block;font-size:.64rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem;font-weight:700}
+
+/* Footer nav */
+.foot-nav{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.foot-nav a{font-size:.78rem}
+
+/* Print */
+@page{size:A4 portrait;margin:14mm 16mm}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  html{font-size:10px}
+  .topbar,.no-print,.foot-nav{display:none!important}
+  .shot-card,.timing,.kit-table,.diagram-card,.qgate,.quiz,.mistake{break-inside:avoid;page-break-inside:avoid}
+  .section{page-break-before:auto}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- TOPBAR -->
+  <div class="topbar no-print">
+    <div class="topbar-brand">Chefly · Training Pack · C1</div>
+    <div class="topbar-actions">
+      <a href="/internal-shoot-pack.html" class="btn">← Shoot pack</a>
+      <a href="/training-companion.html" class="btn">Training companion</a>
+      <a href="/training-course.html" class="btn">Take the course</a>
+      <a href="/training-pack-c2.html" class="btn btn-primary">Next: C2 →</a>
+      <button class="btn" onclick="window.print()">Print</button>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="eyebrow">training pack · c1 · v1.0 · 19 apr 2026 · for kaja (lead) + james (behind cam)</div>
+    <h1>C1 · Kaja chest-framed testimonial</h1>
+    <p class="hero-sub">A deep, step-by-step training module for the first and most important shoot of the day: a quiet, emotionally grounded handheld monologue. This pack teaches every decision — framing, eye-line, audio, light, delivery tone — so both of you can walk onto set knowing exactly what "good" looks like and why.</p>
+    <div class="hero-chips">
+      <span class="chip accent">Priority 1</span>
+      <span class="chip">Dialogue-led</span>
+      <span class="chip">1 camera</span>
+      <span class="chip">Handheld</span>
+      <span class="chip">20 to 30s final</span>
+      <span class="chip">~45 min on set</span>
+      <span class="chip green">Difficulty: easy to medium</span>
+    </div>
+  </div>
+
+  <!-- MODULE META -->
+  <div class="module-meta">
+    <div class="mm-card">
+      <h3>Learning goals</h3>
+      <ul>
+        <li>Hold a phone steady at chest height for a 30-second take without visible drift</li>
+        <li>Frame a subject chest-up with eyes on the top third and understand why it works</li>
+        <li>Route a DJI Mic 2 to an iPhone and run a clean audio test</li>
+        <li>Build a single-source soft-key lighting setup that looks like daylight</li>
+        <li>Coach a talent out of "performance mode" and into delivery mode</li>
+      </ul>
+    </div>
+    <div class="mm-card">
+      <h3>Pre-requisites</h3>
+      <ul>
+        <li>Read Training Companion Parts 1, 2, and 3 (angles, lighting, audio)</li>
+        <li>Open the shoot pack sheet for C1 so you can cross-reference the grid</li>
+        <li>Pass Module 1 of the training course (framing basics)</li>
+        <li>Fully charge both iPhones the night before</li>
+      </ul>
+    </div>
+    <div class="mm-card">
+      <h3>What you'll deliver</h3>
+      <ul>
+        <li>3 clean dead-on handheld takes of the full monologue, chest-framed</li>
+        <li>2 to 3 takes of the same script at a 3/4 side angle</li>
+        <li>4 silent cut-away beats (window, fridge, microwave, eating)</li>
+        <li>Camera-original files, no in-phone edits, labelled C1-A and C1-B</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">What's in this pack</div>
+    <ol>
+      <li><a href="#s1">01 · Concept brief and why this format wins</a></li>
+      <li><a href="#s2">02 · Kit breakdown (what you use and why)</a></li>
+      <li><a href="#s3">03 · Framing, camera settings, and crop</a></li>
+      <li><a href="#s4">04 · Lighting setup step by step</a></li>
+      <li><a href="#s5">05 · Audio setup and test procedure</a></li>
+      <li><a href="#s6">06 · Wardrobe and set dressing</a></li>
+      <li><a href="#s7">07 · The script, annotated with director notes</a></li>
+      <li><a href="#s8">08 · Shot-by-shot breakdown</a></li>
+      <li><a href="#s9">09 · Minute-by-minute timing plan</a></li>
+      <li><a href="#s10">10 · Quality gates (you're done when...)</a></li>
+      <li><a href="#s11">11 · Common mistakes and how to rescue them</a></li>
+      <li><a href="#s12">12 · Post-production handoff</a></li>
+      <li><a href="#s13">13 · Self-check (5 questions)</a></li>
+    </ol>
+  </div>
+
+  <!-- S1 CONCEPT -->
+  <div class="section" id="s1">
+    <div class="section-head">
+      <span class="sh-tag">01 · Concept</span>
+      <h2>What we're making and why it works</h2>
+      <p class="sh-sub">The selling point of this ad is not the meal. It is Kaja's relief.</p>
+    </div>
+    <div class="prose">
+      <p>This is a <strong>quiet handheld monologue</strong>. Kaja speaks directly to camera, chest-framed, with one piece of light and no music. The emotional payoff is a single line: <em>"I haven't thought about dinner in six weeks."</em> Everything in the frame is in service of that line landing.</p>
+      <p>The reason this format scores well in the format brief is counter-intuitive: lower production feels more real, and real feels more trustworthy. The highest-performing Simmer and Megan Petite Coach ads this quarter were filmed in kitchens, handheld, with a single collar mic, by one person. Polish is the enemy here. If the lighting looks like a commercial, the line stops working.</p>
+      <div class="plain"><strong>Plain-english summary</strong>Kaja stands in the kitchen, James holds the phone at his chest, and Kaja tells a real story in her own voice. No music, no tripod, no performance. It feels like she's telling a friend. That's the whole job.</div>
+      <h3>Reference winners this pattern came from</h3>
+      <ul>
+        <li><strong>Simmer ad 1</strong> — quiet handheld monologue, chest-framed, no music. Scored for intimacy over polish.</li>
+        <li><strong>Megan Petite Coach ad 3</strong> — relief as the emotional payoff. Same structure, different voice.</li>
+        <li>Both ads use <strong>daylight only</strong> or a single soft source. Neither uses a tripod. Neither uses music until the final text card.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- S2 KIT -->
+  <div class="section" id="s2">
+    <div class="section-head">
+      <span class="sh-tag">02 · Kit</span>
+      <h2>Kit breakdown</h2>
+      <p class="sh-sub">Every piece of kit you need, where it goes, and the single most common setup mistake for each.</p>
+    </div>
+    <table class="kit-table">
+      <thead>
+        <tr><th>Item</th><th>Role on C1</th><th>Where / how</th><th>Common mistake</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>iPhone 17 Pro Max</td>
+          <td>Lead and only camera</td>
+          <td>Handheld by James. Back camera. 4K, 30fps.</td>
+          <td>Switching to front camera by accident. Check before every take.</td>
+        </tr>
+        <tr>
+          <td>DJI Mic 2 · TX</td>
+          <td>Kaja's audio</td>
+          <td>Clipped under her collar, cable tucked, transmitter in a back pocket or waistband</td>
+          <td>Clipping over a zip or necklace. You'll hear every tiny clink. Clip to fabric only.</td>
+        </tr>
+        <tr>
+          <td>DJI Mic 2 · RX</td>
+          <td>Audio receiver</td>
+          <td>Plugged directly into the iPhone 17 Pro Max's USB-C port</td>
+          <td>Forgetting to switch the iPhone's audio input to the RX. Check in Settings before roll.</td>
+        </tr>
+        <tr>
+          <td>Amaran 200x</td>
+          <td>Soft key light</td>
+          <td>Camera-left, 45° to Kaja, 1.5m away. 5600K (daylight). Through Dome III only.</td>
+          <td>Running it too hot. If it reads brighter than daylight, dial it down or kill it.</td>
+        </tr>
+        <tr>
+          <td>Dome III softbox</td>
+          <td>Diffuser on the Amaran</td>
+          <td>Front grid fitted. Facing Kaja. Softens the source into a window-like wash.</td>
+          <td>Facing the softbox at the wrong angle. The broad face must point at Kaja, not the ceiling.</td>
+        </tr>
+        <tr>
+          <td>Lantern 26"</td>
+          <td>Not used on C1</td>
+          <td>Kept in its case. One light only for this concept.</td>
+          <td>Adding it "just in case". Don't. It flattens the face and kills the daylight feel.</td>
+        </tr>
+        <tr>
+          <td>Tripod</td>
+          <td>Not used on C1</td>
+          <td>Put it away. A tripod makes this shot stiff.</td>
+          <td>Grabbing the tripod because it feels safer. The stiffness reads on camera.</td>
+        </tr>
+        <tr>
+          <td>Branded containers</td>
+          <td>Set dressing</td>
+          <td>4 to 6 in the fridge, label-forward. 1 on the counter in soft background focus.</td>
+          <td>Over-styling. Leave one slightly askew. Lived-in beats stage-dressed.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- S3 FRAMING -->
+  <div class="section" id="s3">
+    <div class="section-head">
+      <span class="sh-tag">03 · Framing and camera</span>
+      <h2>Framing, settings, and crop</h2>
+      <p class="sh-sub">Chest-framed means collarbone at the bottom, a small headroom at the top. Eyes on the top third.</p>
+    </div>
+
+    <div class="diagram-row">
+      <div class="diagram-card">
+        <svg viewBox="0 0 180 320" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="4" width="172" height="312" fill="none" stroke="#1a1714" stroke-width="2"/>
+          <line x1="4" y1="108" x2="176" y2="108" stroke="#b44d1e" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="4" y1="212" x2="176" y2="212" stroke="#b44d1e" stroke-width="1" stroke-dasharray="3,3"/>
+          <circle cx="90" cy="140" r="38" fill="#f4e6dc" stroke="#1a1714" stroke-width="1.5"/>
+          <circle cx="80" cy="133" r="3" fill="#1a1714"/>
+          <circle cx="100" cy="133" r="3" fill="#1a1714"/>
+          <path d="M 78 152 Q 90 160 102 152" stroke="#1a1714" stroke-width="1.5" fill="none"/>
+          <path d="M 52 178 Q 52 196 58 220 L 122 220 Q 128 196 128 178 L 128 175 Q 110 185 90 185 Q 70 185 52 175 Z" fill="#8a8279" stroke="#1a1714" stroke-width="1.5"/>
+          <text x="10" y="100" font-family="DM Sans" font-size="7" fill="#b44d1e" font-weight="700">TOP THIRD (eyes here)</text>
+          <text x="10" y="20" font-family="DM Sans" font-size="7" fill="#5c564d">9:16 vertical</text>
+          <text x="10" y="312" font-family="DM Sans" font-size="7" fill="#5c564d">collarbone at bottom edge</text>
+        </svg>
+        <div class="dc-label">Chest-framed, dead-on</div>
+        <div class="dc-note">Take A. James stands directly in front of Kaja, phone at his own chest height. Kaja's eyes fall on the top third line. Small headroom above.</div>
+      </div>
+      <div class="diagram-card">
+        <svg viewBox="0 0 180 320" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="4" width="172" height="312" fill="none" stroke="#1a1714" stroke-width="2"/>
+          <line x1="4" y1="108" x2="176" y2="108" stroke="#b44d1e" stroke-width="1" stroke-dasharray="3,3"/>
+          <ellipse cx="108" cy="150" rx="32" ry="38" fill="#f4e6dc" stroke="#1a1714" stroke-width="1.5"/>
+          <circle cx="104" cy="143" r="2.5" fill="#1a1714"/>
+          <circle cx="122" cy="143" r="2.5" fill="#1a1714"/>
+          <path d="M 100 162 Q 112 168 124 162" stroke="#1a1714" stroke-width="1.5" fill="none"/>
+          <path d="M 70 190 Q 60 210 65 240 L 150 240 Q 155 210 145 190 Q 130 200 108 200 Q 85 200 70 190 Z" fill="#8a8279" stroke="#1a1714" stroke-width="1.5"/>
+          <text x="10" y="100" font-family="DM Sans" font-size="7" fill="#b44d1e" font-weight="700">EYES TOP THIRD</text>
+          <text x="10" y="310" font-family="DM Sans" font-size="7" fill="#5c564d">wider, hip height, 3/4 angle</text>
+        </svg>
+        <div class="dc-label">3/4 angle, hip height</div>
+        <div class="dc-note">Take B. James moves to Kaja's right (her 4 o'clock), phone dropped to hip height, angled up slightly. Wider framing.</div>
+      </div>
+    </div>
+
+    <h3>Camera settings (iPhone 17 Pro Max)</h3>
+    <table class="kit-table">
+      <thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Mode</td><td>Video</td><td>Obvious, but double-check. Easy to accidentally record stills.</td></tr>
+        <tr><td>Resolution</td><td>4K</td><td>Lets the editor crop into a 1:1 or square version without quality loss.</td></tr>
+        <tr><td>Frame rate</td><td>30fps</td><td>Matches the look of organic social. 60fps feels too "ad-like" for this format.</td></tr>
+        <tr><td>Lens</td><td>1x (main / 24mm equivalent)</td><td>Don't use ultra-wide. Don't use telephoto. 1x is natural.</td></tr>
+        <tr><td>HDR Video</td><td>OFF</td><td>HDR upload handling on social is unreliable. Ship a standard dynamic range file.</td></tr>
+        <tr><td>Stabilisation</td><td>ON (default)</td><td>Helps hide any small drift in handheld. Do not over-correct with a gimbal.</td></tr>
+        <tr><td>Audio input</td><td>DJI Mic 2 RX (set in iPhone Settings)</td><td>iPhone will use the onboard mic unless you explicitly point it at the RX.</td></tr>
+        <tr><td>Exposure lock</td><td>Long-press to lock on Kaja's face before recording</td><td>Stops the phone from exposure-drifting mid-take if she moves near a window.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- S4 LIGHTING -->
+  <div class="section" id="s4">
+    <div class="section-head">
+      <span class="sh-tag">04 · Lighting</span>
+      <h2>Lighting setup, step by step</h2>
+      <p class="sh-sub">One source. Soft. Daylight-coloured. Treat the Amaran as if it's a window.</p>
+    </div>
+
+    <div class="diagram-row">
+      <div class="diagram-card">
+        <svg viewBox="0 0 300 220" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="10" width="280" height="200" fill="none" stroke="#1a1714" stroke-width="1.5"/>
+          <circle cx="160" cy="120" r="22" fill="#f4e6dc" stroke="#1a1714" stroke-width="1.5"/>
+          <text x="151" y="125" font-family="DM Sans" font-size="9" font-weight="700">KAJA</text>
+          <rect x="60" y="88" width="32" height="56" fill="#fef3c7" stroke="#92400e" stroke-width="1.5"/>
+          <text x="62" y="77" font-family="DM Sans" font-size="7" font-weight="700" fill="#92400e">AMARAN</text>
+          <text x="62" y="160" font-family="DM Sans" font-size="7" fill="#92400e">+ DOME III</text>
+          <path d="M 92 116 L 138 120" stroke="#b44d1e" stroke-width="1" stroke-dasharray="3,3"/>
+          <text x="100" y="110" font-family="DM Sans" font-size="7" fill="#b44d1e" font-weight="700">45° soft key</text>
+          <rect x="240" y="80" width="36" height="70" fill="#d0e2f4" stroke="#1d4e89" stroke-width="1.5"/>
+          <text x="240" y="73" font-family="DM Sans" font-size="7" font-weight="700" fill="#1d4e89">WINDOW</text>
+          <text x="240" y="164" font-family="DM Sans" font-size="7" fill="#1d4e89">daylight</text>
+          <circle cx="185" cy="165" r="6" fill="#1a1714"/>
+          <text x="176" y="184" font-family="DM Sans" font-size="7" fill="#1a1714" font-weight="700">JAMES + cam</text>
+        </svg>
+        <div class="dc-label">Top-down lighting plan</div>
+        <div class="dc-note">Amaran 200x + Dome III camera-left at 45°. Window behind Kaja as a practical backlight. James stands in front of Kaja with the phone.</div>
+      </div>
+    </div>
+
+    <h3>Step by step</h3>
+    <ol class="prose">
+      <li><strong>Find the window.</strong> Position Kaja so a window is roughly behind her or to her back-left. Daylight is doing half the work here.</li>
+      <li><strong>Place the Amaran 200x</strong> on its stand, camera-left, 1.5m from Kaja, at head height. Point it at her face.</li>
+      <li><strong>Fit the Dome III softbox</strong> over the Amaran. Front diffusion panel clicked on. The broad face of the softbox must point at Kaja.</li>
+      <li><strong>Set colour temperature to 5600K</strong> (daylight). This matches the window behind her so the two sources don't fight.</li>
+      <li><strong>Set brightness around 20% to start.</strong> It should feel like a soft window wash on her face, not a studio key. If you can see a hard shadow on her nose, raise the light or move it further away.</li>
+      <li><strong>Walk around Kaja with the phone</strong> and check: no hot spot on her forehead, no harsh shadow under her chin, catch-lights visible in her eyes. If not, nudge the Amaran up or down by 10cm at a time.</li>
+      <li><strong>Kill the overhead kitchen lights.</strong> They'll colour-clash with the daylight and flatten the face. Daylight plus the one Amaran is the whole setup.</li>
+    </ol>
+    <div class="plain"><strong>Rule of thumb</strong>If you can tell there's a light on in the room, the light is too bright. This shot is daylight-first, Amaran-second, everything else off.</div>
+  </div>
+
+  <!-- S5 AUDIO -->
+  <div class="section" id="s5">
+    <div class="section-head">
+      <span class="sh-tag">05 · Audio</span>
+      <h2>Audio setup and test</h2>
+      <p class="sh-sub">Audio wins or loses this ad. Bad picture is forgivable. Bad audio is an instant scroll.</p>
+    </div>
+
+    <ol class="prose">
+      <li><strong>Unpack the DJI Mic 2 case.</strong> You need 1 TX (transmitter, the clip-on box with the bead mic) and the RX (receiver, the small round disc with USB-C).</li>
+      <li><strong>Power both on.</strong> Long-press the power button on each until the screen lights up. Pair should be automatic (they were paired on the test day). Watch the RX screen show a green "linked" icon.</li>
+      <li><strong>Plug the RX into the iPhone 17 Pro Max.</strong> It goes directly into the USB-C port, no adapter. The iPhone will pop a permission prompt the first time, allow it.</li>
+      <li><strong>Open the iPhone Camera app.</strong> Top-right, tap the audio icon if visible. Otherwise go to Settings → Camera → Record Audio and confirm external input is selected.</li>
+      <li><strong>Clip the TX to Kaja.</strong> Under her collar, mic bead pointing up toward her mouth, about a fist's width below her chin. Cable tucked behind the shirt. TX itself in a back pocket or clipped to waistband, not dangling.</li>
+      <li><strong>Audio test.</strong> James starts a recording on the iPhone. Kaja counts to ten, normal voice, standing where she'll stand for the take. James stops, plays back on headphones (AirPods fine). Listen for: clear voice, no crackle, no clothing rustle, no hum from the fridge.</li>
+      <li><strong>If you hear clothing rustle,</strong> the clip is catching a zip or necklace. Re-clip onto fabric only. Test again.</li>
+      <li><strong>If you hear hum,</strong> the fridge or a fan is close. Turn them off for the take.</li>
+      <li><strong>Monitor during takes.</strong> James keeps one AirPod in during the actual takes. If something goes wrong mid-take you can catch it live, not in the edit.</li>
+    </ol>
+    <div class="plain"><strong>Back-up plan</strong>If the DJI Mic 2 fails or won't pair, fall back to the iPhone's onboard mic. Move James within 50cm of Kaja and keep the environment silent. Quality drops but the shot is still usable.</div>
+  </div>
+
+  <!-- S6 WARDROBE -->
+  <div class="section" id="s6">
+    <div class="section-head">
+      <span class="sh-tag">06 · Wardrobe and set</span>
+      <h2>Wardrobe and set dressing</h2>
+      <p class="sh-sub">Nothing in Kaja's outfit or the kitchen should compete with her face.</p>
+    </div>
+    <div class="dodont">
+      <div class="dodont-block dodont-do">
+        <h5>Do</h5>
+        <ul>
+          <li>Plain muted top: cream, stone, soft navy, rust, or light grey</li>
+          <li>Hair the way Kaja naturally wears it on a work-from-home day</li>
+          <li>Minimal jewellery. Small studs at most. No clinking.</li>
+          <li>4 to 6 branded containers in the fridge, label-forward but not perfectly aligned</li>
+          <li>One container sitting on the counter behind Kaja, soft-focus</li>
+          <li>A cutting board or wooden spoon visible. Lived-in kitchen cues.</li>
+        </ul>
+      </div>
+      <div class="dodont-block dodont-dont">
+        <h5>Don't</h5>
+        <ul>
+          <li>Chefly-branded clothing on Kaja. Breaks the "real customer" feel.</li>
+          <li>Busy patterns or logos. They pull focus and compress badly on social.</li>
+          <li>Heavy make-up. Natural skin sells "real".</li>
+          <li>Perfectly aligned, museum-lit containers. Too commercial.</li>
+          <li>Competitor products or other brand logos in shot. Bin them or hide them.</li>
+          <li>Dishes in the sink visible. Clear the background line of sight.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- S7 SCRIPT -->
+  <div class="section" id="s7">
+    <div class="section-head">
+      <span class="sh-tag">07 · Script</span>
+      <h2>The script, annotated</h2>
+      <p class="sh-sub">Kaja, read this once to learn the beats. Do not memorise. Say it like you'd say it to a friend.</p>
+    </div>
+    <div class="script">
+      <div class="script-line">
+        <div class="t">0:00</div>
+        <div class="l">"I used to spend Sunday nights just <em>dreading</em> the week."
+          <span class="note">Flat delivery. Tired, not dramatic. Land on the word "dreading" but don't push it.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">0:04</div>
+        <div class="l">"Not because of work. Because of <em>food</em>."
+          <span class="note">Tiny pause after "work". The reveal lands on "food". One-beat pause before the next line.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">0:08</div>
+        <div class="l">"What am I eating tomorrow. What do I need to buy. Have I got protein in."
+          <span class="note">These three sentences speed up slightly, like you're listing the loop. No commas in the delivery, just the dot-dot-dot of tired admin.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">0:13</div>
+        <div class="l">"Every single night, the same loop."
+          <span class="note">Slow back down. Small sigh before the line if it feels natural.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">0:16</div>
+        <div class="l">"Now it's just… there. Fridge. Done." <em>(small shrug, half-smile)</em>
+          <span class="note">This is the turn. The tone shifts. The shrug is the move. Do not over-act. A small one-shoulder shrug is plenty.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">0:20</div>
+        <div class="l">"I haven't thought about dinner in six weeks."
+          <span class="note">The hero line of the whole ad. Straight delivery. Eye contact with the lens. Do not smile through it.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">0:24</div>
+        <div class="l">"And I didn't realise how much space that takes up until it was gone."
+          <span class="note">Soft, reflective. End the line, then hold the look for one more beat before James cuts. This is the most important beat in the ad.</span>
+        </div>
+      </div>
+      <div class="script-line">
+        <div class="t">0:28</div>
+        <div class="l"><em>Text overlay in post: "Chefly. Stop thinking about dinner."</em>
+          <span class="note">Added in CapCut. Syne Extra Bold. Cream on a near-black card. No music yet.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S8 SHOT-BY-SHOT -->
+  <div class="section" id="s8">
+    <div class="section-head">
+      <span class="sh-tag">08 · Shot breakdown</span>
+      <h2>Shot-by-shot</h2>
+      <p class="sh-sub">Every shot, what it's for, how to frame it, what kit does the work, and what ruins it.</p>
+    </div>
+
+    <div class="shot-grid">
+
+      <div class="shot-card">
+        <div class="sc-num">1</div>
+        <div class="sc-body">
+          <h4>Take A · chest-framed, dead-on</h4>
+          <div class="sc-meta">
+            <span class="chip accent">Handheld</span>
+            <span class="chip">9:16</span>
+            <span class="chip">Chest height</span>
+            <span class="chip">30s rolled, 3 takes</span>
+          </div>
+          <div class="sc-grid">
+            <div><strong>Kit</strong>iPhone 17 Pro Max, DJI Mic 2 TX+RX</div>
+            <div><strong>On camera</strong>Kaja</div>
+            <div><strong>Behind camera</strong>James</div>
+            <div><strong>Lighting</strong>Amaran 200x + Dome III camera-left 45°</div>
+            <div><strong>Audio</strong>DJI Mic 2 to iPhone 17 (RX in USB-C)</div>
+            <div><strong>Format</strong>4K 30fps, 1x lens, SDR</div>
+          </div>
+          <div class="sc-why"><strong>Why this shot</strong>This is the primary take. Everything else is coverage. We need 3 clean passes of the full script so the editor can pick the best one and cut to angle B or a cut-away if any single line is flat.</div>
+          <div class="sc-fail"><strong>Failure mode</strong>James drifts — phone starts at chest, ends at navel over 30 seconds. Fix: James anchors both elbows against his ribs and treats his torso as the tripod. Small sway is fine. Large drift is not.</div>
+        </div>
+      </div>
+
+      <div class="shot-card">
+        <div class="sc-num">2</div>
+        <div class="sc-body">
+          <h4>Take B · 3/4 angle, hip height</h4>
+          <div class="sc-meta">
+            <span class="chip accent">Handheld</span>
+            <span class="chip">9:16</span>
+            <span class="chip">Hip height</span>
+            <span class="chip">30s rolled, 2 to 3 takes</span>
+          </div>
+          <div class="sc-grid">
+            <div><strong>Kit</strong>iPhone 17 Pro Max, same DJI mic setup</div>
+            <div><strong>On camera</strong>Kaja</div>
+            <div><strong>Behind camera</strong>James (moved to Kaja's 4 o'clock)</div>
+            <div><strong>Lighting</strong>Unchanged. Don't touch the Amaran.</div>
+            <div><strong>Audio</strong>Same routing</div>
+            <div><strong>Format</strong>4K 30fps, 1x lens</div>
+          </div>
+          <div class="sc-why"><strong>Why this shot</strong>Coverage. If a line goes flat in Take A the editor can cut to Take B for variety without it looking like a continuity error. Also gives us a "thinking" look if Kaja glances off-camera.</div>
+          <div class="sc-fail"><strong>Failure mode</strong>James moves too far around, ends up at 9 o'clock. Kaja ends up in profile. Not useful. Stay between 4 and 5 o'clock.</div>
+        </div>
+      </div>
+
+      <div class="shot-card">
+        <div class="sc-num">3</div>
+        <div class="sc-body">
+          <h4>Cut-away · window thought</h4>
+          <div class="sc-meta">
+            <span class="chip">Silent</span>
+            <span class="chip blue">4s</span>
+            <span class="chip">Side profile</span>
+          </div>
+          <div class="sc-grid">
+            <div><strong>Kit</strong>iPhone 17 Pro Max, handheld</div>
+            <div><strong>On camera</strong>Kaja, side profile</div>
+            <div><strong>Action</strong>Kaja looks out the window. No dialogue. Hold for 4 full seconds.</div>
+            <div><strong>Audio</strong>Room tone only. Mic still on for foley.</div>
+          </div>
+          <div class="sc-why"><strong>Why this shot</strong>A safe cut point the editor can drop in anywhere if a line overruns. Also carries the emotional loop without words.</div>
+          <div class="sc-fail"><strong>Failure mode</strong>Kaja smiles. Don't. Soft, thoughtful, neutral.</div>
+        </div>
+      </div>
+
+      <div class="shot-card">
+        <div class="sc-num">4</div>
+        <div class="sc-body">
+          <h4>Cut-away · fridge open</h4>
+          <div class="sc-meta">
+            <span class="chip">Silent dialogue</span>
+            <span class="chip blue">3s</span>
+            <span class="chip">Over-shoulder</span>
+          </div>
+          <div class="sc-grid">
+            <div><strong>Kit</strong>iPhone 17 Pro Max, handheld, over Kaja's shoulder</div>
+            <div><strong>On camera</strong>Kaja's shoulder + fridge interior</div>
+            <div><strong>Action</strong>Kaja opens the fridge, reaches for a container. James follows her hand.</div>
+            <div><strong>Audio</strong>Natural fridge-door sound. Foley.</div>
+          </div>
+          <div class="sc-why"><strong>Why this shot</strong>The "fridge. Done." line lands visually. Labels forward when possible but don't force it.</div>
+          <div class="sc-fail"><strong>Failure mode</strong>Fridge too full and chaotic. Reset it between takes to the curated 4 to 6 containers.</div>
+        </div>
+      </div>
+
+      <div class="shot-card">
+        <div class="sc-num">5</div>
+        <div class="sc-body">
+          <h4>Cut-away · microwave</h4>
+          <div class="sc-meta">
+            <span class="chip">Natural sound</span>
+            <span class="chip blue">3s</span>
+            <span class="chip">Medium straight-on</span>
+          </div>
+          <div class="sc-grid">
+            <div><strong>Kit</strong>iPhone 17 Pro Max, handheld</div>
+            <div><strong>On camera</strong>Kaja + microwave</div>
+            <div><strong>Action</strong>Places a container, closes the door, presses start.</div>
+            <div><strong>Audio</strong>Microwave beep is usable. Leave it in.</div>
+          </div>
+          <div class="sc-why"><strong>Why this shot</strong>Pays off the "90 seconds" in the voiceover in C2 and C3 as well. Compounding B-roll.</div>
+          <div class="sc-fail"><strong>Failure mode</strong>Auto-exposure hunts as the microwave light comes on. Lock exposure on Kaja's face before tapping record.</div>
+        </div>
+      </div>
+
+      <div class="shot-card">
+        <div class="sc-num">6</div>
+        <div class="sc-body">
+          <h4>Cut-away · eating at the counter</h4>
+          <div class="sc-meta">
+            <span class="chip">Silent</span>
+            <span class="chip blue">4s</span>
+            <span class="chip">Medium 3/4</span>
+          </div>
+          <div class="sc-grid">
+            <div><strong>Kit</strong>iPhone 17 Pro Max, handheld</div>
+            <div><strong>On camera</strong>Kaja, container, fork</div>
+            <div><strong>Action</strong>Kaja stands at the counter and eats, looking out the window.</div>
+            <div><strong>Audio</strong>Faint cutlery foley. No dialogue.</div>
+          </div>
+          <div class="sc-why"><strong>Why this shot</strong>The quiet earns the final line. Without this visual breath, the monologue feels claustrophobic.</div>
+          <div class="sc-fail"><strong>Failure mode</strong>Kaja eats too quickly and looks stressed. Slow down. Small bites. Look out, not down.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- S9 TIMING -->
+  <div class="section" id="s9">
+    <div class="section-head">
+      <span class="sh-tag">09 · Timing plan</span>
+      <h2>Minute-by-minute on the day</h2>
+      <p class="sh-sub">45 minutes from empty kitchen to wrap. Stick to this. Drift costs C2 later.</p>
+    </div>
+    <div class="timing">
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">min 0 to 10</span>Setup</div>
+        <div class="t-body"><strong>James</strong> builds the lighting per Section 04. <strong>Kaja</strong> reads the script twice quietly, does not memorise. Put branded containers in the fridge, label-forward. Clear the counter.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">min 10 to 13</span>Audio test</div>
+        <div class="t-body">Clip DJI TX to Kaja. James plugs RX into iPhone. Record a 10-count. Play back on AirPods. Fix any rustle or hum before continuing.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">min 13 to 22</span>Take A (3 passes)</div>
+        <div class="t-body">James stands dead-on, phone at chest height. Kaja reads the script straight through, once. Reset, water, go again. Three times total. Between passes, James checks playback of the last pass for focus drift or audio issues.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">min 22 to 30</span>Take B (2 to 3 passes)</div>
+        <div class="t-body">James moves to Kaja's 4 o'clock, drops phone to hip, angles slightly up. Kaja delivers the same script again. Two passes minimum, three if first one is shaky.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">min 30 to 40</span>Cut-aways</div>
+        <div class="t-body">Shoot shots 3 to 6 in order. Each one: 2 minutes of setup and filming, 30 seconds of playback check. Move on. Don't second-guess.</div>
+      </div>
+      <div class="timing-row">
+        <div class="t-min"><span class="t-label">min 40 to 45</span>Review + wrap</div>
+        <div class="t-body">Sit together. Scrub through the takes. Confirm: one strong take of A, one of B, four cut-aways, clean audio throughout. Label files C1-A-take1.mov and so on as you AirDrop them off the phone.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S10 QUALITY GATES -->
+  <div class="section" id="s10">
+    <div class="section-head">
+      <span class="sh-tag">10 · Quality gates</span>
+      <h2>You're done when...</h2>
+      <p class="sh-sub">Do not wrap until all of these are ticked.</p>
+    </div>
+    <div class="qgate">
+      <h5>C1 sign-off checklist</h5>
+      <ul>
+        <li>At least one complete take of the script from Take A (chest-framed, dead-on)</li>
+        <li>At least one complete take of the script from Take B (3/4 angle, hip height)</li>
+        <li>All four cut-away beats captured (window, fridge, microwave, eating)</li>
+        <li>Audio on the primary takes is clean on AirPod playback — no clothing rustle, no fridge hum</li>
+        <li>No one in the kitchen has spoken during a take except Kaja</li>
+        <li>Files transferred off the phone (AirDrop to laptop) and labelled C1-A-takeN / C1-B-takeN / C1-CA-N</li>
+        <li>Overhead kitchen lights were off for the dialogue takes</li>
+        <li>The hero line "I haven't thought about dinner in six weeks" has at least one take you'd happily show a stranger</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- S11 MISTAKES -->
+  <div class="section" id="s11">
+    <div class="section-head">
+      <span class="sh-tag">11 · Common mistakes + rescues</span>
+      <h2>What usually goes wrong and how to fix it fast</h2>
+    </div>
+
+    <div class="mistake">
+      <h5>Kaja performs instead of delivers</h5>
+      <p>You can tell because the voice goes up in register and the eye contact gets intense. The shot stops feeling real.</p>
+      <div class="rescue"><strong>Rescue</strong>James says "tell it to me like I'm your sister and we're having a cup of tea." Shoot one more take immediately. That take is usually the keeper.</div>
+    </div>
+
+    <div class="mistake">
+      <h5>Audio has a weird low hum on playback</h5>
+      <p>Almost always the fridge compressor kicking in. Sometimes the boiler. Rarely a phone-interference buzz.</p>
+      <div class="rescue"><strong>Rescue</strong>Unplug the fridge for 10 minutes (plan around this). If boiler, turn off heating. If hum remains, move Kaja 2m from any appliance and re-test.</div>
+    </div>
+
+    <div class="mistake">
+      <h5>Exposure hunts during the take</h5>
+      <p>The image gets darker then lighter as Kaja moves her head or someone walks past a window.</p>
+      <div class="rescue"><strong>Rescue</strong>Before rolling, long-press on Kaja's face in the camera app until "AE/AF LOCK" appears at the top. Exposure is now locked.</div>
+    </div>
+
+    <div class="mistake">
+      <h5>The hero line lands flat in every take</h5>
+      <p>Kaja has read the line too many times and lost the meaning.</p>
+      <div class="rescue"><strong>Rescue</strong>Stop. Two-minute break. Kaja does one silent read, one out-loud read in a totally different tone (sarcastic, or sung), then the real take. Pattern-break fixes dead delivery.</div>
+    </div>
+
+    <div class="mistake">
+      <h5>James has visible drift on a 30-second take</h5>
+      <p>Phone starts at chest, ends at navel. Very common in long takes.</p>
+      <div class="rescue"><strong>Rescue</strong>Between takes, James rests the phone on a countertop edge at the correct height and checks his arm angle. Then resumes. For extra help, James can lean his back against a wall during the take.</div>
+    </div>
+
+    <div class="mistake">
+      <h5>Fridge B-roll looks staged</h5>
+      <p>Too perfect. Reads like a photo shoot.</p>
+      <div class="rescue"><strong>Rescue</strong>Kaja rearranges 2 containers to be slightly askew. Adds 1 unrelated item (a butter, a ketchup). Shoot it again. Lived-in wins.</div>
+    </div>
+  </div>
+
+  <!-- S12 POST -->
+  <div class="section" id="s12">
+    <div class="section-head">
+      <span class="sh-tag">12 · Post-production handoff</span>
+      <h2>What the editor needs and what not to add</h2>
+    </div>
+    <table class="kit-table">
+      <thead><tr><th>Item</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Files</td><td>All .mov camera originals from iPhone 17 Pro Max, labelled C1-A-takeN, C1-B-takeN, C1-CA-1 to C1-CA-4.</td></tr>
+        <tr><td>Edit tool</td><td>CapCut. Keep the edit simple. This does not need DaVinci.</td></tr>
+        <tr><td>Cut structure</td><td>Pick the strongest Take A as the spine. Cut to Take B on one mid-sentence beat for variety. Drop one cut-away on the "fridge" line and one on the final "eating" beat.</td></tr>
+        <tr><td>Music</td><td>None until the final 2 seconds, and only if it truly helps. Silence is the default.</td></tr>
+        <tr><td>Text overlay</td><td>Only the final card. "Chefly. Stop thinking about dinner." Syne Extra Bold or DM Sans Bold. Cream on near-black.</td></tr>
+        <tr><td>Captions</td><td>Yes, burn-in. Dialogue only. Keep them small, low third, Syne Extra Bold, cream.</td></tr>
+        <tr><td>Length</td><td>20 to 30 seconds. If you're over 32, cut harder. Every second past 30 costs view-through rate.</td></tr>
+        <tr><td>Exports</td><td>9:16 master at 1080x1920. 1:1 square crop at 1080x1080 as a variant (for feed). Both H.264, 10 Mbps.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- S13 SELF-CHECK -->
+  <div class="section" id="s13">
+    <div class="section-head">
+      <span class="sh-tag">13 · Self-check</span>
+      <h2>Quick self-check</h2>
+      <p class="sh-sub">Five questions. Try them before opening the answers.</p>
+    </div>
+    <div class="quiz">
+      <h5>Before you shoot, can you answer these?</h5>
+
+      <div class="quiz-q">
+        <div class="q">Where should Kaja's eyes fall in the frame, and why?</div>
+        <details><summary>Show answer</summary>
+          <div class="a"><strong>Answer:</strong> On the top third line of the 9:16 frame. It gives a natural sense of balance (rule of thirds), keeps small headroom above her, and means her collarbone sits roughly at the bottom edge of the chest-framed crop.</div>
+        </details>
+      </div>
+
+      <div class="quiz-q">
+        <div class="q">Why are we not using the Lantern 26" on this shoot?</div>
+        <details><summary>Show answer</summary>
+          <div class="a"><strong>Answer:</strong> C1 wants a daylight feel from a single source. Adding the Lantern as a second light flattens the face and makes the shot feel studio-lit, which kills the "real customer" framing. One light, Amaran + Dome III, is the whole setup.</div>
+        </details>
+      </div>
+
+      <div class="quiz-q">
+        <div class="q">The DJI Mic 2 won't pair with its receiver. What do you do?</div>
+        <details><summary>Show answer</summary>
+          <div class="a"><strong>Answer:</strong> Turn both units off, turn the RX on first, then the TX. Wait 10 seconds. If still no pair, fall back to the iPhone onboard mic, move James within 50cm of Kaja, silence the kitchen. Shot is still usable.</div>
+        </details>
+      </div>
+
+      <div class="quiz-q">
+        <div class="q">Which take is the editor most likely to use as the spine of the edit, and why?</div>
+        <details><summary>Show answer</summary>
+          <div class="a"><strong>Answer:</strong> Take A (chest-framed, dead-on). It is the most intimate framing and carries the hero line best. Take B is for coverage, used to cut to on a single mid-sentence beat for variety.</div>
+        </details>
+      </div>
+
+      <div class="quiz-q">
+        <div class="q">Name three things that should not appear in the background.</div>
+        <details><summary>Show answer</summary>
+          <div class="a"><strong>Answer:</strong> Dishes in the sink, competitor product logos, and Chefly-branded clothing on Kaja. Any one of these breaks the "real customer in her own kitchen" framing.</div>
+        </details>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER NAV -->
+  <div class="foot-nav no-print">
+    <a href="/internal-shoot-pack.html" class="btn">← All shoot sheets</a>
+    <a href="/training-pack-c2.html" class="btn btn-primary">Next module: C2 · James founder talking head →</a>
+  </div>
+
+</div>
+</body>
+</html>
