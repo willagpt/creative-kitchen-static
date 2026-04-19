@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Planning rhythm · Chefly shoot cadence · calendar view</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#faf9f7;
+  --surface:#fff;
+  --surface-alt:#f4f0ea;
+  --surface-warm:#fdf5ec;
+  --ink:#1a1714;
+  --ink-2:#4a4540;
+  --ink-3:#7a746d;
+  --ink-4:#aaa49b;
+  --accent:#b44d1e;
+  --accent-dark:#8a3a14;
+  --accent-light:#f8e6d8;
+  --accent-strong:#eac19c;
+  --amber:#8a6a1a;
+  --amber-light:#fbf3dd;
+  --green:#4a6b3a;
+  --green-light:#dce6d2;
+  --border:#e3ddd3;
+  --radius:4px;
+  --radius-lg:6px;
+  --font-body:'DM Sans',system-ui,sans-serif;
+  --font-display:'Fraunces',Georgia,serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--font-body);font-size:15px;line-height:1.6;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+.page{max-width:1080px;margin:0 auto;padding:clamp(1rem,3vw,2rem)}
+a{color:var(--accent-dark);text-decoration:underline;text-underline-offset:2px}
+a:hover{color:var(--accent)}
+
+/* TOPBAR */
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:.8rem;padding:.9rem 1.2rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:1.4rem;flex-wrap:wrap}
+.topbar-brand{font-family:var(--font-display);font-weight:700;font-size:.98rem;color:var(--ink)}
+.topbar-actions{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+.btn{padding:.4rem .9rem;font-family:var(--font-body);font-size:.72rem;font-weight:600;border-radius:var(--radius);cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;border:1.5px solid var(--border);background:var(--surface);color:var(--ink-2)}
+.btn:hover{border-color:var(--ink-3);color:var(--ink)}
+.btn-primary{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark);text-decoration:none}
+
+/* HERO */
+.hero{padding:clamp(1.5rem,4vw,2.4rem) 0 1.2rem;border-bottom:1px solid var(--border);margin-bottom:1.8rem}
+.eyebrow{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent-dark);margin-bottom:.7rem}
+.hero h1{font-family:var(--font-display);font-size:clamp(1.8rem,4vw,2.6rem);font-weight:800;letter-spacing:-.025em;margin-bottom:.5rem;color:var(--ink);line-height:1.1}
+.hero h1 em{font-style:italic;color:var(--accent-dark);font-weight:600}
+.hero-sub{font-size:1rem;color:var(--ink-2);max-width:60ch;line-height:1.55}
+
+/* TL;DR */
+.tldr{background:var(--accent-light);border-left:4px solid var(--accent);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:1rem 1.2rem;margin:0 0 2rem;font-size:.94rem;line-height:1.65}
+.tldr strong{display:block;font-size:.66rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent-dark);margin-bottom:.35rem;font-weight:700}
+
+/* SECTION */
+.section{margin-bottom:2.4rem}
+.section-head{margin-bottom:1rem}
+.sh-tag{display:inline-block;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent-dark);background:var(--accent-light);padding:.25rem .55rem;border-radius:var(--radius);margin-bottom:.5rem}
+.section-head h2{font-family:var(--font-display);font-size:clamp(1.3rem,3vw,1.8rem);font-weight:700;letter-spacing:-.015em;color:var(--ink);margin-bottom:.3rem;line-height:1.15}
+.section-head p.sh-sub{font-size:.92rem;color:var(--ink-2);line-height:1.55;max-width:64ch}
+
+/* CALENDAR GRID */
+.cal{display:grid;grid-template-columns:90px repeat(7,1fr);gap:.35rem;border:1px solid var(--border);background:var(--border);padding:1px;border-radius:var(--radius-lg);overflow:hidden;margin:1rem 0}
+.cal-head,.cal-rowlabel,.cal-cell{background:var(--surface);padding:.55rem .55rem;font-size:.72rem;line-height:1.4;min-height:94px;display:flex;flex-direction:column;gap:.25rem}
+.cal-head{background:var(--ink);color:var(--bg);font-weight:700;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;text-align:center;min-height:auto;padding:.55rem .35rem;align-items:center;justify-content:center}
+.cal-rowlabel{background:var(--surface-alt);font-weight:700;font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);justify-content:center;align-items:flex-start}
+.cal-rowlabel .wk-num{font-family:var(--font-display);font-size:1.1rem;color:var(--accent-dark);font-weight:700;letter-spacing:0;text-transform:none;margin-bottom:.1rem}
+.cal-rowlabel .wk-range{font-size:.58rem;color:var(--ink-3);font-weight:600;text-transform:none;letter-spacing:.02em}
+.cal-cell .d-date{font-family:var(--font-display);font-size:1rem;font-weight:700;color:var(--ink);line-height:1}
+.cal-cell .d-month{font-size:.56rem;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-top:-.1rem}
+.cal-cell .d-act{font-size:.68rem;line-height:1.3;color:var(--ink);margin-top:auto;font-weight:500}
+.cal-cell .d-act b{display:block;font-weight:700;font-size:.7rem;color:var(--ink);margin-bottom:.1rem;line-height:1.2}
+.cal-cell.rest{background:#efe9e3}
+.cal-cell.rest .d-date{color:var(--ink-3)}
+.cal-cell.rest .d-act{color:var(--ink-3);font-weight:500}
+.cal-cell.desk{background:var(--surface-warm)}
+.cal-cell.desk .d-act b{color:var(--ink-2)}
+.cal-cell.c2{background:var(--accent-light);border:none;outline:2px solid var(--accent);outline-offset:-2px}
+.cal-cell.c2 .d-act b{color:var(--accent-dark)}
+.cal-cell.fullshoot{background:var(--accent-strong);border:none;outline:2px solid var(--accent-dark);outline-offset:-2px}
+.cal-cell.fullshoot .d-act b{color:var(--accent-dark);text-transform:uppercase;font-size:.62rem;letter-spacing:.05em}
+.cal-cell.review{background:var(--amber-light);border:none;outline:2px solid var(--amber);outline-offset:-2px}
+.cal-cell.review .d-act b{color:var(--amber)}
+.cal-cell.push{background:var(--green-light)}
+.cal-cell.push .d-act b{color:var(--green)}
+@media (max-width:780px){
+  .cal{grid-template-columns:70px repeat(7,1fr);font-size:.66rem}
+  .cal-head,.cal-rowlabel,.cal-cell{padding:.35rem .3rem;min-height:84px}
+  .cal-cell .d-date{font-size:.9rem}
+  .cal-cell .d-act{font-size:.6rem;line-height:1.25}
+  .cal-cell .d-act b{font-size:.62rem}
+}
+
+/* LEGEND */
+.legend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.72rem;color:var(--ink-3);margin:.6rem 0 0}
+.legend span{display:inline-flex;align-items:center;gap:.4rem}
+.legend i{display:inline-block;width:.9rem;height:.9rem;border-radius:2px;border:1px solid var(--border)}
+.legend i.rest{background:#efe9e3}
+.legend i.desk{background:var(--surface-warm)}
+.legend i.c2{background:var(--accent-light);border:1.5px solid var(--accent)}
+.legend i.fullshoot{background:var(--accent-strong);border:1.5px solid var(--accent-dark)}
+.legend i.review{background:var(--amber-light);border:1.5px solid var(--amber)}
+.legend i.push{background:var(--green-light)}
+
+/* WEEK CARDS */
+.week-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.2rem 0}
+@media (max-width:760px){.week-grid{grid-template-columns:1fr}}
+.week-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.2rem;border-left:4px solid var(--accent)}
+.week-card .wc-tag{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--accent-dark);margin-bottom:.2rem;display:block}
+.week-card h4{font-family:var(--font-display);font-size:1.05rem;font-weight:700;color:var(--ink);margin-bottom:.35rem}
+.week-card p{font-size:.86rem;color:var(--ink-2);line-height:1.55;margin-bottom:.6rem}
+.week-card .wc-line{font-size:.82rem;color:var(--ink);padding:.25rem 0;line-height:1.45;border-bottom:1px dotted var(--border)}
+.week-card .wc-line:last-child{border-bottom:none}
+.week-card .wc-line b{color:var(--accent-dark);font-weight:700}
+.week-card .wc-time{font-weight:700;color:var(--ink);font-size:.78rem}
+.week-card.heavy{border-left-color:var(--amber)}
+.week-card.heavy .wc-tag{color:var(--amber)}
+.week-card.light{border-left-color:var(--ink-3)}
+.week-card.light .wc-tag{color:var(--ink-3)}
+
+/* PLANNING CASCADE TABLE */
+.cascade{width:100%;border-collapse:collapse;border:1px solid var(--border);font-size:.82rem;margin:1rem 0;background:var(--surface);border-radius:var(--radius-lg);overflow:hidden}
+.cascade th{background:var(--ink);color:var(--bg);font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.6rem .8rem;text-align:left}
+.cascade td{padding:.7rem .8rem;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5}
+.cascade tr:last-child td{border-bottom:none}
+.cascade tr:nth-child(even) td{background:var(--surface-alt)}
+.cascade td:first-child{font-weight:700;color:var(--accent-dark);white-space:nowrap;font-size:.76rem}
+.cascade td:nth-child(2){font-weight:600;color:var(--ink)}
+.cascade td:nth-child(3){color:var(--ink-2);font-size:.8rem}
+
+/* OUTPUT TOTE */
+.tote{background:var(--surface);border:2px solid var(--ink);border-radius:var(--radius-lg);padding:1.1rem 1.3rem;margin:1.2rem 0;display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem}
+@media (max-width:680px){.tote{grid-template-columns:repeat(2,1fr)}}
+.tote-item{text-align:center}
+.tote-val{font-family:var(--font-display);font-size:1.8rem;font-weight:800;color:var(--accent-dark);line-height:1;margin-bottom:.2rem}
+.tote-lbl{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);font-weight:700}
+
+/* PLAIN CALLOUT */
+.plain{background:var(--accent-light);border-left:4px solid var(--accent);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:.9rem 1.1rem;margin:1rem 0;font-size:.88rem;color:var(--ink);line-height:1.65}
+.plain strong{color:var(--accent-dark);display:block;font-size:.64rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem;font-weight:700}
+
+/* AUTOMATION BOX */
+.auto-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.2rem 1.4rem;margin:1.2rem 0}
+.auto-box h3{font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-bottom:.5rem}
+.auto-box ol{margin:.5rem 0 0 1.3rem;font-size:.86rem;line-height:1.75}
+.auto-box ol li{padding:.15rem 0}
+.auto-box ol li b{color:var(--accent-dark)}
+
+/* FOOTER NAV */
+.foot-nav{margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.foot-nav a{font-size:.78rem}
+
+@page{size:A4 landscape;margin:12mm}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  html{font-size:9.5px}
+  .topbar,.foot-nav,.no-print{display:none!important}
+  .cal{page-break-inside:avoid}
+  .week-card,.cascade,.tote{break-inside:avoid;page-break-inside:avoid}
+  .page{max-width:100%;padding:0}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- TOPBAR -->
+  <div class="topbar no-print">
+    <div class="topbar-brand">Chefly · Planning Rhythm</div>
+    <div class="topbar-actions">
+      <a href="/shoot-day-schedule.html" class="btn">← Schedule</a>
+      <a href="/internal-shoot-pack.html" class="btn">Shoot pack</a>
+      <a href="/training-companion.html" class="btn">Training companion</a>
+      <a href="/format-brief.html" class="btn">Format brief</a>
+      <button class="btn btn-primary" onclick="window.print()">Print (landscape)</button>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="eyebrow">planning rhythm · v1.0 · 19 apr 2026 · calendar view · for tired brains</div>
+    <h1>the <em>next 4 weeks</em>,<br>one page, one glance.</h1>
+    <p class="hero-sub">Forget the long docs. This is what actually happens on which day. Two shoot flavours (Wed full shoot every other week, Fri 90-min C2 every week), one desk review (first Thu of the month), and five rest days. Same two locations forever: kitchen and desk.</p>
+  </div>
+
+  <div class="tldr">
+    <strong>The whole plan in 7 lines</strong>
+    Mon &amp; Tue → no camera, ever.<br>
+    Wed → full shoot day (6 hrs) every <em>other</em> week. Desk day on off-weeks.<br>
+    Thu → edit + approve. First Thu of the month is a 2-hr creative review.<br>
+    Fri → weekly 90-min C2 reaction shoot (James solo, same desk).<br>
+    Sat → auto-render weekend edit block.<br>
+    Sun → off. 15-min thumbnail QA with coffee if you want.<br>
+    Push-to-Meta happens Monday mornings automatically.
+  </div>
+
+  <!-- ────────── SECTION 1 · Calendar ────────── -->
+  <div class="section" id="s1">
+    <div class="section-head">
+      <span class="sh-tag">01 · The calendar</span>
+      <h2>The next 4 weeks, actually on a calendar</h2>
+      <p class="sh-sub">Real dates. Real plan. Colour-coded so you can scan it in 5 seconds. Print the page in landscape and stick it on the kitchen wall.</p>
+    </div>
+
+    <div class="cal">
+      <div class="cal-head">Week</div>
+      <div class="cal-head">Mon</div>
+      <div class="cal-head">Tue</div>
+      <div class="cal-head">Wed</div>
+      <div class="cal-head">Thu</div>
+      <div class="cal-head">Fri</div>
+      <div class="cal-head">Sat</div>
+      <div class="cal-head">Sun</div>
+
+      <!-- WEEK 1: Apr 20 to 26 -->
+      <div class="cal-rowlabel">
+        <div class="wk-num">W1</div>
+        <div class="wk-range">20 to 26 Apr</div>
+      </div>
+      <div class="cal-cell rest">
+        <div class="d-date">20</div>
+        <div class="d-month">Apr</div>
+        <div class="d-act"><b>Rest</b>No camera</div>
+      </div>
+      <div class="cal-cell rest">
+        <div class="d-date">21</div>
+        <div class="d-month">Apr</div>
+        <div class="d-act"><b>Rest</b>No camera</div>
+      </div>
+      <div class="cal-cell desk">
+        <div class="d-date">22</div>
+        <div class="d-month">Apr</div>
+        <div class="d-act"><b>Desk day</b>Write Fri C2 script</div>
+      </div>
+      <div class="cal-cell desk">
+        <div class="d-date">23</div>
+        <div class="d-month">Apr</div>
+        <div class="d-act"><b>Desk day</b>Approve script, charge kit</div>
+      </div>
+      <div class="cal-cell c2">
+        <div class="d-date">24</div>
+        <div class="d-month">Apr</div>
+        <div class="d-act"><b>C2 shoot</b>09:30 to 11:00, James solo</div>
+      </div>
+      <div class="cal-cell desk">
+        <div class="d-date">25</div>
+        <div class="d-month">Apr</div>
+        <div class="d-act"><b>Edit block</b>Auto-render + QA</div>
+      </div>
+      <div class="cal-cell rest">
+        <div class="d-date">26</div>
+        <div class="d-month">Apr</div>
+        <div class="d-act"><b>Off</b>15-min thumbnail check</div>
+      </div>
+
+      <!-- WEEK 2: Apr 27 to May 3 -->
+      <div class="cal-rowlabel">
+        <div class="wk-num">W2</div>
+        <div class="wk-range">27 Apr to 3 May</div>
+      </div>
+      <div class="cal-cell push">
+        <div class="d-date">27</div>
+        <div class="d-month">Apr</div>
+        <div class="d-act"><b>Push</b>C2 batch → Meta</div>
+      </div>
+      <div class="cal-cell rest">
+        <div class="d-date">28</div>
+        <div class="d-month">Apr</div>
+        <div class="d-act"><b>Rest</b>Evening: dress sets, prep meals</div>
+      </div>
+      <div class="cal-cell fullshoot">
+        <div class="d-date">29</div>
+        <div class="d-month">Apr</div>
+        <div class="d-act"><b>FULL SHOOT</b>09:00 to 15:00, all 5 concepts, both of you</div>
+      </div>
+      <div class="cal-cell desk">
+        <div class="d-date">30</div>
+        <div class="d-month">Apr</div>
+        <div class="d-act"><b>Edit day</b>Approve + render batch</div>
+      </div>
+      <div class="cal-cell c2">
+        <div class="d-date">1</div>
+        <div class="d-month">May</div>
+        <div class="d-act"><b>C2 shoot</b>09:30 to 11:00</div>
+      </div>
+      <div class="cal-cell desk">
+        <div class="d-date">2</div>
+        <div class="d-month">May</div>
+        <div class="d-act"><b>Edit block</b>Auto-render + QA</div>
+      </div>
+      <div class="cal-cell rest">
+        <div class="d-date">3</div>
+        <div class="d-month">May</div>
+        <div class="d-act"><b>Off</b></div>
+      </div>
+
+      <!-- WEEK 3: May 4 to 10 -->
+      <div class="cal-rowlabel">
+        <div class="wk-num">W3</div>
+        <div class="wk-range">4 to 10 May</div>
+      </div>
+      <div class="cal-cell push">
+        <div class="d-date">4</div>
+        <div class="d-month">May</div>
+        <div class="d-act"><b>Push</b>Wed batch + Fri C2 → Meta</div>
+      </div>
+      <div class="cal-cell rest">
+        <div class="d-date">5</div>
+        <div class="d-month">May</div>
+        <div class="d-act"><b>Rest</b>No camera</div>
+      </div>
+      <div class="cal-cell desk">
+        <div class="d-date">6</div>
+        <div class="d-month">May</div>
+        <div class="d-act"><b>Desk day</b>Write Fri C2 script</div>
+      </div>
+      <div class="cal-cell review">
+        <div class="d-date">7</div>
+        <div class="d-month">May</div>
+        <div class="d-act"><b>Monthly review</b>10:00 to 12:00, no camera, desk only</div>
+      </div>
+      <div class="cal-cell c2">
+        <div class="d-date">8</div>
+        <div class="d-month">May</div>
+        <div class="d-act"><b>C2 shoot</b>09:30 to 11:00</div>
+      </div>
+      <div class="cal-cell desk">
+        <div class="d-date">9</div>
+        <div class="d-month">May</div>
+        <div class="d-act"><b>Edit block</b>Auto-render + QA</div>
+      </div>
+      <div class="cal-cell rest">
+        <div class="d-date">10</div>
+        <div class="d-month">May</div>
+        <div class="d-act"><b>Off</b></div>
+      </div>
+
+      <!-- WEEK 4: May 11 to 17 -->
+      <div class="cal-rowlabel">
+        <div class="wk-num">W4</div>
+        <div class="wk-range">11 to 17 May</div>
+      </div>
+      <div class="cal-cell push">
+        <div class="d-date">11</div>
+        <div class="d-month">May</div>
+        <div class="d-act"><b>Push</b>C2 batch → Meta</div>
+      </div>
+      <div class="cal-cell rest">
+        <div class="d-date">12</div>
+        <div class="d-month">May</div>
+        <div class="d-act"><b>Rest</b>Evening: dress sets, prep meals</div>
+      </div>
+      <div class="cal-cell fullshoot">
+        <div class="d-date">13</div>
+        <div class="d-month">May</div>
+        <div class="d-act"><b>FULL SHOOT</b>09:00 to 15:00, all 5 concepts, both of you</div>
+      </div>
+      <div class="cal-cell desk">
+        <div class="d-date">14</div>
+        <div class="d-month">May</div>
+        <div class="d-act"><b>Edit day</b>Approve + render batch</div>
+      </div>
+      <div class="cal-cell c2">
+        <div class="d-date">15</div>
+        <div class="d-month">May</div>
+        <div class="d-act"><b>C2 shoot</b>09:30 to 11:00</div>
+      </div>
+      <div class="cal-cell desk">
+        <div class="d-date">16</div>
+        <div class="d-month">May</div>
+        <div class="d-act"><b>Edit block</b>Auto-render + QA</div>
+      </div>
+      <div class="cal-cell rest">
+        <div class="d-date">17</div>
+        <div class="d-month">May</div>
+        <div class="d-act"><b>Off</b></div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><i class="fullshoot"></i> Full shoot day (bi-weekly)</span>
+      <span><i class="c2"></i> Weekly C2 (90 min)</span>
+      <span><i class="review"></i> Monthly creative review</span>
+      <span><i class="desk"></i> Desk / edit / script</span>
+      <span><i class="push"></i> Push-to-Meta day</span>
+      <span><i class="rest"></i> Rest / no camera</span>
+    </div>
+
+    <div class="plain"><strong>What you'll notice</strong>Every week has Fri as the fixed anchor. Every second Wednesday is your big day. Mon/Tue are always rest. The first Thursday of each month is the only "new" thing on the calendar, and it's 2 hours at a desk, not a shoot.</div>
+  </div>
+
+  <!-- ────────── SECTION 2 · What you actually do each week ────────── -->
+  <div class="section" id="s2">
+    <div class="section-head">
+      <span class="sh-tag">02 · One line per week</span>
+      <h2>What you and Kaja actually do, week by week</h2>
+      <p class="sh-sub">Read this when fatigue is winning. Each week summarised in 3 to 5 bullets. If you only remember one thing from this doc, remember these.</p>
+    </div>
+
+    <div class="week-grid">
+      <div class="week-card light">
+        <span class="wc-tag">Week 1 · light week</span>
+        <h4>C2 only. No big shoot.</h4>
+        <p>This is a "breathing" week. No camera Mon/Tue. Two desk days Wed/Thu. Only 90 min on camera all week.</p>
+        <div class="wc-line"><span class="wc-time">Wed 09:00 to 10:00</span> · Write Friday's C2 script from this week's Meta data + customer reviews.</div>
+        <div class="wc-line"><span class="wc-time">Thu 16:00 to 16:15</span> · Read script out loud. Approve. Charge iPhone + DJI mic.</div>
+        <div class="wc-line"><span class="wc-time">Fri 09:30 to 11:00</span> · <b>Shoot C2.</b> 3 to 5 script variants. Same desk, same outfit.</div>
+        <div class="wc-line"><span class="wc-time">Sat</span> · Auto-render runs itself. 15 min Sunday with coffee to approve.</div>
+      </div>
+
+      <div class="week-card">
+        <span class="wc-tag">Week 2 · full shoot week</span>
+        <h4>The big one. Wed shoot + Fri C2.</h4>
+        <p>This is the week you earn the next fortnight's content. Prep Tuesday evening. Bring energy Wednesday.</p>
+        <div class="wc-line"><span class="wc-time">Mon</span> · Push last week's C2 batch to Meta (auto).</div>
+        <div class="wc-line"><span class="wc-time">Tue evening</span> · Dress kitchen + desk. Prep tomorrow's meals. Charge everything.</div>
+        <div class="wc-line"><span class="wc-time">Wed 09:00 to 15:00</span> · <b>Full shoot day.</b> C1 + C2 + C3 + C4 + C5. 15 to 20 creatives.</div>
+        <div class="wc-line"><span class="wc-time">Thu</span> · 2 hrs at desk approving the batch.</div>
+        <div class="wc-line"><span class="wc-time">Fri 09:30 to 11:00</span> · Weekly C2 as normal. Yes, even after Wednesday.</div>
+      </div>
+
+      <div class="week-card heavy">
+        <span class="wc-tag">Week 3 · review week</span>
+        <h4>Monthly review + Friday C2.</h4>
+        <p>One extra meeting this week: the first Thursday of the month. Desk only, no camera. This is where the next 4 weeks get planned.</p>
+        <div class="wc-line"><span class="wc-time">Mon</span> · Push Wed 29 full batch + Fri 1 C2 batch → Meta.</div>
+        <div class="wc-line"><span class="wc-time">Wed</span> · Desk day. Write Friday's C2 script.</div>
+        <div class="wc-line"><span class="wc-time">Thu 10:00 to 12:00</span> · <b>Monthly creative review.</b> Kill fatigued ads, approve new rotation, lock next 4 Fridays and 2 Wednesdays.</div>
+        <div class="wc-line"><span class="wc-time">Fri 09:30 to 11:00</span> · C2 shoot.</div>
+      </div>
+
+      <div class="week-card">
+        <span class="wc-tag">Week 4 · full shoot week</span>
+        <h4>Same as Week 2. Shoot big, shoot small.</h4>
+        <p>Repeat of Week 2. The plan is already locked from Thursday's review, so no thinking needed. Just execute.</p>
+        <div class="wc-line"><span class="wc-time">Mon</span> · Push.</div>
+        <div class="wc-line"><span class="wc-time">Tue evening</span> · Prep (15 min).</div>
+        <div class="wc-line"><span class="wc-time">Wed 09:00 to 15:00</span> · <b>Full shoot day.</b></div>
+        <div class="wc-line"><span class="wc-time">Thu</span> · Edit + approve.</div>
+        <div class="wc-line"><span class="wc-time">Fri 09:30 to 11:00</span> · C2 shoot.</div>
+      </div>
+    </div>
+
+    <div class="tote">
+      <div class="tote-item"><div class="tote-val">~50</div><div class="tote-lbl">creatives / month</div></div>
+      <div class="tote-item"><div class="tote-val">~150</div><div class="tote-lbl">Meta exports</div></div>
+      <div class="tote-item"><div class="tote-val">~15 hrs</div><div class="tote-lbl">camera time / month</div></div>
+      <div class="tote-item"><div class="tote-val">2 hrs</div><div class="tote-lbl">thinking time / month</div></div>
+    </div>
+  </div>
+
+  <!-- ────────── SECTION 3 · What gets decided when ────────── -->
+  <div class="section" id="s3">
+    <div class="section-head">
+      <span class="sh-tag">03 · The planning cascade</span>
+      <h2>What gets decided at which meeting</h2>
+      <p class="sh-sub">You're not inventing content each week. Decisions cascade from monthly (big) to weekly (tiny). By Friday morning, the only thing you're doing is saying the words.</p>
+    </div>
+
+    <table class="cascade">
+      <thead><tr><th>when</th><th>what gets decided</th><th>output</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Monthly<br>1st Thu · 2 hrs</td>
+          <td>Kill fatigued ads. Pick the month's hero offer. Lock 4 Friday C2 topics + 2 Wednesday shot lists.</td>
+          <td>"Creative plan · [Month] 2026" doc: kill list, offer, 4 script topics, 2 Wed meal menus, C1 testimonial angles, C4 offer variants.</td>
+        </tr>
+        <tr>
+          <td>Bi-weekly<br>Sun before shoot · 30 min</td>
+          <td>Print shot sheets for Wednesday. Prep meals. Dress sets. Charge kit.</td>
+          <td>Ready-to-shoot kitchen + desk on Wed morning. No Wed morning scrambling.</td>
+        </tr>
+        <tr>
+          <td>Weekly<br>Thu afternoon · 15 min</td>
+          <td>Write Friday's C2 script from this week's Meta data + customer reviews. Kaja one-line approval.</td>
+          <td>A3 script card on the desk for Friday morning. Nothing to decide when you sit down.</td>
+        </tr>
+        <tr>
+          <td>Shoot day<br>90 min or 6 hrs</td>
+          <td>Nothing. Execute. The decisions are already made.</td>
+          <td>Raw clips uploaded to Drive. The automation handles the rest.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="plain"><strong>The golden rule</strong>If you're making a creative decision on shoot day, something went wrong upstream. The shoot is execution, not design. Design happens at the Thursday desk.</div>
+  </div>
+
+  <!-- ────────── SECTION 4 · Automation ────────── -->
+  <div class="section" id="s4">
+    <div class="section-head">
+      <span class="sh-tag">04 · What the machine does</span>
+      <h2>The automated half (Creative Kitchen Video)</h2>
+      <p class="sh-sub">You own a tool built exactly for this. Creative Kitchen Video already does the editing, voiceover, rendering, and Meta push. You don't need Remotion or a new stack. You just need to shoot the raw clips and drop them in a Drive folder.</p>
+    </div>
+
+    <div class="auto-box">
+      <h3>The weekly C2 pipeline, end to end</h3>
+      <ol>
+        <li><b>Fri 09:30 to 11:00</b> · James shoots 3 to 5 script variants. 2 cameras, 2 takes each. ~15 clips.</li>
+        <li><b>Fri 11:00</b> · Kaja drops the folder into the CK-Video Google Drive share.</li>
+        <li><b>Fri 11:15 onward</b> · CK-Video auto-ingests, tags clips by type (HOOK / BODY / CTA), inserts into the <code>clips</code> table.</li>
+        <li><b>Fri afternoon</b> · For each script, the recipe builder auto-assembles hook → body → CTA → music bed and queues the render.</li>
+        <li><b>Sat overnight</b> · FFmpeg WASM renders every variant. Output lands in <code>rendered_videos</code> status <code>complete</code>.</li>
+        <li><b>Sun 10:00 · 15 min coffee</b> · James thumbs through the thumbnails. Approve the good ones.</li>
+        <li><b>Mon 06:00</b> · <code>push-ads</code> fires approved videos into Meta. Campaign + adset + ad created. Activated.</li>
+        <li><b>Tue onwards</b> · <code>sync-meta-insights</code> pulls performance data. <code>auto-review-ads</code> flags fatigue. Feeds next Thursday's script decisions.</li>
+      </ol>
+    </div>
+
+    <div class="plain"><strong>Your time per week for C2</strong>90 min shoot + 5 min script + 15 min Sunday approval = <b>under 2 hours</b> for 3 to 5 fresh creatives entering Meta rotation every week. The bi-weekly Wednesday shoot is the same pipeline, just wider: 6 hrs + 30 min approval = 6.5 hrs for 15 to 20 creatives.</div>
+
+    <div class="plain" style="background:var(--surface-warm);border-left-color:var(--ink-3)"><strong>Small build needed (half day of engineering)</strong>Three things CK-Video doesn't do yet, all small: (1) auto-tag clips by type on upload via Claude vision, (2) 5 locked recipe templates (one per concept) so variants generate with one click, (3) a "render 3 variants from this brief" button in the Recipes view. Ticket this separately if you want the Sunday-morning approval flow to actually work.</div>
+  </div>
+
+  <!-- ────────── SECTION 5 · The two locations ────────── -->
+  <div class="section" id="s5">
+    <div class="section-head">
+      <span class="sh-tag">05 · Where you shoot</span>
+      <h2>Two locations, both already in your house</h2>
+      <p class="sh-sub">"New locations weekly" was wrong. You have two spots. That's it. Forever.</p>
+    </div>
+
+    <div class="week-grid">
+      <div class="week-card">
+        <span class="wc-tag">Location 1</span>
+        <h4>The kitchen</h4>
+        <p>Natural daylight, Amaran 200x on Lantern 26" for fill. Marble or wood counter. Film three concepts here.</p>
+        <div class="wc-line"><b>C1</b> · Kaja testimonial on the sofa-adjacent chair</div>
+        <div class="wc-line"><b>C3</b> · Hands-POV cooking with SmallRig neck mount</div>
+        <div class="wc-line"><b>C5</b> · Top-down food hero with Manfrotto tripod overhead</div>
+      </div>
+
+      <div class="week-card">
+        <span class="wc-tag">Location 2</span>
+        <h4>The desk / office</h4>
+        <p>Same desk James sits at every day. Amaran Dome III as key, books + plant in background (intentionally). Film two concepts here.</p>
+        <div class="wc-line"><b>C2</b> · James founder talking head (weekly Friday)</div>
+        <div class="wc-line"><b>C4</b> · Offer static flat-lay (pack + bowl + text overlay)</div>
+      </div>
+    </div>
+
+    <div class="plain"><strong>What actually changes week to week</strong>The script (5 min to write). The meal on camera for Wednesday shoots (already in the menu drop calendar). That's it. Your wardrobe, lighting, rigs, framing, and location are all frozen. This is by design: lock the variables, vary the message.</div>
+  </div>
+
+  <!-- FOOTER NAV -->
+  <div class="foot-nav no-print">
+    <div>
+      <a href="/shoot-day-schedule.html">← Shoot-day schedule (hour-by-hour)</a>
+    </div>
+    <div>
+      <a href="/format-brief.html">Format brief →</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
