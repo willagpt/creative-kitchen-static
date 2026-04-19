@@ -146,7 +146,7 @@
     border: 1px solid var(--line);
     border-radius: 12px;
     padding: 22px 24px;
-    margin: 16px 0 24px;
+    margin: 16px 0 28px;
     position: relative;
   }
   .ad-card .rank {
@@ -155,9 +155,35 @@
     padding: 4px 12px; border-radius: 12px;
     font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
   }
+  .ad-card .card-grid {
+    display: grid; grid-template-columns: 220px 1fr; gap: 22px; align-items: start;
+  }
+  @media (max-width: 640px) {
+    .ad-card .card-grid { grid-template-columns: 1fr; gap: 16px; }
+  }
+  .ad-card .media {
+    position: relative; width: 100%;
+    background: #000; border-radius: 10px; overflow: hidden;
+    aspect-ratio: 9 / 16;
+    border: 1px solid var(--line);
+  }
+  .ad-card .media.sq { aspect-ratio: 1 / 1; }
+  .ad-card .media video,
+  .ad-card .media img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    background: #000;
+  }
+  .ad-card .media .format-chip {
+    position: absolute; top: 8px; left: 8px;
+    background: rgba(26, 24, 21, 0.82); color: var(--bg);
+    padding: 3px 8px; border-radius: 10px;
+    font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    pointer-events: none;
+  }
   .ad-card h4 {
     font-family: var(--font-head); font-weight: 700; font-size: 18px;
-    margin: 6px 0 6px; line-height: 1.25; letter-spacing: -0.005em; text-transform: lowercase;
+    margin: 0 0 6px; line-height: 1.25; letter-spacing: -0.005em; text-transform: lowercase;
     display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
   }
   .ad-card h4 .anchor-btn { margin-top: 2px; flex-shrink: 0; }
@@ -177,6 +203,14 @@
     text-decoration: none;
   }
   .ad-card .cta-link:hover { background: var(--ink-soft); text-decoration: none; }
+  .ad-card .attribution-note {
+    font-size: 12px; color: var(--ink-mute); font-style: italic;
+    margin: -4px 0 10px;
+  }
+
+  /* Lighting table */
+  .lighting-tbl { margin-bottom: 20px; }
+  .lighting-tbl td:first-child { font-family: var(--font-head); font-weight: 700; text-transform: lowercase; color: var(--ink); }
 
   /* Format priority list */
   .priority-list { counter-reset: item; list-style: none; padding-left: 0; margin: 8px 0 24px; }
@@ -437,7 +471,7 @@
     </header>
 
     <main>
-      <div class="eyebrow">brief · 18 apr 2026 · draft for james + kaja</div>
+      <div class="eyebrow">brief · v2 · 19 apr 2026 · draft for james + kaja · inline playback</div>
       <h1>format gap.<br/>a <em>reclamation</em> plan.</h1>
       <p class="subline">chefly popularised the 2021 category. the imitators moved on to UGC and talking-head. this doc names the winners worth studying and the formats worth stealing back.</p>
 
@@ -505,29 +539,49 @@
         </h3>
 
         <div class="ad-card scoped" data-anchor="ad-1">
-          <span class="rank">ad 1</span>
-          <h4>simmer, "one less thing to think about"
-            <button class="anchor-btn" data-anchor="ad-1" aria-label="comments on ad 1">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </button>
-          </h4>
-          <div class="duration">running · <b>83 days</b> · UGC + lifestyle</div>
-          <p>Creator holds the sleeve in hand, eats on camera, talks about the mental load of meal planning.</p>
-          <div class="watch"><b>what to watch.</b> the opening 2 seconds (hook shot), how the sleeve is shown (product reveal timing), the shift from creator-face to food close-up.</div>
-          <a class="cta-link" href="https://www.facebook.com/ads/library/?id=658894047249834" target="_blank" rel="noopener">open in meta ad library →</a>
+          <span class="rank">ad 1 · simmer</span>
+          <div class="card-grid">
+            <div class="media">
+              <span class="format-chip">9:16 · video</span>
+              <video preload="metadata" controls playsinline muted poster="https://r2.foreplay.co/9c858d62de398a55ca2fcdd1ecdd720016d81c5bff850c52d3bc0033924adc2b.mp4" data-brief-video>
+                <source src="https://r2.foreplay.co/9c858d62de398a55ca2fcdd1ecdd720016d81c5bff850c52d3bc0033924adc2b.mp4" type="video/mp4" />
+              </video>
+            </div>
+            <div>
+              <h4>"one less thing to think about"
+                <button class="anchor-btn" data-anchor="ad-1" aria-label="comments on ad 1">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </button>
+              </h4>
+              <div class="duration">running · <b>83 days</b> · UGC + lifestyle</div>
+              <p>Creator holds the sleeve in hand, eats on camera, talks about the mental load of meal planning.</p>
+              <div class="watch"><b>what to watch.</b> the opening 2 seconds (hook shot), how the sleeve is shown (product reveal timing), the shift from creator-face to food close-up.</div>
+              <a class="cta-link" href="https://www.facebook.com/ads/library/?id=658894047249834" target="_blank" rel="noopener">open in meta ad library →</a>
+            </div>
+          </div>
         </div>
 
         <div class="ad-card scoped" data-anchor="ad-2">
-          <span class="rank">ad 2</span>
-          <h4>frive, nigel benn testimonial
-            <button class="anchor-btn" data-anchor="ad-2" aria-label="comments on ad 2">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </button>
-          </h4>
-          <div class="duration">running · <b>44 days</b> · UGC + b-roll</div>
-          <p>Named celebrity as creator (boxer Nigel Benn).</p>
-          <div class="watch"><b>what to watch.</b> how they frame the authority angle without making it feel scripted. chefly could do this with any named UK athlete, nutritionist, or PT on the customer list.</div>
-          <a class="cta-link" href="https://www.facebook.com/ads/library/?id=1411996790671981" target="_blank" rel="noopener">open in meta ad library →</a>
+          <span class="rank">ad 2 · frive</span>
+          <div class="card-grid">
+            <div class="media">
+              <span class="format-chip">9:16 · video</span>
+              <video preload="metadata" controls playsinline muted data-brief-video>
+                <source src="https://r2.foreplay.co/3c4d8ce9b63ba82a60537ad943223e5921675a3d8937d559eacb90242ce41fe2.mp4" type="video/mp4" />
+              </video>
+            </div>
+            <div>
+              <h4>nigel benn testimonial
+                <button class="anchor-btn" data-anchor="ad-2" aria-label="comments on ad 2">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </button>
+              </h4>
+              <div class="duration">running · <b>44 days</b> · UGC + b-roll</div>
+              <p>Named celebrity as creator (boxer Nigel Benn).</p>
+              <div class="watch"><b>what to watch.</b> how they frame the authority angle without making it feel scripted. chefly could do this with any named UK athlete, nutritionist, or PT on the customer list.</div>
+              <a class="cta-link" href="https://www.facebook.com/ads/library/?id=1411996790671981" target="_blank" rel="noopener">open in meta ad library →</a>
+            </div>
+          </div>
         </div>
 
         <h3>format 2: talking-head / founder
@@ -537,42 +591,73 @@
         </h3>
 
         <div class="ad-card scoped" data-anchor="ad-3">
-          <span class="rank">ad 3</span>
-          <h4>simmer, "healthy eating made easy"
-            <button class="anchor-btn" data-anchor="ad-3" aria-label="comments on ad 3">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </button>
-          </h4>
-          <div class="duration">running · <b>87 days</b>, still active · talking-head + b-roll</div>
-          <p>The longest-running tagged video in the dataset.</p>
-          <div class="watch"><b>what to watch.</b> how the speaker's script maps to AIDA beats (usually 2s hook, 3s problem, 4s solution reveal, 3s proof, 2s CTA). <strong>this is the single most important watch on this list.</strong></div>
-          <a class="cta-link" href="https://www.facebook.com/ads/library/?id=664081870023230" target="_blank" rel="noopener">open in meta ad library →</a>
+          <span class="rank">ad 3 · megan petite coach</span>
+          <div class="card-grid">
+            <div class="media">
+              <span class="format-chip">9:16 · video</span>
+              <video preload="metadata" controls playsinline muted data-brief-video>
+                <source src="https://r2.foreplay.co/f82a429122f710e292eb33a0258af6f56de9a0329f22b0a6e60de5f3c91df2df.mp4" type="video/mp4" />
+              </video>
+            </div>
+            <div>
+              <h4>"healthy eating made easy"
+                <button class="anchor-btn" data-anchor="ad-3" aria-label="comments on ad 3">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </button>
+              </h4>
+              <div class="duration">running · <b>87 days</b>, still active · talking-head + b-roll</div>
+              <div class="attribution-note">creator page, not simmer's main page. simmer-adjacent (partnered fitness coach). correction applied 19 apr.</div>
+              <p>The longest-running tagged video in the dataset.</p>
+              <div class="watch"><b>what to watch.</b> how the speaker's script maps to AIDA beats (usually 2s hook, 3s problem, 4s solution reveal, 3s proof, 2s CTA). <strong>this is the single most important watch on this list.</strong></div>
+              <a class="cta-link" href="https://www.facebook.com/ads/library/?id=664081870023230" target="_blank" rel="noopener">open in meta ad library →</a>
+            </div>
+          </div>
         </div>
 
         <div class="ad-card scoped" data-anchor="ad-4">
-          <span class="rank">ad 4</span>
-          <h4>frive, founder-led
-            <button class="anchor-btn" data-anchor="ad-4" aria-label="comments on ad 4">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </button>
-          </h4>
-          <div class="duration">running · <b>47 days</b> · talking-head + lifestyle</div>
-          <p>Founder on camera, kitchen or office backdrop.</p>
-          <div class="watch"><b>what to watch.</b> the "who am i and why you should trust me" structure in the first 5 seconds, then the pivot to product.</div>
-          <a class="cta-link" href="https://www.facebook.com/ads/library/?id=1583733762832620" target="_blank" rel="noopener">open in meta ad library →</a>
+          <span class="rank">ad 4 · frive</span>
+          <div class="card-grid">
+            <div class="media">
+              <span class="format-chip">9:16 · video</span>
+              <video preload="metadata" controls playsinline muted data-brief-video>
+                <source src="https://r2.foreplay.co/63600ac27bfb5c12c28698f9ea3eae2a907972af3ff481c79a3c3e3df8f4723f.mp4" type="video/mp4" />
+              </video>
+            </div>
+            <div>
+              <h4>founder-led
+                <button class="anchor-btn" data-anchor="ad-4" aria-label="comments on ad 4">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </button>
+              </h4>
+              <div class="duration">running · <b>47 days</b> · talking-head + lifestyle</div>
+              <p>Founder on camera, kitchen or office backdrop.</p>
+              <div class="watch"><b>what to watch.</b> the "who am i and why you should trust me" structure in the first 5 seconds, then the pivot to product.</div>
+              <a class="cta-link" href="https://www.facebook.com/ads/library/?id=1583733762832620" target="_blank" rel="noopener">open in meta ad library →</a>
+            </div>
+          </div>
         </div>
 
         <div class="ad-card scoped" data-anchor="ad-5">
-          <span class="rank">ad 5</span>
-          <h4>your heights, founder with name-drops
-            <button class="anchor-btn" data-anchor="ad-5" aria-label="comments on ad 5">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </button>
-          </h4>
-          <div class="duration">running · <b>18 days</b> · talking-head + b-roll</div>
-          <p>Name-drops Stephen Fry and Steven Bartlett as customers.</p>
-          <div class="watch"><b>what to watch.</b> how name-dropping is woven in, not as a boast, as a credibility prop mid-script.</div>
-          <a class="cta-link" href="https://www.facebook.com/ads/library/?id=3311713725654249" target="_blank" rel="noopener">open in meta ad library →</a>
+          <span class="rank">ad 5 · your heights</span>
+          <div class="card-grid">
+            <div class="media">
+              <span class="format-chip">9:16 · video</span>
+              <video preload="metadata" controls playsinline muted poster="https://r2.foreplay.co/296b2b433fbb58ac2da332262b997d85bd961bb337f7e2cc63f23faa9cfe461b.jpg" data-brief-video>
+                <source src="https://r2.foreplay.co/7a18a70692e66665acc1cad1160f775392133c36d14c52559a00fe9d55ce98bb.mp4" type="video/mp4" />
+              </video>
+            </div>
+            <div>
+              <h4>founder with name-drops
+                <button class="anchor-btn" data-anchor="ad-5" aria-label="comments on ad 5">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </button>
+              </h4>
+              <div class="duration">running · <b>18 days</b> · talking-head + b-roll</div>
+              <p>Name-drops Stephen Fry and Steven Bartlett as customers.</p>
+              <div class="watch"><b>what to watch.</b> how name-dropping is woven in, not as a boast, as a credibility prop mid-script.</div>
+              <a class="cta-link" href="https://www.facebook.com/ads/library/?id=3311713725654249" target="_blank" rel="noopener">open in meta ad library →</a>
+            </div>
+          </div>
         </div>
 
         <h3>format 3: offer-led static
@@ -582,40 +667,64 @@
         </h3>
 
         <div class="ad-card scoped" data-anchor="ad-6">
-          <span class="rank">ad 6</span>
-          <h4>simmer, "food that supports you"
-            <button class="anchor-btn" data-anchor="ad-6" aria-label="comments on ad 6">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </button>
-          </h4>
-          <div class="duration">running · <b>63 days</b> (retired 11 apr) · hero image + benefit-stacked copy</div>
-          <div class="watch"><b>what to watch.</b> composition at thumbnail size, how the value prop lives in the image without needing body copy.</div>
-          <a class="cta-link" href="https://www.facebook.com/ads/library/?id=26203258305965650" target="_blank" rel="noopener">open in meta ad library →</a>
+          <span class="rank">ad 6 · simmer</span>
+          <div class="card-grid">
+            <div class="media sq">
+              <span class="format-chip">1:1 · static</span>
+              <img loading="lazy" src="https://r2.foreplay.co/a1cfbe6a61a3d2eeae300e8a74d248f5b7c67cd168180668ab1f12b6a37b1f84.png" alt="simmer food that supports you static" />
+            </div>
+            <div>
+              <h4>"food that supports you"
+                <button class="anchor-btn" data-anchor="ad-6" aria-label="comments on ad 6">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </button>
+              </h4>
+              <div class="duration">running · <b>63 days</b> (retired 11 apr) · hero image + benefit-stacked copy</div>
+              <div class="watch"><b>what to watch.</b> composition at thumbnail size, how the value prop lives in the image without needing body copy.</div>
+              <a class="cta-link" href="https://www.facebook.com/ads/library/?id=26203258305965650" target="_blank" rel="noopener">open in meta ad library →</a>
+            </div>
+          </div>
         </div>
 
         <div class="ad-card scoped" data-anchor="ad-7">
-          <span class="rank">ad 7</span>
-          <h4>simmer, "open. heat. eat. that's it." (recipe-box callout)
-            <button class="anchor-btn" data-anchor="ad-7" aria-label="comments on ad 7">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </button>
-          </h4>
-          <div class="duration">running · <b>33 days</b> across 5 DCO copies</div>
-          <p>Body copy opens: <em>"We got called out by a recipe box company last month. They said they're cheaper. They're right. By about £1. What they didn't mention: ❌ Their meals take 45 minutes to cook&hellip;"</em></p>
-          <div class="watch"><b>what to watch.</b> the named-objection hook, the bullet list with emoji check/cross, the price-honesty pivot. this is the strongest persuasion architecture in the static set.</div>
-          <a class="cta-link" href="https://www.facebook.com/ads/library/?id=661033423534024" target="_blank" rel="noopener">open in meta ad library →</a>
+          <span class="rank">ad 7 · simmer</span>
+          <div class="card-grid">
+            <div class="media sq">
+              <span class="format-chip">1:1 · static</span>
+              <img loading="lazy" src="https://r2.foreplay.co/3dac7a81c64733d72d8592dc3c047a56a6c0d7a657b56f1893c650b38193d71e.png" alt="simmer recipe-box callout static" />
+            </div>
+            <div>
+              <h4>"open. heat. eat. that's it." (recipe-box callout)
+                <button class="anchor-btn" data-anchor="ad-7" aria-label="comments on ad 7">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </button>
+              </h4>
+              <div class="duration">running · <b>33 days</b> across 5 DCO copies</div>
+              <p>Body copy opens: <em>"We got called out by a recipe box company last month. They said they're cheaper. They're right. By about £1. What they didn't mention: ❌ Their meals take 45 minutes to cook&hellip;"</em></p>
+              <div class="watch"><b>what to watch.</b> the named-objection hook, the bullet list with emoji check/cross, the price-honesty pivot. this is the strongest persuasion architecture in the static set.</div>
+              <a class="cta-link" href="https://www.facebook.com/ads/library/?id=1549710406098815" target="_blank" rel="noopener">open in meta ad library →</a>
+            </div>
+          </div>
         </div>
 
         <div class="ad-card scoped" data-anchor="ad-8">
-          <span class="rank">ad 8</span>
-          <h4>huel, "40g of protein. ready in seconds."
-            <button class="anchor-btn" data-anchor="ad-8" aria-label="comments on ad 8">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </button>
-          </h4>
-          <div class="duration">running · <b>33 days</b>, still active · single product hero, massive numeric claim</div>
-          <div class="watch"><b>what to watch.</b> the confidence of leading with one number. huel has 14 of these live right now. that's a pattern, not a one-off.</div>
-          <a class="cta-link" href="https://www.facebook.com/ads/library/?id=1751725389141329" target="_blank" rel="noopener">open in meta ad library →</a>
+          <span class="rank">ad 8 · huel</span>
+          <div class="card-grid">
+            <div class="media sq">
+              <span class="format-chip">1:1 · static</span>
+              <img loading="lazy" src="https://r2.foreplay.co/43e6b5d1579ad6909858fc08f36f77cc32232df3b47c703c7e2d896b690910b2.png" alt="huel 40g of protein static" />
+            </div>
+            <div>
+              <h4>"40g of protein. ready in seconds."
+                <button class="anchor-btn" data-anchor="ad-8" aria-label="comments on ad 8">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </button>
+              </h4>
+              <div class="duration">running · <b>33 days</b>, still active · single product hero, massive numeric claim</div>
+              <div class="watch"><b>what to watch.</b> the confidence of leading with one number. huel has 14 of these live right now. that's a pattern, not a one-off.</div>
+              <a class="cta-link" href="https://www.facebook.com/ads/library/?id=1751725389141329" target="_blank" rel="noopener">open in meta ad library →</a>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -680,6 +789,51 @@
           <li><b>creator brief length.</b> max 60 seconds of footage, cut to 15 or 20 seconds for the ad.</li>
           <li><b>creative kitchen clip mapping.</b> new HOOK + VAR shots required (creator content), existing FOOD clips for cutaways, existing CTA for end card.</li>
         </ul>
+      </section>
+
+      <section class="scoped" data-anchor="lighting">
+        <h2>lighting notes (amaran 200x)
+          <button class="anchor-btn" data-anchor="lighting" aria-label="comments on lighting">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </h2>
+        <p>Starting settings if you're shooting with a single amaran 200x bi-colour. All assume a cream backdrop and the d3.2 sleeve on a neutral surface. Dial from here, don't chase numbers.</p>
+        <table class="tbl lighting-tbl">
+          <thead><tr><th>format</th><th>CCT</th><th>modifier</th><th>distance</th><th>power</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>talking-head</td>
+              <td class="num">3200 to 4000 K</td>
+              <td>30 to 60cm softbox, 45° camera-right, slight top-down</td>
+              <td class="num">1.2 to 1.5m</td>
+              <td class="num">35 to 55%</td>
+            </tr>
+            <tr>
+              <td>offer-led static</td>
+              <td class="num">5000 to 5600 K</td>
+              <td>medium softbox or diffusion, overhead-front, 2nd bounce card opposite</td>
+              <td class="num">0.8 to 1.2m</td>
+              <td class="num">60 to 80%</td>
+            </tr>
+            <tr>
+              <td>UGC (phone)</td>
+              <td class="num">3000 to 3200 K</td>
+              <td>bare or paper diffusion, bounce off ceiling (make it feel like window light)</td>
+              <td class="num">2 to 3m</td>
+              <td class="num">20 to 30%</td>
+            </tr>
+            <tr>
+              <td>food close-up</td>
+              <td class="num">4500 to 5000 K</td>
+              <td>small softbox + black flag to cut rear spill, plus white bounce card</td>
+              <td class="num">0.5 to 0.7m</td>
+              <td class="num">40 to 60%</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout">
+          <strong>rules of thumb.</strong> warmer CCT for founder/UGC (reads kitchen-human), cooler CCT for static/food (reads clean + product-first). Never go above 70% on the 200x without diffusion: the highlight blows out the cream sticker + yellow label in the chefly palette.
+        </div>
       </section>
 
       <section class="scoped" data-anchor="blockers">
@@ -1146,6 +1300,15 @@
 
   // refresh time labels every minute
   setInterval(() => { if (!document.hidden) renderDrawer(); }, 60 * 1000);
+
+  /* ---------- one video playing at a time ---------- */
+  document.querySelectorAll('video[data-brief-video]').forEach(v => {
+    v.addEventListener('play', () => {
+      document.querySelectorAll('video[data-brief-video]').forEach(other => {
+        if (other !== v && !other.paused) other.pause();
+      });
+    });
+  });
 </script>
 
 </body>
