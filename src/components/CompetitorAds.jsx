@@ -835,7 +835,13 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
       setAddInput('')
 
       // Auto-trigger Foreplay fetch back to 23 Dec 2025
-      setAddStatus('Pulling ads from Foreplay since 23 Dec 2025 (may take a minute)...')
+      // If Foreplay has zero coverage for this brand AND a Meta token is
+      // connected, the edge function falls back to Meta Ad Library.
+      const fallbackHint = hasKey
+        ? ' Falling back to Meta Ad Library if Foreplay has no coverage.'
+        : ''
+      setAddStatus(`Pulling ads from Foreplay since 23 Dec 2025 (may take a minute).${fallbackHint}`)
+      let autoCloseModal = false
       try {
         const res = await fetch(FOREPLAY_FN_URL, {
           method: 'POST',
@@ -844,14 +850,35 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
             page_id: pageId,
             start_date: '2025-12-23',
             credit_budget: 5000,
+            meta_token: hasKey ? apiKey : undefined,
           }),
         })
         if (res.ok) {
           const data = await res.json().catch(() => ({}))
           const refreshed = await fetchFollowedBrands(supabaseUrl)
           setFollowedBrands(refreshed)
-          if (data && (data.totalRows === 0 || data.ads_fetched === 0)) {
-            setAddError('Brand saved, but Foreplay returned 0 ads for this page.')
+
+          const totalRows = Number(data?.totalRows ?? 0)
+          const foreplayRows = Number(data?.foreplayRows ?? totalRows)
+          const metaRows = Number(data?.metaFallback?.totalRows ?? 0)
+          const source = data?.source || 'foreplay'
+
+          if (totalRows > 0) {
+            // Success path: close modal, no error.
+            autoCloseModal = true
+            if (source === 'meta_ad_library' && metaRows > 0) {
+              setAddStatus(`Saved. Foreplay had no coverage, pulled ${metaRows} ads from Meta Ad Library.`)
+            } else {
+              setAddStatus(`Saved. Pulled ${foreplayRows} ads from Foreplay.`)
+            }
+          } else if (data?.metaFallback?.attempted && data.metaFallback.error) {
+            setAddError(`Foreplay returned 0 ads. Meta fallback failed: ${String(data.metaFallback.error).slice(0, 160)}`)
+          } else if (data?.metaFallback?.attempted) {
+            setAddError('Brand saved, but neither Foreplay nor Meta Ad Library returned ads for this page (UK reach).')
+          } else if (hasKey) {
+            setAddError('Brand saved, but no ads were returned. Try again or check the page ID.')
+          } else {
+            setAddError('Foreplay returned 0 ads. Connect a Meta token (top right) to enable the Meta Ad Library fallback for brands Foreplay does not track.')
           }
         } else {
           const bodyText = await res.text().catch(() => '')
@@ -860,9 +887,11 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
       } catch (fetchErr) {
         setAddError(`Auto-fetch failed: ${fetchErr.message}. Click the brand in Library to retry.`)
       }
-      setShowAddForm(false)
+      // Only close the modal on real success. Otherwise leave it open so
+      // the user can read the status / error and decide what to do next.
+      if (autoCloseModal) setShowAddForm(false)
     } catch (err) { setAddError(err.message) }
-    finally { setAddLoading(false); setAddStatus('') }
+    finally { setAddLoading(false) /* keep status visible until user closes */ }
   }
 
   async function handleRemoveBrand(pageId) {
@@ -1402,7 +1431,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
       </div>
 
       {showAddForm && (
-        <div className="ca-add-modal-bg" onMouseDown={e => { if (e.target === e.currentTarget) { setShowAddForm(false); setAddInput(''); setAddError(null) } }}>
+        <div className="ca-add-modal-bg" onMouseDown={e => { if (e.target === e.currentTarget && !addLoading) { setShowAddForm(false); setAddInput(''); setAddError(null); setAddStatus('') } }}>
           <div className="ca-add-modal" onClick={e => e.stopPropagation()}>
             <h3>Add Competitor</h3>
             <p className="ca-add-modal-desc">Enter a Facebook Page ID or Ad Library URL</p>
@@ -1416,10 +1445,11 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
               autoFocus
               onKeyDown={e => e.key === 'Enter' && handleAddBrand()}
             />
+            {addStatus && <p className="ca-add-status" style={{margin:'8px 0 0',padding:'8px 10px',borderRadius:6,background:'rgba(120,180,255,0.08)',color:'#9ec5ff',fontSize:13,lineHeight:1.4}}>{addStatus}</p>}
             {addError && <p className="ca-add-err">{addError}</p>}
             <div className="ca-add-modal-btns">
-              <button onClick={() => { setShowAddForm(false); setAddInput(''); setAddError(null); setAddStatus('') }} className="ca-btn-ghost">Cancel</button>
-              <button onClick={handleAddBrand} disabled={addLoading || !addInput.trim()} className="ca-btn-primary">{addLoading ? (addStatus || 'Working...') : 'Add Competitor'}</button>
+              <button onClick={() => { setShowAddForm(false); setAddInput(''); setAddError(null); setAddStatus('') }} className="ca-btn-ghost">{addLoading ? 'Close' : 'Cancel'}</button>
+              <button onClick={handleAddBrand} disabled={addLoading || !addInput.trim()} className="ca-btn-primary">{addLoading ? 'Working...' : 'Add Competitor'}</button>
             </div>
           </div>
         </div>
