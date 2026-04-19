@@ -6,15 +6,23 @@ const SUPABASE_URL = "https://ifrxylvoufncdxyltgqt.supabase.co";
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
 // Meta Ad Library auto-auth.
-// Preference order:
+// Preference order (only consulted when META_AD_LIBRARY_ENABLED is true):
 //   1. META_SYSTEM_USER_TOKEN — Business Manager System User token. Never
 //      expires when configured with "Never" expiration. Inherits user-context
-//      permissions (ads_read), so it can call /ads_archive for any brand page.
-//      This is the production-standard path.
+//      permissions (ads_read).
 //   2. META_APP_ID|META_APP_SECRET — app access token. Never expires but only
 //      works for political/electoral/issue ads in transparency-required
-//      countries. Kept as a no-op fallback for completeness.
+//      countries.
 //   3. body-supplied user token — legacy per-request path.
+//
+// META_AD_LIBRARY_ENABLED is the master gate. Default OFF because the Ad
+// Library /ads_archive endpoint requires Meta app review approval ("Ads
+// Archive API" use case). Without that approval, every token type returns
+// HTTP 400 with error_subcode 2332002 / 2332004 ("Application does not
+// have permission for this action"). Flip this to "true" once the Meta
+// app has been approved. Until then we surface a direct Meta Ad Library
+// link to the user instead of attempting the API call.
+const META_AD_LIBRARY_ENABLED = (Deno.env.get("META_AD_LIBRARY_ENABLED") || "false").toLowerCase() === "true";
 const META_SYSTEM_USER_TOKEN = Deno.env.get("META_SYSTEM_USER_TOKEN") || "";
 const META_APP_ID = Deno.env.get("META_APP_ID") || "";
 const META_APP_SECRET = Deno.env.get("META_APP_SECRET") || "";
@@ -22,6 +30,13 @@ const META_APP_SECRET = Deno.env.get("META_APP_SECRET") || "";
 // SAFEGUARDS
 const DEFAULT_CREDIT_BUDGET = 500;
 const DEFAULT_START_DATE = "2025-12-23";
+
+function metaAdLibraryUrl(pageId: string): string {
+  return (
+    "https://www.facebook.com/ads/library/" +
+    `?active_status=all&ad_type=all&country=GB&view_all_page_id=${pageId}`
+  );
+}
 
 type MetaAuthSource = "system_user_token" | "app_token" | "user_token" | "none";
 
@@ -585,18 +600,20 @@ Deno.serve(async (req: Request) => {
 
     // -----------------------------------------------------------------
     // Meta Ad Library fallback
-    // Trigger when Foreplay returned zero ads AND we have a page_id AND
-    // we can resolve a Meta token. Token resolution prefers the System
-    // User token (META_SYSTEM_USER_TOKEN, never expires, full ad library
-    // access for any brand page), falls back to the app access token
-    // (META_APP_ID + META_APP_SECRET, political ads only), then to the
-    // per-request body token. Lets us cover brands Foreplay's Spyder
-    // index does not track without ever asking the user to paste a
-    // token.
+    // Master gate: META_AD_LIBRARY_ENABLED. Default OFF because the
+    // /ads_archive endpoint requires Meta app review approval. Until the
+    // app is approved, we surface a direct Meta Ad Library link instead
+    // of attempting a doomed API call.
+    //
+    // When enabled, token resolution prefers the System User token
+    // (never expires, full ad library access), falls back to the app
+    // access token (political ads only), then to the per-request body
+    // token. Lets us cover brands Foreplay's Spyder index does not
+    // track without ever asking the user to paste a token.
     // -----------------------------------------------------------------
     let metaFallback: Record<string, unknown> | null = null;
     const resolvedMeta = resolveMetaToken(metaToken);
-    if (rows.length === 0 && page_id && resolvedMeta.token) {
+    if (rows.length === 0 && page_id && META_AD_LIBRARY_ENABLED && resolvedMeta.token) {
       try {
         console.log(
           `Foreplay returned 0 ads for page_id ${page_id}. Falling back to Meta Ad Library (auth: ${resolvedMeta.source}).`,
@@ -630,14 +647,30 @@ Deno.serve(async (req: Request) => {
           rawAds: metaResult.ads.length,
           totalRows: metaRows.length,
           upsertErrors: metaUpsertErrors,
+          metaAdLibraryUrl: metaAdLibraryUrl(page_id),
         };
         console.log(`Meta fallback: ${metaRows.length} rows upserted (${metaUpsertErrors} errors)`);
       } catch (metaErr) {
-        metaFallback = { attempted: true, authSource: resolvedMeta.source, error: String(metaErr) };
+        metaFallback = {
+          attempted: true,
+          authSource: resolvedMeta.source,
+          error: String(metaErr),
+          metaAdLibraryUrl: metaAdLibraryUrl(page_id),
+        };
         console.error(`Meta fallback failed: ${String(metaErr)}`);
       }
+    } else if (rows.length === 0 && page_id && !META_AD_LIBRARY_ENABLED) {
+      metaFallback = {
+        attempted: false,
+        reason: "meta_app_review_pending",
+        metaAdLibraryUrl: metaAdLibraryUrl(page_id),
+      };
     } else if (rows.length === 0 && page_id && !resolvedMeta.token) {
-      metaFallback = { attempted: false, reason: "no_meta_credentials_available" };
+      metaFallback = {
+        attempted: false,
+        reason: "no_meta_credentials_available",
+        metaAdLibraryUrl: metaAdLibraryUrl(page_id),
+      };
     }
 
     const totalRows = rows.length + Number((metaFallback?.totalRows as number) || 0);
