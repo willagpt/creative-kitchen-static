@@ -189,6 +189,34 @@ a:hover{text-decoration:underline}
 .fr-footer{margin-top:1rem;padding-top:.7rem;border-top:1px dashed var(--border);font-size:.7rem;color:var(--ink-3);line-height:1.5}
 .fr-count{display:inline-block;background:var(--ink);color:var(--bg);font-size:.6rem;font-weight:700;padding:.1rem .4rem;border-radius:999px;margin-left:.3rem}
 
+/* reviewer picker */
+.fr-who{display:flex;align-items:center;gap:.4rem;padding:.55rem .7rem;background:var(--accent-light);border:1px solid var(--accent);border-radius:var(--radius);margin-bottom:.7rem;flex-wrap:wrap}
+.fr-who-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent-dark)}
+.fr-who-buttons{display:flex;gap:.25rem;flex-wrap:wrap;flex:1;min-width:0}
+.fr-who-btn{font-family:var(--font-body);font-size:.72rem;font-weight:600;padding:.25rem .6rem;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);color:var(--ink-2);cursor:pointer;transition:all .12s}
+.fr-who-btn:hover{border-color:var(--ink-3);color:var(--ink)}
+.fr-who-btn.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* split feedback card */
+.fr-block{border-top:1px dashed var(--border);padding-top:.5rem;margin-top:.5rem}
+.fr-block:first-of-type{border-top:none;padding-top:.2rem;margin-top:.2rem}
+.fr-whose{display:flex;align-items:center;gap:.4rem;margin-bottom:.3rem}
+.fr-whose-name{font-family:var(--font-body);font-size:.72rem;font-weight:700;color:var(--ink);text-transform:capitalize}
+.fr-whose-tag{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:.1rem .4rem;border-radius:999px;color:var(--bg)}
+.fr-whose-tag.me{background:var(--accent-dark)}
+.fr-whose-tag.them{background:var(--ink-3)}
+.fr-note-ro{font-size:.78rem;color:var(--ink);background:var(--surface-alt);border:1px dashed var(--border);border-radius:var(--radius);padding:.4rem .55rem;line-height:1.5;white-space:pre-wrap;word-wrap:break-word}
+.fr-note-ro.empty{color:var(--ink-4);font-style:italic}
+.fr-mood-ro{display:inline-flex;align-items:center;gap:.2rem;font-size:.68rem;font-weight:600;padding:.1rem .45rem;border-radius:999px;color:var(--bg);margin-bottom:.3rem}
+.fr-mood-ro.m-love{background:var(--green)}
+.fr-mood-ro.m-ok{background:var(--blue)}
+.fr-mood-ro.m-needs{background:var(--amber)}
+.fr-saved{font-size:.62rem;color:var(--ink-3);margin-top:.3rem;min-height:.95rem;line-height:1.3}
+.fr-saved.saving{color:var(--accent-dark)}
+.fr-saved.saved{color:var(--green)}
+.fr-saved.error{color:var(--red)}
+.fr-empty-them{font-size:.7rem;color:var(--ink-4);font-style:italic;padding:.3rem 0}
+
 /* overlay for mobile drawer */
 .fr-overlay{position:fixed;inset:0;background:rgba(26,23,20,.3);z-index:55;opacity:0;pointer-events:none;transition:opacity .2s}
 .fr-overlay.on{opacity:1;pointer-events:auto}
@@ -732,11 +760,19 @@ a:hover{text-decoration:underline}
     <h3>feedback</h3>
     <div class="fr-head-actions">
       <button class="btn" id="exportFeedback" type="button" title="copy all notes to clipboard as markdown">Export</button>
-      <button class="btn" id="clearFeedback" type="button" title="clear all feedback">Clear</button>
+      <button class="btn" id="clearFeedback" type="button" title="clear your notes only">Clear mine</button>
       <button class="btn fr-close" id="closeFeedback" type="button" aria-label="close feedback">×</button>
     </div>
   </div>
-  <div class="fr-intro">Leave notes on any section. Saved to this browser. Click <strong>Export</strong> to copy the lot to the clipboard as markdown.</div>
+  <div class="fr-who" id="reviewerPicker">
+    <span class="fr-who-label">I'm</span>
+    <div class="fr-who-buttons" id="reviewerButtons">
+      <button type="button" class="fr-who-btn" data-who="kaja">Kaja</button>
+      <button type="button" class="fr-who-btn" data-who="james">James</button>
+      <button type="button" class="fr-who-btn" data-who="other">Other…</button>
+    </div>
+  </div>
+  <div class="fr-intro">Leave notes on any section. <strong>Saves to the shared database.</strong> Both of you see each other's notes in real time. Refresh or reopen the page to see the latest.</div>
   <div class="fr-sections" id="feedbackSections"></div>
   <div class="fr-footer">
     v1.4 · 20 apr 2026 · consumer-only · sous-vide proteins · Chefly Trade is a separate brand
@@ -745,6 +781,7 @@ a:hover{text-decoration:underline}
 
 <script>
 (function(){
+  // --- config ---
   const SECTIONS = [
     { id: 'tldr',       label: 'TLDR · the one-page version' },
     { id: 'worldview',  label: 'S1 · the worldview' },
@@ -760,130 +797,390 @@ a:hover{text-decoration:underline}
     { id: 'swap',       label: 'S11 · the swap test' },
     { id: 'next',       label: 'S12 · what to do this week' }
   ];
-  const STORAGE_KEY = 'chefly_positioning_feedback_v1_2';
-  function load(){
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
-    catch(e) { return {}; }
-  }
-  function save(d){
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch(e) {}
-  }
+  const DOC_SLUG    = 'chefly-positioning';
+  const DOC_VERSION = 'v1.4';
+  const SUPABASE_URL = 'https://ifrxylvoufncdxyltgqt.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA';
+  const REST_URL    = SUPABASE_URL + '/rest/v1/positioning_feedback';
+  const REVIEWER_KEY = 'chefly_positioning_reviewer_v1';
+  const POLL_MS      = 20000;   // refresh "them" view every 20s
+  const SAVE_DEBOUNCE_MS = 800;
+
+  // --- helpers ---
   function esc(s){
     return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[c]);
   }
-  const data = load();
-  const list = document.getElementById('feedbackSections');
-  const countEl = document.getElementById('feedbackCount');
-  const rail = document.getElementById('feedbackRail');
-  const overlay = document.getElementById('feedbackOverlay');
+  function relTime(iso){
+    if (!iso) return '';
+    const t = new Date(iso).getTime();
+    const d = Math.max(0, Date.now() - t);
+    if (d < 10000) return 'just now';
+    if (d < 60000) return Math.round(d/1000) + 's ago';
+    if (d < 3600000) return Math.round(d/60000) + 'm ago';
+    if (d < 86400000) return Math.round(d/3600000) + 'h ago';
+    return Math.round(d/86400000) + 'd ago';
+  }
+  function moodChar(m){ return m==='love'?'♥': m==='ok'?'✓': m==='needs'?'?': ''; }
+  function moodWord(m){ return m==='love'?'love': m==='ok'?'ok': m==='needs'?'needs work': ''; }
 
+  // --- state ---
+  let reviewer = (function(){
+    try { return localStorage.getItem(REVIEWER_KEY) || ''; } catch(e){ return ''; }
+  })();
+  // entries[reviewer][section_id] = { mood, note, updated_at }
+  let entries = {};
+
+  const list      = document.getElementById('feedbackSections');
+  const countEl   = document.getElementById('feedbackCount');
+  const rail      = document.getElementById('feedbackRail');
+  const overlay   = document.getElementById('feedbackOverlay');
+  const reviewerButtons = document.getElementById('reviewerButtons');
+  const intro     = document.querySelector('.fr-intro');
+
+  // --- supabase REST ---
+  function authHeaders(){
+    return {
+      'apikey': SUPABASE_ANON,
+      'Authorization': 'Bearer ' + SUPABASE_ANON,
+      'Content-Type': 'application/json'
+    };
+  }
+  async function loadAll(){
+    try {
+      const url = REST_URL + '?doc_slug=eq.' + encodeURIComponent(DOC_SLUG) + '&select=*';
+      const res = await fetch(url, { headers: authHeaders() });
+      if (!res.ok) throw new Error('load failed: ' + res.status);
+      const rows = await res.json();
+      entries = {};
+      rows.forEach(r => {
+        const who = (r.reviewer || '').toLowerCase();
+        if (!entries[who]) entries[who] = {};
+        entries[who][r.section_id] = {
+          mood: r.mood || '',
+          note: r.note || '',
+          updated_at: r.updated_at,
+          doc_version: r.doc_version || ''
+        };
+      });
+      return true;
+    } catch(e){
+      console.error('positioning_feedback load failed', e);
+      return false;
+    }
+  }
+  async function upsertRow(section_id, mood, note){
+    if (!reviewer) return { ok: false, error: 'no reviewer' };
+    const body = [{
+      doc_slug: DOC_SLUG,
+      section_id: section_id,
+      reviewer: reviewer,
+      mood: mood || null,
+      note: (note && note.trim()) ? note : null,
+      doc_version: DOC_VERSION
+    }];
+    try {
+      const url = REST_URL + '?on_conflict=doc_slug,section_id,reviewer';
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: Object.assign({}, authHeaders(), {
+          'Prefer': 'resolution=merge-duplicates,return=representation'
+        }),
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(res.status + ': ' + txt);
+      }
+      const out = await res.json();
+      const row = out && out[0] ? out[0] : null;
+      if (row){
+        if (!entries[reviewer]) entries[reviewer] = {};
+        entries[reviewer][section_id] = {
+          mood: row.mood || '',
+          note: row.note || '',
+          updated_at: row.updated_at,
+          doc_version: row.doc_version || ''
+        };
+      }
+      return { ok: true, row };
+    } catch(e){
+      console.error('upsert failed', e);
+      return { ok: false, error: String(e) };
+    }
+  }
+  async function deleteMine(){
+    if (!reviewer) return false;
+    try {
+      const url = REST_URL +
+        '?doc_slug=eq.' + encodeURIComponent(DOC_SLUG) +
+        '&reviewer=eq.' + encodeURIComponent(reviewer);
+      const res = await fetch(url, { method: 'DELETE', headers: authHeaders() });
+      return res.ok;
+    } catch(e){ return false; }
+  }
+
+  // --- render ---
+  function getMine(sid){ return (entries[reviewer] && entries[reviewer][sid]) || { mood:'', note:'', updated_at:null }; }
+  function getThem(){
+    const otherReviewers = Object.keys(entries).filter(r => r && r !== reviewer);
+    return otherReviewers; // array of names
+  }
+  function applyCardClass(card, sid){
+    const mine = getMine(sid);
+    const hasNote = !!(mine.note && mine.note.trim());
+    card.classList.toggle('has-note', hasNote);
+    card.classList.remove('mood-love','mood-ok','mood-needs');
+    if (mine.mood) card.classList.add('mood-' + mine.mood);
+  }
   function updateCount(){
+    if (!countEl) return;
     let n = 0;
     SECTIONS.forEach(s => {
-      const e = data[s.id];
-      if (!e) return;
+      const e = getMine(s.id);
       if ((e.note && e.note.trim()) || e.mood) n++;
     });
     countEl.textContent = n;
     countEl.style.display = n ? 'inline-block' : 'none';
   }
 
-  function applyCardClass(card, sid){
-    const e = data[sid] || {};
-    card.classList.toggle('has-note', !!(e.note && e.note.trim()));
-    card.classList.remove('mood-love','mood-ok','mood-needs');
-    if (e.mood) card.classList.add('mood-' + e.mood);
-  }
-
-  SECTIONS.forEach(s => {
-    const entry = data[s.id] || {};
+  function renderCard(s){
+    const mine = getMine(s.id);
     const card = document.createElement('div');
     card.className = 'fr-card';
     card.dataset.sid = s.id;
-    card.innerHTML = `
-      <div class="fr-sec"><a href="#${esc(s.id)}">${esc(s.label)}</a></div>
-      <div class="fr-mood" role="group" aria-label="mood for ${esc(s.label)}">
-        <button type="button" data-m="love"  class="${entry.mood==='love'?'on':''}"  aria-label="love it"    title="love it">♥</button>
-        <button type="button" data-m="ok"    class="${entry.mood==='ok'?'on':''}"    aria-label="ok"         title="ok">✓</button>
-        <button type="button" data-m="needs" class="${entry.mood==='needs'?'on':''}" aria-label="needs work" title="needs work">?</button>
-      </div>
-      <textarea placeholder="notes on this section" rows="2">${esc(entry.note || '')}</textarea>
-    `;
-    list.appendChild(card);
-    applyCardClass(card, s.id);
-  });
 
+    let html = `<div class="fr-sec"><a href="#${esc(s.id)}">${esc(s.label)}</a></div>`;
+
+    // ME block (editable)
+    html += `
+      <div class="fr-block me">
+        <div class="fr-whose">
+          <span class="fr-whose-name">${reviewer ? esc(reviewer) : 'you'}</span>
+          <span class="fr-whose-tag me">me</span>
+        </div>
+        <div class="fr-mood" role="group" aria-label="your mood for ${esc(s.label)}">
+          <button type="button" data-m="love"  class="${mine.mood==='love'?'on':''}"  aria-label="love it"    title="love it">♥</button>
+          <button type="button" data-m="ok"    class="${mine.mood==='ok'?'on':''}"    aria-label="ok"         title="ok">✓</button>
+          <button type="button" data-m="needs" class="${mine.mood==='needs'?'on':''}" aria-label="needs work" title="needs work">?</button>
+        </div>
+        <textarea placeholder="your notes on this section" rows="2" ${reviewer ? '' : 'disabled'}>${esc(mine.note || '')}</textarea>
+        <div class="fr-saved" data-saved="${esc(s.id)}">${mine.updated_at ? 'saved · ' + esc(relTime(mine.updated_at)) : ''}</div>
+      </div>`;
+
+    // THEM blocks (read-only) — one per other reviewer who has any content for this section
+    const theirReviewers = getThem().filter(r => {
+      const e = entries[r] && entries[r][s.id];
+      return e && (e.mood || (e.note && e.note.trim()));
+    });
+    theirReviewers.forEach(r => {
+      const t = entries[r][s.id];
+      const noteHtml = t.note && t.note.trim()
+        ? `<div class="fr-note-ro">${esc(t.note)}</div>`
+        : `<div class="fr-note-ro empty">(no note)</div>`;
+      const moodHtml = t.mood
+        ? `<div class="fr-mood-ro m-${esc(t.mood)}">${moodChar(t.mood)} ${esc(moodWord(t.mood))}</div>`
+        : '';
+      html += `
+        <div class="fr-block them" data-them="${esc(r)}">
+          <div class="fr-whose">
+            <span class="fr-whose-name">${esc(r)}</span>
+            <span class="fr-whose-tag them">them</span>
+          </div>
+          ${moodHtml}
+          ${noteHtml}
+          <div class="fr-saved">${t.updated_at ? 'updated ' + esc(relTime(t.updated_at)) : ''}</div>
+        </div>`;
+    });
+
+    card.innerHTML = html;
+    applyCardClass(card, s.id);
+    return card;
+  }
+
+  function renderAll(){
+    list.innerHTML = '';
+    SECTIONS.forEach(s => list.appendChild(renderCard(s)));
+    updateCount();
+  }
+
+  // refresh just the "them" blocks + the "saved" timestamps without losing focus / typing
+  function softRefresh(){
+    SECTIONS.forEach(s => {
+      const card = list.querySelector('.fr-card[data-sid="' + s.id + '"]');
+      if (!card) return;
+      // Update "saved" line for me
+      const mine = getMine(s.id);
+      const savedEl = card.querySelector('.fr-saved[data-saved="' + s.id + '"]');
+      if (savedEl && !savedEl.classList.contains('saving') && !savedEl.classList.contains('saved')) {
+        savedEl.textContent = mine.updated_at ? 'saved · ' + relTime(mine.updated_at) : '';
+      }
+      // Re-render the "them" blocks
+      card.querySelectorAll('.fr-block.them').forEach(b => b.remove());
+      const theirReviewers = getThem().filter(r => {
+        const e = entries[r] && entries[r][s.id];
+        return e && (e.mood || (e.note && e.note.trim()));
+      });
+      theirReviewers.forEach(r => {
+        const t = entries[r][s.id];
+        const block = document.createElement('div');
+        block.className = 'fr-block them';
+        block.dataset.them = r;
+        const moodHtml = t.mood
+          ? `<div class="fr-mood-ro m-${esc(t.mood)}">${moodChar(t.mood)} ${esc(moodWord(t.mood))}</div>`
+          : '';
+        const noteHtml = t.note && t.note.trim()
+          ? `<div class="fr-note-ro">${esc(t.note)}</div>`
+          : `<div class="fr-note-ro empty">(no note)</div>`;
+        block.innerHTML = `
+          <div class="fr-whose">
+            <span class="fr-whose-name">${esc(r)}</span>
+            <span class="fr-whose-tag them">them</span>
+          </div>
+          ${moodHtml}
+          ${noteHtml}
+          <div class="fr-saved">${t.updated_at ? 'updated ' + esc(relTime(t.updated_at)) : ''}</div>`;
+        card.appendChild(block);
+      });
+    });
+    updateCount();
+  }
+
+  // --- save logic with debounce + save-status indicator ---
+  const saveTimers = {};
+  function setSavedState(sid, state, text){
+    const el = list.querySelector('.fr-card[data-sid="' + sid + '"] .fr-saved[data-saved="' + sid + '"]');
+    if (!el) return;
+    el.classList.remove('saving','saved','error');
+    if (state) el.classList.add(state);
+    el.textContent = text || '';
+  }
+  async function persist(sid){
+    if (!reviewer){
+      setSavedState(sid, 'error', 'pick a reviewer first');
+      return;
+    }
+    const card = list.querySelector('.fr-card[data-sid="' + sid + '"]');
+    if (!card) return;
+    const ta = card.querySelector('textarea');
+    const moodBtn = card.querySelector('.fr-mood button.on');
+    const note = ta ? ta.value : '';
+    const mood = moodBtn ? moodBtn.dataset.m : '';
+    setSavedState(sid, 'saving', 'saving…');
+    const r = await upsertRow(sid, mood, note);
+    if (r.ok){
+      setSavedState(sid, 'saved', 'saved · just now');
+      setTimeout(() => {
+        const mine = getMine(sid);
+        setSavedState(sid, '', mine.updated_at ? 'saved · ' + relTime(mine.updated_at) : '');
+      }, 2500);
+      applyCardClass(card, sid);
+      updateCount();
+    } else {
+      setSavedState(sid, 'error', 'save failed · check connection');
+    }
+  }
+  function scheduleSave(sid){
+    clearTimeout(saveTimers[sid]);
+    saveTimers[sid] = setTimeout(() => persist(sid), SAVE_DEBOUNCE_MS);
+  }
+
+  // --- event wiring ---
   list.addEventListener('input', e => {
     if (e.target.tagName !== 'TEXTAREA') return;
     const card = e.target.closest('.fr-card');
     if (!card) return;
-    const sid = card.dataset.sid;
-    data[sid] = data[sid] || {};
-    data[sid].note = e.target.value;
-    save(data);
-    applyCardClass(card, sid);
-    updateCount();
+    setSavedState(card.dataset.sid, 'saving', 'typing…');
+    scheduleSave(card.dataset.sid);
   });
-
   list.addEventListener('click', e => {
-    const b = e.target.closest('button[data-m]');
+    const b = e.target.closest('.fr-mood button[data-m]');
     if (!b) return;
     const card = b.closest('.fr-card');
     if (!card) return;
-    const sid = card.dataset.sid;
-    data[sid] = data[sid] || {};
-    const was = data[sid].mood;
-    data[sid].mood = was === b.dataset.m ? '' : b.dataset.m;
-    save(data);
-    card.querySelectorAll('button[data-m]').forEach(btn => {
-      btn.classList.toggle('on', btn.dataset.m === data[sid].mood);
-    });
-    applyCardClass(card, sid);
-    updateCount();
+    if (!reviewer){
+      window.alert('Pick a reviewer first (top of the panel).');
+      return;
+    }
+    const wasOn = b.classList.contains('on');
+    card.querySelectorAll('.fr-mood button[data-m]').forEach(btn => btn.classList.remove('on'));
+    if (!wasOn) b.classList.add('on');
+    persist(card.dataset.sid);
   });
 
+  // --- reviewer picker ---
+  function setReviewer(name){
+    reviewer = (name || '').trim().toLowerCase();
+    try { localStorage.setItem(REVIEWER_KEY, reviewer); } catch(e){}
+    Array.from(reviewerButtons.querySelectorAll('.fr-who-btn')).forEach(btn => {
+      const w = btn.dataset.who;
+      const isOn = (w === reviewer) || (w === 'other' && reviewer && reviewer !== 'kaja' && reviewer !== 'james');
+      btn.classList.toggle('on', isOn);
+      if (w === 'other' && isOn) btn.textContent = esc(reviewer);
+      if (w === 'other' && !isOn) btn.textContent = 'Other…';
+    });
+    renderAll();
+  }
+  reviewerButtons.addEventListener('click', e => {
+    const b = e.target.closest('.fr-who-btn');
+    if (!b) return;
+    const w = b.dataset.who;
+    if (w === 'other'){
+      const name = window.prompt('Your name (will be visible to others):', reviewer && reviewer !== 'kaja' && reviewer !== 'james' ? reviewer : '');
+      if (!name || !name.trim()) return;
+      setReviewer(name.trim());
+    } else {
+      setReviewer(w);
+    }
+  });
+
+  // --- export / clear ---
   document.getElementById('exportFeedback').addEventListener('click', () => {
     const today = new Date().toISOString().slice(0,10);
-    const lines = ['# Chefly positioning feedback', '', `_v1.2 · exported ${today}_`, ''];
+    const lines = ['# Chefly positioning feedback', '', '_' + DOC_VERSION + ' · exported ' + today + '_', ''];
     let any = false;
     SECTIONS.forEach(s => {
-      const e = data[s.id] || {};
-      const hasNote = e.note && e.note.trim();
-      if (e.mood || hasNote){
-        any = true;
-        lines.push('## ' + s.label);
-        if (e.mood) lines.push('_mood:_ **' + e.mood + '**');
-        if (hasNote) { lines.push(''); lines.push(e.note.trim()); }
+      const allReviewers = Object.keys(entries).filter(r => {
+        const e = entries[r][s.id];
+        return e && (e.mood || (e.note && e.note.trim()));
+      });
+      if (!allReviewers.length) return;
+      any = true;
+      lines.push('## ' + s.label);
+      allReviewers.forEach(r => {
+        const e = entries[r][s.id];
         lines.push('');
-      }
+        lines.push('**' + r + '**' + (e.mood ? ' · _' + moodWord(e.mood) + '_' : '') + (e.updated_at ? ' · ' + relTime(e.updated_at) : ''));
+        if (e.note && e.note.trim()) { lines.push(''); lines.push(e.note.trim()); }
+      });
+      lines.push('');
     });
     if (!any) lines.push('_No feedback yet._');
     const md = lines.join('\n');
     const done = () => { try { window.alert('Feedback copied to clipboard as markdown.'); } catch(e){} };
     if (navigator.clipboard && navigator.clipboard.writeText){
       navigator.clipboard.writeText(md).then(done, fallback);
-    } else {
-      fallback();
-    }
+    } else { fallback(); }
     function fallback(){
       const ta = document.createElement('textarea');
-      ta.value = md;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
+      ta.value = md; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
       try { document.execCommand('copy'); } catch(e){}
-      ta.remove();
-      done();
+      ta.remove(); done();
+    }
+  });
+  document.getElementById('clearFeedback').addEventListener('click', async () => {
+    if (!reviewer){ window.alert('Pick a reviewer first.'); return; }
+    if (!window.confirm('Clear all of ' + reviewer + "'s notes from this doc? This cannot be undone. (Other reviewers' notes are unaffected.)")) return;
+    const ok = await deleteMine();
+    if (ok){
+      if (entries[reviewer]) delete entries[reviewer];
+      renderAll();
+    } else {
+      window.alert('Clear failed. Check connection and try again.');
     }
   });
 
-  document.getElementById('clearFeedback').addEventListener('click', () => {
-    if (!window.confirm('Clear all feedback? This cannot be undone.')) return;
-    localStorage.removeItem(STORAGE_KEY);
-    location.reload();
-  });
-
+  // --- rail open/close ---
   const toggle = document.getElementById('toggleFeedback');
   function openRail(){ rail.classList.add('open'); overlay.classList.add('on'); }
   function closeRail(){ rail.classList.remove('open'); overlay.classList.remove('on'); }
@@ -892,7 +1189,16 @@ a:hover{text-decoration:underline}
   overlay.addEventListener('click', closeRail);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeRail(); });
 
-  updateCount();
+  // --- init ---
+  (async function init(){
+    setReviewer(reviewer); // marks current button as "on"
+    await loadAll();
+    renderAll();
+    setInterval(async () => {
+      await loadAll();
+      softRefresh();
+    }, POLL_MS);
+  })();
 })();
 </script>
 
