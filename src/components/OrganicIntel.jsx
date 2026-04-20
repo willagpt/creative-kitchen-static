@@ -87,33 +87,36 @@ function isVideoPost(post) {
 // ---------- Fetch depth + cost helpers ----------
 
 // Depth tiers are platform-aware because the underlying fetchers have
-// different MAX_LIMITs. Staying within those MAX_LIMITs means we don't need
-// pagination in the fetchers. If the user ever wants deeper than these tiers
-// (e.g. full IG history beyond 100 posts) we'd need to add pageToken +
-// resultsLimit looping in the fetchers, which is out of scope for this PR.
+// different MAX_LIMITs. The Full history tier (500) relies on pageToken
+// pagination in fetch-youtube-posts@1.1.0 and a raised MAX_LIMIT in
+// fetch-instagram-posts@1.2.0.
 const DEPTH_TIERS = {
   instagram: [
     { key: 'quick', label: 'Quick', limit: 12, description: 'Most recent 12 posts' },
     { key: 'standard', label: 'Standard', limit: 50, description: 'Most recent 50 posts' },
-    { key: 'deep', label: 'Deep', limit: 100, description: 'Most recent 100 posts (fetcher max)' },
+    { key: 'deep', label: 'Deep', limit: 100, description: 'Most recent 100 posts' },
+    { key: 'full', label: 'Full history', limit: 500, description: 'Up to 500 posts (fetcher max)' },
   ],
   youtube: [
     { key: 'quick', label: 'Quick', limit: 10, description: 'Most recent 10 uploads' },
     { key: 'standard', label: 'Standard', limit: 30, description: 'Most recent 30 uploads' },
-    { key: 'deep', label: 'Deep', limit: 50, description: 'Most recent 50 uploads (fetcher max)' },
+    { key: 'deep', label: 'Deep', limit: 50, description: 'Most recent 50 uploads' },
+    { key: 'full', label: 'Full history', limit: 500, description: 'Up to 500 uploads (fetcher max)' },
   ],
 }
 
 // Cost math mirrors the server-side guards:
 //   IG → Apify pay-per-compute ~$2.30 / 1000 results.
-//   YT → fixed 2 quota units per fetch for limit <= 50 (1 playlistItems.list
-//        + 1 videos.list). Shorts HEAD probes are not billable quota.
+//   YT → 1 quota unit per playlistItems page (50) + 1 per videos.list batch (50),
+//        so 2 units per 50 uploads. Shorts HEAD probes are not billable quota.
 function estimateFetchCost(platform, limit) {
   if (platform === 'instagram') {
     const usd = Math.round(limit * 2.30 / 1000 * 10000) / 10000
     return { platform, limit, kind: 'usd', value: usd, display: `$${usd.toFixed(4)}` }
   }
-  return { platform, limit, kind: 'yt_units', value: 2, display: '~2 quota units' }
+  const pages = Math.max(1, Math.ceil(limit / 50))
+  const units = pages * 2
+  return { platform, limit, kind: 'yt_units', value: units, display: `~${units} quota units` }
 }
 
 function getDepthTiers(platform) {
@@ -1411,8 +1414,13 @@ function BackfillModal({ open, account, onClose, onBackfilled }) {
               <div className="oi-modal-hint">
                 {platform === 'instagram'
                   ? 'Apify charges roughly $2.30 per 1,000 results. Monthly IG budget is $30.'
-                  : 'YouTube fetches cost ~2 quota units regardless of depth (up to 50). Monthly YT budget is 10,000 units.'}
+                  : 'YouTube fetches cost ~2 quota units per 50 uploads. Monthly YT budget is 10,000 units.'}
               </div>
+              {depth === 'full' && (
+                <div className="oi-modal-note oi-modal-note-warn" style={{ marginTop: 'var(--space-3)' }}>
+                  <strong>Full history fetches can take several minutes.</strong> The fetcher paginates through up to 500 {platform === 'instagram' ? 'posts' : 'uploads'} in a single run, so keep the tab open until it finishes.
+                </div>
+              )}
             </>
           )}
 

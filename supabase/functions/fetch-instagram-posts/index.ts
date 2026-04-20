@@ -10,7 +10,7 @@
 //   { account_id?: uuid,
 //     handle?: string,                // alternative to account_id
 //     platform_account_id?: string,   // alternative to account_id / handle
-//     limit?: number = 50,            // posts per fetch (max 100)
+//     limit?: number = 50,            // posts per fetch (max 500)
 //     mode?: "fetch" | "test" = "fetch",
 //     budget_usd?: number = 30 }      // monthly hard cap
 //
@@ -33,12 +33,12 @@ const COST_PER_1000 = 2.30; // USD
 const DEFAULT_BUDGET_USD = 30;
 const BUDGET_WARN_PCT = 0.80;
 const DEFAULT_LIMIT = 50;
-const MAX_LIMIT = 100;
+const MAX_LIMIT = 500;
 const THUMBNAIL_BUCKET = "organic-thumbs";
 const THUMBNAIL_FETCH_TIMEOUT_MS = 8000;
 const THUMBNAIL_MAX_BYTES = 5 * 1024 * 1024;
 
-const FUNCTION_VERSION = "fetch-instagram-posts@1.1.0";
+const FUNCTION_VERSION = "fetch-instagram-posts@1.2.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -186,9 +186,13 @@ function estimateCost(postsFetched: number): number {
 async function callApify(handle: string, resultsLimit: number): Promise<ApifyPost[]> {
   if (!APIFY_TOKEN) throw new Error("APIFY_TOKEN secret not set");
 
+  // Actor wall-clock timeout scales with resultsLimit. Apify's instagram-scraper
+  // comfortably returns up to ~500 posts in a single sync run but deep fetches
+  // can take minutes; give the actor a generous 540s ceiling.
+  const actorTimeout = Math.min(540, Math.max(180, Math.ceil(resultsLimit * 1.2)));
   const url =
     `${APIFY_BASE}/acts/${APIFY_ACTOR_ID}/run-sync-get-dataset-items` +
-    `?token=${APIFY_TOKEN}&timeout=180&memory=1024`;
+    `?token=${APIFY_TOKEN}&timeout=${actorTimeout}&memory=1024`;
 
   const input = {
     directUrls: [`https://www.instagram.com/${handle}/`],
