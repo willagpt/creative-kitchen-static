@@ -947,6 +947,273 @@ function AccountDetail({ account, latestLog, onBack }) {
   )
 }
 
+// ---------- Add Account modal ----------
+
+// Chains: resolve-organic-account -> save-organic-account (upsert) ->
+// fetch-instagram-posts or fetch-youtube-posts (mode: "fetch"). The resolve
+// step handles both IG handles (via Apify) and YouTube @handle / UC... / URL
+// (via YT Data API). Save is idempotent on (platform, platform_account_id);
+// a new row gets is_active=true. Initial fetch is best-effort and errors
+// there do not block the add (the nightly cron will pick the account up).
+function AddAccountModal({ open, onClose, onAdded }) {
+  const [platform, setPlatform] = useState('instagram')
+  const [rawInput, setRawInput] = useState('')
+  const [brandName, setBrandName] = useState('')
+  const [resolved, setResolved] = useState(null) // { platform_account_id, handle, uploads_playlist_id?, avatar_url?, display_name, already_tracked, existing? }
+  const [step, setStep] = useState('input') // 'input' | 'resolving' | 'confirm' | 'saving' | 'fetching' | 'done' | 'error'
+  const [errMsg, setErrMsg] = useState(null)
+  const [fetchResult, setFetchResult] = useState(null)
+
+  useEffect(() => {
+    if (!open) {
+      setRawInput('')
+      setBrandName('')
+      setResolved(null)
+      setStep('input')
+      setErrMsg(null)
+      setFetchResult(null)
+    }
+  }, [open])
+
+  const placeholder = platform === 'instagram'
+    ? '@allplants or allplants or instagram.com/allplants'
+    : '@aragusea or youtube.com/@aragusea or a UC… channel ID'
+
+  async function handleResolve() {
+    if (!rawInput.trim()) {
+      setErrMsg('Enter a handle or URL first.')
+      return
+    }
+    setStep('resolving')
+    setErrMsg(null)
+    try {
+      const res = await fetch(`${supabaseUrl}/functions/v1/resolve-organic-account`, {
+        method: 'POST',
+        headers: fnHeaders,
+        body: JSON.stringify({ platform, input: rawInput.trim() }),
+      })
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(payload?.error || `resolve-organic-account ${res.status}`)
+      }
+      setResolved(payload)
+      setBrandName(payload.brand_name || payload.display_name || payload.handle || '')
+      setStep('confirm')
+    } catch (e) {
+      setErrMsg(e.message || 'Could not resolve that account.')
+      setStep('input')
+    }
+  }
+
+  async function handleSaveAndFetch() {
+    if (!resolved) return
+    setStep('saving')
+    setErrMsg(null)
+    try {
+      const saveRes = await fetch(`${supabaseUrl}/functions/v1/save-organic-account`, {
+        method: 'POST',
+        headers: fnHeaders,
+        body: JSON.stringify({
+          action: 'upsert',
+          brand_name: brandName.trim() || resolved.handle,
+          platform,
+          handle: resolved.handle,
+          platform_account_id: resolved.platform_account_id,
+          uploads_playlist_id: resolved.uploads_playlist_id || null,
+          is_active: true,
+          fetch_frequency: 'daily',
+        }),
+      })
+      const savePayload = await saveRes.json().catch(() => ({}))
+      if (!saveRes.ok) {
+        throw new Error(savePayload?.error || `save-organic-account ${saveRes.status}`)
+      }
+
+      setStep('fetching')
+      const fetchSlug = platform === 'instagram' ? 'fetch-instagram-posts' : 'fetch-youtube-posts'
+      try {
+        const fetchRes = await fetch(`${supabaseUrl}/functions/v1/${fetchSlug}`, {
+          method: 'POST',
+          headers: fnHeaders,
+          body: JSON.stringify({
+            mode: 'fetch',
+            account_id: savePayload?.account?.id || savePayload?.id,
+            limit: platform === 'instagram' ? 12 : 10,
+          }),
+        })
+        const fetchPayload = await fetchRes.json().catch(() => ({}))
+        setFetchResult({ ok: fetchRes.ok, payload: fetchPayload })
+      } catch (fetchErr) {
+        setFetchResult({ ok: false, payload: { error: fetchErr.message } })
+      }
+
+      setStep('done')
+      if (onAdded) onAdded()
+    } catch (e) {
+      setErrMsg(e.message || 'Save failed.')
+      setStep('confirm')
+    }
+  }
+
+  if (!open) return null
+
+  return (
+    <div className="oi-modal-overlay" onClick={onClose}>
+      <div className="oi-modal" onClick={e => e.stopPropagation()}>
+        <div className="oi-modal-head">
+          <h3 className="oi-modal-title">Add an account to track</h3>
+          <button type="button" className="oi-modal-close" onClick={onClose} aria-label="Close">×</button>
+        </div>
+
+        <div className="oi-modal-body">
+          <div className="oi-modal-platform-row">
+            <button
+              type="button"
+              className={`oi-filter-btn ${platform === 'instagram' ? 'active' : ''}`}
+              onClick={() => { setPlatform('instagram'); setResolved(null); setStep('input') }}
+              disabled={step === 'resolving' || step === 'saving' || step === 'fetching'}
+            >Instagram</button>
+            <button
+              type="button"
+              className={`oi-filter-btn ${platform === 'youtube' ? 'active' : ''}`}
+              onClick={() => { setPlatform('youtube'); setResolved(null); setStep('input') }}
+              disabled={step === 'resolving' || step === 'saving' || step === 'fetching'}
+            >YouTube</button>
+          </div>
+
+          {(step === 'input' || step === 'resolving') && (
+            <>
+              <label className="oi-modal-label" htmlFor="oi-add-input">
+                {platform === 'instagram' ? 'Instagram handle or URL' : 'YouTube channel @handle, URL, or UC… ID'}
+              </label>
+              <input
+                id="oi-add-input"
+                className="oi-modal-input"
+                type="text"
+                placeholder={placeholder}
+                value={rawInput}
+                onChange={e => setRawInput(e.target.value)}
+                disabled={step === 'resolving'}
+                autoFocus
+                onKeyDown={e => { if (e.key === 'Enter') handleResolve() }}
+              />
+              <div className="oi-modal-hint">
+                {platform === 'instagram'
+                  ? 'Numeric IG user ID is resolved automatically via one Apify call (~$0.002).'
+                  : 'Channel ID + uploads playlist are resolved via the YouTube Data API (~1 quota unit).'}
+              </div>
+            </>
+          )}
+
+          {step === 'confirm' && resolved && (
+            <div className="oi-modal-preview">
+              <div className="oi-modal-preview-head">
+                {resolved.avatar_url && (
+                  <img
+                    className="oi-modal-avatar"
+                    src={resolved.avatar_url}
+                    alt=""
+                    referrerPolicy="no-referrer"
+                    onError={e => { e.currentTarget.style.display = 'none' }}
+                  />
+                )}
+                <div>
+                  <div className="oi-modal-preview-handle">@{resolved.handle}</div>
+                  <div className="oi-modal-preview-id">
+                    {platform === 'instagram' ? 'IG user id' : 'Channel id'}: {resolved.platform_account_id}
+                  </div>
+                  {resolved.uploads_playlist_id && (
+                    <div className="oi-modal-preview-id">Uploads: {resolved.uploads_playlist_id}</div>
+                  )}
+                </div>
+              </div>
+
+              {resolved.already_tracked ? (
+                <div className="oi-modal-note oi-modal-note-warn">
+                  Already tracked
+                  {resolved.existing && !resolved.existing.is_active ? ' (currently inactive — reactivate to resume daily fetches).' : '.'}
+                </div>
+              ) : null}
+
+              <label className="oi-modal-label" htmlFor="oi-add-brand">Brand name</label>
+              <input
+                id="oi-add-brand"
+                className="oi-modal-input"
+                type="text"
+                value={brandName}
+                onChange={e => setBrandName(e.target.value)}
+              />
+              <div className="oi-modal-hint">This is the label shown in the tracked-accounts grid. You can rename it later.</div>
+            </div>
+          )}
+
+          {(step === 'saving' || step === 'fetching') && (
+            <div className="oi-modal-status">
+              {step === 'saving' ? 'Saving account…' : 'Running initial fetch…'}
+            </div>
+          )}
+
+          {step === 'done' && (
+            <div className="oi-modal-status oi-modal-status-ok">
+              <div><strong>Added.</strong></div>
+              {fetchResult?.ok ? (
+                <div>
+                  Initial fetch: {fetchResult.payload?.posts_new ?? fetchResult.payload?.result?.posts_new ?? 0} new, {fetchResult.payload?.posts_fetched ?? fetchResult.payload?.result?.posts_fetched ?? 0} fetched.
+                  {platform === 'instagram'
+                    ? ` Apify cost $${Number(fetchResult.payload?.cost_estimate ?? fetchResult.payload?.result?.cost_estimate ?? 0).toFixed(3)}.`
+                    : ` YT quota used: ${fetchResult.payload?.yt_quota_units ?? fetchResult.payload?.result?.yt_quota_units ?? 0} units.`}
+                </div>
+              ) : (
+                <div className="oi-modal-note oi-modal-note-warn">
+                  Initial fetch failed: {fetchResult?.payload?.error || 'unknown'}. The nightly cron will pick this up anyway.
+                </div>
+              )}
+            </div>
+          )}
+
+          {errMsg && <div className="oi-modal-note oi-modal-note-err">{errMsg}</div>}
+        </div>
+
+        <div className="oi-modal-foot">
+          {(step === 'input' || step === 'resolving') && (
+            <>
+              <button type="button" className="oi-bulk-btn-ghost" onClick={onClose} disabled={step === 'resolving'}>Cancel</button>
+              <button
+                type="button"
+                className="oi-bulk-btn-primary"
+                onClick={handleResolve}
+                disabled={step === 'resolving' || !rawInput.trim()}
+              >{step === 'resolving' ? 'Resolving…' : 'Resolve'}</button>
+            </>
+          )}
+          {step === 'confirm' && (
+            <>
+              <button type="button" className="oi-bulk-btn-ghost" onClick={() => { setResolved(null); setStep('input') }}>Back</button>
+              <button
+                type="button"
+                className="oi-bulk-btn-primary"
+                onClick={handleSaveAndFetch}
+              >
+                {resolved?.already_tracked && resolved?.existing?.is_active === false
+                  ? 'Reactivate and fetch'
+                  : resolved?.already_tracked
+                    ? 'Refetch now'
+                    : 'Add and fetch'}
+              </button>
+            </>
+          )}
+          {(step === 'saving' || step === 'fetching') && (
+            <button type="button" className="oi-bulk-btn-primary" disabled>Working…</button>
+          )}
+          {step === 'done' && (
+            <button type="button" className="oi-bulk-btn-primary" onClick={onClose}>Done</button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ---------- Top-level component ----------
 
 export default function OrganicIntel() {
@@ -958,6 +1225,7 @@ export default function OrganicIntel() {
   const [error, setError] = useState(null)
   const [platformFilter, setPlatformFilter] = useState('all')
   const [selectedAccount, setSelectedAccount] = useState(null)
+  const [showAddModal, setShowAddModal] = useState(false)
 
   const loadAll = async () => {
     setLoading(true)
@@ -1079,6 +1347,12 @@ export default function OrganicIntel() {
             onClick={() => setPlatformFilter('youtube')}
           >YouTube ({summary.yt})</button>
           <button type="button" className="oi-filter-btn" onClick={loadAll} title="Refresh">&#x21bb;</button>
+          <button
+            type="button"
+            className="oi-add-btn"
+            onClick={() => setShowAddModal(true)}
+            title="Add an Instagram or YouTube account"
+          >+ Add account</button>
         </div>
       </div>
 
@@ -1135,6 +1409,12 @@ export default function OrganicIntel() {
           onOpen={setSelectedAccount}
         />
       )}
+
+      <AddAccountModal
+        open={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onAdded={loadAll}
+      />
     </div>
   )
 }
