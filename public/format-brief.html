@@ -84,6 +84,23 @@
   }
   .topbar-btn:hover { background: var(--paper); border-color: var(--ink-mute); }
 
+  /* Section nav row — appears beneath the topbar on every sheet so users can hop between hub docs */
+  .section-nav {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--bg);
+  }
+  .section-nav a, .section-nav button {
+    font-family: var(--font-body); font-size: 12px; font-weight: 600;
+    padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink); text-decoration: none;
+    cursor: pointer; transition: all .15s ease; line-height: 1; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .section-nav a:hover, .section-nav button:hover { background: var(--paper); border-color: var(--ink-mute); }
+  .section-nav .sn-primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .section-nav .sn-primary:hover { background: var(--ink-soft); border-color: var(--ink-soft); color: var(--bg); }
+  .section-nav .sn-current { background: var(--paper); border-color: var(--ink-mute); color: var(--ink); }
+  @media print { .section-nav { display: none; } }
+
   /* Main content column */
   main { padding: 48px 56px 120px; max-width: 760px; margin: 0 auto; }
   @media (max-width: 700px) { main { padding: 32px 20px 100px; } }
@@ -469,6 +486,15 @@
         <span id="topbar-author-name">&nbsp;</span>
       </button>
     </header>
+
+    <nav class="section-nav no-print" aria-label="sheet navigation">
+      <a href="/format-brief.html" class="sn-current">Format brief</a>
+      <a href="/shoot-day-schedule.html">Schedule</a>
+      <a href="/planning-rhythm.html">Calendar view</a>
+      <a href="/internal-shoot-pack.html">Shoot pack</a>
+      <a href="/training-companion.html">Training companion</a>
+      <button onclick="window.print()" class="sn-primary">Print</button>
+    </nav>
 
     <main>
       <div class="eyebrow">brief · v2.12 · 19 apr 2026 · draft for james + kaja · positioning doc added</div>
