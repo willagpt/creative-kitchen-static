@@ -906,3 +906,117 @@
   .oi-modal-foot { padding-left: var(--space-md); padding-right: var(--space-md); }
   .oi-add-btn { margin-left: 0; }
 }
+
+/* ---------- Depth picker (Add Account + Backfill) ---------- */
+
+.oi-depth-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+.oi-depth-pills {
+  display: flex;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+}
+.oi-depth-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-xs) var(--space-md);
+  min-width: 84px;
+  border: 1px solid var(--bg-3);
+  border-radius: var(--radius, 8px);
+  background: var(--bg-0);
+  color: var(--text-1);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+.oi-depth-pill:hover:not(:disabled) {
+  border-color: var(--accent, #c7f24a);
+  color: var(--cream);
+}
+.oi-depth-pill.active {
+  border-color: var(--accent, #c7f24a);
+  background: rgba(199, 242, 74, 0.12);
+  color: var(--cream);
+}
+.oi-depth-pill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.oi-depth-pill-label {
+  font-weight: var(--weight-medium, 500);
+}
+.oi-depth-pill-num {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-2);
+}
+.oi-depth-pill.active .oi-depth-pill-num {
+  color: var(--cream);
+}
+
+.oi-depth-cost {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  color: var(--text-2);
+  line-height: 1.4;
+}
+.oi-depth-cost-sep {
+  color: var(--bg-3);
+}
+
+/* ---------- Detail view action row (Backfill + future siblings) ---------- */
+
+.oi-detail-head {
+  /* Layout was a simple block; make it a flex row so actions sit on the right.
+     Existing inner <div> stays where it is, we just add a sibling actions node. */
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+.oi-detail-actions {
+  display: flex;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+}
+.oi-detail-action {
+  padding: var(--space-xs) var(--space-md);
+  border: 1px solid var(--accent, #c7f24a);
+  border-radius: var(--radius, 8px);
+  background: transparent;
+  color: var(--accent, #c7f24a);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium, 500);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.oi-detail-action:hover:not(:disabled) {
+  background: rgba(199, 242, 74, 0.12);
+}
+.oi-detail-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .oi-detail-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .oi-detail-actions {
+    justify-content: flex-end;
+  }
+  .oi-depth-pill { flex: 1 1 30%; min-width: 0; }
+}

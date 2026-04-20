@@ -84,6 +84,47 @@ function isVideoPost(post) {
   return t === 'reel' || t === 'short' || t === 'video'
 }
 
+// ---------- Fetch depth + cost helpers ----------
+
+// Depth tiers are platform-aware because the underlying fetchers have
+// different MAX_LIMITs. Staying within those MAX_LIMITs means we don't need
+// pagination in the fetchers. If the user ever wants deeper than these tiers
+// (e.g. full IG history beyond 100 posts) we'd need to add pageToken +
+// resultsLimit looping in the fetchers, which is out of scope for this PR.
+const DEPTH_TIERS = {
+  instagram: [
+    { key: 'quick', label: 'Quick', limit: 12, description: 'Most recent 12 posts' },
+    { key: 'standard', label: 'Standard', limit: 50, description: 'Most recent 50 posts' },
+    { key: 'deep', label: 'Deep', limit: 100, description: 'Most recent 100 posts (fetcher max)' },
+  ],
+  youtube: [
+    { key: 'quick', label: 'Quick', limit: 10, description: 'Most recent 10 uploads' },
+    { key: 'standard', label: 'Standard', limit: 30, description: 'Most recent 30 uploads' },
+    { key: 'deep', label: 'Deep', limit: 50, description: 'Most recent 50 uploads (fetcher max)' },
+  ],
+}
+
+// Cost math mirrors the server-side guards:
+//   IG → Apify pay-per-compute ~$2.30 / 1000 results.
+//   YT → fixed 2 quota units per fetch for limit <= 50 (1 playlistItems.list
+//        + 1 videos.list). Shorts HEAD probes are not billable quota.
+function estimateFetchCost(platform, limit) {
+  if (platform === 'instagram') {
+    const usd = Math.round(limit * 2.30 / 1000 * 10000) / 10000
+    return { platform, limit, kind: 'usd', value: usd, display: `$${usd.toFixed(4)}` }
+  }
+  return { platform, limit, kind: 'yt_units', value: 2, display: '~2 quota units' }
+}
+
+function getDepthTiers(platform) {
+  return DEPTH_TIERS[platform] || DEPTH_TIERS.instagram
+}
+
+function getDepthTier(platform, key) {
+  const tiers = getDepthTiers(platform)
+  return tiers.find(t => t.key === key) || tiers[0]
+}
+
 // ---------- Ranking + persistence helpers ----------
 
 // Deterministic comparator used by both the percentile selector and the
@@ -388,7 +429,7 @@ function PostCard({
 
 // ---------- Detail view ----------
 
-function AccountDetail({ account, latestLog, onBack }) {
+function AccountDetail({ account, latestLog, onBack, onBackfilled }) {
   const [posts, setPosts] = useState([])
   const [metricsByPost, setMetricsByPost] = useState({})
   const [analysesByPostId, setAnalysesByPostId] = useState({})
@@ -397,6 +438,8 @@ function AccountDetail({ account, latestLog, onBack }) {
   const [analyseError, setAnalyseError] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [showBackfill, setShowBackfill] = useState(false)
+  const [reloadTick, setReloadTick] = useState(0)
 
   // Bulk selection + bulk run state.
   const [selectedIds, setSelectedIds] = useState(() => new Set())
@@ -498,7 +541,7 @@ function AccountDetail({ account, latestLog, onBack }) {
     }
     load()
     return () => { cancelled = true }
-  }, [account.id])
+  }, [account.id, reloadTick])
 
   // Phase 2+3 pipeline: transcribe → OCR → merge → AI analysis.
   // Each step reads video_shots/video_analyses directly; we just kick them
@@ -802,6 +845,16 @@ function AccountDetail({ account, latestLog, onBack }) {
             {latestLog?.yt_quota_units != null && <span>{latestLog.yt_quota_units} YT units</span>}
           </div>
         </div>
+        <div className="oi-detail-actions">
+          <button
+            type="button"
+            className="oi-detail-action"
+            onClick={() => setShowBackfill(true)}
+            title="Run a deeper pull against this account"
+          >
+            Backfill
+          </button>
+        </div>
       </div>
 
       <div className="oi-stats-bar">
@@ -943,6 +996,58 @@ function AccountDetail({ account, latestLog, onBack }) {
           ))}
         </div>
       )}
+
+      <BackfillModal
+        open={showBackfill}
+        account={account}
+        onClose={() => setShowBackfill(false)}
+        onBackfilled={() => {
+          // Reload this detail view's posts + metrics + analyses, and let the
+          // top-level list refresh its post counts + last-run meta.
+          setReloadTick(t => t + 1)
+          if (onBackfilled) onBackfilled()
+        }}
+      />
+    </div>
+  )
+}
+
+// ---------- Shared: depth picker ----------
+
+// Platform-aware 3-tier depth selector used by both the Add Account modal's
+// confirm step AND the standalone Backfill modal. Exposes the underlying
+// limit via the selected tier key so callers can call the fetcher with the
+// right resultsLimit / maxResults.
+function DepthPicker({ platform, value, onChange, disabled }) {
+  const tiers = getDepthTiers(platform)
+  const selected = getDepthTier(platform, value)
+  const cost = estimateFetchCost(platform, selected.limit)
+  return (
+    <div className="oi-depth-picker">
+      <div className="oi-depth-pills" role="group" aria-label="Fetch depth">
+        {tiers.map(tier => {
+          const tierCost = estimateFetchCost(platform, tier.limit)
+          const active = value === tier.key
+          return (
+            <button
+              key={tier.key}
+              type="button"
+              className={`oi-depth-pill${active ? ' active' : ''}`}
+              onClick={() => onChange && onChange(tier.key)}
+              disabled={disabled}
+              title={`${tier.description} · ${tierCost.display}`}
+            >
+              <span className="oi-depth-pill-label">{tier.label}</span>
+              <span className="oi-depth-pill-num">{tier.limit}</span>
+            </button>
+          )
+        })}
+      </div>
+      <div className="oi-depth-cost">
+        <strong>{selected.description}</strong>
+        <span className="oi-depth-cost-sep">·</span>
+        <span>Projected cost: {cost.display}</span>
+      </div>
     </div>
   )
 }
@@ -963,6 +1068,9 @@ function AddAccountModal({ open, onClose, onAdded }) {
   const [step, setStep] = useState('input') // 'input' | 'resolving' | 'confirm' | 'saving' | 'fetching' | 'done' | 'error'
   const [errMsg, setErrMsg] = useState(null)
   const [fetchResult, setFetchResult] = useState(null)
+  // Fetch depth for the initial pull. Default Quick keeps parity with the
+  // old behaviour (IG 12 / YT 10) so an unchanged click path is still cheap.
+  const [depth, setDepth] = useState('quick')
 
   useEffect(() => {
     if (!open) {
@@ -972,6 +1080,7 @@ function AddAccountModal({ open, onClose, onAdded }) {
       setStep('input')
       setErrMsg(null)
       setFetchResult(null)
+      setDepth('quick')
     }
   }, [open])
 
@@ -1031,6 +1140,7 @@ function AddAccountModal({ open, onClose, onAdded }) {
 
       setStep('fetching')
       const fetchSlug = platform === 'instagram' ? 'fetch-instagram-posts' : 'fetch-youtube-posts'
+      const chosenTier = getDepthTier(platform, depth)
       try {
         const fetchRes = await fetch(`${supabaseUrl}/functions/v1/${fetchSlug}`, {
           method: 'POST',
@@ -1038,7 +1148,7 @@ function AddAccountModal({ open, onClose, onAdded }) {
           body: JSON.stringify({
             mode: 'fetch',
             account_id: savePayload?.account?.id || savePayload?.id,
-            limit: platform === 'instagram' ? 12 : 10,
+            limit: chosenTier.limit,
           }),
         })
         const fetchPayload = await fetchRes.json().catch(() => ({}))
@@ -1144,6 +1254,12 @@ function AddAccountModal({ open, onClose, onAdded }) {
                 onChange={e => setBrandName(e.target.value)}
               />
               <div className="oi-modal-hint">This is the label shown in the tracked-accounts grid. You can rename it later.</div>
+
+              <label className="oi-modal-label">Initial fetch depth</label>
+              <DepthPicker platform={platform} value={depth} onChange={setDepth} />
+              <div className="oi-modal-hint">
+                You can always run a deeper Backfill later from this account's detail view.
+              </div>
             </div>
           )}
 
@@ -1207,6 +1323,166 @@ function AddAccountModal({ open, onClose, onAdded }) {
           )}
           {step === 'done' && (
             <button type="button" className="oi-bulk-btn-primary" onClick={onClose}>Done</button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ---------- Backfill modal ----------
+
+// Runs a deeper pull against an already-tracked account. Skips the resolve
+// step (we already know the platform_account_id / uploads_playlist_id) and
+// goes straight to: choose-depth → preview-cost → confirm → fetch → done.
+// Calls the same fetch-instagram-posts / fetch-youtube-posts endpoints as
+// the daily cron with a higher resultsLimit, so it reuses their server-side
+// budget guards (IG $30/UTC-month, YT 10k quota/UTC-month). On success the
+// detail view reloads posts + metrics + analyses for the account.
+function BackfillModal({ open, account, onClose, onBackfilled }) {
+  const platform = account?.platform || 'instagram'
+  const [depth, setDepth] = useState('standard')
+  const [step, setStep] = useState('choose') // 'choose' | 'confirm' | 'fetching' | 'done' | 'error'
+  const [errMsg, setErrMsg] = useState(null)
+  const [fetchResult, setFetchResult] = useState(null)
+
+  useEffect(() => {
+    if (!open) {
+      setDepth('standard')
+      setStep('choose')
+      setErrMsg(null)
+      setFetchResult(null)
+    }
+  }, [open])
+
+  if (!open || !account) return null
+
+  const chosenTier = getDepthTier(platform, depth)
+  const cost = estimateFetchCost(platform, chosenTier.limit)
+  const platformLabel = platform === 'youtube' ? 'YouTube' : 'Instagram'
+
+  async function runBackfill() {
+    setStep('fetching')
+    setErrMsg(null)
+    const fetchSlug = platform === 'instagram' ? 'fetch-instagram-posts' : 'fetch-youtube-posts'
+    try {
+      const res = await fetch(`${supabaseUrl}/functions/v1/${fetchSlug}`, {
+        method: 'POST',
+        headers: fnHeaders,
+        body: JSON.stringify({
+          mode: 'fetch',
+          account_id: account.id,
+          limit: chosenTier.limit,
+        }),
+      })
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(payload?.error || `${fetchSlug} ${res.status}`)
+      }
+      setFetchResult(payload)
+      setStep('done')
+      if (onBackfilled) onBackfilled()
+    } catch (e) {
+      setErrMsg(e.message || 'Backfill failed.')
+      setStep('error')
+    }
+  }
+
+  return (
+    <div className="oi-modal-overlay" onClick={onClose}>
+      <div className="oi-modal" onClick={e => e.stopPropagation()}>
+        <div className="oi-modal-head">
+          <h3 className="oi-modal-title">Backfill @{account.handle}</h3>
+          <button type="button" className="oi-modal-close" onClick={onClose} aria-label="Close">×</button>
+        </div>
+
+        <div className="oi-modal-body">
+          <div className="oi-modal-preview-head">
+            <div>
+              <div className="oi-modal-preview-handle">@{account.handle}</div>
+              <div className="oi-modal-preview-id">{platformLabel} · {account.brand_name}</div>
+            </div>
+          </div>
+
+          {step === 'choose' && (
+            <>
+              <label className="oi-modal-label">How far back?</label>
+              <DepthPicker platform={platform} value={depth} onChange={setDepth} />
+              <div className="oi-modal-hint">
+                {platform === 'instagram'
+                  ? 'Apify charges roughly $2.30 per 1,000 results. Monthly IG budget is $30.'
+                  : 'YouTube fetches cost ~2 quota units regardless of depth (up to 50). Monthly YT budget is 10,000 units.'}
+              </div>
+            </>
+          )}
+
+          {step === 'confirm' && (
+            <div className="oi-modal-preview">
+              <div className="oi-modal-note oi-modal-note-warn">
+                <strong>Confirm backfill.</strong> This will fetch up to <strong>{chosenTier.limit}</strong>{' '}
+                {platform === 'instagram' ? 'posts' : 'uploads'} from @{account.handle} and run a projected cost of{' '}
+                <strong>{cost.display}</strong>. Budget guards still apply server-side, this will fail fast if the monthly cap is hit.
+              </div>
+            </div>
+          )}
+
+          {step === 'fetching' && (
+            <div className="oi-modal-status">Fetching {chosenTier.limit} {platform === 'instagram' ? 'posts' : 'uploads'}…</div>
+          )}
+
+          {step === 'done' && fetchResult && (
+            <div className="oi-modal-status oi-modal-status-ok">
+              <div><strong>Backfill complete.</strong></div>
+              <div>
+                {fetchResult.posts_new ?? 0} new · {fetchResult.posts_fetched ?? 0} fetched
+                {platform === 'instagram'
+                  ? ` · Apify cost $${Number(fetchResult.cost_estimate ?? 0).toFixed(4)}`
+                  : ` · ${fetchResult.quota_units_used ?? 0} YT units used`}
+              </div>
+              {platform === 'instagram' && typeof fetchResult.month_spend_usd === 'number' && (
+                <div className="oi-modal-hint">
+                  Month-to-date IG spend: ${Number(fetchResult.month_spend_usd).toFixed(2)} of ${Number(fetchResult.budget_usd || 30).toFixed(2)} budget.
+                </div>
+              )}
+              {platform === 'youtube' && typeof fetchResult.month_quota_used === 'number' && (
+                <div className="oi-modal-hint">
+                  Month-to-date YT quota: {fetchResult.month_quota_used} of {fetchResult.quota_budget || 10000} units.
+                </div>
+              )}
+            </div>
+          )}
+
+          {errMsg && <div className="oi-modal-note oi-modal-note-err">{errMsg}</div>}
+        </div>
+
+        <div className="oi-modal-foot">
+          {step === 'choose' && (
+            <>
+              <button type="button" className="oi-bulk-btn-ghost" onClick={onClose}>Cancel</button>
+              <button type="button" className="oi-bulk-btn-primary" onClick={() => setStep('confirm')}>
+                Preview cost
+              </button>
+            </>
+          )}
+          {step === 'confirm' && (
+            <>
+              <button type="button" className="oi-bulk-btn-ghost" onClick={() => setStep('choose')}>Back</button>
+              <button type="button" className="oi-bulk-btn-primary" onClick={runBackfill}>
+                Run backfill ({cost.display})
+              </button>
+            </>
+          )}
+          {step === 'fetching' && (
+            <button type="button" className="oi-bulk-btn-primary" disabled>Fetching…</button>
+          )}
+          {step === 'done' && (
+            <button type="button" className="oi-bulk-btn-primary" onClick={onClose}>Done</button>
+          )}
+          {step === 'error' && (
+            <>
+              <button type="button" className="oi-bulk-btn-ghost" onClick={onClose}>Close</button>
+              <button type="button" className="oi-bulk-btn-primary" onClick={() => setStep('choose')}>Try again</button>
+            </>
           )}
         </div>
       </div>
@@ -1319,6 +1595,7 @@ export default function OrganicIntel() {
         account={selectedAccount}
         latestLog={logsByAccount[selectedAccount.id]}
         onBack={() => setSelectedAccount(null)}
+        onBackfilled={loadAll}
       />
     )
   }
