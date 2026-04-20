@@ -513,8 +513,12 @@ function AccountDetail({ account, latestLog, onBack, onBackfilled }) {
       setLoading(true)
       setError(null)
       try {
+        // Match the fetcher's Full history ceiling (500) so every stored
+        // post surfaces in the grid and the "Posts tracked" stat. The hard
+        // cap is kept so a runaway account (500+ posts) renders in bounded
+        // time; if that ever bites we can move to pagination here.
         const fetchedPosts = await fetchTable(
-          `organic_posts?select=*&account_id=eq.${account.id}&order=posted_at.desc&limit=50`
+          `organic_posts?select=*&account_id=eq.${account.id}&order=posted_at.desc&limit=500`
         )
         if (cancelled) return
         setPosts(fetchedPosts)
