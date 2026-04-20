@@ -158,6 +158,48 @@ a:hover{text-decoration:underline}
 
 .tbd{display:inline-block;background:var(--yellow-light);border:1px dashed var(--yellow);color:var(--amber);font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:var(--radius);text-transform:uppercase;letter-spacing:.05em;font-family:var(--font-body)}
 
+/* feedback rail */
+.feedback-rail{position:fixed;top:0;right:0;width:360px;height:100vh;background:var(--surface);border-left:1px solid var(--border);overflow-y:auto;padding:1rem 1.1rem 2rem;z-index:60;box-shadow:-6px 0 20px rgba(26,23,20,.06);transform:translateX(100%);transition:transform .25s ease}
+.feedback-rail.open{transform:translateX(0)}
+.fr-head{display:flex;justify-content:space-between;align-items:center;gap:.5rem;padding-bottom:.6rem;margin-bottom:.6rem;border-bottom:2px solid var(--ink)}
+.fr-head h3{font-family:var(--font-display);font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--ink);margin:0}
+.fr-head-actions{display:flex;gap:.3rem;align-items:center}
+.fr-head .btn{padding:.3rem .6rem;font-size:.65rem}
+.fr-close{padding:.2rem .55rem!important;font-size:.9rem!important;line-height:1}
+.fr-intro{font-size:.74rem;color:var(--ink-2);line-height:1.55;margin-bottom:.9rem;padding:.6rem .7rem;background:var(--surface-warm);border-radius:var(--radius);border:1px solid var(--border-light)}
+.fr-sections{display:flex;flex-direction:column;gap:.6rem}
+.fr-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.65rem .75rem;transition:border-color .15s}
+.fr-card:focus-within{border-color:var(--ink)}
+.fr-card.has-note{border-left:3px solid var(--accent)}
+.fr-card.mood-love{border-left:3px solid var(--green)}
+.fr-card.mood-needs{border-left:3px solid var(--yellow)}
+.fr-card.mood-ok{border-left:3px solid var(--blue)}
+.fr-sec{font-family:var(--font-body);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);margin-bottom:.4rem}
+.fr-sec a{color:var(--ink-2);text-decoration:none}
+.fr-sec a:hover{color:var(--accent-dark);text-decoration:underline}
+.fr-mood{display:flex;gap:.3rem;margin-bottom:.4rem}
+.fr-mood button{border:1px solid var(--border);background:var(--surface);color:var(--ink-3);font-size:.78rem;line-height:1;padding:.25rem .5rem;border-radius:var(--radius);cursor:pointer;font-family:var(--font-body);transition:all .12s}
+.fr-mood button:hover{border-color:var(--ink-3);color:var(--ink)}
+.fr-mood button.on[data-m=love]{background:var(--green-light);border-color:var(--green);color:var(--green)}
+.fr-mood button.on[data-m=ok]{background:var(--blue-light);border-color:var(--blue);color:var(--blue)}
+.fr-mood button.on[data-m=needs]{background:var(--yellow-light);border-color:var(--yellow);color:var(--amber)}
+.fr-card textarea{width:100%;border:1px solid var(--border);background:var(--bg);border-radius:var(--radius);padding:.45rem .55rem;font-family:var(--font-body);font-size:.8rem;line-height:1.5;color:var(--ink);resize:vertical;min-height:48px}
+.fr-card textarea:focus{outline:none;border-color:var(--ink)}
+.fr-card textarea::placeholder{color:var(--ink-4)}
+.fr-footer{margin-top:1rem;padding-top:.7rem;border-top:1px dashed var(--border);font-size:.7rem;color:var(--ink-3);line-height:1.5}
+.fr-count{display:inline-block;background:var(--ink);color:var(--bg);font-size:.6rem;font-weight:700;padding:.1rem .4rem;border-radius:999px;margin-left:.3rem}
+
+/* overlay for mobile drawer */
+.fr-overlay{position:fixed;inset:0;background:rgba(26,23,20,.3);z-index:55;opacity:0;pointer-events:none;transition:opacity .2s}
+.fr-overlay.on{opacity:1;pointer-events:auto}
+
+@media (min-width:1440px){
+  body{padding-right:360px}
+  .feedback-rail{transform:translateX(0)}
+  .fr-close,.fr-overlay{display:none}
+  .btn-feedback{display:none!important}
+}
+
 @page{size:A4 portrait;margin:14mm 16mm}
 @media print{
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
@@ -179,35 +221,36 @@ a:hover{text-decoration:underline}
       <a href="/planning-rhythm.html" class="btn">Calendar view</a>
       <a href="/internal-shoot-pack.html" class="btn">Shoot pack</a>
       <a href="/training-companion.html" class="btn">Training companion</a>
+      <button class="btn btn-feedback" id="toggleFeedback" type="button">Feedback <span class="fr-count" id="feedbackCount">0</span></button>
       <button class="btn btn-primary" onclick="window.print()">Print</button>
     </div>
   </div>
 
   <div class="hero">
-    <div class="eyebrow">positioning · v1.1 · 20 apr 2026 · kaja scale added · lock this</div>
-    <h1>chefly = <em>food without the project.</em></h1>
-    <p class="hero-sub">The category got crowded. Everyone's making the same claims. Here is what Chefly is, what Chefly is not, who fronts it, and how to test every single ad against it. One page. Printable. Read before you brief anyone, film anything, or ship any copy.</p>
+    <div class="eyebrow">positioning · v1.2 · 20 apr 2026 · trade + works frame · lock this</div>
+    <h1>chefly = <em>a kitchen that works, a cook who knows her trade.</em></h1>
+    <p class="hero-sub">The category got crowded. Everyone's making the same claims. Here is what Chefly is, what Chefly is not, who fronts it, and how to test every single ad against it. One page. Printable. Read before you brief anyone, film anything, or ship any copy. v1.2 reframes the brand around trade and works: not a restaurant that ships, not a lab that measures, a kitchen that runs.</p>
     <div class="hero-chips">
-      <span class="chip accent">worldview</span>
+      <span class="chip accent">trade + works</span>
       <span class="chip">enemy named</span>
       <span class="chip">kaja-led</span>
-      <span class="chip">58, self-taught, 7 yrs</span>
-      <span class="chip">20 years together</span>
+      <span class="chip">one cook, the whole time</span>
+      <span class="chip">over a million meals</span>
       <span class="chip">no em dashes</span>
     </div>
   </div>
 
-  <div class="tldr">
+  <div class="tldr" id="tldr">
     <h3>the one-page version</h3>
     <dl class="tldr-lines">
-      <dt>What Chefly is</dt><dd><strong>Food without the project.</strong> Proper food, by a cook who learnt because she got tired of what was out there, sent to people who'd rather not plan their week in a spreadsheet.</dd>
-      <dt>Who fronts it</dt><dd><strong>Kaja.</strong> 58. Self-taught. Has cooked every Chefly recipe since day one, seven years ago. Warm, confident, country-grounded, happy on camera.</dd>
+      <dt>What Chefly is</dt><dd><strong>A kitchen that works. A cook who knows her trade.</strong> Proper food, made by someone whose job it is to make it, properly, every day. Not a chef's project. Not a lab's formula. A trade. A works.</dd>
+      <dt>Who runs the works</dt><dd><strong>Kaja.</strong> 58. Self-taught. Has cooked every Chefly recipe since day one. Warm, confident, country-grounded, happy on camera. Not a chef. Not a nutritionist. A cook who's served her time.</dd>
       <dt>Who supports</dt><dd><strong>James.</strong> 43. In food since 2007. Runs the business. On camera as the customer-proxy ("husband at the table"), the founder-story voice, and the strategic commentator. Not the chef. Doesn't pretend to be.</dd>
       <dt>Together</dt><dd><strong>20 years.</strong> Visible, not stated. Lived-in. The rhythm is a long partnership, not a brand-couple dynamic.</dd>
-      <dt>Enemy</dt><dd><strong>Food as a self-improvement project.</strong> Macro counters. Meal plans. Wellness-industrial complex. "Fuel, not food." The whole optimisation pitch.</dd>
-      <dt>Line we own</dt><dd><strong>"Dinner, handled."</strong> Plus up to four supporting. See sentences section.</dd>
-      <dt>Brand world</dt><dd><strong>Warm. English country. Real kitchen. Yellow-and-olive palette. Home, not studio.</strong> A lived-in house, not a ghost kitchen.</dd>
-      <dt>The test</dt><dd><strong>Could Simmer, Calo, Frive or Huel have made this ad and swapped their logo in?</strong> If yes, kill it.</dd>
+      <dt>Enemy</dt><dd><strong>Food as a self-improvement project.</strong> Macro counters. Meal plans. Wellness-industrial complex. "Fuel, not food." The whole optimisation pitch. Plus the adjacent enemy: chef-showmanship (rotating chef rosters, celebrity plating, culinary performance).</dd>
+      <dt>Line we own</dt><dd><strong>"A kitchen that works. A cook who knows her trade."</strong> Plus "Dinner, handled." + supporting lines. See sentences section.</dd>
+      <dt>Brand world</dt><dd><strong>Warm. English country. Real kitchen. Yellow-and-olive palette. Home, not studio. The line, the floor, the trays.</strong> A works that looks like a kitchen, not a kitchen that looks like a factory.</dd>
+      <dt>The test</dt><dd><strong>Could Simmer, Calo, Frive or Huel have made this ad and swapped their logo in?</strong> If yes, kill it. (Plus v1.2: could Cook Unity have made it? If yes, also kill it.)</dd>
     </dl>
   </div>
 
@@ -237,10 +280,14 @@ a:hover{text-decoration:underline}
       <p class="sh-sub">This is what Chefly believes. Every ad, email, post, packaging line, supplier call and creator brief traces back here.</p>
     </div>
     <div class="prose">
-      <p>Every DTC meal brand in the UK is selling food-as-a-project. Simmer sells a training project. Calo sells a macro project. Your Heights sells a biohacking project. Huel sells an efficiency project. Frive sells a performance project. Different costumes, same pitch: <em>care more, plan more, track more, optimise more.</em></p>
-      <p><strong>Chefly is the inversion of that entire category's offer.</strong></p>
-      <div class="pull">Most people do not want food to be a homework assignment. They want dinner to be sorted. <strong>Chefly is for people who don't want food to be a project.</strong> No plan. No programme. No tracking. No transformation arc. Proper food. Handled.</div>
-      <p>This isn't a softer version of Simmer. It's a different emotional job. Simmer sells you a <em>better version of yourself through food</em>. Chefly sells you <em>one less thing to think about</em>. Bigger market, warmer relationship, longer retention.</p>
+      <p>Every DTC meal brand in the UK is selling food-as-a-project. Simmer sells a training project. Calo sells a macro project. Your Heights sells a biohacking project. Huel sells an efficiency project. Frive sells a performance project. Different costumes, same pitch: <em>care more, plan more, track more, optimise more.</em> And the adjacent move (Cook Unity, Mindful Chef, the rotating-chef platforms) sells food-as-a-curated-experience: rotating chef rosters, named talent, culinary performance. <em>Discover more, taste more, sample more.</em></p>
+      <p><strong>Chefly is the inversion of both.</strong> It isn't a training programme. It isn't a curated tasting tour. It's a works. A kitchen that runs. A trade, done properly, by the same cook, every week.</p>
+      <div class="pull">Most people don't want food to be a homework assignment. They also don't want it to be a chef's showcase. They want dinner to be sorted. <strong>Chefly is for people who want a kitchen that just works.</strong> No plan. No programme. No tracking. No rotating chef. No transformation arc. One cook. One trade. Proper food. Handled.</div>
+      <p>This isn't a softer version of Simmer. It isn't a cheaper version of Cook Unity. It's a different emotional job. The category sells you a <em>better version of yourself through food</em>, or a <em>more cultured palate through chefs</em>. Chefly sells you <em>one less thing to think about, made by someone who's been making it properly for years.</em> Bigger market, warmer relationship, longer retention.</p>
+      <div class="plain">
+        <strong>Trade vs. chef (the frame in one line)</strong>
+        A chef performs. A cook with a trade shows up, does the work, feeds people, and does it again tomorrow. Chefly is the second one. Kaja is the second one.
+      </div>
     </div>
   </section>
 
@@ -316,8 +363,16 @@ a:hover{text-decoration:underline}
       <p class="sh-sub">The brand's main character. Not the chef. The cook. 80% of camera time is hers.</p>
     </div>
     <div class="prose">
-      <p><strong>Who she is, on camera:</strong> Kaja, 58, self-taught, English country kitchen. Warm. Confident. Happy to be on camera and up for trying. The cook who has developed every Chefly recipe since day one. Not a chef. Not a nutritionist. Not a trainer. Just <em>a cook</em>. The tone is <strong>warm aunt who feeds you</strong>, not <strong>fitness influencer</strong>.</p>
-      <p><strong>What she's actually done (the receipts):</strong> Developed every Chefly recipe since day one. Tasted and approved every single meal. Present in the kitchen every production day. <strong>Over a million meals, to date.</strong> No team of chefs, no rotating R&amp;D, no outsourced development. One cook. The whole time.</p>
+      <p><strong>Who she is, on camera:</strong> Kaja, 58, self-taught, English country kitchen. Warm. Confident. Happy to be on camera and up for trying. The cook who has developed every Chefly recipe since day one. Not a chef. Not a nutritionist. Not a trainer. Just <em>a cook who knows her trade</em>. The tone is <strong>warm aunt who feeds you</strong>, not <strong>fitness influencer</strong> and not <strong>celebrity chef</strong>.</p>
+      <p><strong>What she's actually done (the receipts):</strong> Developed every Chefly recipe since day one. Tasted and approved every single meal. Present in the kitchen every production day. <strong>Over a million meals, to date.</strong> No team of chefs, no rotating R&amp;D, no outsourced development. One cook. The whole time. <strong>That's the trade.</strong> A million meals is the tonnage. One cook is the signature. Since day one is the permanence. You can't fake any of the three.</p>
+      <p><strong>Why the "trade" frame fits her:</strong> Trade is apprenticeship, earned skill, quiet competence, hands that know what they're doing. It sidesteps "chef" (too performed) and "artisan" (too precious) and lands where butcher, baker, tailor, plumber land: trades you trust because someone served their time. Kaja served hers. Seven years of production days. Every recipe. Every meal. That's not culinary showmanship. That's a trade.</p>
+      <p><strong>What a "works" frames lets you say (that a "chef" frame doesn't):</strong></p>
+      <ul>
+        <li><strong>"The kitchen runs."</strong> Reliability as the lead promise, not novelty.</li>
+        <li><strong>"Over a million meals."</strong> Tonnage reads as proof, not as a brag, because a works is supposed to produce.</li>
+        <li><strong>"Same cook, the whole time."</strong> Permanence as a differentiator. The opposite of Cook Unity's rotating roster.</li>
+        <li><strong>"Made to spec, every week."</strong> Consistency, not surprise. Your Thursday doesn't need a new adventure.</li>
+      </ul>
       <p><strong>Why her, specifically:</strong></p>
       <ul>
         <li><strong>There is no dominant female-founder-led voice in UK DTC food.</strong> Simmer, Huel, Gousto, Mindful Chef all skew male-voice primary. Calo has no voice. The slot is structurally open.</li>
@@ -461,6 +516,12 @@ a:hover{text-decoration:underline}
           <span class="lang-chip">chef</span>
           <span class="lang-chip">trained</span>
           <span class="lang-chip">Michelin</span>
+          <span class="lang-chip">culinary</span>
+          <span class="lang-chip">curated</span>
+          <span class="lang-chip">crafted</span>
+          <span class="lang-chip">artisan</span>
+          <span class="lang-chip">chef-driven</span>
+          <span class="lang-chip">rotating chefs</span>
           <span class="lang-chip">macros</span>
           <span class="lang-chip">calorie</span>
           <span class="lang-chip">protein-packed</span>
@@ -475,8 +536,6 @@ a:hover{text-decoration:underline}
           <span class="lang-chip">project</span>
           <span class="lang-chip">transform</span>
           <span class="lang-chip">premium</span>
-          <span class="lang-chip">crafted</span>
-          <span class="lang-chip">artisan</span>
           <span class="lang-chip">subscription box</span>
         </div>
       </div>
@@ -486,6 +545,16 @@ a:hover{text-decoration:underline}
           <span class="lang-chip">cook</span>
           <span class="lang-chip">Kaja</span>
           <span class="lang-chip">kitchen</span>
+          <span class="lang-chip">the works</span>
+          <span class="lang-chip">the trade</span>
+          <span class="lang-chip">served her time</span>
+          <span class="lang-chip">the kitchen runs</span>
+          <span class="lang-chip">one cook</span>
+          <span class="lang-chip">since day one</span>
+          <span class="lang-chip">a million meals</span>
+          <span class="lang-chip">made to spec</span>
+          <span class="lang-chip">the line</span>
+          <span class="lang-chip">the floor</span>
           <span class="lang-chip">dinner</span>
           <span class="lang-chip">proper food</span>
           <span class="lang-chip">real food</span>
@@ -494,14 +563,11 @@ a:hover{text-decoration:underline}
           <span class="lang-chip">sit down</span>
           <span class="lang-chip">tonight</span>
           <span class="lang-chip">this week's menu</span>
-          <span class="lang-chip">made at home</span>
           <span class="lang-chip">warm</span>
           <span class="lang-chip">generous</span>
           <span class="lang-chip">proper</span>
-          <span class="lang-chip">eat</span>
           <span class="lang-chip">tired of that</span>
           <span class="lang-chip">nothing fancy</span>
-          <span class="lang-chip">seven years</span>
         </div>
       </div>
     </div>
@@ -589,18 +655,20 @@ a:hover{text-decoration:underline}
     </div>
     <div class="sentences">
       <h3>hero options</h3>
+      <div class="sentence"><strong>A kitchen that works. A cook who knows her trade.</strong></div>
       <div class="sentence"><strong>Dinner, handled.</strong></div>
-      <div class="sentence">For people who don't want food to be a project.</div>
-      <div class="sentence">Chefly, by Kaja.</div>
-      <div class="sentence">No plan. No programme. Just proper dinner.</div>
-      <div class="sentence">The un-diet.</div>
+      <div class="sentence">Not a chef's project. Not a lab's formula. A trade. A works.</div>
+      <div class="sentence">Chefly, by Kaja. One cook. The whole time.</div>
+      <div class="sentence">No plan. No programme. No rotating chef. Just proper dinner.</div>
       <div class="sentence">A cook, not a chef. A kitchen, not a studio. Proper food, sent to you.</div>
     </div>
     <div class="sentences" style="margin-top:.8rem;">
       <h3>supporting lines</h3>
       <div class="sentence"><strong>"Over a million meals. One cook. Since day one."</strong></div>
+      <div class="sentence">"A kitchen that works. A cook who knows her trade. Food that shows up, made properly, every week."</div>
+      <div class="sentence">"Chefly is a works. Kaja runs it. You get fed."</div>
+      <div class="sentence">"No rotating chefs. No optimisation. Just the trade, done properly, since day one."</div>
       <div class="sentence">"We got tired of what was out there. So we started cooking."</div>
-      <div class="sentence">"Kaja's been cooking every recipe for seven years."</div>
       <div class="sentence">"After 20 years in food, I bet a company on Kaja's cooking."</div>
       <div class="sentence">"Eat well. Don't overthink it."</div>
       <div class="sentence">"Made in a kitchen that looks like yours."</div>
@@ -655,5 +723,177 @@ a:hover{text-decoration:underline}
   </nav>
 
 </div>
+
+<div class="fr-overlay no-print" id="feedbackOverlay" aria-hidden="true"></div>
+
+<aside class="feedback-rail no-print" id="feedbackRail" aria-label="section feedback">
+  <div class="fr-head">
+    <h3>feedback</h3>
+    <div class="fr-head-actions">
+      <button class="btn" id="exportFeedback" type="button" title="copy all notes to clipboard as markdown">Export</button>
+      <button class="btn" id="clearFeedback" type="button" title="clear all feedback">Clear</button>
+      <button class="btn fr-close" id="closeFeedback" type="button" aria-label="close feedback">×</button>
+    </div>
+  </div>
+  <div class="fr-intro">Leave notes on any section. Saved to this browser. Click <strong>Export</strong> to copy the lot to the clipboard as markdown.</div>
+  <div class="fr-sections" id="feedbackSections"></div>
+  <div class="fr-footer">
+    v1.2 · 20 apr 2026 · trade + works · lock this
+  </div>
+</aside>
+
+<script>
+(function(){
+  const SECTIONS = [
+    { id: 'tldr',       label: 'TLDR · the one-page version' },
+    { id: 'worldview',  label: 'S1 · the worldview' },
+    { id: 'enemy',      label: 'S2 · the enemy' },
+    { id: 'origin',     label: 'S3 · origin story' },
+    { id: 'voice',      label: 'S4 · voice lead · kaja' },
+    { id: 'james',      label: "S5 · james's four roles" },
+    { id: 'couple',     label: 'S6 · the couple dynamic' },
+    { id: 'world',      label: 'S7 · brand world' },
+    { id: 'language',   label: 'S8 · language rules' },
+    { id: 'formats',    label: 'S9 · five content formats' },
+    { id: 'sentences',  label: 'S10 · sentences we own' },
+    { id: 'swap',       label: 'S11 · the swap test' },
+    { id: 'next',       label: 'S12 · what to do this week' }
+  ];
+  const STORAGE_KEY = 'chefly_positioning_feedback_v1_2';
+  function load(){
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+    catch(e) { return {}; }
+  }
+  function save(d){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch(e) {}
+  }
+  function esc(s){
+    return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[c]);
+  }
+  const data = load();
+  const list = document.getElementById('feedbackSections');
+  const countEl = document.getElementById('feedbackCount');
+  const rail = document.getElementById('feedbackRail');
+  const overlay = document.getElementById('feedbackOverlay');
+
+  function updateCount(){
+    let n = 0;
+    SECTIONS.forEach(s => {
+      const e = data[s.id];
+      if (!e) return;
+      if ((e.note && e.note.trim()) || e.mood) n++;
+    });
+    countEl.textContent = n;
+    countEl.style.display = n ? 'inline-block' : 'none';
+  }
+
+  function applyCardClass(card, sid){
+    const e = data[sid] || {};
+    card.classList.toggle('has-note', !!(e.note && e.note.trim()));
+    card.classList.remove('mood-love','mood-ok','mood-needs');
+    if (e.mood) card.classList.add('mood-' + e.mood);
+  }
+
+  SECTIONS.forEach(s => {
+    const entry = data[s.id] || {};
+    const card = document.createElement('div');
+    card.className = 'fr-card';
+    card.dataset.sid = s.id;
+    card.innerHTML = `
+      <div class="fr-sec"><a href="#${esc(s.id)}">${esc(s.label)}</a></div>
+      <div class="fr-mood" role="group" aria-label="mood for ${esc(s.label)}">
+        <button type="button" data-m="love"  class="${entry.mood==='love'?'on':''}"  aria-label="love it"    title="love it">♥</button>
+        <button type="button" data-m="ok"    class="${entry.mood==='ok'?'on':''}"    aria-label="ok"         title="ok">✓</button>
+        <button type="button" data-m="needs" class="${entry.mood==='needs'?'on':''}" aria-label="needs work" title="needs work">?</button>
+      </div>
+      <textarea placeholder="notes on this section" rows="2">${esc(entry.note || '')}</textarea>
+    `;
+    list.appendChild(card);
+    applyCardClass(card, s.id);
+  });
+
+  list.addEventListener('input', e => {
+    if (e.target.tagName !== 'TEXTAREA') return;
+    const card = e.target.closest('.fr-card');
+    if (!card) return;
+    const sid = card.dataset.sid;
+    data[sid] = data[sid] || {};
+    data[sid].note = e.target.value;
+    save(data);
+    applyCardClass(card, sid);
+    updateCount();
+  });
+
+  list.addEventListener('click', e => {
+    const b = e.target.closest('button[data-m]');
+    if (!b) return;
+    const card = b.closest('.fr-card');
+    if (!card) return;
+    const sid = card.dataset.sid;
+    data[sid] = data[sid] || {};
+    const was = data[sid].mood;
+    data[sid].mood = was === b.dataset.m ? '' : b.dataset.m;
+    save(data);
+    card.querySelectorAll('button[data-m]').forEach(btn => {
+      btn.classList.toggle('on', btn.dataset.m === data[sid].mood);
+    });
+    applyCardClass(card, sid);
+    updateCount();
+  });
+
+  document.getElementById('exportFeedback').addEventListener('click', () => {
+    const today = new Date().toISOString().slice(0,10);
+    const lines = ['# Chefly positioning feedback', '', `_v1.2 · exported ${today}_`, ''];
+    let any = false;
+    SECTIONS.forEach(s => {
+      const e = data[s.id] || {};
+      const hasNote = e.note && e.note.trim();
+      if (e.mood || hasNote){
+        any = true;
+        lines.push('## ' + s.label);
+        if (e.mood) lines.push('_mood:_ **' + e.mood + '**');
+        if (hasNote) { lines.push(''); lines.push(e.note.trim()); }
+        lines.push('');
+      }
+    });
+    if (!any) lines.push('_No feedback yet._');
+    const md = lines.join('\n');
+    const done = () => { try { window.alert('Feedback copied to clipboard as markdown.'); } catch(e){} };
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(md).then(done, fallback);
+    } else {
+      fallback();
+    }
+    function fallback(){
+      const ta = document.createElement('textarea');
+      ta.value = md;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch(e){}
+      ta.remove();
+      done();
+    }
+  });
+
+  document.getElementById('clearFeedback').addEventListener('click', () => {
+    if (!window.confirm('Clear all feedback? This cannot be undone.')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  });
+
+  const toggle = document.getElementById('toggleFeedback');
+  function openRail(){ rail.classList.add('open'); overlay.classList.add('on'); }
+  function closeRail(){ rail.classList.remove('open'); overlay.classList.remove('on'); }
+  if (toggle) toggle.addEventListener('click', () => rail.classList.contains('open') ? closeRail() : openRail());
+  document.getElementById('closeFeedback').addEventListener('click', closeRail);
+  overlay.addEventListener('click', closeRail);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeRail(); });
+
+  updateCount();
+})();
+</script>
+
 </body>
 </html>
