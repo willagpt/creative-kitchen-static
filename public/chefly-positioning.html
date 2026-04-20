@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chefly Positioning · the sentence, the enemy, the voice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf9f7;--surface:#fff;--surface-alt:#f4f2ee;--surface-warm:#f9f5f0;
+  --ink:#1a1714;--ink-2:#5c564d;--ink-3:#8a8279;--ink-4:#b0a99e;
+  --accent:#b44d1e;--accent-light:#f4e6dc;--accent-dark:#8a3710;
+  --green:#2d6a4f;--green-light:#d8f3dc;
+  --blue:#1d4e89;--blue-light:#d0e2f4;
+  --amber:#92400e;--amber-light:#fef3c7;
+  --red:#991b1b;--red-light:#fee2e2;
+  --yellow:#b8860b;--yellow-light:#fdf3c4;
+  --border:#e8e4de;--border-light:#f0ece6;
+  --radius:4px;--radius-lg:6px;
+  --shadow-sm:0 1px 2px rgba(26,23,20,.05);
+  --font-display:'Fraunces',Georgia,serif;--font-body:'DM Sans',system-ui,sans-serif;
+}
+html{font-size:14px;scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4,h5{font-family:var(--font-display);font-weight:700;line-height:1.25}
+a{color:var(--accent-dark);text-decoration:none}
+a:hover{text-decoration:underline}
+.page{max-width:1040px;margin:0 auto;padding:0 clamp(1rem,3vw,2rem) 4rem}
+
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:.9rem 0;border-bottom:1px solid var(--border);gap:.5rem;flex-wrap:wrap}
+.topbar-brand{font-family:var(--font-display);font-size:.9rem;font-weight:700;color:var(--accent-dark)}
+.topbar-actions{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+.btn{padding:.4rem .9rem;font-family:var(--font-body);font-size:.72rem;font-weight:600;border-radius:var(--radius);cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;border:1.5px solid var(--border);background:var(--surface);color:var(--ink-2)}
+.btn:hover{border-color:var(--ink-3);color:var(--ink)}
+.btn-primary{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark);text-decoration:none}
+
+.hero{padding:clamp(2rem,5vw,3.5rem) 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem}
+.eyebrow{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent-dark);margin-bottom:.7rem}
+.hero h1{font-size:clamp(1.8rem,4.4vw,2.8rem);font-weight:800;letter-spacing:-.025em;margin-bottom:.6rem}
+.hero h1 em{font-style:italic;color:var(--accent-dark);font-weight:500}
+.hero-sub{font-size:1rem;color:var(--ink-2);max-width:720px;line-height:1.7;margin-bottom:1rem}
+.hero-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.2rem}
+.chip{font-size:.68rem;font-weight:600;padding:.3rem .7rem;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--ink-2)}
+.chip.accent{background:var(--accent-light);border-color:var(--accent);color:var(--accent-dark)}
+
+.tldr{background:var(--surface-warm);border:2px solid var(--ink);border-radius:var(--radius-lg);padding:1.3rem 1.5rem;margin-bottom:2.5rem}
+.tldr h3{font-family:var(--font-display);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent-dark);margin-bottom:.8rem}
+.tldr-lines{display:grid;grid-template-columns:160px 1fr;gap:.4rem 1.2rem;font-size:.86rem;line-height:1.6}
+.tldr-lines dt{font-weight:700;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em;font-size:.7rem;padding-top:.15rem}
+.tldr-lines dd{color:var(--ink)}
+.tldr-lines dd strong{color:var(--accent-dark)}
+
+.toc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.3rem;margin-bottom:2.5rem}
+.toc-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-2);margin-bottom:.7rem}
+.toc ol{padding-left:1.2rem;font-size:.86rem;line-height:1.9;columns:2;column-gap:1.5rem}
+@media (max-width:640px){.toc ol{columns:1}}
+.toc ol li{color:var(--ink-2)}
+.toc ol li a{font-weight:500}
+
+.section{margin-bottom:3rem;scroll-margin-top:1rem}
+.section-head{border-bottom:2px solid var(--ink);padding-bottom:.6rem;margin-bottom:1.3rem}
+.section-head .sh-tag{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent-dark);margin-bottom:.25rem;display:block}
+.section-head h2{font-size:clamp(1.35rem,3vw,1.9rem);font-weight:800;letter-spacing:-.02em;margin:0}
+.section-head .sh-sub{font-size:.86rem;color:var(--ink-2);margin-top:.4rem;max-width:680px}
+
+.prose p{font-size:.92rem;color:var(--ink);margin-bottom:.95rem;line-height:1.7}
+.prose p.muted{color:var(--ink-2)}
+.prose p strong{color:var(--ink);font-weight:700}
+.prose p em{color:var(--accent-dark);font-style:italic}
+.prose ul,.prose ol{padding-left:1.3rem;margin-bottom:1rem}
+.prose li{font-size:.9rem;color:var(--ink);margin-bottom:.4rem;line-height:1.65}
+.prose li strong{color:var(--ink);font-weight:700}
+.prose h3{font-size:1.05rem;font-weight:700;margin:1.8rem 0 .6rem;color:var(--ink);font-family:var(--font-display)}
+
+.pull{font-family:var(--font-display);font-size:clamp(1.25rem,2.6vw,1.6rem);font-weight:500;font-style:italic;color:var(--ink);padding:1.2rem 1.4rem;border-left:4px solid var(--accent);background:var(--accent-light);border-radius:0 var(--radius-lg) var(--radius-lg) 0;margin:1.4rem 0;line-height:1.35}
+.pull strong{color:var(--accent-dark);font-style:normal;font-weight:700}
+
+.versus{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.2rem 0}
+@media (max-width:720px){.versus{grid-template-columns:1fr}}
+.versus .v-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem}
+.versus .v-card h4{font-family:var(--font-display);font-size:.85rem;font-weight:700;margin-bottom:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2)}
+.versus .v-card.them h4{color:var(--red)}
+.versus .v-card.us h4{color:var(--green)}
+.versus .v-card ul{list-style:none;padding:0;margin:0}
+.versus .v-card li{font-size:.86rem;padding:.35rem 0;border-bottom:1px dotted var(--border);line-height:1.5;color:var(--ink)}
+.versus .v-card li:last-child{border-bottom:none}
+.versus .v-card.them li{color:var(--ink-2);text-decoration:line-through;text-decoration-color:var(--red);text-decoration-thickness:1.5px}
+.versus .v-card.us li{color:var(--ink);font-weight:500}
+
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin:1.2rem 0}
+.role-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem;border-top:4px solid var(--accent)}
+.role-card.k{border-top-color:var(--yellow)}
+.role-card.j{border-top-color:var(--blue)}
+.role-card .r-tag{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-3);margin-bottom:.3rem}
+.role-card h4{font-family:var(--font-display);font-size:1.05rem;font-weight:700;margin-bottom:.3rem;color:var(--ink)}
+.role-card p{font-size:.82rem;color:var(--ink-2);line-height:1.6;margin-bottom:.6rem}
+.role-card ul{list-style:none;padding:0;margin:0}
+.role-card li{font-size:.82rem;padding:.25rem 0 .25rem 1rem;position:relative;line-height:1.55;color:var(--ink)}
+.role-card li::before{content:'·';position:absolute;left:.2rem;color:var(--accent);font-weight:800}
+.role-card .r-pct{font-size:.7rem;color:var(--accent-dark);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-top:.5rem;padding-top:.5rem;border-top:1px dashed var(--border)}
+
+.lang-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.2rem 0}
+@media (max-width:720px){.lang-grid{grid-template-columns:1fr}}
+.lang-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem}
+.lang-card h4{font-family:var(--font-display);font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.7rem;display:flex;align-items:center;gap:.5rem}
+.lang-card.ban h4{color:var(--red)}
+.lang-card.own h4{color:var(--green)}
+.lang-chips{display:flex;flex-wrap:wrap;gap:.35rem}
+.lang-chip{font-size:.78rem;font-weight:600;padding:.3rem .7rem;border-radius:var(--radius);border:1px solid var(--border)}
+.lang-card.ban .lang-chip{background:var(--red-light);color:var(--red);border-color:#f3c9c9;text-decoration:line-through;text-decoration-thickness:1.5px}
+.lang-card.own .lang-chip{background:var(--green-light);color:var(--green);border-color:#bfe1cc}
+
+.format-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.2rem 1.4rem;margin-bottom:1rem;position:relative}
+.format-card::before{content:attr(data-num);position:absolute;top:1rem;right:1.2rem;font-family:var(--font-display);font-size:2.8rem;font-weight:800;color:var(--accent-light);line-height:1;letter-spacing:-.04em}
+.format-card h4{font-family:var(--font-display);font-size:1.15rem;font-weight:800;margin-bottom:.3rem;color:var(--ink);padding-right:3rem}
+.format-card .f-kicker{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--accent-dark);margin-bottom:.6rem}
+.format-card p{font-size:.88rem;color:var(--ink);line-height:1.65;margin-bottom:.6rem}
+.format-card p strong{color:var(--accent-dark)}
+.format-card .f-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.4rem;margin-top:.7rem;padding-top:.7rem;border-top:1px dashed var(--border)}
+.format-card .f-meta .fm{font-size:.74rem;color:var(--ink-2);line-height:1.4}
+.format-card .f-meta .fm strong{display:block;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);font-weight:700;margin-bottom:.15rem}
+.format-card.fail{border-left:4px solid var(--red)}
+.format-card.fail::before{color:var(--red-light)}
+
+.sentences{background:var(--ink);color:var(--bg);border-radius:var(--radius-lg);padding:1.6rem 1.8rem;margin:1.5rem 0}
+.sentences h3{color:var(--bg);font-family:var(--font-display);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;margin-bottom:1rem;color:var(--accent-light)}
+.sentence{font-family:var(--font-display);font-size:clamp(1rem,2.2vw,1.3rem);font-weight:500;font-style:italic;line-height:1.4;padding:.5rem 0;border-bottom:1px solid #2e2a26;color:var(--bg)}
+.sentence:last-child{border-bottom:none}
+.sentence strong{font-style:normal;font-weight:700;color:var(--accent-light)}
+
+.swap{background:var(--yellow-light);border:1px solid var(--yellow);border-left:4px solid var(--yellow);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:1.2rem 1.4rem;margin:1.3rem 0}
+.swap h4{font-family:var(--font-display);font-size:1rem;font-weight:700;color:var(--ink);margin-bottom:.5rem}
+.swap p{font-size:.9rem;color:var(--ink);line-height:1.65;margin:0 0 .5rem}
+.swap p:last-child{margin:0}
+.swap .q{font-family:var(--font-display);font-style:italic;font-size:1.05rem;color:var(--accent-dark);font-weight:500}
+
+.plain{background:var(--accent-light);border-left:4px solid var(--accent);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:.95rem 1.2rem;margin:1rem 0;font-size:.9rem;color:var(--ink);line-height:1.65}
+.plain strong{color:var(--accent-dark);display:block;font-size:.64rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem;font-weight:700;font-family:var(--font-display)}
+
+.actions{background:var(--green-light);border:1px solid var(--green);border-radius:var(--radius-lg);padding:1.2rem 1.4rem;margin-top:1.2rem}
+.actions h4{font-family:var(--font-display);font-size:1rem;font-weight:700;color:var(--green);margin-bottom:.7rem}
+.actions ol{padding-left:1.3rem;margin:0}
+.actions li{font-size:.9rem;color:var(--ink);margin-bottom:.4rem;line-height:1.6}
+.actions li strong{color:var(--green);font-weight:700}
+
+.tbl{width:100%;border-collapse:collapse;border:1px solid var(--border);font-size:.86rem;margin:1rem 0}
+.tbl th{background:var(--ink);color:var(--bg);font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.55rem .7rem;text-align:left}
+.tbl td{padding:.6rem .7rem;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:nth-child(even) td{background:var(--surface-alt)}
+.tbl td:first-child{font-weight:600;color:var(--ink);white-space:nowrap}
+
+.foot-nav{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.foot-nav a{font-size:.78rem}
+
+.tbd{display:inline-block;background:var(--yellow-light);border:1px dashed var(--yellow);color:var(--amber);font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:var(--radius);text-transform:uppercase;letter-spacing:.05em;font-family:var(--font-body)}
+
+@page{size:A4 portrait;margin:14mm 16mm}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  html{font-size:10px}
+  .topbar,.no-print,.foot-nav{display:none!important}
+  .format-card,.role-card,.versus .v-card,.lang-card,.tldr,.pull,.sentences,.swap,.plain,.actions,.tbl{break-inside:avoid;page-break-inside:avoid}
+  .section{page-break-before:auto}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="topbar no-print">
+    <div class="topbar-brand">Chefly · Positioning</div>
+    <div class="topbar-actions">
+      <a href="/format-brief.html" class="btn">Format brief</a>
+      <a href="/shoot-day-schedule.html" class="btn">Schedule</a>
+      <a href="/planning-rhythm.html" class="btn">Calendar view</a>
+      <a href="/internal-shoot-pack.html" class="btn">Shoot pack</a>
+      <a href="/training-companion.html" class="btn">Training companion</a>
+      <button class="btn btn-primary" onclick="window.print()">Print</button>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow">positioning · v1.0 · 19 apr 2026 · for kaja + james · lock this</div>
+    <h1>chefly = <em>food without the project.</em></h1>
+    <p class="hero-sub">The category got crowded. Everyone's making the same claims. Here is what Chefly is, what Chefly is not, who fronts it, and how to test every single ad against it. One page. Printable. Read before you brief anyone, film anything, or ship any copy.</p>
+    <div class="hero-chips">
+      <span class="chip accent">worldview</span>
+      <span class="chip">enemy named</span>
+      <span class="chip">kaja-led</span>
+      <span class="chip">58, self-taught, 7 yrs</span>
+      <span class="chip">20 years together</span>
+      <span class="chip">no em dashes</span>
+    </div>
+  </div>
+
+  <div class="tldr">
+    <h3>the one-page version</h3>
+    <dl class="tldr-lines">
+      <dt>What Chefly is</dt><dd><strong>Food without the project.</strong> Proper food, by a cook who learnt because she got tired of what was out there, sent to people who'd rather not plan their week in a spreadsheet.</dd>
+      <dt>Who fronts it</dt><dd><strong>Kaja.</strong> 58. Self-taught. Has cooked every Chefly recipe since day one, seven years ago. Warm, confident, country-grounded, happy on camera.</dd>
+      <dt>Who supports</dt><dd><strong>James.</strong> 43. In food since 2007. Runs the business. On camera as the customer-proxy ("husband at the table"), the founder-story voice, and the strategic commentator. Not the chef. Doesn't pretend to be.</dd>
+      <dt>Together</dt><dd><strong>20 years.</strong> Visible, not stated. Lived-in. The rhythm is a long partnership, not a brand-couple dynamic.</dd>
+      <dt>Enemy</dt><dd><strong>Food as a self-improvement project.</strong> Macro counters. Meal plans. Wellness-industrial complex. "Fuel, not food." The whole optimisation pitch.</dd>
+      <dt>Line we own</dt><dd><strong>"Dinner, handled."</strong> Plus up to four supporting. See sentences section.</dd>
+      <dt>Brand world</dt><dd><strong>Warm. English country. Real kitchen. Yellow-and-olive palette. Home, not studio.</strong> A lived-in house, not a ghost kitchen.</dd>
+      <dt>The test</dt><dd><strong>Could Simmer, Calo, Frive or Huel have made this ad and swapped their logo in?</strong> If yes, kill it.</dd>
+    </dl>
+  </div>
+
+  <nav class="toc no-print">
+    <div class="toc-title">on this page</div>
+    <ol>
+      <li><a href="#worldview">1. the worldview</a></li>
+      <li><a href="#enemy">2. the enemy</a></li>
+      <li><a href="#origin">3. origin story</a></li>
+      <li><a href="#voice">4. voice lead · kaja</a></li>
+      <li><a href="#james">5. james's four roles</a></li>
+      <li><a href="#couple">6. the couple dynamic</a></li>
+      <li><a href="#world">7. brand world</a></li>
+      <li><a href="#language">8. language rules</a></li>
+      <li><a href="#formats">9. five content formats</a></li>
+      <li><a href="#sentences">10. sentences we own</a></li>
+      <li><a href="#swap">11. the swap test</a></li>
+      <li><a href="#next">12. what to do this week</a></li>
+    </ol>
+  </nav>
+
+  <!-- 1. WORLDVIEW -->
+  <section class="section" id="worldview">
+    <div class="section-head">
+      <span class="sh-tag">section 1</span>
+      <h2>the worldview</h2>
+      <p class="sh-sub">This is what Chefly believes. Every ad, email, post, packaging line, supplier call and creator brief traces back here.</p>
+    </div>
+    <div class="prose">
+      <p>Every DTC meal brand in the UK is selling food-as-a-project. Simmer sells a training project. Calo sells a macro project. Your Heights sells a biohacking project. Huel sells an efficiency project. Frive sells a performance project. Different costumes, same pitch: <em>care more, plan more, track more, optimise more.</em></p>
+      <p><strong>Chefly is the inversion of that entire category's offer.</strong></p>
+      <div class="pull">Most people do not want food to be a homework assignment. They want dinner to be sorted. <strong>Chefly is for people who don't want food to be a project.</strong> No plan. No programme. No tracking. No transformation arc. Proper food. Handled.</div>
+      <p>This isn't a softer version of Simmer. It's a different emotional job. Simmer sells you a <em>better version of yourself through food</em>. Chefly sells you <em>one less thing to think about</em>. Bigger market, warmer relationship, longer retention.</p>
+    </div>
+  </section>
+
+  <!-- 2. ENEMY -->
+  <section class="section" id="enemy">
+    <div class="section-head">
+      <span class="sh-tag">section 2</span>
+      <h2>the enemy (name it out loud)</h2>
+      <p class="sh-sub">Opposition is clarifying. Brands that try to appeal to everyone appeal to no one. Chefly picks a fight with a specific culture.</p>
+    </div>
+    <div class="prose">
+      <p>The enemy is <strong>food-as-a-self-improvement-project</strong>. The wellness-industrial complex telling everyone their dinner has a job to do beyond feeding them. Meal plans. Macro trackers. "7-day resets." "30-day cuts." "Fuel, not food." Trainers in the kitchen. Nutritionists on the packet. The whole voice of "you are what you eat, so eat correctly." You don't attack competitors by name. You attack the <em>category they represent</em>. Every customer who's ever bought a meal from one of them and felt a little bit reduced to a macro calculation is your customer.</p>
+    </div>
+    <div class="versus">
+      <div class="v-card them">
+        <h4>What the category sells</h4>
+        <ul>
+          <li>macros, protein, calories, fuel</li>
+          <li>what the body needs</li>
+          <li>the trainer / the nutritionist</li>
+          <li>the athlete / the biohacker</li>
+          <li>optimising your life</li>
+          <li>the transformation arc</li>
+          <li>the meal plan</li>
+          <li>"wellness"</li>
+        </ul>
+      </div>
+      <div class="v-card us">
+        <h4>What Chefly sells</h4>
+        <ul>
+          <li>taste, flavour, care, pleasure</li>
+          <li>what you actually want to eat</li>
+          <li>the cook (Kaja)</li>
+          <li>a normal person, feeding you</li>
+          <li>making dinner one less thing</li>
+          <li>stability, not transformation</li>
+          <li>this week's menu</li>
+          <li>proper food</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. ORIGIN -->
+  <section class="section" id="origin">
+    <div class="section-head">
+      <span class="sh-tag">section 3</span>
+      <h2>origin story (true, short, unfakeable)</h2>
+      <p class="sh-sub">Every competitor in this set has a credentialed founding myth. Ours doesn't. Ours is better because it's the customer's own story reflected back.</p>
+    </div>
+    <div class="prose">
+      <p><strong>The facts:</strong> James has worked in food since 2007 <span class="tbd">swap in the specific food-CV line here</span>. Seven years ago, James and Kaja were tired of what was out there. They started Chefly together. Kaja became the cook on day one and has developed every recipe since. James runs the business. They have been together twenty years.</p>
+      <div class="pull">"I've worked in food since 2007. Seven years ago Kaja and I were tired of what was out there, so we started cooking our own answer. Kaja became the cook. I still run the rest. That's Chefly."</div>
+      <p><strong>Short About-page version:</strong></p>
+      <div class="pull">"After nearly 20 years in food, I bet a company on <strong>Kaja's cooking</strong>. Seven years later, she still cooks every recipe."</div>
+      <p>Why this origin works:</p>
+      <ul>
+        <li><strong>"Tired of what was out there"</strong> is the enemy named in the founding sentence. The positioning and the origin are the same idea.</li>
+        <li><strong>James as the informed outsider.</strong> 19 years in food means the rejection of the optimisation playbook is <em>informed</em>, not naive. You've seen the inside. You walked out. You bet on Kaja instead.</li>
+        <li><strong>Kaja as the home cook who stepped up.</strong> Same genre as Ina Garten, Deliciously Ella, Mob Kitchen. Self-taught → beloved. British food culture rewards this.</li>
+        <li><strong>Seven years of receipts.</strong> Chefly has a seven-year operating track record. Most UK DTC meal competitors are younger than that. Longevity is a quiet trust asset.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 4. VOICE LEAD -->
+  <section class="section" id="voice">
+    <div class="section-head">
+      <span class="sh-tag">section 4</span>
+      <h2>voice lead · kaja</h2>
+      <p class="sh-sub">The brand's main character. Not the chef. The cook. 80% of camera time is hers.</p>
+    </div>
+    <div class="prose">
+      <p><strong>Who she is, on camera:</strong> Kaja, 58, self-taught, English country kitchen. Warm. Confident. Happy to be on camera and up for trying. The cook who has developed every Chefly recipe since day one. Not a chef. Not a nutritionist. Not a trainer. Just <em>a cook</em>. The tone is <strong>warm aunt who feeds you</strong>, not <strong>fitness influencer</strong>.</p>
+      <p><strong>Why her, specifically:</strong></p>
+      <ul>
+        <li><strong>There is no dominant female-founder-led voice in UK DTC food.</strong> Simmer, Huel, Gousto, Mindful Chef all skew male-voice primary. Calo has no voice. The slot is structurally open.</li>
+        <li><strong>Age is credential, not liability.</strong> The UK food space rewards older voices: Mary Berry (90), Nigella (65), Delia (84), Prue Leith (85), Rick Stein (78), Ina Garten (77). Food trust compounds with age. The "young person's game" idea is a TikTok hangover; Meta ads skew 35-65.</li>
+        <li><strong>The worldview needs her.</strong> "Don't count macros, just eat proper food" lands as lazy from a 28-year-old and as wisdom from a 58-year-old who has actually cooked a lot of dinners. The messenger is the message.</li>
+        <li><strong>She fails the competitor swap test most cleanly.</strong> Simmer, Calo, Frive literally cannot make her ad.</li>
+      </ul>
+      <p><strong>What she does on camera (seven of the things she is best placed to front):</strong></p>
+      <ol>
+        <li>Recipe reveal — "this week's dinners." Warm kitchen, her voice, her hands.</li>
+        <li>Taste sessions — her tasting and signing off (or rejecting) a new dish.</li>
+        <li>"Why I cook it this way." Short-form explainers that are not instructional, they're opinions.</li>
+        <li>Home dinners — what she's actually eating tonight at her own kitchen table.</li>
+        <li>Seasonal drops — she announces the new menu the way a restaurant unveils one.</li>
+        <li>Direct to customer — voice notes, hello-from-the-kitchen clips, thank-yous.</li>
+        <li>The manifesto piece — one to camera piece, two minutes, "why we don't do meal plans."</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 5. JAMES'S ROLES -->
+  <section class="section" id="james">
+    <div class="section-head">
+      <span class="sh-tag">section 5</span>
+      <h2>james's four roles</h2>
+      <p class="sh-sub">James doesn't disappear. His screen time is deliberate, not decorative. 20 to 30% of output is James-led.</p>
+    </div>
+    <div class="role-grid">
+      <div class="role-card j">
+        <div class="r-tag">role 1 of 4</div>
+        <h4>The insider-turned-outsider</h4>
+        <p>19 years in the food industry, walked out on the optimisation playbook, bet the company on Kaja's cooking. The credibility layer of the whole brand.</p>
+        <ul>
+          <li>Leads the founder-origin long-form piece (6 to 8 min)</li>
+          <li>Speaks on record about "why we don't do meal plans"</li>
+          <li>Speaks on record about "why we cost what we cost"</li>
+        </ul>
+        <div class="r-pct">Share of camera: ~5% · but high-weight content</div>
+      </div>
+      <div class="role-card j">
+        <div class="r-tag">role 2 of 4</div>
+        <h4>Strategist &amp; commercial operator</h4>
+        <p>Runs marketing, growth, brand, supplier relationships, paid media, the business. Mostly off-camera. Named in credits, visible in business-side content.</p>
+        <ul>
+          <li>Supplier story pieces (visits, handshakes)</li>
+          <li>"Why we chose this packaging" explainers</li>
+          <li>Annual "how Chefly made a difference" round-ups</li>
+        </ul>
+        <div class="r-pct">Share of camera: ~5% · business-side only</div>
+      </div>
+      <div class="role-card j">
+        <div class="r-tag">role 3 of 4</div>
+        <h4>Customer proxy (the husband at the table)</h4>
+        <p>In couple content, James is the customer. He arrives, he eats, he reacts. Viewers see themselves in him. Kaja provides the answer his arrival sets up.</p>
+        <ul>
+          <li>Kitchen-table couple format (ask / cook / taste / eat)</li>
+          <li>"What did you think?" taste reactions</li>
+          <li>Evening dinner at home footage, real, unscripted</li>
+        </ul>
+        <div class="r-pct">Share of camera: ~15% · couple scenes</div>
+      </div>
+      <div class="role-card j">
+        <div class="r-tag">role 4 of 4</div>
+        <h4>The long-form voice</h4>
+        <p>Where explanation, commentary, and opinion are needed, James carries it. Longer formats. Podcast guests. Press interviews. Investor-deck narrative.</p>
+        <ul>
+          <li>Press / podcast interviews on behalf of Chefly</li>
+          <li>Founder letter inside first-order packaging</li>
+          <li>Behind-the-scenes IG stories from the business side</li>
+        </ul>
+        <div class="r-pct">Share of camera: ~5% · long-form only</div>
+      </div>
+    </div>
+    <div class="plain">
+      <strong>The shape of the pairing</strong>
+      She's the cook. He's the champion. The brand exists because he believed in her cooking for long enough to build a company around it. That sentence is the whole dynamic. Every couple shot either <em>demonstrates</em> that sentence or cuts it.
+    </div>
+  </section>
+
+  <!-- 6. COUPLE -->
+  <section class="section" id="couple">
+    <div class="section-head">
+      <span class="sh-tag">section 6</span>
+      <h2>the couple dynamic</h2>
+      <p class="sh-sub">20 years together. 15-year age gap. This is the secret weapon. Don't verbalise it. Let the camera do the work.</p>
+    </div>
+    <div class="prose">
+      <p><strong>What viewers will clock in half a second, and stop caring about in one:</strong> older partner, younger partner, long time together, lived-in kitchen, real home. That's the visual shorthand. It's warmer than Simmer's fit-couple dynamic. It's warmer than Frive's reluctant founder. It's warmer than any staged couple in the category because it isn't staged.</p>
+      <p><strong>Rules for couple-format content:</strong></p>
+      <ol>
+        <li><strong>Don't say "wife" or "husband."</strong> Use Kaja's name. "Kaja's been cooking for me for years" reads warmer and names the main character.</li>
+        <li><strong>Don't say "20 years" in every piece.</strong> Once, on the About page, maybe in the founder long-form. It's ambient, not a headline.</li>
+        <li><strong>Don't say the age gap.</strong> Ever. Viewers clock it, that's enough.</li>
+        <li><strong>The rhythm is long-partnership, not brand-couple.</strong> Slightly bickering. Relaxed. Honest. The comedy of knowing each other for two decades. Reference feel: Ina Garten &amp; Jeffrey at home, not Simmer training together.</li>
+        <li><strong>The kitchen-table scene is the unit of couple content.</strong> Kaja cooks. James arrives. One of them starts talking. It works because it's real.</li>
+      </ol>
+      <div class="pull">"Kaja's been cooking for me for years. It got so good I built a company around it." <strong>That's the whole couple story.</strong> Say it once, well, then just film them at the table.</div>
+    </div>
+  </section>
+
+  <!-- 7. BRAND WORLD -->
+  <section class="section" id="world">
+    <div class="section-head">
+      <span class="sh-tag">section 7</span>
+      <h2>brand world</h2>
+      <p class="sh-sub">What every photo, set, palette and soundtrack is trying to feel like. If it doesn't feel like this, it's not Chefly.</p>
+    </div>
+    <div class="prose">
+      <p><strong>Overall feel:</strong> A lived-in English country home, slightly golden-hour light, dog on the rug, garden out the window. Warm, not clinical. Generous, not precise. Real, not aspirational. The opposite of a fitness studio and the opposite of a white-boxed industrial kitchen.</p>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>dimension</th><th>own</th><th>avoid</th></tr></thead>
+      <tbody>
+        <tr><td>palette</td><td>rapeseed yellow, olive / sage green, cream stone, warm white, navy, earth black</td><td>bright chrome, neon, clinical white, activewear grey, macro-tracker blue</td></tr>
+        <tr><td>light</td><td>late afternoon, kitchen pendant, candlelight</td><td>ring light, overhead studio, cold daylight</td></tr>
+        <tr><td>sound</td><td>birdsong, kitchen noise, murmured chat, warm acoustic</td><td>electronic beats, gym playlists, trend audio</td></tr>
+        <tr><td>wardrobe</td><td>knits, linen, denim, wellies, soft neutrals, yellow jumper</td><td>activewear, branded merch, blocky colour</td></tr>
+        <tr><td>set</td><td>real kitchen, real dining table, garden, country lane</td><td>studio kitchen, glass splashback, bench-mounted shot</td></tr>
+        <tr><td>props</td><td>dog, tea, wooden boards, proper plates, cookbooks</td><td>protein shakers, macro scales, tupperware, branded kit</td></tr>
+        <tr><td>hands</td><td>cooking, pouring, plating, eating</td><td>holding a measuring cup, pouring a shake, flexing</td></tr>
+        <tr><td>faces</td><td>Kaja smiling, James tasting, eyes that aren't trying</td><td>staged hero shots, teeth-model smiles, training poses</td></tr>
+      </tbody>
+    </table>
+    <div class="plain">
+      <strong>Single-sentence test</strong>
+      "Does this look like a scene from Kaja's actual week?" If the answer needs qualification ("well, dressed-up a bit"), it's not Chefly. Re-light, re-set, re-shoot.
+    </div>
+  </section>
+
+  <!-- 8. LANGUAGE -->
+  <section class="section" id="language">
+    <div class="section-head">
+      <span class="sh-tag">section 8</span>
+      <h2>language rules</h2>
+      <p class="sh-sub">Every piece of copy gets pulled through this list before it ships. Bans are hard bans. Owned words should appear on purpose, repeatedly, across channels.</p>
+    </div>
+    <div class="lang-grid">
+      <div class="lang-card ban">
+        <h4>banned (do not use)</h4>
+        <div class="lang-chips">
+          <span class="lang-chip">chef</span>
+          <span class="lang-chip">trained</span>
+          <span class="lang-chip">Michelin</span>
+          <span class="lang-chip">macros</span>
+          <span class="lang-chip">calorie</span>
+          <span class="lang-chip">protein-packed</span>
+          <span class="lang-chip">fuel</span>
+          <span class="lang-chip">optimise</span>
+          <span class="lang-chip">biohack</span>
+          <span class="lang-chip">wellness</span>
+          <span class="lang-chip">plan</span>
+          <span class="lang-chip">programme</span>
+          <span class="lang-chip">reset</span>
+          <span class="lang-chip">cleanse</span>
+          <span class="lang-chip">project</span>
+          <span class="lang-chip">transform</span>
+          <span class="lang-chip">premium</span>
+          <span class="lang-chip">crafted</span>
+          <span class="lang-chip">artisan</span>
+          <span class="lang-chip">subscription box</span>
+        </div>
+      </div>
+      <div class="lang-card own">
+        <h4>owned (use on purpose)</h4>
+        <div class="lang-chips">
+          <span class="lang-chip">cook</span>
+          <span class="lang-chip">Kaja</span>
+          <span class="lang-chip">kitchen</span>
+          <span class="lang-chip">dinner</span>
+          <span class="lang-chip">proper food</span>
+          <span class="lang-chip">real food</span>
+          <span class="lang-chip">handled</span>
+          <span class="lang-chip">sorted</span>
+          <span class="lang-chip">sit down</span>
+          <span class="lang-chip">tonight</span>
+          <span class="lang-chip">this week's menu</span>
+          <span class="lang-chip">made at home</span>
+          <span class="lang-chip">warm</span>
+          <span class="lang-chip">generous</span>
+          <span class="lang-chip">proper</span>
+          <span class="lang-chip">eat</span>
+          <span class="lang-chip">tired of that</span>
+          <span class="lang-chip">nothing fancy</span>
+          <span class="lang-chip">seven years</span>
+        </div>
+      </div>
+    </div>
+    <div class="plain">
+      <strong>Also</strong>
+      No em dashes, no en dashes. Use commas, colons, full stops or arrows (→). Ranges as "2 to 3" not "2-3." Lowercase starts where appropriate for warmth. Short sentences. "Chefly" is not a chef brand. "Chefly" is a vibe. Don't overclaim.
+    </div>
+  </section>
+
+  <!-- 9. FORMATS -->
+  <section class="section" id="formats">
+    <div class="section-head">
+      <span class="sh-tag">section 9</span>
+      <h2>five content formats, only Chefly can run</h2>
+      <p class="sh-sub">Each one is engineered to fail the swap test against Simmer, Calo, Frive and Huel. They literally can't make these ads without contradicting their own brand. That's the point.</p>
+    </div>
+
+    <div class="format-card" data-num="01">
+      <div class="f-kicker">own the tired hour</div>
+      <h4>"Six o'clock."</h4>
+      <p>A recurring series filmed at 6pm with real customers. The school run just ended. The laptop just shut. Nobody wants to cook. Chefly arrives. Dinner, handled. No transformation, just relief. Same framing every week, same hour, same feeling. Everyone else in the category films at sunrise in workout kit. <strong>You own dusk, kitchen light, post-work clothes.</strong></p>
+      <div class="f-meta">
+        <div class="fm"><strong>Lead</strong>Customer-led (Kaja cameo)</div>
+        <div class="fm"><strong>Cadence</strong>Weekly, same 6pm slot</div>
+        <div class="fm"><strong>Format</strong>45 to 60 sec, vertical</div>
+        <div class="fm"><strong>Why it works</strong>Owns an emotional moment the category ignores</div>
+      </div>
+    </div>
+
+    <div class="format-card" data-num="02">
+      <div class="f-kicker">reject the category on camera</div>
+      <h4>"The un-plan."</h4>
+      <p>Kaja to camera. Thirty seconds. <em>"We don't have a meal plan. We don't want you to have a meal plan. Here's dinner."</em> Hero ad. Runs on Meta for six weeks straight. Runs on the homepage above the fold. The moment it stops working, rewrite the second sentence, keep the first. <strong>This is the brand's anti-manifesto in half a minute.</strong></p>
+      <div class="f-meta">
+        <div class="fm"><strong>Lead</strong>Kaja, to camera</div>
+        <div class="fm"><strong>Cadence</strong>Hero ad, evergreen rotation</div>
+        <div class="fm"><strong>Format</strong>30 sec, 9:16 + 1:1</div>
+        <div class="fm"><strong>Why it works</strong>Names the enemy; un-swappable by competitors</div>
+      </div>
+    </div>
+
+    <div class="format-card" data-num="03">
+      <div class="f-kicker">reliable presence, tiny effort</div>
+      <h4>"What you're eating tonight."</h4>
+      <p>Short daily social post, same time every day, same framing: today's actual Chefly dinner, plated, in Kaja's kitchen. No macros. No recipe. No context. Just: <em>this is dinner tonight.</em> Builds ritual. Makes the brand feel like a reliable friend rather than a programme. <strong>Simmer can't run this daily because their positioning requires variety + aspiration. You get stronger by being consistent.</strong></p>
+      <div class="f-meta">
+        <div class="fm"><strong>Lead</strong>Kaja (voice), food (subject)</div>
+        <div class="fm"><strong>Cadence</strong>Daily, same time</div>
+        <div class="fm"><strong>Format</strong>10 to 15 sec, IG Reel + TikTok</div>
+        <div class="fm"><strong>Why it works</strong>Daily brand presence at near-zero production cost</div>
+      </div>
+    </div>
+
+    <div class="format-card" data-num="04">
+      <div class="f-kicker">a before/after nobody else is running</div>
+      <h4>The mental-load before/after.</h4>
+      <p>Every competitor runs body before/afters. Chefly runs <strong>brain</strong> before/afters. Split screen. Left: "Sunday with a meal plan" (40 minutes, spreadsheets, guilt, 17 tabs open, stressed). Right: "Sunday with Chefly" (20 seconds, decided, closed laptop, on with life). The win isn't smaller. It's lighter. <strong>The category is selling transformation. Chefly is selling relief. This is the ad that makes the point.</strong></p>
+      <div class="f-meta">
+        <div class="fm"><strong>Lead</strong>Customer-led</div>
+        <div class="fm"><strong>Cadence</strong>Monthly hero rotation</div>
+        <div class="fm"><strong>Format</strong>45 sec, split-screen 9:16</div>
+        <div class="fm"><strong>Why it works</strong>Re-frames the "win" away from body metrics</div>
+      </div>
+    </div>
+
+    <div class="format-card" data-num="05">
+      <div class="f-kicker">direct shot at the optimisation culture</div>
+      <h4>"Boring on purpose."</h4>
+      <p>A manifesto piece. Kaja to camera, one minute. <em>"Your dinner should be the least interesting thing about your Thursday."</em> Intentionally unglamorous food footage. No macros overlaid. No plating tricks. Just proper food. <strong>This is the ad that gets screenshotted and shared in the comments of competitor ads. The single most un-copyable thing in the content plan.</strong></p>
+      <div class="f-meta">
+        <div class="fm"><strong>Lead</strong>Kaja, to camera</div>
+        <div class="fm"><strong>Cadence</strong>Quarterly hero, refreshed</div>
+        <div class="fm"><strong>Format</strong>60 to 75 sec, 9:16 + 16:9</div>
+        <div class="fm"><strong>Why it works</strong>Takes a public, ownable position</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. SENTENCES -->
+  <section class="section" id="sentences">
+    <div class="section-head">
+      <span class="sh-tag">section 10</span>
+      <h2>sentences we own</h2>
+      <p class="sh-sub">Pick one as hero. Others rotate as supporting. Run them everywhere, consistently, until they stick. Repetition is the only way brand language becomes brand territory.</p>
+    </div>
+    <div class="sentences">
+      <h3>hero options</h3>
+      <div class="sentence"><strong>Dinner, handled.</strong></div>
+      <div class="sentence">For people who don't want food to be a project.</div>
+      <div class="sentence">Chefly, by Kaja.</div>
+      <div class="sentence">No plan. No programme. Just proper dinner.</div>
+      <div class="sentence">The un-diet.</div>
+      <div class="sentence">A cook, not a chef. A kitchen, not a studio. Proper food, sent to you.</div>
+    </div>
+    <div class="sentences" style="margin-top:.8rem;">
+      <h3>supporting lines</h3>
+      <div class="sentence">"We got tired of what was out there. So we started cooking."</div>
+      <div class="sentence">"Kaja's been cooking every recipe for seven years."</div>
+      <div class="sentence">"After 20 years in food, I bet a company on Kaja's cooking."</div>
+      <div class="sentence">"Eat well. Don't overthink it."</div>
+      <div class="sentence">"Made in a kitchen that looks like yours."</div>
+    </div>
+  </section>
+
+  <!-- 11. SWAP TEST -->
+  <section class="section" id="swap">
+    <div class="section-head">
+      <span class="sh-tag">section 11</span>
+      <h2>the swap test</h2>
+      <p class="sh-sub">The one diagnostic every piece of content should pass. Print this. Pin it above the edit suite.</p>
+    </div>
+    <div class="swap">
+      <h4>For every ad, post, email or piece of packaging copy, ask:</h4>
+      <p class="q">"Could Simmer, Calo, Frive, Huel or Your Heights have made this ad and swapped their logo in?"</p>
+      <p><strong>If yes</strong> → kill it. It's blending. It reinforces the category, not Chefly.</p>
+      <p><strong>If no</strong> → the reason it's un-swappable is the angle Chefly owns. Ship it, and duplicate the reason.</p>
+      <p>Most ads in UK DTC meal delivery pass the swap test in both directions. That is why everything looks the same and everyone's CPA is grinding. Your job, from this doc forward, is to ensure Chefly ads <em>fail</em> the swap test.</p>
+    </div>
+  </section>
+
+  <!-- 12. NEXT -->
+  <section class="section" id="next">
+    <div class="section-head">
+      <span class="sh-tag">section 12</span>
+      <h2>what to do this week</h2>
+      <p class="sh-sub">Cheap, low-risk, high-signal moves that make the positioning real before anything else gets shot.</p>
+    </div>
+    <div class="actions">
+      <h4>Do these in the next seven days</h4>
+      <ol>
+        <li><strong>Strip "chef" from all Kaja-facing copy.</strong> Website hero, About, Instagram bio, product pages, packaging. Replace with "cook" / "Kaja" / "the woman behind the kitchen."</li>
+        <li><strong>Add the origin sentence to the homepage, above the fold.</strong> <em>"We got tired of what was out there. So we started cooking."</em> One line, with Kaja's name visible.</li>
+        <li><strong>Post the two country / kitchen photos of Kaja on Instagram.</strong> Caption in her voice: <em>"Hi, I'm Kaja. I'm the cook behind Chefly. Seven years ago we got tired of what was out there, so I started making it myself. Here's what I cook this week."</em> Measure engagement against the last 90 days of lifestyle ads. This is the zero-cost test.</li>
+        <li><strong>Pick a hero sentence from section 10 and lock it.</strong> Suggest "Dinner, handled." Everywhere. For six weeks. No variation.</li>
+        <li><strong>Run the swap test on the last 10 ads.</strong> Flag every ad that passes (i.e. could have been a competitor's). Replace or rewrite before next launch.</li>
+        <li><strong>Brief the next shoot from this doc, not from the format brief alone.</strong> Every concept must fail the swap test and lead with Kaja or the couple dynamic.</li>
+      </ol>
+    </div>
+    <div class="plain" style="margin-top:1.2rem;">
+      <strong>Governance</strong>
+      This is a living doc. Update the version number and date at the top each time. Changes get logged here. Everyone briefed on Chefly (creators, editors, agencies, future hires) reads this first before anything else.
+    </div>
+  </section>
+
+  <nav class="foot-nav no-print">
+    <a href="/format-brief.html">← Format brief</a>
+    <a href="/shoot-day-schedule.html">Schedule</a>
+    <a href="/planning-rhythm.html">Calendar view</a>
+    <a href="/internal-shoot-pack.html">Shoot pack →</a>
+  </nav>
+
+</div>
+</body>
+</html>
