@@ -122,6 +122,8 @@ img{display:block;max-width:100%}
 .badge.score.high{background:var(--green)}
 .badge.score.mid{background:var(--amber)}
 .badge.score.low{background:var(--ink-3)}
+.badge.variants{background:rgba(0,0,0,.72);backdrop-filter:blur(6px);color:#fff}
+.badge.variant-of{background:rgba(255,255,255,.82);color:var(--ink-3);border:1px solid var(--ink-5)}
 .badge.setup{background:rgba(255,255,255,.92);color:var(--ink-2);border:1px solid var(--border)}
 .badge.setup.packaging-reveal{background:var(--plum-light);color:var(--plum);border-color:var(--plum-light)}
 .badge.setup.eating-moment{background:var(--accent-light);color:var(--accent-dark);border-color:var(--accent-light)}
@@ -329,6 +331,47 @@ const LS_KEY = 'founder_shortlist_ids_v1';
 const LS_META = 'founder_shortlist_meta_v1';
 
 // -----------------------------------------------------------------------------
+// Dedup: different ad IDs often share the same underlying clip, so the library
+// ends up with 4+ near-identical thumbnails. We fingerprint each shot on
+// brand + normalised description and group them. The highest-scored member of
+// each group is the canonical; the rest get flagged as variants and hidden
+// from Claude's candidates view (still visible in the full "all" view).
+
+const STOP_WORDS = new Set(['the','a','an','and','or','of','on','in','with','into','onto','for','to','at','by','over','from','as','is','are','was','were','be','being','been','their','its','it']);
+
+// Populated in init() from the loaded shot list, so we can strip the brand
+// name from each description before fingerprinting. Without this, "hand
+// places a Simmer meal prep container" and "hand places a meal prep
+// container" end up in different groups despite being the same clip.
+let BRAND_WORDS = new Set();
+
+function normaliseDesc(d){
+  // Strip brand words (so "Simmer meal prep" and "meal prep" collapse), drop
+  // punctuation, remove stop words, take the first 4 meaningful tokens
+  // sorted alphabetically (bag of words) so
+  //   "hand places container into microwave"
+  //   "hand places a Simmer meal prep container in microwave"
+  //   "hand places meal prep container with food into microwave"
+  // all collapse to the same key. Layout + food-state stay separate keys so
+  // a split-screen version of the beat is not merged into the full-frame one.
+  const words = (d||'')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g,' ')
+    .split(/\s+/)
+    .filter(w => w && !STOP_WORDS.has(w) && !BRAND_WORDS.has(w));
+  return words.slice(0, 4).sort().join(' ');
+}
+
+function dedupKey(sh){
+  // Brand + layout + food-state + 4-token bag. Keeps Simmer's microwave
+  // separate from Huel's microwave, and a split-screen layout separate from
+  // the full-frame version, but collapses the same beat across ad IDs.
+  // Shots with no usable description fall back to their own id so we do not
+  // accidentally merge hundreds of un-captioned shots into one group.
+  const norm = normaliseDesc(sh.d);
+  if (norm.split(' ').filter(Boolean).length < 2) return `self|${sh.id}`;
+  return `${sh.b||''}|${sh.l||''}|${sh.fs||''}|${norm}`;
+}
 
 function countPeople(d){
   const s = (d||'').toLowerCase();
@@ -391,12 +434,41 @@ let FILTER = {
 async function init(){
   const res = await fetch('/shots.json', {cache:'no-store'});
   const raw = await res.json();
-  // enrich with computed score, setup
+  // Populate BRAND_WORDS from the dataset so dedup can strip brand names
+  // ("Simmer", "Huel", etc.) from descriptions before fingerprinting.
+  for (const s of raw) {
+    for (const w of (s.b||'').toLowerCase().split(/[\s.]+/)) {
+      if (w && w.length >= 3) BRAND_WORDS.add(w);
+    }
+  }
+  // enrich with computed score, setup, dedup key
   SHOTS = raw.map(s => ({
     ...s,
     _score: score(s),
     _setup: setupBucket(s),
+    _dedupKey: dedupKey(s),
   }));
+
+  // Dedup pass: group by key, highest-scored becomes canonical, rest become
+  // variants. Stable tie-break by id so repeated loads give the same canonical.
+  const groups = new Map();
+  for (const s of SHOTS) {
+    if (!groups.has(s._dedupKey)) groups.set(s._dedupKey, []);
+    groups.get(s._dedupKey).push(s);
+  }
+  for (const [, members] of groups) {
+    members.sort((a,b) => (b._score - a._score) || (a.id > b.id ? 1 : -1));
+    const canonical = members[0];
+    canonical._canonical = true;
+    canonical._variantCount = members.length;
+    canonical._variantIds = members.slice(1).map(m => m.id);
+    for (let i = 1; i < members.length; i++) {
+      members[i]._canonical = false;
+      members[i]._variantOf = canonical.id;
+      members[i]._variantCount = members.length;
+    }
+  }
+
   // Load persisted selection
   try {
     const saved = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
@@ -474,7 +546,7 @@ function renderFilters(){
     });
   });
   document.getElementById('v-all').textContent = SHOTS.length;
-  document.getElementById('v-candidates').textContent = SHOTS.filter(s => s._score >= 10).length;
+  document.getElementById('v-candidates').textContent = SHOTS.filter(s => s._score >= 10 && s._canonical).length;
 
   // Sort select
   document.getElementById('sort-sel').addEventListener('change', (e) => {
@@ -518,11 +590,13 @@ function bindControls(){
 }
 
 function applyStratifiedShortlist(){
-  // Clear and re-seed stratified top-N per bucket
+  // Clear and re-seed stratified top-N per bucket. Canonicals only: if the
+  // library has 4 near-identical Simmer microwave shots, only the best one
+  // gets picked. Variants stay browsable in the "all" view.
   SELECTED.clear();
   for (const [bucket, n] of Object.entries(STRAT_TARGETS)) {
     const pool = SHOTS
-      .filter(s => s._setup === bucket && s._score >= 4)
+      .filter(s => s._setup === bucket && s._score >= 4 && s._canonical)
       .sort((a,b) => b._score - a._score)
       .slice(0, n);
     pool.forEach(s => SELECTED.add(s.id));
@@ -535,7 +609,7 @@ function applyStratifiedShortlist(){
 
 function applyTopN(buckets, n){
   const pool = SHOTS
-    .filter(s => buckets.includes(s._setup) && s._score >= 4)
+    .filter(s => buckets.includes(s._setup) && s._score >= 4 && s._canonical)
     .sort((a,b) => b._score - a._score)
     .slice(0, n);
   pool.forEach(s => SELECTED.add(s.id));
@@ -562,7 +636,9 @@ function persist(withMeta = false){
 
 function filtered(){
   let rows = SHOTS.slice();
-  if (FILTER.view === 'candidates') rows = rows.filter(s => s._score >= 10);
+  // Candidates view = canonicals only above the score floor. Variants are
+  // still reachable via "all" for anyone who wants to see them.
+  if (FILTER.view === 'candidates') rows = rows.filter(s => s._score >= 10 && s._canonical);
   if (FILTER.view === 'selected') rows = rows.filter(s => SELECTED.has(s.id));
   if (FILTER.setups.size) rows = rows.filter(s => FILTER.setups.has(s._setup));
   if (FILTER.brands.size) rows = rows.filter(s => FILTER.brands.has(s.b));
@@ -625,6 +701,8 @@ function renderCard(s){
       <div class="badges">
         <span class="badge score ${scoreBadgeClass(s._score)}">${s._score >= 0 ? '+' : ''}${s._score}</span>
         <span class="badge setup ${s._setup}">${setup.label}</span>
+        ${s._canonical && s._variantCount > 1 ? `<span class="badge variants" title="${s._variantCount-1} near-duplicate${s._variantCount-1===1?'':'s'} hidden from candidates — same clip reused across ad IDs. Switch to 'All shots' to see them.">+${s._variantCount-1} similar</span>` : ''}
+        ${s._canonical === false ? `<span class="badge variant-of" title="Near-duplicate of a higher-scored shot. Only shown in 'All shots'.">variant</span>` : ''}
       </div>
     </div>
     <div class="meta">
