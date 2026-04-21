@@ -112,6 +112,7 @@ section.block .sub{color:var(--ink-3);font-size:.9rem;margin-bottom:1.2rem}
 .shot .caption{padding:.55rem .7rem;font-size:.76rem;color:var(--ink-2);line-height:1.4;display:flex;flex-direction:column;gap:.3rem}
 .shot .caption .brand{font-family:var(--font-mono);font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3)}
 .shot .caption .desc{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.shot .caption .variants{font-family:var(--font-mono);font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);background:rgba(220,80,40,.08);border:1px solid rgba(220,80,40,.25);padding:.15rem .35rem;border-radius:3px;align-self:flex-start}
 
 /* CHECKLIST */
 .kit-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
@@ -304,6 +305,45 @@ function loadSelection(){
   }
 }
 
+// -----------------------------------------------------------------------------
+// Dedup, mirrored from founder-shoot-builder.html so legacy shortlists (saved
+// before the builder's dedup shipped) and any manual variant picks collapse
+// to one card per beat on the brief. See PR #52 for the rationale.
+const STOP_WORDS = new Set(['the','a','an','and','or','of','on','in','with','into','onto','for','to','at','by','over','from','as','is','are','was','were','be','being','been','their','its','it']);
+let BRAND_WORDS = new Set();
+function normaliseDesc(d){
+  const words = (d||'')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g,' ')
+    .split(/\s+/)
+    .filter(w => w && !STOP_WORDS.has(w) && !BRAND_WORDS.has(w));
+  return words.slice(0, 4).sort().join(' ');
+}
+function dedupKey(sh){
+  const norm = normaliseDesc(sh.d);
+  if (norm.split(' ').filter(Boolean).length < 2) return `self|${sh.id}`;
+  return `${sh.b||''}|${sh.l||''}|${sh.fs||''}|${norm}`;
+}
+
+// Quick scorer, just enough to pick the best representative out of a group of
+// variants the user selected. Not a full port of the builder's scorer.
+function quickScore(sh){
+  const d = (sh.d||'').toLowerCase();
+  const fs = sh.fs||'';
+  let sc = 0;
+  if (fs === 'eating') sc += 6;
+  if (fs === 'cooking') sc += 5;
+  if (fs === 'packaging') sc += 3;
+  if (fs === 'plated') sc += 2;
+  if (sh.fp === 'primary') sc += 2;
+  if (sh.l === 'full') sc += 1;
+  if (typeof sh.l === 'string' && sh.l.startsWith('split')) sc -= 2;
+  if (d.includes('hands')) sc += 2;
+  if (d.includes('takes a bite') || d.includes('taking a bite')) sc += 3;
+  if (d.includes('mouthful')) sc += 2;
+  return sc;
+}
+
 async function init(){
   const selected = loadSelection();
   document.getElementById('gen-date').textContent = new Date().toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'});
@@ -315,9 +355,33 @@ async function init(){
 
   const res = await fetch('/shots.json', {cache:'no-store'});
   const raw = await res.json();
-  // Attach the same setup classifier as the builder
-  const enriched = raw.filter(s => selected.has(s.id)).map(s => ({ ...s, _setup: setupBucket(s) }));
-  render(enriched);
+  // Populate brand words so dedupKey strips them from descriptions
+  for (const s of raw) {
+    for (const w of (s.b||'').toLowerCase().split(/[\s.]+/)) {
+      if (w && w.length >= 3) BRAND_WORDS.add(w);
+    }
+  }
+  // Filter to selected, enrich with setup + dedupKey + score
+  const picked = raw
+    .filter(s => selected.has(s.id))
+    .map(s => ({ ...s, _setup: setupBucket(s), _dedupKey: dedupKey(s), _score: quickScore(s) }));
+
+  // Collapse same-key picks: pick highest-scored as canonical, track how many
+  // near-duplicate picks collapsed into it so the brief can show "+N similar".
+  const groups = new Map();
+  for (const s of picked) {
+    if (!groups.has(s._dedupKey)) groups.set(s._dedupKey, []);
+    groups.get(s._dedupKey).push(s);
+  }
+  const deduped = [];
+  for (const [, members] of groups) {
+    members.sort((a,b) => (b._score - a._score) || (a.id > b.id ? 1 : -1));
+    const head = members[0];
+    head._pickedVariants = members.length - 1;
+    deduped.push(head);
+  }
+
+  render(deduped);
 }
 
 function setupBucket(sh){
@@ -452,6 +516,7 @@ function render(shots){
                 <div class="caption">
                   <span class="brand">${sh.b}${sh.fs && sh.fs !== 'unknown' && sh.fs !== 'n/a' ? ' · ' + sh.fs : ''}</span>
                   <span class="desc">${(sh.d||'').slice(0, 140)}</span>
+                  ${sh._pickedVariants > 0 ? `<span class="variants">+${sh._pickedVariants} similar you picked</span>` : ''}
                 </div>
               </div>
             `).join('')}
