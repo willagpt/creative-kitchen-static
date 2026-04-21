@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Founder shoot builder · Curate a lifestyle shot list for the founder-led shoot</title>
+<meta name="description" content="Build a founder-led lifestyle shoot list from the 1,246-shot reference library. Claude pre-ticks a balanced shortlist across packaging reveal, eating, cooking, prep, plated and lifestyle moments; you curate; then generate the founder brief grouped by setup." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#faf9f7;
+  --surface:#fff;
+  --surface-alt:#f4f0ea;
+  --surface-warm:#fdf5ec;
+  --ink:#1a1714;
+  --ink-2:#4a4540;
+  --ink-3:#7a746d;
+  --ink-4:#aaa49b;
+  --accent:#b44d1e;
+  --accent-dark:#8a3a14;
+  --accent-light:#f8e6d8;
+  --accent-strong:#eac19c;
+  --amber:#8a6a1a;
+  --amber-light:#fbf3dd;
+  --green:#4a6b3a;
+  --green-light:#dce6d2;
+  --plum:#7a2e52;
+  --plum-light:#f4dfe8;
+  --border:#e3ddd3;
+  --border-strong:#d2c9bd;
+  --radius:4px;
+  --radius-lg:6px;
+  --radius-xl:10px;
+  --font-body:'DM Sans',system-ui,sans-serif;
+  --font-display:'Fraunces',Georgia,serif;
+  --font-mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--font-body);font-size:15px;line-height:1.6;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+body{background:linear-gradient(180deg,var(--surface-warm) 0,var(--bg) 420px);padding-bottom:140px}
+a{color:var(--accent-dark);text-decoration:underline;text-underline-offset:2px}
+a:hover{color:var(--accent)}
+button{font-family:inherit;cursor:pointer}
+img{display:block;max-width:100%}
+
+.page{max-width:1320px;margin:0 auto;padding:clamp(1rem,3vw,2rem)}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;gap:.9rem;font-family:var(--font-mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.14em;color:var(--ink-3);margin-bottom:1.2rem}
+.topbar .crumb{display:flex;align-items:center;gap:.5rem}
+.topbar .crumb a{color:var(--ink-3);text-decoration:none}
+.topbar .crumb a:hover{color:var(--accent-dark)}
+.topbar .sep{color:var(--ink-4)}
+
+/* HERO */
+.hero{background:linear-gradient(160deg,var(--accent-light) 0,var(--amber-light) 60%,var(--surface-warm) 100%);border:1px solid var(--border);border-radius:var(--radius-xl);padding:clamp(1.4rem,3vw,2.6rem);margin-bottom:1.6rem;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 110% -30%,rgba(180,77,30,.16) 0,transparent 55%);pointer-events:none}
+.hero .kicker{font-family:var(--font-mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.18em;color:var(--accent-dark);margin-bottom:.6rem}
+.hero h1{font-family:var(--font-display);font-weight:600;font-size:clamp(1.9rem,4vw,3rem);line-height:1.05;letter-spacing:-.015em;color:var(--ink);margin-bottom:.8rem}
+.hero h1 em{font-style:italic;font-weight:500;color:var(--accent-dark)}
+.hero p.lede{font-size:1.02rem;color:var(--ink-2);max-width:760px;margin-bottom:1.2rem}
+.hero .brief-meta{display:flex;flex-wrap:wrap;gap:.7rem;margin-top:.5rem}
+.brief-chip{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.35rem .65rem;font-family:var(--font-mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2)}
+.brief-chip b{color:var(--accent-dark);font-weight:600;margin-right:.35rem}
+
+/* EXPLAINER */
+.explainer{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem;margin-bottom:1.4rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
+.step{display:flex;gap:.65rem;align-items:flex-start}
+.step .n{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--accent-dark);color:#fff;display:grid;place-items:center;font-family:var(--font-mono);font-size:.75rem;font-weight:600}
+.step h4{font-size:.88rem;font-weight:600;margin-bottom:.15rem}
+.step p{font-size:.83rem;color:var(--ink-2);line-height:1.5}
+
+/* CONTROLS */
+.controls{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem;margin-bottom:1.2rem;display:flex;flex-direction:column;gap:.9rem}
+.ctl-row{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem}
+.ctl-label{font-family:var(--font-mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-3);margin-right:.25rem;flex:0 0 auto}
+.chip{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .7rem;border:1px solid var(--border);border-radius:999px;background:var(--surface);font-size:.82rem;color:var(--ink-2);cursor:pointer;transition:all .12s ease;user-select:none}
+.chip:hover{border-color:var(--border-strong);background:var(--surface-alt)}
+.chip.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip .n{font-family:var(--font-mono);font-size:.72rem;opacity:.7;margin-left:.1rem}
+.chip.active .n{opacity:.85}
+
+.setup-pill{padding:.4rem .8rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);font-size:.82rem;font-weight:500;color:var(--ink-2);cursor:pointer;transition:all .12s ease;display:inline-flex;align-items:center;gap:.4rem}
+.setup-pill.active{background:var(--amber-light);border-color:var(--amber);color:var(--amber)}
+.setup-pill .swatch{width:10px;height:10px;border-radius:50%}
+
+.search-row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.search{flex:1;min-width:200px;padding:.55rem .8rem;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:.9rem;background:var(--surface-alt)}
+.search:focus{outline:2px solid var(--accent-strong);outline-offset:-1px;background:var(--surface)}
+
+.btn{padding:.55rem .9rem;border:1px solid var(--border-strong);border-radius:var(--radius);background:var(--surface);color:var(--ink);font-size:.83rem;font-weight:500;cursor:pointer;transition:all .12s ease}
+.btn:hover{background:var(--surface-alt)}
+.btn-primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+.btn-accent{background:var(--accent-dark);color:#fff;border-color:var(--accent-dark)}
+.btn-accent:hover{background:var(--accent)}
+.btn-subtle{color:var(--ink-2)}
+
+/* STATUS / STATS */
+.stats{display:flex;flex-wrap:wrap;gap:.7rem;font-family:var(--font-mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3)}
+.stat b{color:var(--ink);font-weight:600}
+.stat .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:.4rem;vertical-align:middle}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.9rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:all .15s ease;position:relative;display:flex;flex-direction:column}
+.card:hover{border-color:var(--border-strong);box-shadow:0 4px 14px -8px rgba(26,23,20,.15)}
+.card.selected{border-color:var(--accent-dark);box-shadow:0 0 0 2px var(--accent-light);background:var(--surface-warm)}
+.card .thumb{position:relative;aspect-ratio:3/4;background:var(--surface-alt);overflow:hidden;cursor:pointer}
+.card .thumb img{width:100%;height:100%;object-fit:cover;transition:transform .3s ease}
+.card:hover .thumb img{transform:scale(1.03)}
+.card .pick{position:absolute;top:.5rem;left:.5rem;z-index:2}
+.card .pick input{appearance:none;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.32);backdrop-filter:blur(4px);cursor:pointer;transition:all .12s ease;position:relative}
+.card .pick input:hover{background:rgba(0,0,0,.55)}
+.card .pick input:checked{background:var(--accent-dark);border-color:#fff}
+.card .pick input:checked::after{content:"";position:absolute;inset:6px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-2px);width:6px;height:10px}
+.card .badges{position:absolute;top:.5rem;right:.5rem;display:flex;flex-direction:column;gap:.25rem;align-items:flex-end;z-index:1}
+.badge{font-family:var(--font-mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;padding:.15rem .4rem;border-radius:2px;background:rgba(0,0,0,.7);color:#fff;backdrop-filter:blur(3px);font-weight:500}
+.badge.score{background:var(--accent-dark)}
+.badge.score.high{background:var(--green)}
+.badge.score.mid{background:var(--amber)}
+.badge.score.low{background:var(--ink-3)}
+.badge.setup{background:rgba(255,255,255,.92);color:var(--ink-2);border:1px solid var(--border)}
+.badge.setup.packaging-reveal{background:var(--plum-light);color:var(--plum);border-color:var(--plum-light)}
+.badge.setup.eating-moment{background:var(--accent-light);color:var(--accent-dark);border-color:var(--accent-light)}
+.badge.setup.cooking-action{background:var(--amber-light);color:var(--amber);border-color:var(--amber-light)}
+.badge.setup.kitchen-prep{background:var(--green-light);color:var(--green);border-color:var(--green-light)}
+.badge.setup.plated-hero{background:var(--surface-alt);color:var(--ink-2);border-color:var(--border)}
+.badge.setup.lifestyle-moment{background:#e8f0f5;color:#3a5a75;border-color:#d3e1eb}
+
+.card .meta{padding:.6rem .7rem .7rem;font-size:.8rem;line-height:1.45;color:var(--ink-2);flex:1;display:flex;flex-direction:column;gap:.35rem}
+.card .meta .brand{font-family:var(--font-mono);font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.card .meta .desc{font-size:.82rem;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card .meta .tags{display:flex;flex-wrap:wrap;gap:.25rem;margin-top:auto}
+.card .meta .tag{font-family:var(--font-mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;padding:.1rem .35rem;background:var(--surface-alt);color:var(--ink-3);border-radius:2px}
+
+.empty{text-align:center;padding:3rem 1rem;color:var(--ink-3);font-size:.9rem;background:var(--surface);border:1px dashed var(--border-strong);border-radius:var(--radius-lg)}
+.empty b{color:var(--ink)}
+
+/* TRAY */
+.tray{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border-strong);box-shadow:0 -8px 24px -12px rgba(26,23,20,.2);z-index:50;padding:.9rem clamp(1rem,3vw,2rem);backdrop-filter:blur(8px)}
+.tray-inner{max-width:1320px;margin:0 auto;display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap}
+.tray .count{font-family:var(--font-display);font-weight:600;font-size:1.5rem;color:var(--ink);line-height:1}
+.tray .count .n{color:var(--accent-dark)}
+.tray .count .label{font-family:var(--font-body);font-size:.72rem;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:.12em;margin-left:.5rem}
+.tray .breakdown{display:flex;gap:.5rem;flex-wrap:wrap;flex:1}
+.tray .bk{font-family:var(--font-mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;padding:.3rem .55rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-alt);color:var(--ink-2)}
+.tray .bk b{color:var(--ink);margin-right:.3rem;font-weight:600}
+.tray .actions{display:flex;gap:.5rem;flex-wrap:wrap}
+.tray .actions .btn{padding:.65rem 1.1rem;font-size:.85rem}
+
+@media(max-width:760px){
+  .tray-inner{flex-direction:column;align-items:stretch}
+  .tray .actions{justify-content:space-between}
+}
+
+/* SWATCHES */
+.sw-packaging-reveal{background:var(--plum)}
+.sw-eating-moment{background:var(--accent-dark)}
+.sw-cooking-action{background:var(--amber)}
+.sw-kitchen-prep{background:var(--green)}
+.sw-plated-hero{background:var(--ink-3)}
+.sw-lifestyle-moment{background:#3a5a75}
+.sw-other{background:var(--ink-4)}
+
+/* FOOTER */
+footer{margin-top:2rem;padding:1.5rem 0;border-top:1px solid var(--border);text-align:center;color:var(--ink-3);font-family:var(--font-mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.12em}
+</style>
+</head>
+<body>
+<div class="page">
+
+<nav class="topbar" aria-label="Breadcrumb">
+  <span class="crumb"><a href="/">Big Tasty Productions</a></span>
+  <span class="sep">/</span>
+  <span class="crumb"><a href="/food-shot-library.html">Food shot library</a></span>
+  <span class="sep">/</span>
+  <span class="crumb">Founder shoot builder</span>
+</nav>
+
+<section class="hero">
+  <div class="kicker">A data-driven first pass · curated by you</div>
+  <h1>Build the <em>founder shoot list</em> from the 1,246-shot reference library.</h1>
+  <p class="lede">Two founders on camera. One full day, with the option to break into two half-days. Styling your own food. Claude pre-ticks a balanced shortlist across the five setups that fill your lifestyle gap, you adjust, then export a founder brief grouped by setup, not by shot.</p>
+  <div class="brief-meta">
+    <span class="brief-chip"><b>Talent</b>2 founders</span>
+    <span class="brief-chip"><b>Scale</b>Full day / 2 × half</span>
+    <span class="brief-chip"><b>Dish target</b>8 to 12</span>
+    <span class="brief-chip"><b>Production tier</b>Prosumer / hands-friendly</span>
+    <span class="brief-chip"><b>Setting</b>Home realistic</span>
+    <span class="brief-chip"><b>Gap to fill</b>Lifestyle, not macros</span>
+  </div>
+</section>
+
+<section class="explainer">
+  <div class="step"><div class="n">1</div><div><h4>Claude pre-ticks a balanced shortlist</h4><p>Roughly 60 candidates scored on hands-in-frame, people count, setting, food state, and format tags. Stratified across setups so no one bucket dominates.</p></div></div>
+  <div class="step"><div class="n">2</div><div><h4>You curate</h4><p>Filter by brand, setup, meal state. Untick what you won't replicate. Tick extras Claude missed. Aim for 30 to 60 references total.</p></div></div>
+  <div class="step"><div class="n">3</div><div><h4>Generate the founder brief</h4><p>Opens a new page grouped by setup (prep, cook, plate, eat, packaging reveal). Each setup lists lighting, props, styling, wardrobe, dishes, and reference thumbs.</p></div></div>
+  <div class="step"><div class="n">4</div><div><h4>Shoot it</h4><p>The brief is printable, responsive, and links back here. Gap callouts flag what the library doesn't cover but the founders might still want.</p></div></div>
+</section>
+
+<section class="controls" aria-label="Curation controls">
+
+  <div class="ctl-row">
+    <span class="ctl-label">Shortlist</span>
+    <button class="btn btn-accent" id="btn-preset-shortlist">Apply Claude's shortlist (~60)</button>
+    <button class="btn" id="btn-preset-packaging">+ Packaging focus</button>
+    <button class="btn" id="btn-preset-eating">+ Eating focus</button>
+    <button class="btn" id="btn-preset-cooking">+ Prep + cook focus</button>
+    <button class="btn btn-subtle" id="btn-preset-clear">Clear all</button>
+  </div>
+
+  <div class="ctl-row" id="setup-row">
+    <span class="ctl-label">Setup</span>
+    <!-- populated by JS -->
+  </div>
+
+  <div class="ctl-row" id="brand-row">
+    <span class="ctl-label">Brand</span>
+    <!-- populated by JS -->
+  </div>
+
+  <div class="ctl-row" id="state-row">
+    <span class="ctl-label">Food state</span>
+    <!-- populated by JS -->
+  </div>
+
+  <div class="ctl-row" id="view-row">
+    <span class="ctl-label">View</span>
+    <button class="chip active" data-view="candidates">Claude's candidates (score&nbsp;≥&nbsp;10)<span class="n" id="v-candidates"></span></button>
+    <button class="chip" data-view="all">All shots<span class="n" id="v-all"></span></button>
+    <button class="chip" data-view="selected">Selected only<span class="n" id="v-selected"></span></button>
+    <span style="flex:1"></span>
+    <span class="ctl-label">Sort</span>
+    <select class="search" id="sort-sel" style="flex:0 0 auto;min-width:auto;width:auto;padding:.45rem .7rem">
+      <option value="score">Claude score (high → low)</option>
+      <option value="setup">Setup</option>
+      <option value="brand">Brand A–Z</option>
+      <option value="shuffle">Shuffle</option>
+    </select>
+  </div>
+
+  <div class="search-row">
+    <input class="search" id="q" type="search" placeholder="Search description, on-screen text, or brand…" />
+    <div class="stats">
+      <span class="stat"><span class="dot" style="background:var(--accent-dark)"></span>Showing <b id="stat-visible">0</b></span>
+      <span class="stat"><span class="dot" style="background:var(--green)"></span>Selected <b id="stat-selected">0</b></span>
+      <span class="stat">of <b id="stat-total">0</b> shots</span>
+    </div>
+  </div>
+
+</section>
+
+<section id="grid-container">
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" hidden>No shots match your filters. Try clearing a chip or widening the view.</div>
+</section>
+
+<footer>Big Tasty Productions · willa.ltd · founder shoot builder v1</footer>
+
+</div>
+
+<div class="tray" role="region" aria-label="Shortlist tray">
+  <div class="tray-inner">
+    <div class="count"><span class="n" id="tray-count">0</span><span class="label">in shortlist</span></div>
+    <div class="breakdown" id="tray-breakdown"></div>
+    <div class="actions">
+      <button class="btn" id="btn-save-draft" title="Save this shortlist to your browser so you can come back to it">Save draft</button>
+      <button class="btn btn-primary" id="btn-generate" disabled>Generate founder brief →</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+// -----------------------------------------------------------------------------
+// FOUNDER SHOOT BUILDER
+// Data-driven first-pass curator for a founder-led lifestyle shoot.
+// -----------------------------------------------------------------------------
+
+const SETUPS = [
+  {id:'packaging-reveal', label:'Packaging reveal', sw:'sw-packaging-reveal', desc:'Box opens, lid peels, overhead reveal'},
+  {id:'eating-moment',    label:'Eating moment',    sw:'sw-eating-moment',    desc:'Bite, fork, table, reaction'},
+  {id:'cooking-action',   label:'Cooking action',   sw:'sw-cooking-action',   desc:'Pan, stove, stirring, plating'},
+  {id:'kitchen-prep',     label:'Kitchen prep',     sw:'sw-kitchen-prep',     desc:'Chopping, slicing, hands on board'},
+  {id:'plated-hero',      label:'Plated hero',      sw:'sw-plated-hero',      desc:'Finished plate on table, styled'},
+  {id:'lifestyle-moment', label:'Lifestyle moment', sw:'sw-lifestyle-moment', desc:'Two people, couch, casual'},
+  {id:'other',            label:'Other',            sw:'sw-other',            desc:'Reference only'},
+];
+
+// Stratified targets for Claude's shortlist (~60 total).
+const STRAT_TARGETS = {
+  'packaging-reveal': 15,
+  'eating-moment':    15,
+  'cooking-action':   10,
+  'kitchen-prep':     10,
+  'plated-hero':       5,
+  'lifestyle-moment':  5,
+  'other':             0,
+};
+
+// Keyword lexicons used to score description text.
+const POSITIVE = {
+  'hand':3,'hands':4,'holding':3,'holds':3,'reaches':2,'grabs':2,'grabbing':2,
+  'opens':2,'opening':2,'peel':3,'peels':3,'peels back':4,'lifts':2,'pours':3,'pouring':3,
+  'eating':4,'bites':4,'bite':3,'mouth':3,'mouthful':3,'chewing':3,'taste':2,
+  'fork':3,'spoon':3,'chopsticks':3,'cutlery':2,'enjoying':2,'enjoys':2,'savour':2,
+  'stirring':3,'stirs':3,'chopping':3,'slicing':3,'cutting board':3,'chopping board':3,'knife':2,
+  'pan':2,'pot':2,'saucepan':2,'stove':2,'hob':3,'oven':2,'baking':2,
+  'sprinkles':2,'drizzles':2,'tosses':2,'plates':2,'plating':3,
+  'kitchen counter':4,'countertop':3,'kitchen':3,
+  'dining table':3,'dining room':2,'living room':2,'sofa':2,'couch':2,
+  'table':2,'sit at':2,'sits at':2,'seated':1,'sitting':1,
+  'meal prep container':4,'container':3,'lid':2,'reveal':3,
+  'taking a bite':5,'takes a bite':5,'smile':2,'smiling':2,'laughing':1,
+};
+const NEGATIVE = {
+  'podcast':-6,'microphone':-4,'rode microphone':-6,'headphones':-4,'studio':-3,
+  'green screen':-5,'treadmill':-5,'gym':-4,'dumbbell':-4,'yoga':-2,
+  'laptop':-2,'computer screen':-3,'monitor':-2,
+  'delivery van':-3,'shipping':-3,'warehouse':-3,
+  'text overlay':-3,'animated text':-3,'graphic':-2,'chart':-3,'graph':-3,'infographic':-5,'title card':-3,
+  'crowd':-4,'group of people':-4,'many people':-4,'team of':-2,
+  'illustration':-5,'illustrated':-5,'cartoon':-5,'animation':-5,
+};
+
+const LS_KEY = 'founder_shortlist_ids_v1';
+const LS_META = 'founder_shortlist_meta_v1';
+
+// -----------------------------------------------------------------------------
+
+function countPeople(d){
+  const s = (d||'').toLowerCase();
+  if (['three people','four people','crowd','many people','group of'].some(k=>s.includes(k))) return 3;
+  if (['two women','two men','two people','couple','pair of'].some(k=>s.includes(k))) return 2;
+  if ([' a man ',' a woman ',' a person ',' a chef ','one woman','one man'].some(k=>s.includes(k))) return 1;
+  return 0;
+}
+
+function setupBucket(sh){
+  const d = (sh.d||'').toLowerCase();
+  const fs = sh.fs||'';
+  if (['meal prep container','delivery box'].some(k=>d.includes(k)) || fs==='packaging') return 'packaging-reveal';
+  if (fs==='eating' || ['takes a bite','taking a bite','eats ','eating ',' mouth',' fork',' spoon','chopsticks'].some(k=>d.includes(k))) return 'eating-moment';
+  if (fs==='cooking' || ['stove',' pan',' saucepan',' hob','stirring','stirs ',' oven','sauté','simmer ','boiling','boil '].some(k=>d.includes(k))) return 'cooking-action';
+  if (fs==='raw' || ['chopping','slicing','cutting board','chopping board','knife','raw ingredient'].some(k=>d.includes(k))) return 'kitchen-prep';
+  if (fs==='plated' && ['table','dining','plate of','bowl of','plated'].some(k=>d.includes(k))) return 'plated-hero';
+  if (['sofa','couch','living room','dining table','friends','couple','two women','two men'].some(k=>d.includes(k))) return 'lifestyle-moment';
+  if (fs==='plated') return 'plated-hero';
+  return 'other';
+}
+
+function score(sh){
+  const d = (sh.d||'').toLowerCase();
+  const {fs='',fp='',f='',mc='',l=''} = sh;
+  let sc = 0;
+  for (const [kw,w] of Object.entries(POSITIVE)) if (d.includes(kw)) sc += w;
+  for (const [kw,w] of Object.entries(NEGATIVE)) if (d.includes(kw)) sc += w;
+  const fsW = {eating:6,cooking:5,raw:3,plated:2,packaging:3};
+  if (fsW[fs] !== undefined) sc += fsW[fs];
+  if (mc === 'savoury-main') sc += 2;
+  if (mc === 'drink') sc -= 2;
+  if (f.includes('Lifestyle')) sc += 3;
+  if (f.includes('UGC')) sc += 2;
+  if (f === 'unclassified' && !['eating','cooking','packaging'].includes(fs)) sc -= 2;
+  if (l === 'full') sc += 1;
+  if (l.startsWith && l.startsWith('split')) sc -= 2;
+  if (fp === 'primary') sc += 2;
+  if (fp === 'none' && ['eating','cooking','raw','packaging'].includes(fs)) sc += 1;
+  const pc = countPeople(d);
+  if (pc === 1) sc += 2;
+  if (pc === 2) sc += 3;
+  if (pc === 3) sc -= 3;
+  return sc;
+}
+
+// -----------------------------------------------------------------------------
+// State
+let SHOTS = [];           // all 1246 enriched records
+let SELECTED = new Set(); // shot ids
+let FILTER = {
+  view: 'candidates',
+  setups: new Set(),      // empty = all
+  brands: new Set(),      // empty = all
+  states: new Set(),      // empty = all
+  q: '',
+  sort: 'score',
+};
+
+async function init(){
+  const res = await fetch('/shots.json', {cache:'no-store'});
+  const raw = await res.json();
+  // enrich with computed score, setup
+  SHOTS = raw.map(s => ({
+    ...s,
+    _score: score(s),
+    _setup: setupBucket(s),
+  }));
+  // Load persisted selection
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+    if (Array.isArray(saved)) saved.forEach(id => SELECTED.add(id));
+  } catch {}
+  renderFilters();
+  bindControls();
+  render();
+}
+
+function renderFilters(){
+  // Setup pills
+  const setupRow = document.getElementById('setup-row');
+  SETUPS.forEach(s => {
+    const count = SHOTS.filter(sh => sh._setup === s.id).length;
+    if (count === 0 && s.id !== 'other') return;
+    const el = document.createElement('button');
+    el.className = 'setup-pill';
+    el.dataset.setup = s.id;
+    el.innerHTML = `<span class="swatch ${s.sw}"></span>${s.label}<span class="n" style="opacity:.55;font-family:var(--font-mono);font-size:.7rem">${count}</span>`;
+    el.title = s.desc;
+    el.addEventListener('click', () => {
+      if (FILTER.setups.has(s.id)) FILTER.setups.delete(s.id);
+      else FILTER.setups.add(s.id);
+      el.classList.toggle('active');
+      render();
+    });
+    setupRow.appendChild(el);
+  });
+
+  // Brand chips
+  const brandRow = document.getElementById('brand-row');
+  const brands = [...new Set(SHOTS.map(s => s.b))].sort();
+  brands.forEach(b => {
+    const count = SHOTS.filter(s => s.b === b).length;
+    const el = document.createElement('button');
+    el.className = 'chip';
+    el.dataset.brand = b;
+    el.innerHTML = `${b}<span class="n">${count}</span>`;
+    el.addEventListener('click', () => {
+      if (FILTER.brands.has(b)) FILTER.brands.delete(b);
+      else FILTER.brands.add(b);
+      el.classList.toggle('active');
+      render();
+    });
+    brandRow.appendChild(el);
+  });
+
+  // Food state chips
+  const stateRow = document.getElementById('state-row');
+  const states = ['packaging','eating','plated','cooking','raw','n/a','unknown'];
+  states.forEach(st => {
+    const count = SHOTS.filter(s => s.fs === st).length;
+    if (count === 0) return;
+    const el = document.createElement('button');
+    el.className = 'chip';
+    el.dataset.state = st;
+    el.innerHTML = `${st}<span class="n">${count}</span>`;
+    el.addEventListener('click', () => {
+      if (FILTER.states.has(st)) FILTER.states.delete(st);
+      else FILTER.states.add(st);
+      el.classList.toggle('active');
+      render();
+    });
+    stateRow.appendChild(el);
+  });
+
+  // View chips (already in HTML, just bind)
+  document.querySelectorAll('[data-view]').forEach(el => {
+    el.addEventListener('click', () => {
+      document.querySelectorAll('[data-view]').forEach(e => e.classList.remove('active'));
+      el.classList.add('active');
+      FILTER.view = el.dataset.view;
+      render();
+    });
+  });
+  document.getElementById('v-all').textContent = SHOTS.length;
+  document.getElementById('v-candidates').textContent = SHOTS.filter(s => s._score >= 10).length;
+
+  // Sort select
+  document.getElementById('sort-sel').addEventListener('change', (e) => {
+    FILTER.sort = e.target.value;
+    render();
+  });
+
+  // Search
+  document.getElementById('q').addEventListener('input', (e) => {
+    FILTER.q = e.target.value.toLowerCase();
+    render();
+  });
+}
+
+function bindControls(){
+  // Claude's stratified shortlist
+  document.getElementById('btn-preset-shortlist').addEventListener('click', applyStratifiedShortlist);
+  document.getElementById('btn-preset-packaging').addEventListener('click', () => applyTopN(['packaging-reveal'], 30));
+  document.getElementById('btn-preset-eating').addEventListener('click', () => applyTopN(['eating-moment'], 20));
+  document.getElementById('btn-preset-cooking').addEventListener('click', () => applyTopN(['cooking-action','kitchen-prep'], 25));
+  document.getElementById('btn-preset-clear').addEventListener('click', () => {
+    if (SELECTED.size === 0 || confirm(`Clear all ${SELECTED.size} selections?`)) {
+      SELECTED.clear();
+      persist();
+      render();
+    }
+  });
+
+  document.getElementById('btn-save-draft').addEventListener('click', () => {
+    persist();
+    const btn = document.getElementById('btn-save-draft');
+    const old = btn.textContent;
+    btn.textContent = 'Saved ✓';
+    setTimeout(() => btn.textContent = old, 1400);
+  });
+
+  document.getElementById('btn-generate').addEventListener('click', () => {
+    persist(true);
+    window.location.href = '/founder-shoot-brief.html';
+  });
+}
+
+function applyStratifiedShortlist(){
+  // Clear and re-seed stratified top-N per bucket
+  SELECTED.clear();
+  for (const [bucket, n] of Object.entries(STRAT_TARGETS)) {
+    const pool = SHOTS
+      .filter(s => s._setup === bucket && s._score >= 4)
+      .sort((a,b) => b._score - a._score)
+      .slice(0, n);
+    pool.forEach(s => SELECTED.add(s.id));
+  }
+  persist();
+  render();
+  // jump user to Selected view so they can immediately curate
+  document.querySelector('[data-view="selected"]').click();
+}
+
+function applyTopN(buckets, n){
+  const pool = SHOTS
+    .filter(s => buckets.includes(s._setup) && s._score >= 4)
+    .sort((a,b) => b._score - a._score)
+    .slice(0, n);
+  pool.forEach(s => SELECTED.add(s.id));
+  persist();
+  render();
+}
+
+function persist(withMeta = false){
+  localStorage.setItem(LS_KEY, JSON.stringify([...SELECTED]));
+  if (withMeta) {
+    const meta = {
+      generated_at: new Date().toISOString(),
+      total: SELECTED.size,
+      by_setup: {},
+    };
+    for (const id of SELECTED) {
+      const sh = SHOTS.find(s => s.id === id);
+      if (!sh) continue;
+      meta.by_setup[sh._setup] = (meta.by_setup[sh._setup] || 0) + 1;
+    }
+    localStorage.setItem(LS_META, JSON.stringify(meta));
+  }
+}
+
+function filtered(){
+  let rows = SHOTS.slice();
+  if (FILTER.view === 'candidates') rows = rows.filter(s => s._score >= 10);
+  if (FILTER.view === 'selected') rows = rows.filter(s => SELECTED.has(s.id));
+  if (FILTER.setups.size) rows = rows.filter(s => FILTER.setups.has(s._setup));
+  if (FILTER.brands.size) rows = rows.filter(s => FILTER.brands.has(s.b));
+  if (FILTER.states.size) rows = rows.filter(s => FILTER.states.has(s.fs));
+  if (FILTER.q) {
+    const q = FILTER.q;
+    rows = rows.filter(s => (s.d||'').toLowerCase().includes(q) || (s.o||'').toLowerCase().includes(q) || (s.b||'').toLowerCase().includes(q));
+  }
+  if (FILTER.sort === 'score') rows.sort((a,b) => b._score - a._score);
+  if (FILTER.sort === 'setup') rows.sort((a,b) => (a._setup > b._setup ? 1 : -1) || (b._score - a._score));
+  if (FILTER.sort === 'brand') rows.sort((a,b) => (a.b > b.b ? 1 : -1) || (b._score - a._score));
+  if (FILTER.sort === 'shuffle') rows.sort(() => Math.random() - .5);
+  return rows;
+}
+
+function render(){
+  const rows = filtered();
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('empty');
+
+  // Cap render for perf; if they really want to see 1,246 at once they can scroll-load.
+  const CAP = 600;
+  const slice = rows.slice(0, CAP);
+
+  grid.innerHTML = '';
+  if (slice.length === 0) {
+    empty.hidden = false;
+  } else {
+    empty.hidden = true;
+    const frag = document.createDocumentFragment();
+    slice.forEach(s => frag.appendChild(renderCard(s)));
+    grid.appendChild(frag);
+  }
+
+  document.getElementById('stat-visible').textContent = rows.length + (rows.length > CAP ? ` (showing first ${CAP})` : '');
+  document.getElementById('stat-selected').textContent = SELECTED.size;
+  document.getElementById('stat-total').textContent = SHOTS.length;
+  renderTray();
+}
+
+function scoreBadgeClass(sc){
+  if (sc >= 15) return 'high';
+  if (sc >= 8)  return 'mid';
+  return 'low';
+}
+
+function renderCard(s){
+  const el = document.createElement('article');
+  el.className = 'card' + (SELECTED.has(s.id) ? ' selected' : '');
+  el.dataset.id = s.id;
+  const setup = SETUPS.find(x => x.id === s._setup) || SETUPS[SETUPS.length-1];
+  const desc = s.d || '';
+  const short = desc.length > 160 ? desc.slice(0, 160) + '…' : desc;
+  el.innerHTML = `
+    <div class="thumb">
+      <img loading="lazy" src="${s.u}" alt="${desc.replace(/"/g,'&quot;').slice(0,120)}" />
+      <label class="pick" onclick="event.stopPropagation()">
+        <input type="checkbox" ${SELECTED.has(s.id) ? 'checked' : ''} />
+      </label>
+      <div class="badges">
+        <span class="badge score ${scoreBadgeClass(s._score)}">${s._score >= 0 ? '+' : ''}${s._score}</span>
+        <span class="badge setup ${s._setup}">${setup.label}</span>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="brand">${s.b}${s.mc && s.mc !== 'n/a' && s.mc !== 'unknown' ? ' · ' + s.mc : ''}</div>
+      <div class="desc">${short}</div>
+      <div class="tags">
+        ${s.fs && s.fs !== 'n/a' && s.fs !== 'unknown' ? `<span class="tag">fs: ${s.fs}</span>` : ''}
+        ${s.fp && s.fp !== 'unclassified' ? `<span class="tag">fp: ${s.fp}</span>` : ''}
+        ${s.l && s.l !== 'unknown' ? `<span class="tag">layout: ${s.l}</span>` : ''}
+      </div>
+    </div>
+  `;
+  const checkbox = el.querySelector('input[type=checkbox]');
+  checkbox.addEventListener('change', () => {
+    if (checkbox.checked) SELECTED.add(s.id);
+    else SELECTED.delete(s.id);
+    el.classList.toggle('selected', checkbox.checked);
+    persist();
+    renderTray();
+    if (FILTER.view === 'selected') {
+      // re-filter if the user is on "selected" view
+      render();
+    }
+  });
+  // Click thumbnail toggles selection too
+  el.querySelector('.thumb').addEventListener('click', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    checkbox.click();
+  });
+  return el;
+}
+
+function renderTray(){
+  document.getElementById('tray-count').textContent = SELECTED.size;
+  const breakdown = {};
+  for (const id of SELECTED) {
+    const sh = SHOTS.find(s => s.id === id);
+    if (!sh) continue;
+    breakdown[sh._setup] = (breakdown[sh._setup] || 0) + 1;
+  }
+  const bk = document.getElementById('tray-breakdown');
+  bk.innerHTML = '';
+  SETUPS.forEach(s => {
+    const n = breakdown[s.id] || 0;
+    if (n === 0) return;
+    const el = document.createElement('span');
+    el.className = 'bk';
+    el.innerHTML = `<b>${n}</b> ${s.label}`;
+    bk.appendChild(el);
+  });
+  document.getElementById('btn-generate').disabled = SELECTED.size === 0;
+}
+
+init().catch(err => {
+  document.getElementById('grid').innerHTML = `<div class="empty"><b>Couldn't load shots.json.</b><br/><small>${String(err)}</small></div>`;
+});
+</script>
+</body>
+</html>

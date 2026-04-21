@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Founder shoot brief · Grouped by setup</title>
+<meta name="description" content="The founder-led shoot brief, assembled from your curated shortlist. Grouped by setup (prep, cook, plate, eat, packaging reveal) with lighting, props, wardrobe, dishes, and reference thumbs per setup. Printable." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#faf9f7;
+  --surface:#fff;
+  --surface-alt:#f4f0ea;
+  --surface-warm:#fdf5ec;
+  --ink:#1a1714;
+  --ink-2:#4a4540;
+  --ink-3:#7a746d;
+  --ink-4:#aaa49b;
+  --accent:#b44d1e;
+  --accent-dark:#8a3a14;
+  --accent-light:#f8e6d8;
+  --accent-strong:#eac19c;
+  --amber:#8a6a1a;
+  --amber-light:#fbf3dd;
+  --green:#4a6b3a;
+  --green-light:#dce6d2;
+  --plum:#7a2e52;
+  --plum-light:#f4dfe8;
+  --border:#e3ddd3;
+  --border-strong:#d2c9bd;
+  --radius:4px;
+  --radius-lg:6px;
+  --radius-xl:10px;
+  --font-body:'DM Sans',system-ui,sans-serif;
+  --font-display:'Fraunces',Georgia,serif;
+  --font-mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--font-body);font-size:15px;line-height:1.6;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+body{background:linear-gradient(180deg,var(--surface-warm) 0,var(--bg) 420px)}
+a{color:var(--accent-dark);text-decoration:underline;text-underline-offset:2px}
+a:hover{color:var(--accent)}
+button{font-family:inherit;cursor:pointer}
+img{display:block;max-width:100%}
+
+.page{max-width:1180px;margin:0 auto;padding:clamp(1rem,3vw,2rem)}
+
+.topbar{display:flex;align-items:center;gap:.9rem;font-family:var(--font-mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.14em;color:var(--ink-3);margin-bottom:1.2rem}
+.topbar a{color:var(--ink-3);text-decoration:none}
+.topbar a:hover{color:var(--accent-dark)}
+.topbar .sep{color:var(--ink-4)}
+.topbar .actions{margin-left:auto;display:flex;gap:.5rem}
+.btn{padding:.5rem .85rem;border:1px solid var(--border-strong);border-radius:var(--radius);background:var(--surface);color:var(--ink);font-size:.8rem;font-weight:500;cursor:pointer;transition:all .12s ease;font-family:inherit}
+.btn:hover{background:var(--surface-alt)}
+.btn-primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+
+/* COVER */
+.cover{background:linear-gradient(160deg,var(--accent-light) 0,var(--amber-light) 55%,var(--surface-warm) 100%);border:1px solid var(--border);border-radius:var(--radius-xl);padding:clamp(1.6rem,4vw,3rem);margin-bottom:2rem;position:relative;overflow:hidden}
+.cover::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 110% -30%,rgba(180,77,30,.18) 0,transparent 55%);pointer-events:none}
+.cover .kicker{font-family:var(--font-mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.16em;color:var(--accent-dark);margin-bottom:.7rem}
+.cover h1{font-family:var(--font-display);font-weight:600;font-size:clamp(2rem,5vw,3.6rem);line-height:1.02;letter-spacing:-.015em;margin-bottom:.8rem}
+.cover h1 em{font-style:italic;font-weight:500;color:var(--accent-dark)}
+.cover p.lede{font-size:1.05rem;color:var(--ink-2);max-width:720px;margin-bottom:1.3rem}
+.cover-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.8rem;margin-top:1rem}
+.meta-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.7rem .9rem}
+.meta-box .k{font-family:var(--font-mono);font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-3);margin-bottom:.25rem}
+.meta-box .v{font-family:var(--font-display);font-size:1.3rem;font-weight:600;color:var(--ink);line-height:1.1}
+.meta-box .v small{font-family:var(--font-body);font-size:.72rem;color:var(--ink-3);font-weight:400;margin-left:.3rem;letter-spacing:0}
+
+/* SECTIONS */
+section.block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:clamp(1.2rem,2.5vw,1.8rem);margin-bottom:1.4rem}
+section.block h2{font-family:var(--font-display);font-size:clamp(1.4rem,2.5vw,1.9rem);font-weight:600;letter-spacing:-.01em;margin-bottom:.4rem}
+section.block .sub{color:var(--ink-3);font-size:.9rem;margin-bottom:1.2rem}
+
+/* SCHEDULE */
+.schedule{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
+.slot{background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem}
+.slot .time{font-family:var(--font-mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:var(--accent-dark);margin-bottom:.3rem}
+.slot h4{font-family:var(--font-display);font-size:1.2rem;font-weight:600;margin-bottom:.4rem}
+.slot p{font-size:.85rem;color:var(--ink-2)}
+.slot ul{margin-top:.5rem;font-size:.82rem;color:var(--ink-2);padding-left:1.1rem}
+.slot ul li{margin-bottom:.15rem}
+
+/* SETUP CARDS */
+.setup-card{border:1px solid var(--border);border-radius:var(--radius-lg);padding:0;margin-bottom:1.4rem;overflow:hidden;background:var(--surface)}
+.setup-card.empty{opacity:.65;border-style:dashed}
+.setup-head{padding:1rem 1.2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.setup-head.packaging-reveal{background:var(--plum-light)}
+.setup-head.eating-moment{background:var(--accent-light)}
+.setup-head.cooking-action{background:var(--amber-light)}
+.setup-head.kitchen-prep{background:var(--green-light)}
+.setup-head.plated-hero{background:var(--surface-alt)}
+.setup-head.lifestyle-moment{background:#e8f0f5}
+.setup-head.other{background:var(--surface-alt)}
+.setup-head .num{font-family:var(--font-display);font-size:2.2rem;font-weight:600;line-height:1;color:var(--ink);opacity:.4}
+.setup-head h3{font-family:var(--font-display);font-size:1.6rem;font-weight:600;letter-spacing:-.01em;margin-bottom:.1rem}
+.setup-head .desc{font-size:.85rem;color:var(--ink-2);max-width:520px}
+.setup-head .count{margin-left:auto;background:rgba(255,255,255,.85);border:1px solid rgba(0,0,0,.08);padding:.35rem .75rem;border-radius:var(--radius);font-family:var(--font-mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);display:flex;flex-direction:column;align-items:center}
+.setup-head .count b{font-family:var(--font-display);font-size:1.4rem;font-weight:600;color:var(--ink);line-height:1;letter-spacing:0;text-transform:none}
+
+.setup-body{padding:1.2rem}
+.setup-brief{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.8rem;margin-bottom:1.2rem;padding:1rem;background:var(--surface-alt);border-radius:var(--radius);border:1px solid var(--border)}
+.brief-item .label{font-family:var(--font-mono);font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-3);margin-bottom:.2rem}
+.brief-item .value{font-size:.9rem;color:var(--ink);line-height:1.4}
+
+.shot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.7rem}
+.shot{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.shot img{aspect-ratio:3/4;object-fit:cover;width:100%}
+.shot .caption{padding:.55rem .7rem;font-size:.76rem;color:var(--ink-2);line-height:1.4;display:flex;flex-direction:column;gap:.3rem}
+.shot .caption .brand{font-family:var(--font-mono);font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3)}
+.shot .caption .desc{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* CHECKLIST */
+.kit-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
+.kit-group h4{font-family:var(--font-display);font-size:1.1rem;font-weight:600;margin-bottom:.4rem}
+.kit-group ul{list-style:none;padding:0}
+.kit-group li{padding:.3rem 0;font-size:.88rem;color:var(--ink-2);display:flex;align-items:flex-start;gap:.5rem;border-bottom:1px dashed var(--border)}
+.kit-group li::before{content:"□";color:var(--ink-4);font-family:var(--font-mono);flex:0 0 auto}
+.kit-group li:last-child{border-bottom:none}
+
+/* GAPS */
+.gap-card{background:var(--amber-light);border:1px solid var(--amber);border-radius:var(--radius);padding:1rem 1.2rem;margin-bottom:.8rem}
+.gap-card .label{font-family:var(--font-mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:var(--amber);margin-bottom:.3rem}
+.gap-card h4{font-family:var(--font-display);font-size:1.1rem;font-weight:600;margin-bottom:.3rem}
+.gap-card p{font-size:.88rem;color:var(--ink-2)}
+
+/* EMPTY STATE */
+.no-selection{background:var(--surface);border:2px dashed var(--border-strong);border-radius:var(--radius-lg);padding:3rem 2rem;text-align:center}
+.no-selection h2{font-family:var(--font-display);font-size:1.6rem;margin-bottom:.5rem}
+.no-selection p{color:var(--ink-2);margin-bottom:1.2rem;max-width:520px;margin-left:auto;margin-right:auto}
+
+footer{margin-top:2rem;padding:1.5rem 0;border-top:1px solid var(--border);text-align:center;color:var(--ink-3);font-family:var(--font-mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.12em}
+
+/* PRINT */
+@media print {
+  body{background:#fff;padding:0}
+  .topbar{display:none}
+  section.block, .setup-card, .cover{break-inside:avoid;page-break-inside:avoid;box-shadow:none}
+  .setup-card{page-break-before:auto}
+  .shot{break-inside:avoid}
+  .cover{border:none;background:#fff}
+  .cover::before{display:none}
+  footer{display:none}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<nav class="topbar" aria-label="Breadcrumb">
+  <a href="/">Big Tasty Productions</a>
+  <span class="sep">/</span>
+  <a href="/founder-shoot-builder.html">Founder shoot builder</a>
+  <span class="sep">/</span>
+  <span>Brief</span>
+  <span class="actions">
+    <button class="btn" onclick="window.location.href='/founder-shoot-builder.html'">← Edit shortlist</button>
+    <button class="btn btn-primary" onclick="window.print()">Print / Save PDF</button>
+  </span>
+</nav>
+
+<div id="body"></div>
+
+<footer>Big Tasty Productions · willa.ltd · founder shoot brief · generated <span id="gen-date"></span></footer>
+
+</div>
+
+<script type="module">
+// -----------------------------------------------------------------------------
+// FOUNDER SHOOT BRIEF
+// Reads the shortlist from localStorage, groups by setup, renders the brief.
+// -----------------------------------------------------------------------------
+
+const LS_KEY  = 'founder_shortlist_ids_v1';
+const LS_META = 'founder_shortlist_meta_v1';
+
+const SETUPS = [
+  {
+    id:'kitchen-prep', label:'Kitchen prep', desc:'Chopping, slicing, hands on the board. Ingredients coming together. Morning light, counter high, ingredient-forward.',
+    order:1,
+    brief:{
+      'Lighting':'Soft morning light through a window, side-lit. Avoid overhead hot spots. Diffuser if it gets harsh.',
+      'Framing':'Overhead (top-down) on the board. 3/4 side-angle on the chopping hand. Close-up on the knife work.',
+      'Hand position':'Dominant hand holds the knife. Non-dominant holds the ingredient, fingers curled into a claw. Show both hands.',
+      'Wardrobe':'Warm neutrals. Plain long-sleeve tee or apron. No busy logos.',
+      'Props':'Wooden board, ceramic plate, linen tea towel, small mise-en-place bowls, one hero ingredient + 2 supporting.',
+      'Styling':'Raw ingredients grouped, not scattered. Leave negative space. A single herb sprig reads more than a pile.',
+      'Dish ideas':'Pick the 2 to 3 dishes whose raw ingredients are the most photogenic (colour, texture, shape).',
+    }
+  },
+  {
+    id:'cooking-action', label:'Cooking action', desc:'Pan on hob, stirring, pouring, steam. Motion and sound. Hands in frame, face optional.',
+    order:2,
+    brief:{
+      'Lighting':'Natural + practical (hob light). Add a soft fill from the side if the hob throws hard shadows.',
+      'Framing':'3/4 over the shoulder looking down at the pan. Tight macro on the stir/pour. Wide of the whole cook space.',
+      'Hand position':'Wooden spoon stirring, wrist relaxed. Olive oil or stock being poured from a height. Tilt the pan toward camera.',
+      'Wardrobe':'Linen shirt, apron, rolled sleeves. No watches (reflections).',
+      'Props':'One hero pan, one wooden spoon, a bowl to pour from. Keep the hob surface tidy.',
+      'Styling':'Steam is worth waiting for. Capture the first two minutes after adding liquid. Slight sheen on the food = cooked, not greasy.',
+      'Dish ideas':'Pick 2 to 3 dishes with visible action (stir-fry, pasta toss, curry simmer, sauce reduction).',
+    }
+  },
+  {
+    id:'plated-hero', label:'Plated hero', desc:'Finished plate, on the table, styled. Same league as the macros you already have, but in a lifestyle context.',
+    order:3,
+    brief:{
+      'Lighting':'Soft daylight from 45° behind the plate. Gentle shadow to add depth.',
+      'Framing':'Overhead square and 3/4 hero. Shallow depth on the 3/4. No ultra-wide distortion.',
+      'Hand position':'One hand resting on the table next to the plate. A cutlery piece mid-motion toward the plate.',
+      'Wardrobe':'Neutral tee, dark wash denim. Keep the talent at arm or torso only; no face in the plated hero.',
+      'Props':'Ceramic plate, linen napkin, matte cutlery, plain glass, a second plate or glass in soft-focus.',
+      'Styling':'Wipe the rim of every plate. Garnish last. A little sauce on the rim = real, not messy.',
+      'Dish ideas':'All 8 to 12 dishes should get a plated hero. This is your core library fill.',
+    }
+  },
+  {
+    id:'eating-moment', label:'Eating moment', desc:'The bite, the fork, the reaction. The most persuasive frame in the ad; the one you don\'t have today.',
+    order:4,
+    brief:{
+      'Lighting':'Soft daylight, slight backlight for a rim-light on the talent. Fill card opposite.',
+      'Framing':'Eye-level side-profile on the bite. Over-the-shoulder at the plate. Overhead on two people sharing.',
+      'Hand position':'Fork mid-air, one beat before the mouth. Non-dominant hand resting on the table or holding the plate edge.',
+      'Wardrobe':'Warm neutral tops. Clean collars (easier to retouch). Two founders should coordinate but not match.',
+      'Props':'Same tableware as plated hero. Fresh glasses (no lipstick marks). Phones off the table.',
+      'Styling':'Don\'t actually take the bite on every take. Hover the fork. The mid-air frame is where the ad lives.',
+      'Dish ideas':'Eat-moment candidates are the dishes that fork well. Rice bowls, pastas, wraps, curries over anything saucy-and-floppy.',
+    }
+  },
+  {
+    id:'packaging-reveal', label:'Packaging reveal', desc:'Branded box or container opens, lid peels, food underneath. The founder-led brand reveal.',
+    order:5,
+    brief:{
+      'Lighting':'Clean, bright, soft. Consistency matters more than drama; this is your product hero.',
+      'Framing':'Overhead top-down (square) on the open container. 3/4 hand holding the container. Tight macro on the lid peel.',
+      'Hand position':'Both hands visible. One lifts the lid in a smooth arc, the other steadies the base. Fingernails clean.',
+      'Wardrobe':'Light neutral. Keep the frame simple so the packaging is the hero.',
+      'Props':'Chefly container, branded delivery box (if you have one), a plain table (wood or marble). Nothing competing.',
+      'Styling':'Food inside the container should look full but styled. Leave a clean 10mm border between food and container edge.',
+      'Dish ideas':'One reveal per dish, ideally. This is your e-comm hero for the site + ads.',
+    }
+  },
+  {
+    id:'lifestyle-moment', label:'Lifestyle moment', desc:'Two founders, couch or table, casual. The "real people behind Chefly" beat.',
+    order:6,
+    brief:{
+      'Lighting':'Golden-hour natural if you can. Otherwise soft daylight + practicals.',
+      'Framing':'Wide two-shot on the sofa. Medium 3/4 at the dining table. Over-the-shoulder at a bowl.',
+      'Hand position':'Hands on cutlery, hand holding a glass, hand passing a plate. Interaction is the point.',
+      'Wardrobe':'Matching tone family (earth, cream, olive). Not literally matching outfits.',
+      'Props':'One hero dish on the table. One secondary plate. Drinks. A candle if evening light.',
+      'Styling':'Messy-but-curated. A half-finished plate is more honest than a pristine one.',
+      'Dish ideas':'Pick 1 to 2 dishes that work for 2 people (pasta, curry + rice, sharing bowl).',
+    }
+  },
+];
+
+const SETUP_ORDER = Object.fromEntries(SETUPS.map(s => [s.id, s.order]));
+
+const SUGGESTED_KIT = {
+  'Talent & wardrobe':[
+    'Two founder outfits each (neutral, earthy)',
+    'Apron x2',
+    'Backup shirt in case of spills',
+  ],
+  'Food & ingredients':[
+    '8 to 12 hero dishes, each cooked at shoot time',
+    '2x ingredients per dish (one to cook, one to style fresh)',
+    'Garnishes: parsley, chilli flakes, lemon, olive oil',
+    'Cling film + containers for partial-cook holds',
+  ],
+  'Surfaces & tabletop':[
+    'Wooden chopping board (large, flat grain)',
+    'Marble or light stone slab',
+    'Linen tea towels x3 (white, cream, natural)',
+    'Ceramic plates (2 hero, 4 supporting)',
+    'Matte cutlery set',
+    'Plain glasses, plain water jug',
+  ],
+  'Lighting & camera':[
+    'Key light source: north-facing window if possible',
+    'White foam bounce (600x900mm)',
+    'Black flag for negative fill',
+    'Tripod with top-down arm',
+    '50mm prime + wide zoom',
+    'Memory cards x2, charged batteries x2',
+  ],
+  'Product & brand':[
+    'Chefly containers x12 (clean, no fingerprints)',
+    'Branded delivery box if applicable',
+    'Menu card / ingredient card (optional tabletop prop)',
+  ],
+};
+
+function loadSelection(){
+  try {
+    const ids = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+    return new Set(Array.isArray(ids) ? ids : []);
+  } catch {
+    return new Set();
+  }
+}
+
+async function init(){
+  const selected = loadSelection();
+  document.getElementById('gen-date').textContent = new Date().toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'});
+
+  if (selected.size === 0) {
+    renderEmpty();
+    return;
+  }
+
+  const res = await fetch('/shots.json', {cache:'no-store'});
+  const raw = await res.json();
+  // Attach the same setup classifier as the builder
+  const enriched = raw.filter(s => selected.has(s.id)).map(s => ({ ...s, _setup: setupBucket(s) }));
+  render(enriched);
+}
+
+function setupBucket(sh){
+  const d = (sh.d||'').toLowerCase();
+  const fs = sh.fs||'';
+  if (['meal prep container','delivery box'].some(k=>d.includes(k)) || fs==='packaging') return 'packaging-reveal';
+  if (fs==='eating' || ['takes a bite','taking a bite','eats ','eating ',' mouth',' fork',' spoon','chopsticks'].some(k=>d.includes(k))) return 'eating-moment';
+  if (fs==='cooking' || ['stove',' pan',' saucepan',' hob','stirring','stirs ',' oven','sauté','simmer ','boiling','boil '].some(k=>d.includes(k))) return 'cooking-action';
+  if (fs==='raw' || ['chopping','slicing','cutting board','chopping board','knife','raw ingredient'].some(k=>d.includes(k))) return 'kitchen-prep';
+  if (fs==='plated' && ['table','dining','plate of','bowl of','plated'].some(k=>d.includes(k))) return 'plated-hero';
+  if (['sofa','couch','living room','dining table','friends','couple','two women','two men'].some(k=>d.includes(k))) return 'lifestyle-moment';
+  if (fs==='plated') return 'plated-hero';
+  return 'other';
+}
+
+function renderEmpty(){
+  document.getElementById('body').innerHTML = `
+    <div class="no-selection">
+      <h2>No shortlist yet</h2>
+      <p>The founder shoot brief assembles from shots you curate in the builder. Head back, apply Claude's shortlist, adjust, then come back here.</p>
+      <a class="btn btn-primary" href="/founder-shoot-builder.html" style="text-decoration:none;display:inline-block">Open the shoot builder →</a>
+    </div>
+  `;
+}
+
+function render(shots){
+  // Group by setup
+  const grouped = {};
+  SETUPS.forEach(s => grouped[s.id] = []);
+  grouped['other'] = [];
+  shots.forEach(s => {
+    if (!grouped[s._setup]) grouped[s._setup] = [];
+    grouped[s._setup].push(s);
+  });
+
+  // Meta
+  const total = shots.length;
+  const setupsHit = SETUPS.filter(s => (grouped[s.id]||[]).length > 0).length;
+  const dishTarget = '8 to 12';
+
+  const body = document.getElementById('body');
+
+  // COVER
+  const cover = document.createElement('section');
+  cover.className = 'cover';
+  cover.innerHTML = `
+    <div class="kicker">Founder-led · Chefly · produced in-house</div>
+    <h1>The <em>founder shoot</em> brief.</h1>
+    <p class="lede">Two founders on camera. One full day, optionally broken into two half-days. ${total} reference shots, curated down from 1,246, grouped into ${setupsHit} setups so you batch lighting and props once per setup instead of resetting per dish.</p>
+    <div class="cover-meta">
+      <div class="meta-box"><div class="k">Talent</div><div class="v">2<small>founders</small></div></div>
+      <div class="meta-box"><div class="k">Scale</div><div class="v">1 day<small>or 2 × half</small></div></div>
+      <div class="meta-box"><div class="k">Dishes</div><div class="v">${dishTarget}<small>target</small></div></div>
+      <div class="meta-box"><div class="k">Setups</div><div class="v">${setupsHit}<small>of 6</small></div></div>
+      <div class="meta-box"><div class="k">Ref shots</div><div class="v">${total}<small>curated</small></div></div>
+      <div class="meta-box"><div class="k">Setting</div><div class="v">Home<small>realistic</small></div></div>
+    </div>
+  `;
+  body.appendChild(cover);
+
+  // SHOOT SCHEDULE
+  const sched = document.createElement('section');
+  sched.className = 'block';
+  sched.innerHTML = `
+    <h2>Shoot schedule</h2>
+    <p class="sub">Suggested flow. Batch by setup so you change lighting and props once, not per dish. If you split the day in half, Day A = prep + cook + plate (the hot side), Day B = eat + packaging + lifestyle (the talent-heavy side).</p>
+    <div class="schedule">
+      <div class="slot">
+        <div class="time">Day A · 08:00 – 13:00</div>
+        <h4>Hot side</h4>
+        <p>All cooking and plating. Get dishes locked before the talent-heavy afternoon.</p>
+        <ul>
+          <li>08:00  Setup kitchen + light check</li>
+          <li>09:00  Setup 1 · Kitchen prep</li>
+          <li>10:30  Setup 2 · Cooking action</li>
+          <li>12:00  Setup 3 · Plated hero</li>
+          <li>13:00  Wrap + hold dishes</li>
+        </ul>
+      </div>
+      <div class="slot">
+        <div class="time">Day B · 14:00 – 19:00</div>
+        <h4>Talent-heavy side</h4>
+        <p>Re-plate from Day A holds. Founders change for each setup. Eating last (food cools quickly).</p>
+        <ul>
+          <li>14:00  Founders refresh + wardrobe</li>
+          <li>14:30  Setup 4 · Packaging reveal</li>
+          <li>16:00  Setup 5 · Lifestyle moment</li>
+          <li>17:30  Setup 6 · Eating moment</li>
+          <li>19:00  Wrap + backup cards</li>
+        </ul>
+      </div>
+    </div>
+  `;
+  body.appendChild(sched);
+
+  // SETUPS
+  const setupsSection = document.createElement('section');
+  setupsSection.className = 'block';
+  setupsSection.innerHTML = `
+    <h2>Setups</h2>
+    <p class="sub">One card per setup. Each setup gathers its reference shots, the lighting and styling notes, and the dish ideas. Work through them in order; the schedule above matches the order here.</p>
+  `;
+  body.appendChild(setupsSection);
+
+  SETUPS.forEach(s => {
+    const shots = grouped[s.id] || [];
+    const card = document.createElement('div');
+    card.className = 'setup-card' + (shots.length === 0 ? ' empty' : '');
+    card.innerHTML = `
+      <div class="setup-head ${s.id}">
+        <div class="num">${String(s.order).padStart(2,'0')}</div>
+        <div>
+          <h3>${s.label}</h3>
+          <div class="desc">${s.desc}</div>
+        </div>
+        <div class="count"><b>${shots.length}</b>ref</div>
+      </div>
+      <div class="setup-body">
+        <div class="setup-brief">
+          ${Object.entries(s.brief).map(([k,v]) => `
+            <div class="brief-item">
+              <div class="label">${k}</div>
+              <div class="value">${v}</div>
+            </div>
+          `).join('')}
+        </div>
+        ${shots.length > 0 ? `
+          <div class="shot-grid">
+            ${shots.map(sh => `
+              <div class="shot">
+                <img loading="lazy" src="${sh.u}" alt="${(sh.d||'').replace(/"/g,'&quot;').slice(0,120)}" />
+                <div class="caption">
+                  <span class="brand">${sh.b}${sh.fs && sh.fs !== 'unknown' && sh.fs !== 'n/a' ? ' · ' + sh.fs : ''}</span>
+                  <span class="desc">${(sh.d||'').slice(0, 140)}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        ` : `
+          <div style="padding:1rem;text-align:center;color:var(--ink-3);font-style:italic;border:1px dashed var(--border);border-radius:var(--radius)">
+            No reference shots selected for this setup. Consider adding at least 2 to 3 in the builder so the founders have something to match on the day.
+          </div>
+        `}
+      </div>
+    `;
+    body.appendChild(card);
+  });
+
+  // GAP CALLOUTS
+  const emptySetups = SETUPS.filter(s => (grouped[s.id]||[]).length === 0);
+  const thinSetups  = SETUPS.filter(s => {
+    const n = (grouped[s.id]||[]).length;
+    return n > 0 && n < 3;
+  });
+  if (emptySetups.length > 0 || thinSetups.length > 0) {
+    const gaps = document.createElement('section');
+    gaps.className = 'block';
+    gaps.innerHTML = `<h2>Gap callouts</h2><p class="sub">Setups the current shortlist doesn't cover, or covers thinly. Decide whether to skip them, re-open the builder to add references, or shoot them blind without library backup.</p>`;
+    emptySetups.forEach(s => {
+      const el = document.createElement('div');
+      el.className = 'gap-card';
+      el.innerHTML = `<div class="label">No references</div><h4>${s.label}</h4><p>${s.desc} Nothing in the shortlist covers this. Either skip the setup or <a href="/founder-shoot-builder.html">go back and add 3 to 5 references</a>.</p>`;
+      gaps.appendChild(el);
+    });
+    thinSetups.forEach(s => {
+      const el = document.createElement('div');
+      el.className = 'gap-card';
+      el.innerHTML = `<div class="label">Thin coverage · ${grouped[s.id].length} shots</div><h4>${s.label}</h4><p>${s.desc} Consider adding 2 to 3 more references for variety, so the founders have 3+ framings to match.</p>`;
+      gaps.appendChild(el);
+    });
+    body.appendChild(gaps);
+  }
+
+  // KIT CHECKLIST
+  const kit = document.createElement('section');
+  kit.className = 'block';
+  kit.innerHTML = `<h2>Kit & checklist</h2><p class="sub">The shortlist of kit, food, and wardrobe to have in the kitchen before you start. Tick off as you prep.</p><div class="kit-list">${Object.entries(SUGGESTED_KIT).map(([group, items]) => `
+    <div class="kit-group">
+      <h4>${group}</h4>
+      <ul>${items.map(i => `<li>${i}</li>`).join('')}</ul>
+    </div>
+  `).join('')}</div>`;
+  body.appendChild(kit);
+
+  // NOTES
+  const notes = document.createElement('section');
+  notes.className = 'block';
+  notes.innerHTML = `
+    <h2>On-shoot notes</h2>
+    <p class="sub">Things to remember while you're in it.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.2rem">
+      <div>
+        <h4 style="font-family:var(--font-display);font-size:1.1rem;margin-bottom:.4rem">Shoot format first, content second</h4>
+        <p style="font-size:.88rem;color:var(--ink-2)">The library shots you picked define <em>framing</em>. Replicate the framing first, then make the food look as good as you can. A pixel-perfect macro in the wrong framing is less useful than a close-but-not-perfect match in the right framing.</p>
+      </div>
+      <div>
+        <h4 style="font-family:var(--font-display);font-size:1.1rem;margin-bottom:.4rem">Always shoot a cover + a detail</h4>
+        <p style="font-size:.88rem;color:var(--ink-2)">For every dish in every setup, capture one wider cover shot and one tight detail. Ads crop unpredictably; two framings per beat gives you twice the usable material.</p>
+      </div>
+      <div>
+        <h4 style="font-family:var(--font-display);font-size:1.1rem;margin-bottom:.4rem">Talent eyes</h4>
+        <p style="font-size:.88rem;color:var(--ink-2)">On eating moments, keep eyes down or on the food. Founders looking at camera reads awkward; founders enjoying the food reads authentic.</p>
+      </div>
+      <div>
+        <h4 style="font-family:var(--font-display);font-size:1.1rem;margin-bottom:.4rem">Hands are the shortcut</h4>
+        <p style="font-size:.88rem;color:var(--ink-2)">Every frame without a hand is a frame that could have had a hand. Hands signal presence, scale, and warmth without needing a face. When in doubt, put a hand in frame.</p>
+      </div>
+    </div>
+  `;
+  body.appendChild(notes);
+}
+
+init().catch(err => {
+  document.getElementById('body').innerHTML = `<div class="no-selection"><h2>Couldn't load the brief</h2><p>${String(err)}</p><a class="btn btn-primary" href="/founder-shoot-builder.html">Back to the builder</a></div>`;
+});
+</script>
+</body>
+</html>
