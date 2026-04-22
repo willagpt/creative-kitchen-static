@@ -29,8 +29,33 @@ const TABS = [
   { key: 'tester', label: 'Prompt Tester' },
 ]
 
+const VALID_TAB_KEYS = TABS.map(t => t.key)
+
+function readTabFromUrl() {
+  if (typeof window === 'undefined') return 'competitors'
+  const params = new URLSearchParams(window.location.search)
+  const qp = params.get('tab')
+  if (qp && VALID_TAB_KEYS.includes(qp)) return qp
+  return 'competitors'
+}
+
 export default function App() {
-  const [tab, setTab] = useState('competitors')
+  const [tab, setTabState] = useState(readTabFromUrl)
+
+  // Keep ?tab=<key> in sync with the selected tab so the URL is shareable
+  // and standalone pages like /prompt-tester.html can deep-link via /?tab=tester.
+  const setTab = (next) => {
+    setTabState(next)
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      if (next && next !== 'competitors') {
+        url.searchParams.set('tab', next)
+      } else {
+        url.searchParams.delete('tab')
+      }
+      window.history.replaceState({}, '', url.toString())
+    }
+  }
 
   const [ads, setAds] = useState([])
   const [versions, setVersions] = useState({})
