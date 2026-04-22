@@ -1299,3 +1299,106 @@
   align-items: center;
   flex-wrap: wrap;
 }
+
+
+/* Pipeline step chips on cards (per-step accuracy, replaces single 'complete' pill). */
+.va-pipe-chips {
+  display: inline-flex;
+  gap: 4px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.va-pipe-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.va-pipe-chip-dot { font-size: 0.7rem; line-height: 1; }
+.va-pipe-success { color: #34d399; border-color: rgba(52, 211, 153, 0.4); background: rgba(52, 211, 153, 0.08); }
+.va-pipe-partial { color: #fbbf24; border-color: rgba(251, 191, 36, 0.4); background: rgba(251, 191, 36, 0.08); }
+.va-pipe-error   { color: #f43f5e; border-color: rgba(244, 63, 94, 0.4); background: rgba(244, 63, 94, 0.08); }
+.va-pipe-running { color: #60a5fa; border-color: rgba(96, 165, 250, 0.4); background: rgba(96, 165, 250, 0.08); }
+.va-pipe-pending { color: #71717a; border-color: #3f3f46; background: transparent; }
+
+.va-pipe-error-banner {
+  font-size: 0.7rem;
+  color: #fca5a5;
+  background: rgba(244, 63, 94, 0.08);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  border-radius: 6px;
+  padding: 4px 8px;
+  width: fit-content;
+}
+
+/* Brand filter chip row (multi-select, sits just below the source filter) */
+.va-brand-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -8px 0 20px 0;
+  padding: 8px 0 12px 0;
+  border-top: 1px dashed #2a2a34;
+}
+
+/* Right-side action cluster on the card (re-run + delete) */
+.va-card-action-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.va-rerun-wrapper { position: relative; }
+.va-card-rerun {
+  padding: 0.35rem 0.75rem;
+  background: transparent;
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+  color: #a4a4f5;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.va-card-rerun:hover {
+  border-color: #7c7cf0;
+  color: #c8c8ff;
+  background: rgba(124, 124, 240, 0.08);
+}
+.va-card-rerun:disabled { opacity: 0.5; cursor: not-allowed; }
+.va-rerun-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 4px);
+  min-width: 220px;
+  background: #141419;
+  border: 1px solid #2a2a34;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+}
+.va-rerun-menu-item {
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: #d4d4d8;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.va-rerun-menu-item:hover {
+  background: rgba(124, 124, 240, 0.1);
+  color: #fafafa;
+}

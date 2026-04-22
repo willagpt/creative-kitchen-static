@@ -66,6 +66,8 @@ export default function VideoAnalysis() {
   const [detailTab, setDetailTab] = useState('script') // 'script', 'analysis', 'shots'
   const [deletingId, setDeletingId] = useState(null)
   const [sourceFilter, setSourceFilter] = useState('all') // 'all' | 'competitor_ad' | 'organic_post'
+  const [brandFilter, setBrandFilter] = useState(() => new Set()) // multi-select set of page_name; empty = All
+  const [rerunning, setRerunning] = useState({}) // { [analysisId]: Set<'transcript'|'ocr'|'ai'> }
 
   // Fetch all analyses
   useEffect(() => {
@@ -249,6 +251,54 @@ export default function VideoAnalysis() {
     }
   }
 
+
+  const handleRerun = async (analysisId, step) => {
+    // step: 'transcript' | 'ocr' | 'ai'
+    const fnMap = {
+      transcript: 'transcribe-video',
+      ocr: 'ocr-video-frames',
+      ai: 'ai-analyse-video',
+    }
+    const fnSlug = fnMap[step]
+    if (!fnSlug) return
+
+    setRerunning(prev => {
+      const next = { ...prev }
+      const set = new Set(next[analysisId] || [])
+      set.add(step)
+      next[analysisId] = set
+      return next
+    })
+
+    try {
+      const res = await fetch(`${supabaseUrl}/functions/v1/${fnSlug}`, {
+        method: 'POST',
+        headers: fnHeaders,
+        body: JSON.stringify({ analysis_id: analysisId }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || `${fnSlug} failed (${res.status})`)
+      }
+      // Sub-status columns update quickly; OCR/AI bodies can take ~10-30s so we also
+      // poll a second time for good measure.
+      setTimeout(fetchAnalyses, 1500)
+      setTimeout(fetchAnalyses, 15000)
+    } catch (e) {
+      console.error(`Re-run ${step} error:`, e)
+      alert(`Failed to re-run ${step}: ${e.message}`)
+    } finally {
+      setRerunning(prev => {
+        const next = { ...prev }
+        const set = new Set(next[analysisId] || [])
+        set.delete(step)
+        if (set.size === 0) delete next[analysisId]
+        else next[analysisId] = set
+        return next
+      })
+    }
+  }
+
   const openDetail = (analysis) => {
     setSelectedAnalysis(analysis)
     setDetailTab('script')
@@ -350,16 +400,70 @@ export default function VideoAnalysis() {
         </div>
       )}
 
+      {/* Brand filter (multi-select) */}
+      {view === 'list' && (() => {
+        const sourceFiltered = sourceFilter === 'all' ? analyses : analyses.filter((a) => a.source === sourceFilter)
+        const counts = new Map()
+        for (const a of sourceFiltered) {
+          const name = (a.page_name || '').trim()
+          if (!name) continue
+          counts.set(name, (counts.get(name) || 0) + 1)
+        }
+        const brands = Array.from(counts.entries())
+          .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+        if (brands.length <= 1) return null
+
+        const toggleBrand = (name) => {
+          setBrandFilter((prev) => {
+            const next = new Set(prev)
+            if (next.has(name)) next.delete(name)
+            else next.add(name)
+            return next
+          })
+        }
+        const clearBrands = () => setBrandFilter(new Set())
+
+        return (
+          <div className="va-brand-filter-bar" aria-label="Filter by brand">
+            <button
+              type="button"
+              className={`va-filter-btn${brandFilter.size === 0 ? ' active' : ''}`}
+              onClick={clearBrands}
+            >
+              All brands
+              <span className="va-filter-count">{sourceFiltered.length}</span>
+            </button>
+            {brands.map(([name, count]) => (
+              <button
+                key={name}
+                type="button"
+                className={`va-filter-btn${brandFilter.has(name) ? ' active' : ''}`}
+                onClick={() => toggleBrand(name)}
+              >
+                {name}
+                <span className="va-filter-count">{count}</span>
+              </button>
+            ))}
+          </div>
+        )
+      })()}
+
       {/* Main content area */}
       {view === 'list' ? (
         <ListViewContent
-          analyses={sourceFilter === 'all' ? analyses : analyses.filter((a) => a.source === sourceFilter)}
+          analyses={(() => {
+            let list = sourceFilter === 'all' ? analyses : analyses.filter((a) => a.source === sourceFilter)
+            if (brandFilter.size > 0) list = list.filter((a) => brandFilter.has((a.page_name || '').trim()))
+            return list
+          })()}
           loading={loading}
           error={error}
           onSelect={openDetail}
           onRetry={fetchAnalyses}
           onDelete={handleDeleteAnalysis}
           deletingId={deletingId}
+          onRerun={handleRerun}
+          rerunning={rerunning}
         />
       ) : (
         <DetailViewContent
@@ -375,7 +479,7 @@ export default function VideoAnalysis() {
   )
 }
 
-function ListViewContent({ analyses, loading, error, onSelect, onRetry, onDelete, deletingId }) {
+function ListViewContent({ analyses, loading, error, onSelect, onRetry, onDelete, deletingId, onRerun, rerunning }) {
   if (loading) {
     return (
       <div className="va-empty-state">
@@ -416,25 +520,26 @@ function ListViewContent({ analyses, loading, error, onSelect, onRetry, onDelete
           onClick={() => onSelect(analysis)}
           onDelete={onDelete}
           isDeleting={deletingId === analysis.id}
+          onRerun={onRerun}
+          rerunning={(rerunning && rerunning[analysis.id]) || null}
         />
       ))}
     </div>
   )
 }
 
-function AnalysisCard({ analysis, onClick, onDelete, isDeleting }) {
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'complete':
-        return '#34d399'
-      case 'processing':
-        return '#fbbf24'
-      case 'error':
-        return '#f43f5e'
-      default:
-        return '#71717a'
-    }
-  }
+function AnalysisCard({ analysis, onClick, onDelete, isDeleting, onRerun, rerunning }) {
+  // Per-step completeness derived from existing columns. No migration.
+  // Option C from the 21 Apr handover: treat the master 'status' column as unreliable.
+  const transcriptStep = deriveStep(analysis.transcript_status, rerunning && rerunning.has && rerunning.has('transcript'))
+  const ocrStep = deriveStep(analysis.ocr_status, rerunning && rerunning.has && rerunning.has('ocr'))
+  const aiStep = (rerunning && rerunning.has && rerunning.has('ai'))
+    ? 'running'
+    : (analysis.ai_analysis ? 'success' : 'pending')
+  const isMasterError = analysis.status === 'error'
+  const isIncomplete = transcriptStep !== 'success' || ocrStep !== 'success' || aiStep !== 'success'
+  const [showRerunMenu, setShowRerunMenu] = useState(false)
+  const anyRunning = rerunning && rerunning.size > 0
 
   return (
     <div className="va-card" onClick={onClick}>
@@ -457,14 +562,17 @@ function AnalysisCard({ analysis, onClick, onDelete, isDeleting }) {
       <div className="va-card-content">
         <div className="va-card-header">
           <h3 className="va-card-title">{analysis.brand_name}</h3>
-          <div
-            className="va-status-badge"
-            style={{ borderColor: getStatusColor(analysis.status) }}
-          >
-            <span style={{ color: getStatusColor(analysis.status) }}>●</span>
-            {analysis.status}
+          <div className="va-pipe-chips" role="group" aria-label="Pipeline status">
+            <StepChip label="Script" step={transcriptStep} />
+            <StepChip label="OCR" step={ocrStep} />
+            <StepChip label="AI" step={aiStep} />
           </div>
         </div>
+        {isMasterError && (
+          <div className="va-pipe-error-banner" title={analysis.error_message || ''}>
+            ⚠ pipeline errored, see detail
+          </div>
+        )}
         {analysis.source === 'organic_post' && (
           <div className="va-source-chip va-source-organic">
             {analysis.source_label || 'Organic'}
@@ -505,19 +613,94 @@ function AnalysisCard({ analysis, onClick, onDelete, isDeleting }) {
 
         <div className="va-card-actions">
           <button className="va-card-action">View Details →</button>
-          <button
-            className="va-card-delete"
-            disabled={isDeleting}
-            onClick={(e) => {
-              e.stopPropagation()
-              onDelete(analysis.id)
-            }}
-          >
-            {isDeleting ? 'Deleting...' : 'Delete'}
-          </button>
+          <div className="va-card-action-right">
+            {isIncomplete && (
+              <div className="va-rerun-wrapper" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  className="va-card-rerun"
+                  onClick={() => setShowRerunMenu((s) => !s)}
+                  disabled={anyRunning}
+                  title="Re-run missing pipeline steps"
+                >
+                  {anyRunning ? 'Re-running…' : 'Re-run ▾'}
+                </button>
+                {showRerunMenu && (
+                  <div className="va-rerun-menu">
+                    {transcriptStep !== 'success' && (
+                      <button
+                        type="button"
+                        className="va-rerun-menu-item"
+                        onClick={() => { setShowRerunMenu(false); onRerun && onRerun(analysis.id, 'transcript') }}
+                      >
+                        Re-run Script (Whisper)
+                      </button>
+                    )}
+                    {ocrStep !== 'success' && (
+                      <button
+                        type="button"
+                        className="va-rerun-menu-item"
+                        onClick={() => { setShowRerunMenu(false); onRerun && onRerun(analysis.id, 'ocr') }}
+                      >
+                        Re-run OCR (Claude vision)
+                      </button>
+                    )}
+                    {aiStep !== 'success' && (
+                      <button
+                        type="button"
+                        className="va-rerun-menu-item"
+                        onClick={() => { setShowRerunMenu(false); onRerun && onRerun(analysis.id, 'ai') }}
+                      >
+                        Re-run AI analysis
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            <button
+              className="va-card-delete"
+              disabled={isDeleting}
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete(analysis.id)
+              }}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
+  )
+}
+
+// Local helpers for pipeline chip rendering.
+function deriveStep(statusValue, isRunning) {
+  if (isRunning) return 'running'
+  if (!statusValue) return 'pending'
+  const v = String(statusValue).toLowerCase()
+  if (v === 'success') return 'success'
+  if (v === 'partial') return 'partial'
+  if (v === 'error') return 'error'
+  if (v === 'running') return 'running'
+  return 'pending'
+}
+
+function StepChip({ label, step }) {
+  const dot = { success: '●', partial: '◐', error: '✕', running: '…', pending: '○' }[step] || '○'
+  const title = {
+    success: `${label} complete`,
+    partial: `${label} partial, some data recovered`,
+    error: `${label} failed`,
+    running: `${label} running…`,
+    pending: `${label} not run yet`,
+  }[step]
+  return (
+    <span className={`va-pipe-chip va-pipe-${step}`} title={title}>
+      <span className="va-pipe-chip-dot">{dot}</span>
+      {label}
+    </span>
   )
 }
 
