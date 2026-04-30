@@ -8,6 +8,34 @@ const fnHeaders = {
   'Content-Type': 'application/json',
 }
 
+// Poll organic_fetch_log for an async fetch run started by
+// fetch-instagram-posts / fetch-youtube-posts (async: true). Resolves with
+// the final log row once status leaves 'running' (success | error), or
+// rejects after the timeout. Used by AddAccountModal + BackfillModal so the
+// UI surfaces completion without blocking on a 150s gateway wall.
+async function pollFetchLog(logId, { intervalMs = 3000, timeoutMs = 360000 } = {}) {
+  const start = Date.now()
+  // tiny initial delay so the fetcher has a chance to write the running row.
+  await new Promise(r => setTimeout(r, 500))
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const res = await fetch(
+        `${supabaseUrl}/rest/v1/organic_fetch_log?select=status,posts_fetched,posts_new,cost_estimate,yt_quota_units,error_message&id=eq.${encodeURIComponent(logId)}`,
+        { headers: fnHeaders },
+      )
+      if (res.ok) {
+        const rows = await res.json().catch(() => [])
+        const row = Array.isArray(rows) ? rows[0] : null
+        if (row && row.status && row.status !== 'running') return row
+      }
+    } catch (_) {
+      // transient; keep polling
+    }
+    await new Promise(r => setTimeout(r, intervalMs))
+  }
+  return { status: 'timeout', error_message: 'fetch took longer than expected; check the dashboard later.' }
+}
+
 // Bulk-analyse concurrency cap (keeps Railway worker + edge functions comfortable).
 const BULK_CONCURRENCY = 3
 
@@ -1147,7 +1175,10 @@ function AddAccountModal({ open, onClose, onAdded }) {
 
       setStep('fetching')
       const fetchSlug = platform === 'instagram' ? 'fetch-instagram-posts' : 'fetch-youtube-posts'
-      const chosenTier = getDepthTier(platform, depth)
+      // Initial fetch is always pinned to the smallest tier (IG 12 / YT 10)
+      // so it dispatches in <1s and any failure surfaces fast. Deeper pulls
+      // are reachable from the per-account Backfill modal.
+      const chosenTier = getDepthTier(platform, 'quick')
       try {
         const fetchRes = await fetch(`${supabaseUrl}/functions/v1/${fetchSlug}`, {
           method: 'POST',
@@ -1156,16 +1187,41 @@ function AddAccountModal({ open, onClose, onAdded }) {
             mode: 'fetch',
             account_id: savePayload?.account?.id || savePayload?.id,
             limit: chosenTier.limit,
+            async: true,
           }),
         })
         const fetchPayload = await fetchRes.json().catch(() => ({}))
-        setFetchResult({ ok: fetchRes.ok, payload: fetchPayload })
+        if (!fetchRes.ok || !fetchPayload?.log_id) {
+          // Fetcher rejected the dispatch (e.g. budget guard) or didn't
+          // hand us a log_id. Surface the reason; account is still added.
+          setFetchResult({ ok: false, payload: fetchPayload })
+          setStep('done')
+          if (onAdded) onAdded()
+          return
+        }
+
+        // Dispatch accepted. Surface the log_id and start polling.
+        setStep('polling')
+        if (onAdded) onAdded() // refresh the accounts grid in the background
+        const finalRow = await pollFetchLog(fetchPayload.log_id)
+        const finalOk = finalRow?.status === 'success'
+        setFetchResult({
+          ok: finalOk,
+          payload: {
+            ...fetchPayload,
+            posts_new: finalRow?.posts_new,
+            posts_fetched: finalRow?.posts_fetched,
+            cost_estimate: finalRow?.cost_estimate,
+            yt_quota_units: finalRow?.yt_quota_units,
+            error: finalOk ? undefined : (finalRow?.error_message || 'fetch did not complete'),
+          },
+        })
+        if (onAdded) onAdded()
       } catch (fetchErr) {
         setFetchResult({ ok: false, payload: { error: fetchErr.message } })
       }
 
       setStep('done')
-      if (onAdded) onAdded()
     } catch (e) {
       setErrMsg(e.message || 'Save failed.')
       setStep('confirm')
@@ -1188,13 +1244,13 @@ function AddAccountModal({ open, onClose, onAdded }) {
               type="button"
               className={`oi-filter-btn ${platform === 'instagram' ? 'active' : ''}`}
               onClick={() => { setPlatform('instagram'); setResolved(null); setStep('input') }}
-              disabled={step === 'resolving' || step === 'saving' || step === 'fetching'}
+              disabled={step === 'resolving' || step === 'saving' || step === 'fetching' || step === 'polling'}
             >Instagram</button>
             <button
               type="button"
               className={`oi-filter-btn ${platform === 'youtube' ? 'active' : ''}`}
               onClick={() => { setPlatform('youtube'); setResolved(null); setStep('input') }}
-              disabled={step === 'resolving' || step === 'saving' || step === 'fetching'}
+              disabled={step === 'resolving' || step === 'saving' || step === 'fetching' || step === 'polling'}
             >YouTube</button>
           </div>
 
@@ -1262,17 +1318,19 @@ function AddAccountModal({ open, onClose, onAdded }) {
               />
               <div className="oi-modal-hint">This is the label shown in the tracked-accounts grid. You can rename it later.</div>
 
-              <label className="oi-modal-label">Initial fetch depth</label>
-              <DepthPicker platform={platform} value={depth} onChange={setDepth} />
-              <div className="oi-modal-hint">
-                You can always run a deeper Backfill later from this account's detail view.
+              <div className="oi-modal-hint" style={{ marginTop: 'var(--space-3)' }}>
+                Initial fetch will pull the most recent {platform === 'instagram' ? '12 posts' : '10 uploads'} in the background — usually under a minute. For a deeper pull, use the Backfill action on the account's detail view after it's been added.
               </div>
             </div>
           )}
 
-          {(step === 'saving' || step === 'fetching') && (
+          {(step === 'saving' || step === 'fetching' || step === 'polling') && (
             <div className="oi-modal-status">
-              {step === 'saving' ? 'Saving account…' : 'Running initial fetch…'}
+              {step === 'saving'
+                ? 'Saving account…'
+                : step === 'fetching'
+                  ? 'Dispatching initial fetch…'
+                  : 'Fetching in the background — this can take up to a minute…'}
             </div>
           )}
 
@@ -1281,14 +1339,14 @@ function AddAccountModal({ open, onClose, onAdded }) {
               <div><strong>Added.</strong></div>
               {fetchResult?.ok ? (
                 <div>
-                  Initial fetch: {fetchResult.payload?.posts_new ?? fetchResult.payload?.result?.posts_new ?? 0} new, {fetchResult.payload?.posts_fetched ?? fetchResult.payload?.result?.posts_fetched ?? 0} fetched.
+                  Initial fetch: {fetchResult.payload?.posts_new ?? 0} new, {fetchResult.payload?.posts_fetched ?? 0} fetched.
                   {platform === 'instagram'
-                    ? ` Apify cost $${Number(fetchResult.payload?.cost_estimate ?? fetchResult.payload?.result?.cost_estimate ?? 0).toFixed(3)}.`
-                    : ` YT quota used: ${fetchResult.payload?.yt_quota_units ?? fetchResult.payload?.result?.yt_quota_units ?? 0} units.`}
+                    ? ` Apify cost $${Number(fetchResult.payload?.cost_estimate ?? 0).toFixed(3)}.`
+                    : ` YT quota used: ${fetchResult.payload?.yt_quota_units ?? 0} units.`}
                 </div>
               ) : (
                 <div className="oi-modal-note oi-modal-note-warn">
-                  Initial fetch failed: {fetchResult?.payload?.error || 'unknown'}. The nightly cron will pick this up anyway.
+                  Initial fetch did not complete: {fetchResult?.payload?.error || 'unknown error'}. The account is added and the nightly cron will retry it.
                 </div>
               )}
             </div>
@@ -1325,7 +1383,7 @@ function AddAccountModal({ open, onClose, onAdded }) {
               </button>
             </>
           )}
-          {(step === 'saving' || step === 'fetching') && (
+          {(step === 'saving' || step === 'fetching' || step === 'polling') && (
             <button type="button" className="oi-bulk-btn-primary" disabled>Working…</button>
           )}
           {step === 'done' && (
@@ -1380,13 +1438,27 @@ function BackfillModal({ open, account, onClose, onBackfilled }) {
           mode: 'fetch',
           account_id: account.id,
           limit: chosenTier.limit,
+          async: true,
         }),
       })
       const payload = await res.json().catch(() => ({}))
-      if (!res.ok) {
+      if (!res.ok || !payload?.log_id) {
         throw new Error(payload?.error || `${fetchSlug} ${res.status}`)
       }
-      setFetchResult(payload)
+      // Dispatch accepted — heavy work runs in EdgeRuntime.waitUntil.
+      // Poll the log row until it leaves 'running'.
+      setStep('polling')
+      const finalRow = await pollFetchLog(payload.log_id)
+      if (finalRow?.status !== 'success') {
+        throw new Error(finalRow?.error_message || 'Backfill did not complete.')
+      }
+      setFetchResult({
+        ...payload,
+        posts_new: finalRow.posts_new,
+        posts_fetched: finalRow.posts_fetched,
+        cost_estimate: finalRow.cost_estimate,
+        quota_units_used: finalRow.yt_quota_units,
+      })
       setStep('done')
       if (onBackfilled) onBackfilled()
     } catch (e) {
@@ -1422,7 +1494,7 @@ function BackfillModal({ open, account, onClose, onBackfilled }) {
               </div>
               {depth === 'full' && (
                 <div className="oi-modal-note oi-modal-note-warn" style={{ marginTop: 'var(--space-3)' }}>
-                  <strong>Full history fetches can take several minutes.</strong> The fetcher paginates through up to 500 {platform === 'instagram' ? 'posts' : 'uploads'} in a single run, so keep the tab open until it finishes.
+                  <strong>Full history fetches can take several minutes.</strong> The fetcher paginates through up to 500 {platform === 'instagram' ? 'posts' : 'uploads'} in the background. You can leave this dialog open to see when it finishes.
                 </div>
               )}
             </>
@@ -1439,7 +1511,13 @@ function BackfillModal({ open, account, onClose, onBackfilled }) {
           )}
 
           {step === 'fetching' && (
-            <div className="oi-modal-status">Fetching {chosenTier.limit} {platform === 'instagram' ? 'posts' : 'uploads'}…</div>
+            <div className="oi-modal-status">Dispatching backfill…</div>
+          )}
+
+          {step === 'polling' && (
+            <div className="oi-modal-status">
+              Fetching up to {chosenTier.limit} {platform === 'instagram' ? 'posts' : 'uploads'} in the background — this can take a few minutes.
+            </div>
           )}
 
           {step === 'done' && fetchResult && (

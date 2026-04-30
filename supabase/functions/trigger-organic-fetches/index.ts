@@ -3,14 +3,24 @@
 // Phase 3c orchestrator. Invoked by pg_cron (via pg_net + vault-stored service
 // role JWT) on a schedule. Reads `followed_organic_accounts`, applies budget
 // and idle-threshold guards, then dispatches to `fetch-instagram-posts` or
-// `fetch-youtube-posts` one account at a time with a stagger delay between
-// calls so a batch doesn't collapse into one second.
+// `fetch-youtube-posts` for each due account in async mode (202 + log_id).
+//
+// Why async dispatch
+// ------------------
+// The previous implementation awaited each per-account fetch in series, with
+// a 30s stagger. A single slow account (e.g. a busy IG handle that takes
+// >150s to scrape) would tip the entire orchestrator past the Supabase
+// gateway's 150s wall, returning 504 and leaving the rest of the queue
+// un-dispatched. Async dispatch flips the model: each fetcher returns 202
+// in <1s with a log_id, and the heavy work runs inside the fetcher's own
+// EdgeRuntime.waitUntil. The orchestrator now finishes a 50-account batch in
+// well under 30s and never blocks on a single slow handle.
 //
 // Request shape (POST, JSON):
 //   { platform: "instagram" | "youtube",
 //     idle_hours?: number,           // override per-platform default
 //     limit_per_account?: number,    // override fetcher default
-//     stagger_ms?: number = 30000,   // delay between account calls
+//     stagger_ms?: number = 250,     // small delay between dispatches
 //     max_accounts?: number,         // safety cap per run
 //     dry_run?: boolean = false }    // plan only, no side effects
 //
@@ -31,15 +41,14 @@
 //   last_fetched_at < now() - interval 'idle_hours hours'.
 //
 // Error policy:
-//   Per-account fetcher errors do not fail the run. The underlying fetcher
-//   logs to organic_fetch_log with status='error'. Orchestrator records
-//   aggregate counts only. Unexpected orchestrator errors (pre-flight, DB)
-//   surface as HTTP 500.
+//   The orchestrator only verifies the dispatch ack (202). The heavy work
+//   completing or failing is reflected in organic_fetch_log by the fetcher
+//   itself. If a fetcher returns a non-2xx ack (auth, account-not-found,
+//   budget-exceeded), we record it as a dispatch failure but keep going.
 //
 // Security:
-//   verify_jwt: true (matches project convention). Cron passes the service
-//   role JWT from vault as Bearer. Manual runs require a signed-in user or
-//   the same service role token.
+//   verify_jwt: true. Cron passes the service role JWT from vault as Bearer.
+//   Manual runs require a signed-in user or the same service role token.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
@@ -53,7 +62,7 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 // or rely on the incoming Authorization header fallback below.
 const DISPATCH_JWT = Deno.env.get("ORG_CRON_SERVICE_KEY") || "";
 
-const FUNCTION_VERSION = "trigger-organic-fetches@1.1.0";
+const FUNCTION_VERSION = "trigger-organic-fetches@1.2.0";
 
 const IG_DEFAULTS = {
   idleHours: 20,
@@ -69,7 +78,9 @@ const YT_DEFAULTS = {
   fetcherPath: "fetch-youtube-posts",
 };
 
-const DEFAULT_STAGGER_MS = 30000;
+// With async dispatch the fetcher returns in ~1s, so the only reason for
+// stagger is to avoid hammering the gateway with simultaneous bursts.
+const DEFAULT_STAGGER_MS = 250;
 const DEFAULT_MAX_ACCOUNTS = 50;
 
 const corsHeaders = {
@@ -104,8 +115,7 @@ interface DispatchResult {
   handle: string;
   ok: boolean;
   http_status: number;
-  posts_fetched?: number;
-  posts_new?: number;
+  log_id?: string;
   error?: string;
 }
 
@@ -129,9 +139,6 @@ async function pgGet(path: string): Promise<any> {
 }
 
 async function fetchBudgetGuard(platform: string): Promise<{ used: number; unit: "usd" | "units" }> {
-  // Window boundary in SQL form; PostgREST uses ISO timestamps.
-  // For IG we want "since start of UTC day".
-  // For YT we want "since start of UTC month".
   const now = new Date();
   let sinceIso: string;
   if (platform === "instagram") {
@@ -154,9 +161,6 @@ async function fetchBudgetGuard(platform: string): Promise<{ used: number; unit:
 }
 
 async function fetchDueAccounts(platform: string, idleHours: number, maxAccounts: number): Promise<AccountRow[]> {
-  // We fetch all active accounts for the platform, then filter by idle in JS.
-  // (PostgREST doesn't support "OR last_fetched_at IS NULL OR last_fetched_at < :ts"
-  // in a single or= clause cleanly with a dynamic ts, so we do it client side.)
   const rows = await pgGet(
     `followed_organic_accounts?select=id,platform,handle,brand_name,is_active,last_fetched_at&platform=eq.${platform}&is_active=eq.true&order=handle.asc`,
   );
@@ -190,7 +194,10 @@ async function dispatchFetcher(
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(payload),
+    // Always async=true: we only need the dispatch ack here, the heavy work
+    // runs in the fetcher's EdgeRuntime.waitUntil and surfaces via
+    // organic_fetch_log.
+    body: JSON.stringify({ ...payload, async: true }),
   });
   const body = await res.json().catch(() => ({}));
   return { ok: res.ok, http_status: res.status, body };
@@ -208,10 +215,6 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "SUPABASE_SERVICE_ROLE_KEY not configured" }, 500);
   }
 
-  // Pick the JWT used for dispatching to fetchers. Prefer explicit override,
-  // otherwise forward the caller's Authorization header. Cron passes the vault
-  // JWT in Authorization so this works out of the box once the override is
-  // populated OR when invoked by cron.
   const incomingAuth = req.headers.get("Authorization") || "";
   const dispatchAuth = DISPATCH_JWT
     ? `Bearer ${DISPATCH_JWT}`
@@ -244,14 +247,12 @@ Deno.serve(async (req) => {
   const startedAt = new Date().toISOString();
 
   try {
-    // ---- 1. Budget guard ----
     const budget = await fetchBudgetGuard(platform);
     const budgetCap = platform === "instagram"
       ? IG_DEFAULTS.dailyBudgetUsd
       : YT_DEFAULTS.monthlyQuotaUnits;
     const budgetExhausted = budget.used >= budgetCap;
 
-    // ---- 2. Due accounts ----
     const due = await fetchDueAccounts(platform, idleHours, maxAccounts);
 
     if (dryRun || budgetExhausted) {
@@ -272,7 +273,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ---- 3. Dispatch ----
     const results: DispatchResult[] = [];
     let succeeded = 0;
     let failed = 0;
@@ -289,17 +289,19 @@ Deno.serve(async (req) => {
           },
           dispatchAuth,
         );
+        // Async fetcher returns 202 with status: "accepted" on a successful
+        // dispatch. Treat both 202 and any 2xx as a successful enqueue.
+        const dispatched = http_status >= 200 && http_status < 300;
         const row: DispatchResult = {
           account_id: acc.id,
           handle: acc.handle,
-          ok,
+          ok: dispatched,
           http_status,
         };
-        if (ok) {
+        if (dispatched) {
           succeeded++;
-          if (respBody && typeof respBody === "object") {
-            if (typeof respBody.posts_fetched === "number") row.posts_fetched = respBody.posts_fetched;
-            if (typeof respBody.posts_new === "number") row.posts_new = respBody.posts_new;
+          if (respBody && typeof respBody === "object" && typeof respBody.log_id === "string") {
+            row.log_id = respBody.log_id;
           }
         } else {
           failed++;
@@ -317,7 +319,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Stagger, but skip after the last account.
       if (i < due.length - 1 && staggerMs > 0) {
         await sleep(staggerMs);
       }
@@ -337,6 +338,7 @@ Deno.serve(async (req) => {
       succeeded,
       failed,
       stagger_ms: staggerMs,
+      note: "Heavy work runs asynchronously in each fetcher's EdgeRuntime.waitUntil. Poll organic_fetch_log by log_id for completion.",
       results,
     });
   } catch (e) {
