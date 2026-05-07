@@ -14,7 +14,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
  * Also classifies screen layouts per shot and computes layout_summary.
  */
 
-const FUNCTION_VERSION = "ai-analyse-video@3";
+const FUNCTION_VERSION = "ai-analyse-video@4";
 
 const SUPABASE_URL = "https://ifrxylvoufncdxyltgqt.supabase.co";
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -75,6 +75,39 @@ const FORMAT_VOCAB = [
   "screen-recording",
 ];
 
+// v4: Content pattern vocabulary. Distinct from production_style — this captures
+// what the video is ABOUT and how it's STRUCTURED, not just how it was filmed.
+// Designed for DTC food / wellness / beauty / fitness / lifestyle. Keep this
+// list deliberately tight (~20 items) so dashboards can group meaningfully.
+const CONTENT_PATTERN_VOCAB = [
+  // Talent-led
+  "street-interview",            // Talent stops strangers, asks questions, films reactions
+  "founder-story",               // Brand founder/owner on camera, personal narrative
+  "customer-testimonial",        // Real customer (not a creator) giving review/reaction
+  "creator-vlog",                // Single creator narrative, day-in-life feel
+  "expert-talking-head",         // Doctor/dietitian/coach speaking with authority
+  // Structure-led
+  "recipe-tutorial",             // Step-by-step cooking/preparation
+  "before-after-transformation", // Visual transformation reveal
+  "unboxing-haul",               // Receiving + opening + showing the product
+  "review-comparison",           // Head-to-head comparison or A/B test
+  "list-format",                 // "5 reasons", "3 things you didn't know"
+  "routine-grwm",                // Get ready / morning / night routine
+  "mukbang-eating",              // Eating + reacting on camera
+  "pov-firsthand",               // First-person "you-are-there" perspective
+  "educational-explainer",       // Teaches a concept with visuals
+  "quick-tip-hack",              // Short actionable tip or lifehack
+  // Trend / format-aware
+  "trend-jacking",               // Meme/audio/dance trend adaptation
+  "reaction-stitch",             // Responding to or building on another video
+  "behind-the-scenes",           // Production/kitchen/process tour
+  // Brand-led
+  "product-spotlight",           // Pure product shots, no talent
+  "brand-story-mission",         // Why-we-exist, values content
+  // Fallback
+  "other",
+];
+
 const ANALYSIS_PROMPT = `You are an expert DTC (direct-to-consumer) paid social creative strategist analysing a competitor video advertisement.
 
 You will be given:
@@ -125,10 +158,89 @@ Analyse this ad and return a JSON object with the following structure:
     "weaknesses": ["1-3 things this ad could do better"]
   },
   "one_line_summary": "A single sentence summarising what this ad is and why it works (or doesn't)",
+  "content_pattern": "string — the dominant content pattern by runtime. MUST be one of: ${CONTENT_PATTERN_VOCAB.join(", ")}. This captures WHAT the video is structurally (street-interview, founder-story, recipe-tutorial, etc.) not just how it was shot. Pick the single pattern that best describes the video's structure and intent. Use 'other' only when no listed pattern fits.",
+  "content_pattern_secondary": "string or null — a second content pattern only if it clearly takes 30%+ of runtime AND is distinct from content_pattern. Otherwise null. Same vocabulary.",
+  "content_pattern_label": "string — human-readable combo. If secondary is null, use Title Case of primary (e.g. 'Street Interview', 'Recipe Tutorial'). If both, join with ' + ' in primary-first order.",
+  "content_pattern_rationale": "string — one sentence (max 200 chars) describing what makes this video fit the chosen pattern(s). Reference specific moments. E.g. 'Founder pitches the brand to camera in the first 8s, then transitions into a kitchen recipe tutorial showing the product in use (~60% of runtime).'",
   "shot_layouts": ["array of screen layout classifications for each shot in order (length must match total shots). Each value is one of: full (single full-frame composition), split-2 (screen divided into two panels \u2014 top/bottom or left/right), split-3 (screen divided into three panels/grid), other (unusual or unclear layout). Look at each frame in the contact sheet and classify its composition."]
 }
 
 Return ONLY the JSON object, no other text. Be specific and reference actual content from the script \u2014 don't give generic analysis.`;
+
+// v4: Normalise content_pattern into a top-level shape before writing to JSONB.
+// Guards against Claude returning vocab variants ("Street Interview" vs
+// "street-interview"), forgetting the label, or returning unknown patterns.
+function normaliseContentPattern(aiAnalysis: Record<string, unknown>): Record<string, unknown> {
+  const titleCase = (s: string) =>
+    s.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()).replace("Grwm", "GRWM").replace("Ugc", "UGC").replace("Pov", "POV");
+
+  const coerce = (val: unknown): string | null => {
+    if (!val || typeof val !== "string") return null;
+    const trimmed = val.trim().toLowerCase().replace(/\s+/g, "-").replace(/_/g, "-").replace(/\//g, "-");
+    if (!trimmed || trimmed === "null" || trimmed === "none") return null;
+    if (CONTENT_PATTERN_VOCAB.includes(trimmed)) return trimmed;
+    // Tolerant fallbacks for common variants Claude might emit.
+    const alias: Record<string, string> = {
+      "interview": "street-interview",
+      "vox-pop": "street-interview",
+      "testimonial": "customer-testimonial",
+      "review": "review-comparison",
+      "comparison": "review-comparison",
+      "haul": "unboxing-haul",
+      "unboxing": "unboxing-haul",
+      "tutorial": "recipe-tutorial",
+      "recipe": "recipe-tutorial",
+      "grwm": "routine-grwm",
+      "get-ready-with-me": "routine-grwm",
+      "vlog": "creator-vlog",
+      "founder": "founder-story",
+      "explainer": "educational-explainer",
+      "tip": "quick-tip-hack",
+      "hack": "quick-tip-hack",
+      "trend": "trend-jacking",
+      "stitch": "reaction-stitch",
+      "reaction": "reaction-stitch",
+      "bts": "behind-the-scenes",
+      "kitchen-tour": "behind-the-scenes",
+      "before-after": "before-after-transformation",
+      "transformation": "before-after-transformation",
+      "mukbang": "mukbang-eating",
+      "eating": "mukbang-eating",
+      "pov": "pov-firsthand",
+      "first-person": "pov-firsthand",
+      "list": "list-format",
+      "listicle": "list-format",
+      "product": "product-spotlight",
+      "brand-story": "brand-story-mission",
+      "mission": "brand-story-mission",
+    };
+    return alias[trimmed] || "other";
+  };
+
+  let primary = coerce(aiAnalysis.content_pattern);
+  let secondary = coerce(aiAnalysis.content_pattern_secondary);
+  if (!primary) primary = "other";
+  if (secondary && secondary === primary) secondary = null;
+
+  const label = (() => {
+    const existing = typeof aiAnalysis.content_pattern_label === "string"
+      ? aiAnalysis.content_pattern_label.trim() : "";
+    if (existing) return existing;
+    if (!secondary) return titleCase(primary);
+    return `${titleCase(primary)} + ${titleCase(secondary)}`;
+  })();
+
+  const rationale = typeof aiAnalysis.content_pattern_rationale === "string"
+    ? aiAnalysis.content_pattern_rationale.trim() : "";
+
+  return {
+    ...aiAnalysis,
+    content_pattern: primary,
+    content_pattern_secondary: secondary,
+    content_pattern_label: label,
+    content_pattern_rationale: rationale || null,
+  };
+}
 
 // Normalise Claude's production_style output into the v3 shape before writing to JSONB.
 // Guards against drift (Claude returning 'mixed', forgetting format_label, etc.).
@@ -332,6 +444,8 @@ Deno.serve(async (req: Request) => {
     // Normalise production_style to the v3 shape (guards against Claude drift).
     if (aiAnalysis && typeof aiAnalysis === "object" && !aiAnalysis.parse_error) {
       aiAnalysis.production_style = normaliseProductionStyle(aiAnalysis.production_style);
+      // v4: also normalise content_pattern so the dashboard can group reliably.
+      aiAnalysis = normaliseContentPattern(aiAnalysis as Record<string, unknown>);
     }
 
     // 5. Save to database

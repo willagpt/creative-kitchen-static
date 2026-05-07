@@ -1,0 +1,309 @@
+/* FormatPerformance.css — Mirrors Cadence + PaidCadence styling so the
+   three sister dashboards look like a coherent suite. */
+
+.fp-root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 16px 0 32px;
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #e6e8eb;
+}
+
+.fp-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.fp-title {
+  font-family: 'Syne', 'Plus Jakarta Sans', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.fp-subtitle {
+  margin-top: 4px;
+  color: #8c95a1;
+  font-size: 13px;
+  max-width: 720px;
+  line-height: 1.45;
+}
+
+.fp-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.fp-select {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  min-width: 180px;
+}
+
+.fp-select:focus {
+  outline: none;
+  border-color: #ffd24a;
+}
+
+.fp-metric-pills {
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.fp-pill {
+  background: none;
+  border: 0;
+  color: #8c95a1;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 100ms ease;
+}
+
+.fp-pill:hover { color: #c8cdd4; }
+
+.fp-pill.active {
+  background: #ffd24a;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+/* ---------- Big picture ---------- */
+
+.fp-bigpic {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+}
+
+.fp-bigpic-stat {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.fp-bigpic-stat-tall {
+  /* For top/bottom pattern cells the value can wrap to two lines */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.fp-bigpic-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8c95a1;
+  font-weight: 500;
+}
+
+.fp-bigpic-value {
+  font-family: 'Instrument Serif', serif;
+  font-size: 28px;
+  line-height: 1.1;
+  margin-top: 4px;
+  color: #ffd24a;
+}
+
+.fp-bigpic-value-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.fp-bigpic-value-dim { color: #8c95a1; }
+
+.fp-bigpic-sub {
+  font-size: 12px;
+  color: #6b7380;
+  margin-top: 2px;
+}
+
+/* ---------- Table ---------- */
+
+.fp-table-wrap {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  overflow-x: auto;
+}
+
+.fp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  min-width: 1100px;
+}
+
+.fp-th {
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8c95a1;
+  font-weight: 500;
+  padding: 11px 12px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.fp-th-left { text-align: left; }
+.fp-th-active { color: #ffd24a; }
+
+.fp-table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 100ms ease;
+}
+
+.fp-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.fp-row-low {
+  opacity: 0.55;
+}
+
+.fp-row-over {
+  background: rgba(74, 222, 128, 0.04);
+}
+
+.fp-row-over:hover {
+  background: rgba(74, 222, 128, 0.07);
+}
+
+.fp-td {
+  padding: 11px 12px;
+  text-align: right;
+  vertical-align: middle;
+  color: #c8cdd4;
+  font-variant-numeric: tabular-nums;
+}
+
+.fp-td-left { text-align: left; }
+.fp-td-active { color: #ffd24a; font-weight: 600; }
+
+.fp-td-warn-label {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  background: rgba(255, 184, 0, 0.18);
+  color: #ffb380;
+  border-radius: 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.fp-pattern-label {
+  font-weight: 600;
+  color: #fff;
+}
+
+.fp-pattern-key {
+  font-size: 10.5px;
+  color: #6b7380;
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 1px;
+}
+
+.fp-index {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #c8cdd4;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.fp-index-over {
+  background: rgba(74, 222, 128, 0.18);
+  color: #4ade80;
+}
+
+.fp-index-under {
+  background: rgba(255, 122, 122, 0.16);
+  color: #ff7a7a;
+}
+
+/* ---------- Example post strip ---------- */
+
+.fp-examples {
+  display: inline-flex;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.fp-example {
+  display: block;
+  width: 36px;
+  height: 48px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.fp-example img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.fp-example:hover {
+  border-color: #ffd24a;
+}
+
+/* ---------- States ---------- */
+
+.fp-empty,
+.fp-error {
+  padding: 28px;
+  text-align: center;
+  color: #8c95a1;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+}
+
+.fp-error { color: #ff7a7a; }
+
+.fp-foot {
+  font-size: 12px;
+  color: #6b7380;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  padding: 12px 16px;
+  line-height: 1.6;
+}
+
+.fp-foot strong { color: #c8cdd4; }
