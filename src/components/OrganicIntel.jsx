@@ -705,10 +705,15 @@ function AccountDetail({ account, latestLog, onBack, onBackfilled }) {
       else next.add(postId)
       return next
     })
+    // Manual toggle diverges from the percentile slice — un-highlight the pill.
+    setPercentile(null)
   }
 
   function selectAllEligible() {
     setSelectedIds(new Set(selectablePosts.map(p => p.id)))
+    // Diverging from the percentile slice — un-highlight the pill so the user
+    // doesn't see "Top 20%" lit while 51 of 51 are actually selected.
+    setPercentile(null)
   }
 
   function clearSelection() {
