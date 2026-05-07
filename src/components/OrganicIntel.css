@@ -1020,3 +1020,38 @@
   }
   .oi-depth-pill { flex: 1 1 30%; min-width: 0; }
 }
+
+/* ---------- Cadence sub-tab switcher ----------
+   Sits between the stats bar and the runs strip. Lets the user switch between
+   the existing accounts grid and the new Cadence dashboard without leaving
+   the Organic Intel surface. */
+
+.oi-subtabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin: 16px 0 12px;
+}
+
+.oi-subtab {
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: #8c95a1;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: color 100ms ease, border-color 100ms ease;
+}
+
+.oi-subtab:hover {
+  color: #c8cdd4;
+}
+
+.oi-subtab.active {
+  color: #ffd24a;
+  border-bottom-color: #ffd24a;
+  font-weight: 600;
+}
