@@ -14,6 +14,7 @@ import {
   saveBrand, updateBrand, deleteBrand
 } from './competitor/api'
 import InlineVideoCard from './competitor/InlineVideoCard'
+import PaidCadence from './PaidCadence'
 
 
 // ── Component ──
@@ -1435,6 +1436,10 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
               Top Performers
             </button>
+            <button className={`ca-view-tab ${viewMode === 'cadence' ? 'active' : ''}`} onClick={() => setViewMode('cadence')} title="Test velocity, library size, kill rate, format mix, posts-per-1m-revenue">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3,17 9,11 13,15 21,7"/><polyline points="14,7 21,7 21,14"/></svg>
+              Cadence
+            </button>
           </div>
           <button className="ca-btn-add-competitor" onClick={() => setShowAddForm(true)}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -1483,6 +1488,9 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
         </div>
       )}
 
+      {viewMode === 'cadence' ? (
+        <PaidCadence />
+      ) : (
       <div className="ca-layout">
         <aside className="ca-sidebar">
           <div className="ca-sidebar-title">Brands ({followedBrands.length})</div>
@@ -2419,6 +2427,7 @@ export default function CompetitorAds({ onNavigate, onAdLibraryRefresh }) {
           )}
         </main>
       </div>
+      )}
 
       {modalAd && (() => {
         const variants = modalAd.variants || [modalAd]
