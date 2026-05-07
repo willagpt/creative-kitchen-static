@@ -102,6 +102,59 @@ function daysSince(iso) {
   return Math.max(0, Math.round((Date.now() - t) / 86400000))
 }
 
+// ---------- Parent brand + link helpers ----------
+
+// Build a deep link to Meta Ad Library filtered to a specific page_id.
+// view_all_page_id is the canonical filter Meta uses for the Library page.
+function metaAdLibraryUrl(pageId) {
+  if (!pageId) return null
+  const qs = new URLSearchParams({
+    active_status: 'all',
+    ad_type: 'all',
+    country: 'ALL',
+    search_type: 'page',
+    view_all_page_id: String(pageId),
+  })
+  return `https://www.facebook.com/ads/library/?${qs}`
+}
+
+// Extract a clean hostname for display from a destination URL (most_common_link_url).
+// Strips www. and any URL parsing failures fall back to a truncated string.
+function prettyHost(url) {
+  if (!url) return null
+  try {
+    const u = new URL(url)
+    return u.hostname.replace(/^www\./, '')
+  } catch {
+    return url.length > 40 ? `${url.slice(0, 40)}...` : url
+  }
+}
+
+// For each row, identify the primary brand at its page_id (the one with the
+// highest total_tests). Rows that aren't primary are flagged as "creators"
+// and their primary's display name is attached.
+function annotateParents(rows) {
+  if (!rows || !rows.length) return rows
+  const byPage = new Map()
+  for (const r of rows) {
+    if (!r.page_id) continue
+    const cur = byPage.get(r.page_id)
+    const total = Number(r.total_tests || 0)
+    if (!cur || total > Number(cur.total_tests || 0)) {
+      byPage.set(r.page_id, r)
+    }
+  }
+  return rows.map(r => {
+    const primary = r.page_id ? byPage.get(r.page_id) : null
+    const isPrimary = !primary || primary.page_name === r.page_name
+    return {
+      ...r,
+      __is_creator: !isPrimary,
+      __parent_brand: isPrimary ? null : (primary?.brand_name_display || primary?.page_name || null),
+    }
+  })
+}
+
 // ---------- Data layer ----------
 
 async function loadStats() {
@@ -619,6 +672,7 @@ function CadenceTable({ rows, cpms, showSpend, onAccountUpdated }) {
             <Header k="revenue" label="Revenue" />
             <Header k="tests_per_million" label="Tests / £1m" />
             <Header k="freshness" label="Last seen" />
+            <th className="pc-th pc-th-left">Links</th>
             {showSpend && <th className="pc-th">Est. spend / mo</th>}
           </tr>
         </thead>
@@ -634,6 +688,11 @@ function CadenceTable({ rows, cpms, showSpend, onAccountUpdated }) {
               <tr key={row.page_name} className={surging ? 'pc-row-surging' : ''}>
                 <td className="pc-td pc-td-left">
                   <div className="pc-brand-name">{row.brand_name_display || row.page_name}</div>
+                  {row.__is_creator && row.__parent_brand && (
+                    <div className="pc-brand-via" title={`Shares page_id ${row.page_id} with ${row.__parent_brand} - likely a UGC creator or affiliated brand`}>
+                      via <strong>{row.__parent_brand}</strong>
+                    </div>
+                  )}
                   <div className="pc-brand-meta">
                     {fmtNumber(row.total_ads)} ads tracked · {fmtNumber(row.total_tests)} tests
                   </div>
@@ -691,6 +750,32 @@ function CadenceTable({ rows, cpms, showSpend, onAccountUpdated }) {
                   {stale === null ? '—' :
                     <span className={stale > 14 ? 'pc-stale' : ''}>{stale}d ago</span>}
                 </td>
+                <td className="pc-td pc-td-left pc-td-links">
+                  {row.page_id && (
+                    <a
+                      className="pc-link"
+                      href={metaAdLibraryUrl(row.page_id)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="View live ads on Meta Ad Library"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+                      Library
+                    </a>
+                  )}
+                  {row.most_common_link_url && (
+                    <a
+                      className="pc-link"
+                      href={row.most_common_link_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={`Top destination URL: ${row.most_common_link_url}`}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                      {prettyHost(row.most_common_link_url)}
+                    </a>
+                  )}
+                </td>
                 {showSpend && (
                   <td className="pc-td">
                     {spend && spend.midpoint
@@ -716,6 +801,7 @@ export default function PaidCadence() {
   const [search, setSearch] = useState('')
   const [intensityFilter, setIntensityFilter] = useState('all')
   const [showSpend, setShowSpend] = useState(false)
+  const [hideCreators, setHideCreators] = useState(false)
   const [cpms, setCpms] = useState(() => {
     if (typeof window === 'undefined') return { ...DEFAULT_CPMS }
     try {
@@ -743,7 +829,7 @@ export default function PaidCadence() {
     setError(null)
     try {
       const data = await loadStats()
-      setRows(data || [])
+      setRows(annotateParents(data || []))
     } catch (e) {
       setError(e.message)
     } finally {
@@ -757,7 +843,7 @@ export default function PaidCadence() {
   // so the table re-renders without a full RPC round trip.
   const onAccountUpdated = useCallback((pageName, saved) => {
     if (!saved) return
-    setRows(prev => prev.map(r => r.page_name === pageName
+    setRows(prev => annotateParents(prev.map(r => r.page_name === pageName
       ? {
           ...r,
           meta_id: saved.id,
@@ -767,7 +853,7 @@ export default function PaidCadence() {
           cpm_override: saved.cpm_override,
         }
       : r
-    ))
+    )))
   }, [])
 
   const filtered = useMemo(() => {
@@ -775,9 +861,10 @@ export default function PaidCadence() {
     return rows.filter(r => {
       if (q && !(r.brand_name_display || r.page_name || '').toLowerCase().includes(q)) return false
       if (intensityFilter !== 'all' && intensityTier(r).key !== intensityFilter) return false
+      if (hideCreators && r.__is_creator) return false
       return true
     })
-  }, [rows, search, intensityFilter])
+  }, [rows, search, intensityFilter, hideCreators])
 
   // Cap at brands with at least 1 test in the last 90 days OR at least 5
   // active ads. Otherwise the table fills up with stale brands.
@@ -824,6 +911,14 @@ export default function PaidCadence() {
               onChange={e => setShowSpend(e.target.checked)}
             />
             <span>Show spend estimate</span>
+          </label>
+          <label className="pc-toggle" title="Hide UGC creators / affiliated brands sharing a parent's ad account">
+            <input
+              type="checkbox"
+              checked={hideCreators}
+              onChange={e => setHideCreators(e.target.checked)}
+            />
+            <span>Hide creators</span>
           </label>
           <button type="button" className="pc-refresh" onClick={reload} title="Reload">
             ↻
