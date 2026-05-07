@@ -562,3 +562,48 @@
 }
 
 .pc-foot strong { color: #c8cdd4; }
+
+/* ---------- Parent-brand attribution + links column ---------- */
+
+.pc-brand-via {
+  margin-top: 2px;
+  font-size: 10.5px;
+  color: #ffb380;
+  letter-spacing: 0.01em;
+}
+
+.pc-brand-via strong {
+  color: #ffd24a;
+  font-weight: 600;
+}
+
+.pc-td-links {
+  white-space: normal;
+  width: 200px;
+  min-width: 180px;
+}
+
+.pc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  margin: 2px 4px 2px 0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: #c8cdd4;
+  font-size: 11px;
+  text-decoration: none;
+  transition: all 100ms ease;
+}
+
+.pc-link:hover {
+  background: rgba(255, 210, 74, 0.1);
+  border-color: rgba(255, 210, 74, 0.4);
+  color: #ffd24a;
+}
+
+.pc-link svg {
+  flex-shrink: 0;
+}
