@@ -20,7 +20,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 const SUPABASE_URL = "https://ifrxylvoufncdxyltgqt.supabase.co";
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
-const FUNCTION_VERSION = "save-organic-account@1.0.0";
+const FUNCTION_VERSION = "save-organic-account@1.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -180,6 +180,28 @@ Deno.serve(async (req: Request) => {
     }
     if (typeof body.fetch_frequency === "string") {
       payload.fetch_frequency = body.fetch_frequency;
+    }
+    // Cadence v1: annual_revenue_estimate (number, nullable) + revenue_currency (string).
+    // Pass null explicitly to clear an existing value.
+    if (Object.prototype.hasOwnProperty.call(body, "annual_revenue_estimate")) {
+      const v = body.annual_revenue_estimate;
+      if (v === null) {
+        payload.annual_revenue_estimate = null;
+      } else if (typeof v === "number" && Number.isFinite(v) && v >= 0) {
+        payload.annual_revenue_estimate = v;
+      } else if (typeof v === "string" && v.trim() !== "") {
+        const n = Number(v);
+        if (!Number.isFinite(n) || n < 0) {
+          return jsonResponse(
+            { error: "annual_revenue_estimate must be a non-negative number or null" },
+            400,
+          );
+        }
+        payload.annual_revenue_estimate = n;
+      }
+    }
+    if (typeof body.revenue_currency === "string" && body.revenue_currency.trim() !== "") {
+      payload.revenue_currency = body.revenue_currency.trim().toUpperCase().slice(0, 3);
     }
 
     // Use PostgREST on_conflict upsert against the UNIQUE(platform, platform_account_id)

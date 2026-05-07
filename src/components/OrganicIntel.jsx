@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabaseUrl, supabaseAnonKey } from '../lib/supabase'
+import Cadence from './Cadence'
 import './OrganicIntel.css'
 
 const fnHeaders = {
@@ -1514,6 +1515,9 @@ export default function OrganicIntel() {
   const [platformFilter, setPlatformFilter] = useState('all')
   const [selectedAccount, setSelectedAccount] = useState(null)
   const [showAddModal, setShowAddModal] = useState(false)
+  // Sub-tab inside the Organic Intel surface. 'accounts' = the existing
+  // grid + detail flow. 'cadence' = the new posts/wk + revenue dashboard.
+  const [viewMode, setViewMode] = useState('accounts')
 
   const loadAll = async () => {
     setLoading(true)
@@ -1544,6 +1548,10 @@ export default function OrganicIntel() {
           fetch_frequency: r.fetch_frequency,
           last_fetched_at: r.last_fetched_at,
           created_at: r.created_at,
+          // Cadence v1: annual revenue + currency power the velocity
+          // benchmark and posts-per-1m-revenue column on the Cadence tab.
+          annual_revenue_estimate: r.annual_revenue_estimate ?? null,
+          revenue_currency: r.revenue_currency || 'GBP',
         })
         counts[r.id] = Number(r.post_count) || 0
         if (r.latest_log_id) {
@@ -1584,6 +1592,14 @@ export default function OrganicIntel() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Cadence inline-edit: when the user updates an account's revenue from
+  // inside <Cadence />, merge the returned row back into accounts so the
+  // table re-renders without a full RPC round trip.
+  const onAccountUpdated = (updated) => {
+    if (!updated || !updated.id) return
+    setAccounts(prev => prev.map(a => a.id === updated.id ? { ...a, ...updated } : a))
   }
 
   useEffect(() => { loadAll() }, [])
@@ -1660,6 +1676,20 @@ export default function OrganicIntel() {
         </div>
       </div>
 
+      <div className="oi-subtabs">
+        <button
+          type="button"
+          className={`oi-subtab ${viewMode === 'accounts' ? 'active' : ''}`}
+          onClick={() => setViewMode('accounts')}
+        >Accounts</button>
+        <button
+          type="button"
+          className={`oi-subtab ${viewMode === 'cadence' ? 'active' : ''}`}
+          onClick={() => setViewMode('cadence')}
+          title="Posting frequency, format mix, and posts-per-1m-revenue benchmarks"
+        >Cadence &amp; Velocity</button>
+      </div>
+
       {(runsSummary.ig || runsSummary.yt) && (
         <div className="oi-runs-strip">
           <div className="oi-runs-strip-label">Last 7 days</div>
@@ -1691,12 +1721,20 @@ export default function OrganicIntel() {
       {loading ? (
         <div className="oi-empty">Loading accounts…</div>
       ) : (
-        <AccountsList
-          accounts={filtered}
-          logsByAccount={logsByAccount}
-          postsByAccount={postsByAccount}
-          onOpen={setSelectedAccount}
-        />
+        viewMode === 'cadence' ? (
+          <Cadence
+            accounts={accounts}
+            loading={loading}
+            onAccountUpdated={onAccountUpdated}
+          />
+        ) : (
+          <AccountsList
+            accounts={filtered}
+            logsByAccount={logsByAccount}
+            postsByAccount={postsByAccount}
+            onOpen={setSelectedAccount}
+          />
+        )
       )}
 
       <AddAccountModal
