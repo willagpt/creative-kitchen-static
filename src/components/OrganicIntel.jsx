@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabaseUrl, supabaseAnonKey } from '../lib/supabase'
 import Cadence from './Cadence'
+import FormatPerformance from './FormatPerformance'
 import './OrganicIntel.css'
 
 const fnHeaders = {
@@ -1688,6 +1689,12 @@ export default function OrganicIntel() {
           onClick={() => setViewMode('cadence')}
           title="Posting frequency, format mix, and posts-per-1m-revenue benchmarks"
         >Cadence &amp; Velocity</button>
+        <button
+          type="button"
+          className={`oi-subtab ${viewMode === 'formats' ? 'active' : ''}`}
+          onClick={() => setViewMode('formats')}
+          title="Which content patterns over-index on engagement (street-interview, founder-story, recipe-tutorial, etc.)"
+        >Format Performance</button>
       </div>
 
       {(runsSummary.ig || runsSummary.yt) && (
@@ -1727,6 +1734,8 @@ export default function OrganicIntel() {
             loading={loading}
             onAccountUpdated={onAccountUpdated}
           />
+        ) : viewMode === 'formats' ? (
+          <FormatPerformance accounts={accounts} />
         ) : (
           <AccountsList
             accounts={filtered}
