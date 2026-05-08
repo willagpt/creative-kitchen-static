@@ -12,7 +12,20 @@
 //     platform_account_id?: string,   // alternative to account_id / handle
 //     limit?: number = 50,            // posts per fetch (max 500)
 //     mode?: "fetch" | "test" = "fetch",
-//     budget_usd?: number = 30 }      // monthly hard cap
+//     budget_usd?: number = 30,       // monthly hard cap
+//     async?: boolean = false }       // when true, return 202 + log_id and
+//                                     // run the work in EdgeRuntime.waitUntil
+//
+// Why async exists
+// ----------------
+// Synchronous mode hits the Supabase gateway 150s wall when Apify takes >150s
+// to return (busy accounts, deeper limits). The 504 leaves the function still
+// running but the HTTP response never arrives, so the FE shows "unknown" and
+// the organic_fetch_log row is stuck in 'running'. Async mode opens the log
+// row up-front, returns 202 with the log_id within ~1s, and runs the heavy
+// path inside EdgeRuntime.waitUntil so the worker stays alive up to the
+// function's full ~400s budget. Callers poll organic_fetch_log to surface
+// completion.
 //
 // Cost model (Apify pay-per-compute, apify/instagram-scraper):
 //   ~$2.30 per 1,000 results. cost_estimate = (posts_fetched / 1000) * 2.30.
@@ -38,7 +51,7 @@ const THUMBNAIL_BUCKET = "organic-thumbs";
 const THUMBNAIL_FETCH_TIMEOUT_MS = 8000;
 const THUMBNAIL_MAX_BYTES = 5 * 1024 * 1024;
 
-const FUNCTION_VERSION = "fetch-instagram-posts@1.2.0";
+const FUNCTION_VERSION = "fetch-instagram-posts@1.3.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -478,6 +491,118 @@ async function closeLog(
   });
 }
 
+// -----------------------------------------------------------------------------
+// Heavy work — extracted so async mode can run it inside EdgeRuntime.waitUntil
+// and sync mode can still await it for the legacy response shape.
+// -----------------------------------------------------------------------------
+
+interface FetchResult {
+  posts_fetched: number;
+  posts_upserted: number;
+  posts_new: number;
+  metrics_rows_inserted: number;
+  thumbnails_snapshotted: number;
+  thumbnails_failed: number;
+  cost_estimate_usd: number;
+  month_spend_usd: number;
+}
+
+async function runHeavyFetch(
+  account: OrganicAccount,
+  limit: number,
+  monthSoFar: number,
+  logId: string | null,
+): Promise<FetchResult> {
+  const apifyPosts = await callApify(account.handle, limit);
+
+  const postRows = apifyPosts
+    .map(p => mapPost(p, account.id))
+    .filter((r): r is Record<string, unknown> => r !== null);
+
+  const { upserted, newCount } = await upsertPosts(postRows);
+  const metricsInserted = await appendMetrics(upserted, apifyPosts);
+
+  // Snapshot thumbnails into our own public bucket so they outlive IG's
+  // signed oh= token. Best-effort: a failure here does not fail the run.
+  const snapshot = await snapshotThumbnailsForRows(postRows);
+  if (snapshot.byPostId.size > 0) {
+    const ops: Promise<unknown>[] = [];
+    for (const u of upserted) {
+      const cached = snapshot.byPostId.get(u.platform_post_id);
+      if (!cached) continue;
+      ops.push(
+        sbPatch(`organic_posts?id=eq.${u.id}`, { thumbnail_cached_url: cached })
+          .catch(err => {
+            console.warn(
+              `[thumbnail-snapshot] patch failed for ${u.platform_post_id}: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          }),
+      );
+    }
+    await Promise.all(ops);
+  }
+
+  const costEstimate = estimateCost(apifyPosts.length);
+  await sbPatch(
+    `followed_organic_accounts?id=eq.${account.id}`,
+    { last_fetched_at: new Date().toISOString() },
+  );
+
+  if (logId) {
+    await closeLog(logId, {
+      posts_fetched: apifyPosts.length,
+      posts_new: newCount,
+      cost_estimate: costEstimate,
+      status: "success",
+    });
+  }
+
+  return {
+    posts_fetched: apifyPosts.length,
+    posts_upserted: postRows.length,
+    posts_new: newCount,
+    metrics_rows_inserted: metricsInserted,
+    thumbnails_snapshotted: snapshot.snapshotted,
+    thumbnails_failed: snapshot.failed,
+    cost_estimate_usd: costEstimate,
+    month_spend_usd: Math.round((monthSoFar + costEstimate) * 10000) / 10000,
+  };
+}
+
+// Wraps runHeavyFetch with the same closeLog-on-error contract used by sync
+// mode, so background failures still mark the log row as 'error' with a
+// useful message instead of leaving it stuck on 'running'.
+async function runHeavyFetchInBackground(
+  account: OrganicAccount,
+  limit: number,
+  monthSoFar: number,
+  logId: string,
+): Promise<void> {
+  try {
+    await runHeavyFetch(account, limit, monthSoFar, logId);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[fetch-instagram-posts] background run failed (log ${logId}): ${message}`);
+    await closeLog(logId, { status: "error", error_message: message }).catch(() => {});
+  }
+}
+
+// EdgeRuntime is provided by the Supabase Deno runtime. waitUntil keeps the
+// worker alive after the response is sent so the background promise can
+// finish. Falls back to letting the promise dangle on local `deno run` so
+// `mode: "test"` still works in unit tests.
+function scheduleBackground(promise: Promise<void>): void {
+  // deno-lint-ignore no-explicit-any
+  const edge = (globalThis as any).EdgeRuntime;
+  if (edge && typeof edge.waitUntil === "function") {
+    edge.waitUntil(promise);
+  } else {
+    // Local dev / non-Supabase runtime: just attach a noop catch so the
+    // unhandled rejection doesn't crash the process.
+    promise.catch(() => {});
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -492,6 +617,9 @@ Deno.serve(async (req: Request) => {
   const mode = body.mode || "fetch";
   const limit = Math.min(Math.max(1, Number(body.limit) || DEFAULT_LIMIT), MAX_LIMIT);
   const budgetUsd = Number(body.budget_usd) || DEFAULT_BUDGET_USD;
+  // Default to sync to preserve the legacy response shape for any caller that
+  // hasn't been updated. The FE and the cron explicitly opt in to async.
+  const asyncMode = body.async === true && mode !== "test";
 
   let logId: string | null = null;
 
@@ -526,13 +654,9 @@ Deno.serve(async (req: Request) => {
       console.warn(`[fetch-instagram-posts] budget warning: projected $${projectedTotal.toFixed(2)} >= ${BUDGET_WARN_PCT * 100}% of $${budgetUsd}`);
     }
 
-    if (mode !== "test") {
-      logId = await openLog(account.id);
-    }
-
-    const apifyPosts = await callApify(account.handle, limit);
-
+    // ---- test mode: never opens a log row, returns inline sample ----
     if (mode === "test") {
+      const apifyPosts = await callApify(account.handle, limit);
       return jsonResponse({
         success: true,
         mode: "test",
@@ -549,61 +673,33 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const postRows = apifyPosts
-      .map(p => mapPost(p, account.id))
-      .filter((r): r is Record<string, unknown> => r !== null);
+    // Open the log row before either branch so the FE has something to poll.
+    logId = await openLog(account.id);
 
-    const { upserted, newCount } = await upsertPosts(postRows);
-    const metricsInserted = await appendMetrics(upserted, apifyPosts);
-
-    // Snapshot thumbnails into our own public bucket so they outlive IG's
-    // signed oh= token. Best-effort: a failure here does not fail the run.
-    const snapshot = await snapshotThumbnailsForRows(postRows);
-    if (snapshot.byPostId.size > 0) {
-      const ops: Promise<unknown>[] = [];
-      for (const u of upserted) {
-        const cached = snapshot.byPostId.get(u.platform_post_id);
-        if (!cached) continue;
-        ops.push(
-          sbPatch(`organic_posts?id=eq.${u.id}`, { thumbnail_cached_url: cached })
-            .catch(err => {
-              console.warn(
-                `[thumbnail-snapshot] patch failed for ${u.platform_post_id}: ${err instanceof Error ? err.message : String(err)}`,
-              );
-            }),
-        );
-      }
-      await Promise.all(ops);
+    // ---- async mode: return 202 + log_id immediately, do work in background ----
+    if (asyncMode) {
+      scheduleBackground(runHeavyFetchInBackground(account, limit, monthSoFar, logId));
+      return jsonResponse({
+        status: "accepted",
+        async: true,
+        account: { id: account.id, handle: account.handle, brand_name: account.brand_name },
+        log_id: logId,
+        projected_cost_usd: projectedCost,
+        month_spend_usd: Math.round(monthSoFar * 10000) / 10000,
+        budget_warned: warned,
+        budget_usd: budgetUsd,
+      }, 202);
     }
 
-
-    const costEstimate = estimateCost(apifyPosts.length);
-    await sbPatch(
-      `followed_organic_accounts?id=eq.${account.id}`,
-      { last_fetched_at: new Date().toISOString() },
-    );
-
-    if (logId) {
-      await closeLog(logId, {
-        posts_fetched: apifyPosts.length,
-        posts_new: newCount,
-        cost_estimate: costEstimate,
-        status: "success",
-      });
-    }
+    // ---- sync mode: legacy behavior, awaits the heavy work ----
+    const result = await runHeavyFetch(account, limit, monthSoFar, logId);
 
     return jsonResponse({
       success: true,
       mode: "fetch",
       account: { id: account.id, handle: account.handle, brand_name: account.brand_name },
-      posts_fetched: apifyPosts.length,
-      posts_upserted: postRows.length,
-      posts_new: newCount,
-      metrics_rows_inserted: metricsInserted,
-      thumbnails_snapshotted: snapshot.snapshotted,
-      thumbnails_failed: snapshot.failed,
-      cost_estimate_usd: costEstimate,
-      month_spend_usd: Math.round((monthSoFar + costEstimate) * 10000) / 10000,
+      ...result,
+      cost_estimate: result.cost_estimate_usd,
       budget_usd: budgetUsd,
       budget_warned: warned,
       log_id: logId,

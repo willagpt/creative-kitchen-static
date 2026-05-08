@@ -12,7 +12,9 @@
 //     platform_account_id?: string,   // channel id (UC...)
 //     limit?: number = 20,            // videos per fetch (max 500)
 //     mode?: "fetch" | "test" = "fetch",
-//     quota_budget?: number = 10000 } // monthly quota soft cap
+//     quota_budget?: number = 10000,  // monthly quota soft cap
+//     async?: boolean = false }       // when true, return 202 + log_id and
+//                                     // run the work in EdgeRuntime.waitUntil
 //
 // Quota model (YouTube Data API v3):
 //   playlistItems.list (contentDetails) = 1 unit / page (50 items)
@@ -37,7 +39,7 @@ const YT_PAGE_SIZE = 50;
 const DEFAULT_QUOTA_BUDGET = 10000;
 const QUOTA_WARN_PCT = 0.80;
 
-const FUNCTION_VERSION = "fetch-youtube-posts@1.1.0";
+const FUNCTION_VERSION = "fetch-youtube-posts@1.2.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -434,6 +436,126 @@ async function closeLog(
   });
 }
 
+// ---- heavy work (extracted for sync + async branches) ---------------------
+
+interface FetchResult {
+  posts_fetched: number;
+  posts_upserted: number;
+  posts_new: number;
+  shorts_detected: number;
+  metrics_rows_inserted: number;
+  quota_units_used: number;
+  month_quota_used: number;
+}
+
+async function runHeavyFetch(
+  account: OrganicAccount,
+  limit: number,
+  monthSoFar: number,
+  logId: string | null,
+): Promise<FetchResult> {
+  const { items: uploads, pagesFetched } = await listUploads(account.uploads_playlist_id!, limit);
+  const videoIds = uploads.map(u => u.videoId);
+
+  if (videoIds.length === 0) {
+    if (logId) {
+      await closeLog(logId, {
+        posts_fetched: 0,
+        posts_new: 0,
+        yt_quota_units: Math.max(1, pagesFetched),
+        status: "success",
+      });
+    }
+    return {
+      posts_fetched: 0,
+      posts_upserted: 0,
+      posts_new: 0,
+      shorts_detected: 0,
+      metrics_rows_inserted: 0,
+      quota_units_used: Math.max(1, pagesFetched),
+      month_quota_used: monthSoFar + Math.max(1, pagesFetched),
+    };
+  }
+
+  const { items: videos, batches: videoBatches } = await videosList(videoIds);
+
+  const durations = new Map<string, number | null>();
+  for (const v of videos) durations.set(v.id, parseIsoDuration(v.contentDetails?.duration));
+
+  const shortsFlags = new Map<string, boolean>();
+  const candidates = videos.filter(v => {
+    const d = durations.get(v.id) ?? null;
+    return d != null && d <= 60;
+  });
+  const CONCURRENCY = 5;
+  for (let i = 0; i < candidates.length; i += CONCURRENCY) {
+    const batch = candidates.slice(i, i + CONCURRENCY);
+    const flags = await Promise.all(batch.map(v => isShort(v.id, durations.get(v.id) ?? null)));
+    batch.forEach((v, idx) => shortsFlags.set(v.id, flags[idx]));
+  }
+  for (const v of videos) if (!shortsFlags.has(v.id)) shortsFlags.set(v.id, false);
+
+  const quotaUsed = pagesFetched + videoBatches;
+
+  const postRows = videos
+    .map(v => mapPost(v, account.id, shortsFlags.get(v.id) || false, durations.get(v.id) ?? null))
+    .filter((r): r is Record<string, unknown> => r !== null);
+
+  const { upserted, newCount } = await upsertPosts(postRows);
+  const metricsInserted = await appendMetrics(upserted, videos);
+
+  await sbPatch(
+    `followed_organic_accounts?id=eq.${account.id}`,
+    { last_fetched_at: new Date().toISOString() },
+  );
+
+  if (logId) {
+    await closeLog(logId, {
+      posts_fetched: videos.length,
+      posts_new: newCount,
+      yt_quota_units: quotaUsed,
+      status: "success",
+    });
+  }
+
+  const shortsCount = [...shortsFlags.values()].filter(Boolean).length;
+
+  return {
+    posts_fetched: videos.length,
+    posts_upserted: postRows.length,
+    posts_new: newCount,
+    shorts_detected: shortsCount,
+    metrics_rows_inserted: metricsInserted,
+    quota_units_used: quotaUsed,
+    month_quota_used: monthSoFar + quotaUsed,
+  };
+}
+
+async function runHeavyFetchInBackground(
+  account: OrganicAccount,
+  limit: number,
+  monthSoFar: number,
+  logId: string,
+): Promise<void> {
+  try {
+    await runHeavyFetch(account, limit, monthSoFar, logId);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[fetch-youtube-posts] background run failed (log ${logId}): ${message}`);
+    await closeLog(logId, { status: "error", error_message: message }).catch(() => {});
+  }
+}
+
+function scheduleBackground(promise: Promise<void>): void {
+  // deno-lint-ignore no-explicit-any
+  const edge = (globalThis as any).EdgeRuntime;
+  if (edge && typeof edge.waitUntil === "function") {
+    edge.waitUntil(promise);
+  } else {
+    promise.catch(() => {});
+  }
+}
+
 // ---- main ------------------------------------------------------------------
 
 Deno.serve(async (req: Request) => {
@@ -450,6 +572,7 @@ Deno.serve(async (req: Request) => {
   const mode = body.mode || "fetch";
   const limit = Math.min(Math.max(1, Number(body.limit) || DEFAULT_LIMIT), MAX_LIMIT);
   const quotaBudget = Number(body.quota_budget) || DEFAULT_QUOTA_BUDGET;
+  const asyncMode = body.async === true && mode !== "test";
 
   let logId: string | null = null;
 
@@ -470,7 +593,7 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: "account missing uploads_playlist_id", account_id: account.id }, 400);
     }
 
-    // 2. quota guard (1 unit per playlistItems page + 1 per videos.list batch, both 50 items)
+    // 2. quota guard
     const projectedPages = Math.max(1, Math.ceil(limit / YT_PAGE_SIZE));
     const projectedQuota = projectedPages * 2;
     const monthSoFar = await monthlyYoutubeQuota();
@@ -489,54 +612,23 @@ Deno.serve(async (req: Request) => {
       console.warn(`[fetch-youtube-posts] quota warning: projected ${projectedTotal} >= ${QUOTA_WARN_PCT * 100}% of ${quotaBudget}`);
     }
 
-    // 3. open log
-    if (mode !== "test") {
-      logId = await openLog(account.id);
-    }
-
-    // 4. list uploads (paginated)
-    const { items: uploads, pagesFetched } = await listUploads(account.uploads_playlist_id, limit);
-    const videoIds = uploads.map(u => u.videoId);
-    if (videoIds.length === 0) {
-      if (logId) {
-        await closeLog(logId, { posts_fetched: 0, posts_new: 0, yt_quota_units: Math.max(1, pagesFetched), status: "success" });
-      }
-      return jsonResponse({
-        success: true, mode, account: { id: account.id, handle: account.handle, brand_name: account.brand_name },
-        posts_fetched: 0, posts_upserted: 0, posts_new: 0, quota_units_used: Math.max(1, pagesFetched),
-      });
-    }
-
-    // 5. fetch full video details (batched in 50s)
-    const { items: videos, batches: videoBatches } = await videosList(videoIds);
-
-    // 6. classify shorts (parallel HEADs, bounded concurrency)
-    const durations = new Map<string, number | null>();
-    for (const v of videos) durations.set(v.id, parseIsoDuration(v.contentDetails?.duration));
-
-    const shortsFlags = new Map<string, boolean>();
-    const candidates = videos.filter(v => {
-      const d = durations.get(v.id) ?? null;
-      return d != null && d <= 60;
-    });
-    const CONCURRENCY = 5;
-    for (let i = 0; i < candidates.length; i += CONCURRENCY) {
-      const batch = candidates.slice(i, i + CONCURRENCY);
-      const flags = await Promise.all(batch.map(v => isShort(v.id, durations.get(v.id) ?? null)));
-      batch.forEach((v, idx) => shortsFlags.set(v.id, flags[idx]));
-    }
-    for (const v of videos) if (!shortsFlags.has(v.id)) shortsFlags.set(v.id, false);
-
-    const quotaUsed = pagesFetched + videoBatches; // 1 unit per page + 1 per videos.list batch
-
-    // 7. test mode returns shape without writing
+    // 3. test mode: run inline, never opens log
     if (mode === "test") {
+      const { items: uploads, pagesFetched } = await listUploads(account.uploads_playlist_id, limit);
+      const { items: videos, batches: videoBatches } = await videosList(uploads.map(u => u.videoId));
+      const durations = new Map<string, number | null>();
+      for (const v of videos) durations.set(v.id, parseIsoDuration(v.contentDetails?.duration));
+      const shortsFlags = new Map<string, boolean>();
+      for (const v of videos) {
+        const d = durations.get(v.id) ?? null;
+        shortsFlags.set(v.id, d != null && d <= 60 ? await isShort(v.id, d) : false);
+      }
       return jsonResponse({
         success: true,
         mode: "test",
         account: { id: account.id, handle: account.handle, brand_name: account.brand_name },
         posts_fetched: videos.length,
-        quota_units_used: quotaUsed,
+        quota_units_used: pagesFetched + videoBatches,
         month_quota_used: monthSoFar,
         quota_warned: warned,
         sample: videos.slice(0, 3).map(v => ({
@@ -551,41 +643,32 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // 8. map + upsert
-    const postRows = videos
-      .map(v => mapPost(v, account.id, shortsFlags.get(v.id) || false, durations.get(v.id) ?? null))
-      .filter((r): r is Record<string, unknown> => r !== null);
+    // 4. open log row before either branch
+    logId = await openLog(account.id);
 
-    const { upserted, newCount } = await upsertPosts(postRows);
-    const metricsInserted = await appendMetrics(upserted, videos);
-
-    await sbPatch(
-      `followed_organic_accounts?id=eq.${account.id}`,
-      { last_fetched_at: new Date().toISOString() },
-    );
-
-    if (logId) {
-      await closeLog(logId, {
-        posts_fetched: videos.length,
-        posts_new: newCount,
-        yt_quota_units: quotaUsed,
-        status: "success",
-      });
+    // 5a. async mode: 202 + log_id, work in background
+    if (asyncMode) {
+      scheduleBackground(runHeavyFetchInBackground(account, limit, monthSoFar, logId));
+      return jsonResponse({
+        status: "accepted",
+        async: true,
+        account: { id: account.id, handle: account.handle, brand_name: account.brand_name },
+        log_id: logId,
+        projected_quota_units: projectedQuota,
+        month_quota_used: monthSoFar,
+        quota_warned: warned,
+        quota_budget: quotaBudget,
+      }, 202);
     }
 
-    const shortsCount = [...shortsFlags.values()].filter(Boolean).length;
+    // 5b. sync mode: legacy, awaits the heavy work
+    const result = await runHeavyFetch(account, limit, monthSoFar, logId);
 
     return jsonResponse({
       success: true,
       mode: "fetch",
       account: { id: account.id, handle: account.handle, brand_name: account.brand_name },
-      posts_fetched: videos.length,
-      posts_upserted: postRows.length,
-      posts_new: newCount,
-      shorts_detected: shortsCount,
-      metrics_rows_inserted: metricsInserted,
-      quota_units_used: quotaUsed,
-      month_quota_used: monthSoFar + quotaUsed,
+      ...result,
       quota_budget: quotaBudget,
       quota_warned: warned,
       log_id: logId,
