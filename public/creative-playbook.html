@@ -26,24 +26,24 @@ html{font-size:14.5px;scroll-behavior:smooth}
 body{font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.65;-webkit-font-smoothing:antialiased}
 h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
 
-/* ── Loading state ── */
+/* -- Loading state -- */
 .loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:1.5rem}
 .loading-screen h2{font-family:var(--font-display);font-size:1.4rem;color:var(--ink-2)}
 .loading-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse .8s infinite alternate}
 .loading-dot:nth-child(2){animation-delay:.15s}.loading-dot:nth-child(3){animation-delay:.3s}
 @keyframes pulse{0%{opacity:.2;transform:scale(.8)}100%{opacity:1;transform:scale(1.1)}}
 
-/* ── Page shell ── */
+/* -- Page shell -- */
 .page{max-width:1140px;margin:0 auto;padding:0 clamp(1rem,3vw,2.5rem) 4rem}
 
-/* ── Top bar ── */
+/* -- Top bar -- */
 .topbar{display:flex;justify-content:space-between;align-items:center;padding:1.1rem 0;border-bottom:1px solid var(--border);margin-bottom:0}
 .topbar-brand{font-family:var(--font-display);font-size:.95rem;font-weight:700;color:var(--accent-dark);letter-spacing:-.02em}
 .topbar-actions{display:flex;gap:.5rem}
 .btn-export{padding:.5rem 1.1rem;font-family:var(--font-body);font-size:.76rem;font-weight:600;border:1.5px solid var(--ink);border-radius:var(--radius);background:var(--ink);color:var(--bg);cursor:pointer;transition:all .15s}
 .btn-export:hover{background:var(--accent-dark);border-color:var(--accent-dark);color:#fff}
 
-/* ── Cover page ── */
+/* -- Cover page -- */
 .cover{padding:clamp(3rem,8vw,6rem) 0 clamp(2rem,5vw,4rem);margin-bottom:2.5rem;position:relative}
 .cover-eyebrow{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);margin-bottom:1.25rem}
 .cover h1{font-size:clamp(2.2rem,5vw,3.6rem);font-weight:800;letter-spacing:-.04em;line-height:1.08;max-width:700px;color:var(--ink)}
@@ -59,7 +59,7 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
 .cover-toc-item span:last-child{color:var(--ink);font-weight:500}
 .cover-footer{margin-top:2rem;font-size:.78rem;color:var(--ink-3);line-height:1.55}
 
-/* ── Nav ── */
+/* -- Nav -- */
 .nav{position:sticky;top:0;z-index:50;background:rgba(250,249,247,.97);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--border);margin:0 calc(-1 * clamp(1rem,3vw,2.5rem));padding:0 clamp(1rem,3vw,2.5rem)}
 .nav-inner{display:flex;gap:0;overflow-x:auto;-ms-overflow-style:none;scrollbar-width:none}
 .nav-inner::-webkit-scrollbar{display:none}
@@ -69,7 +69,7 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
 .nav-tab .tab-num{display:inline-block;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--surface-alt);font-size:.62rem;font-weight:700;margin-right:.4rem;color:var(--ink-3);transition:all .15s}
 .nav-tab.active .tab-num{background:var(--accent);color:#fff}
 
-/* ── Sections ── */
+/* -- Sections -- */
 .section{display:none;padding-top:2.5rem}
 .section.active{display:block}
 .section-header{margin-bottom:2.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
@@ -77,7 +77,7 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
 .section-title{font-size:clamp(1.5rem,3vw,2rem);font-weight:800;margin-bottom:.5rem;letter-spacing:-.03em}
 .section-sub{color:var(--ink-2);font-size:.92rem;max-width:600px;line-height:1.65}
 
-/* ── Page 1: Landscape ── */
+/* -- Page 1: Landscape -- */
 .landscape-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2.5rem}
 @media(max-width:700px){.landscape-grid{grid-template-columns:1fr}}
 .landscape-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.75rem;box-shadow:var(--shadow-sm)}
@@ -98,7 +98,7 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
 .methodology-note h4{font-family:var(--font-display);font-size:.88rem;font-weight:700;margin-bottom:.4rem;color:var(--ink)}
 .methodology-note p{font-size:.84rem;color:var(--ink-2);line-height:1.6}
 
-/* ── Page 2: Patterns ── */
+/* -- Page 2: Patterns -- */
 .pattern-row{display:grid;grid-template-columns:200px 1fr;gap:0;border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1.25rem;background:var(--surface)}
 @media(max-width:640px){.pattern-row{grid-template-columns:1fr}}
 .pattern-label-col{padding:1.25rem;display:flex;flex-direction:column;justify-content:center;gap:.35rem}
@@ -117,7 +117,7 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
 .bar-fill{height:100%;border-radius:3px;transition:width .4s;display:flex;align-items:center;padding-left:.5rem}
 .bar-fill span{font-size:.65rem;font-weight:700;color:#fff;white-space:nowrap}
 
-/* ── Page 3: Brand cards ── */
+/* -- Page 3: Brand cards -- */
 .brand-card{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1.5rem;background:var(--surface);box-shadow:var(--shadow-sm);transition:box-shadow .2s}
 .brand-card:hover{box-shadow:var(--shadow)}
 .brand-card-header{padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap}
@@ -137,7 +137,7 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
 .brand-card-stat-val{font-family:var(--font-display);font-size:1rem;font-weight:700}
 .brand-card-stat-lbl{font-size:.65rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
 
-/* ── Page 4: Strategy ── */
+/* -- Page 4: Strategy -- */
 .track-toggle{display:flex;gap:.35rem;margin-bottom:1.5rem;flex-wrap:wrap}
 .track-btn{padding:.5rem 1.1rem;font-family:var(--font-body);font-size:.8rem;font-weight:600;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--ink-2);cursor:pointer;transition:all .15s}
 .track-btn:hover{border-color:var(--ink-3);color:var(--ink)}
@@ -166,7 +166,7 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
 .shot-notes{font-size:.8rem;color:var(--ink-2);max-width:200px}
 .shot-source{font-size:.78rem;color:var(--ink-3);font-style:italic}
 
-/* ── Page 5: Raw Data ── */
+/* -- Page 5: Raw Data -- */
 .data-table{width:100%;border-collapse:collapse;font-size:.82rem;border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
 .data-table th{text-align:left;padding:.6rem .7rem;background:var(--surface-alt);border-bottom:2px solid var(--border);font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);font-weight:700;white-space:nowrap}
 .data-table td{padding:.6rem .7rem;border-bottom:1px solid var(--border-light);vertical-align:top}
@@ -175,23 +175,23 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
 .data-table tr:hover td{background:var(--accent-glow)}
 .hook-text{font-style:italic;color:var(--ink-2);max-width:320px}
 
-/* ── Print / PDF ── */
+/* -- Print / PDF -- */
 @page{size:A4;margin:20mm 18mm 24mm 18mm}
 @page:first{margin-top:0;margin-bottom:0}
 
 @media print{
-  /* ── Reset ── */
+  /* -- Reset -- */
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
   html{font-size:10px}
   body{background:#fff;color:#1a1714;line-height:1.55}
 
-  /* ── Hide interactive elements ── */
+  /* -- Hide interactive elements -- */
   .topbar,.nav,.btn-export,.no-print,.track-toggle,.loading-screen{display:none!important}
 
-  /* ── Page shell ── */
+  /* -- Page shell -- */
   .page{max-width:none;padding:0}
 
-  /* ── Cover page: full-bleed title page ── */
+  /* -- Cover page: full-bleed title page -- */
   .cover{
     display:flex;flex-direction:column;justify-content:flex-end;
     min-height:100vh;padding:0 0 15mm 0;margin:0;
@@ -207,7 +207,7 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
   .cover-stat-label{font-size:7px;letter-spacing:.08em}
   .cover p[style]{font-size:8px!important;margin-top:8mm!important}
 
-  /* ── Cover extras for print ── */
+  /* -- Cover extras for print -- */
   .cover-toc{display:block!important;margin-top:8mm}
   .cover-toc-item{padding:1.8mm 0;font-size:8.5px;border-bottom:0.5px solid #e8e4de}
   .cover-toc-item span:first-child{font-size:7.5px;min-width:8mm}
@@ -219,7 +219,7 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
     font-size:7px;color:#8a8279;letter-spacing:.04em;
   }
 
-  /* ── Sections ── */
+  /* -- Sections -- */
   .section{display:block!important;padding:0;margin:0}
   .section:not(:first-child){page-break-before:always}
   .section-header{margin-bottom:6mm;padding-bottom:4mm;border-bottom:2px solid #b44d1e}
@@ -227,7 +227,7 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
   .section-title{font-size:20px;letter-spacing:-.02em;margin-bottom:2mm}
   .section-sub{font-size:9px;color:#5c564d;max-width:440px;line-height:1.55}
 
-  /* ── Page 1: Landscape ── */
+  /* -- Page 1: Landscape -- */
   .landscape-grid{grid-template-columns:1fr 1fr;gap:4mm;margin-bottom:5mm}
   .landscape-card{padding:4mm;border:1px solid #e8e4de;border-radius:3px;page-break-inside:avoid}
   .landscape-card h3{font-size:10px;margin-bottom:3mm}
@@ -245,7 +245,7 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
   .methodology-note h4{font-size:8.5px;margin-bottom:1.5mm}
   .methodology-note p{font-size:8px;line-height:1.5}
 
-  /* ── Page 2: Patterns ── */
+  /* -- Page 2: Patterns -- */
   .pattern-row{grid-template-columns:120px 1fr;margin-bottom:3mm;page-break-inside:avoid}
   .pattern-label-col{padding:3mm}
   .pattern-category{font-size:6px}
@@ -256,7 +256,7 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
   .pattern-brands{margin-top:2mm;gap:1.5mm}
   .pattern-brand-tag{font-size:6.5px;padding:1mm 2mm}
 
-  /* ── Page 3: Brand cards ── */
+  /* -- Page 3: Brand cards -- */
   .brand-card{margin-bottom:4mm;page-break-inside:avoid}
   .brand-card-header{padding:3mm 4mm}
   .brand-card-title{font-size:12px}
@@ -269,7 +269,7 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
   .brand-card-stat-val{font-size:9px}
   .brand-card-stat-lbl{font-size:6px}
 
-  /* ── Page 4: Production briefs ── */
+  /* -- Page 4: Production briefs -- */
   .track-section{display:block!important;page-break-before:always}
   .track-header{padding:4mm;margin-bottom:4mm;page-break-inside:avoid;page-break-after:avoid}
   .track-header-label{font-size:7px}
@@ -285,17 +285,17 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
   .shot-source{font-size:7px;max-width:120px}
   .shot-notes{font-size:7px;max-width:110px}
 
-  /* ── Page 5: Raw data ── */
+  /* -- Page 5: Raw data -- */
   .data-table th{font-size:6px;padding:1.5mm 2mm}
   .data-table td{font-size:7.5px;padding:1.5mm 2mm}
   .hook-text{max-width:160px;font-size:7px}
 
-  /* ── Running footer ── */
+  /* -- Running footer -- */
   .page::after{
     content:'';display:block;height:0;
   }
 
-  /* ── Typography tightening ── */
+  /* -- Typography tightening -- */
   h3[style]{font-size:11px!important;margin-bottom:3mm!important;margin-top:5mm!important}
 }
 </style>
@@ -435,7 +435,14 @@ function getBrandsUsing(analyses, field, subfield, value, brandMap) {
 
 function render(data) {
   const { analyses, ads } = data;
-  const complete = analyses.filter(a => a.ai_analysis && a.transcript_text);
+  // Filter out analyses whose underlying ad has no page_id (would render as the 'Unknown' brand)
+  const _adMapForFilter = {};
+  ads.forEach(a => { _adMapForFilter[a.id] = a; });
+  const complete = analyses.filter(a => {
+    if (!a.ai_analysis || !a.transcript_text) return false;
+    const ad = _adMapForFilter[a.competitor_ad_id];
+    return ad && ad.page_id && ad.page_name;
+  });
   if (complete.length === 0) {
     document.getElementById('app').innerHTML = '<div class="loading-screen"><h2>No completed analyses found</h2><p style="color:var(--ink-2)">Analyse some competitor videos first, then come back here.</p></div>';
     return;
@@ -460,7 +467,7 @@ function render(data) {
   const productionFormats = countPattern(complete, 'production_style', 'format');
   const pacingProfiles = countPattern(complete, 'pacing_profile');
 
-  // ── Render HTML ──
+  // -- Render HTML --
   const app = document.getElementById('app');
   app.innerHTML = `
     <!-- Top bar -->
@@ -1006,7 +1013,7 @@ function renderStrategySection(analyses, brandMap, hookTypes, narrativeArcs, emo
   `;
 }
 
-// ── Boot ──
+// -- Boot --
 (async () => {
   try {
     const data = await fetchData();
