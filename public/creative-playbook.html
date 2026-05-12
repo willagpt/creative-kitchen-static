@@ -132,6 +132,12 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
 .fb-card-thumb img,.fb-card-thumb video{width:100%;height:100%;object-fit:cover;display:block}
 .fb-card-body{padding:.75rem .85rem 1rem;flex:1;display:flex;flex-direction:column;gap:.3rem}
 .fb-card-brand{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.fb-card-brand-row{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;margin-bottom:.15rem}
+.fb-brand-chip{display:inline-flex;align-items:center;gap:.35rem;padding:.15rem .55rem;border-radius:99px;font-size:.68rem;letter-spacing:.04em;text-transform:uppercase;font-weight:700;background:var(--paper-2);color:var(--ink-2)}
+.fb-brand-dot{display:inline-block;width:6px;height:6px;border-radius:50%}
+.fb-card-via{font-size:.66rem;color:var(--ink-3);font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+.fb-card-thumb{position:relative}
+.fb-card-days{position:absolute;top:.5rem;right:.5rem;background:rgba(15,14,12,.78);color:#fff;font-size:.7rem;font-weight:600;padding:.15rem .5rem;border-radius:99px;letter-spacing:.02em;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .fb-card-title{font-size:.86rem;line-height:1.4;color:var(--ink-1);font-weight:500;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .fb-card-meta{font-size:.74rem;color:var(--ink-3);margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:.5rem}
 .fb-card-link{color:var(--accent);text-decoration:none;font-weight:600;font-size:.74rem}
@@ -1082,6 +1088,10 @@ function openFilterModal({ field, subfield, value, label }) {
   const matches = getFilteredAnalyses(field, subfield, value, isArray);
   const data = window.__ckPlaybookData;
   const total = data ? data.complete.length : 0;
+  const brandMap = data?.brandMap || {};
+
+  // Longest-running ads first (with no-data fallback to 0)
+  matches.sort((a, b) => ((b.ad?.days_active) || 0) - ((a.ad?.days_active) || 0));
 
   const fieldNames = {
     'production_style': 'Production Style',
@@ -1096,24 +1106,40 @@ function openFilterModal({ field, subfield, value, label }) {
   const grid = matches.map(an => {
     const ad = an.ad || {};
     const adId = ad.id || an.competitor_ad_id;
-    const brand = ad.page_name || 'Unknown';
-    const title = ad.creative_title || (an.combined_script || '').slice(0, 80) || 'Untitled';
+    const pageName = ad.page_name || 'Unknown';
+    const parentBrand = resolveParentBrand(pageName, brandMap);
+    const isCreator = parentBrand !== pageName;
+    const brandColor = brandMap[parentBrand]?.color;
+    // Prefer the curated ai summary as the title so we don't show "[0.0s] VOICEOVER: ..." script slices
+    const ai = an.ai_analysis || {};
+    const title = ad.creative_title
+                || ai.one_line_summary
+                || (ad.creative_body || '').replace(/\s+/g, ' ').trim().slice(0, 110)
+                || (an.combined_script || '').replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim().slice(0, 110)
+                || 'Untitled';
     const days = ad.days_active ? `${ad.days_active}d` : '';
     const thumb = ad.thumbnail_url;
     const video = an.video_url || ad.video_url;
     const playbookHref = adId ? `/single-ad-playbook.html?ad_id=${adId}` : `/single-ad-playbook.html?analysis_id=${an.id}`;
+    const brandChip = brandColor
+      ? `<span class="fb-brand-chip" style="background:${brandColor.bg};color:${brandColor.text}"><span class="fb-brand-dot" style="background:${brandColor.dot}"></span>${escapeHtml(parentBrand)}</span>`
+      : `<span class="fb-brand-chip">${escapeHtml(parentBrand)}</span>`;
     return `
       <a class="fb-card" href="${playbookHref}" target="_blank" rel="noopener" title="Open playbook for this ad">
         <div class="fb-card-thumb">
           ${video ? `<video src="${escapeAttr(video)}" muted playsinline preload="metadata" ${thumb ? `poster="${escapeAttr(thumb)}"` : ''} onmouseenter="this.play().catch(()=>{})" onmouseleave="this.pause(); this.currentTime=0"></video>`
                   : thumb ? `<img src="${escapeAttr(thumb)}" alt="" loading="lazy">`
                   : `<div style="color:#777;display:flex;align-items:center;justify-content:center;height:100%;font-size:.75rem">No preview</div>`}
+          ${days ? `<span class="fb-card-days" title="Days running">${escapeHtml(days)}</span>` : ''}
         </div>
         <div class="fb-card-body">
-          <div class="fb-card-brand">${escapeHtml(brand)}</div>
+          <div class="fb-card-brand-row">
+            ${brandChip}
+            ${isCreator ? `<span class="fb-card-via">via ${escapeHtml(pageName)}</span>` : ''}
+          </div>
           <div class="fb-card-title">${escapeHtml(title)}</div>
           <div class="fb-card-meta">
-            <span>${escapeHtml(days)} ${an.total_shots ? `· ${an.total_shots} shots` : ''}</span>
+            <span>${an.total_shots ? `${an.total_shots} shots` : ''}${an.duration_seconds ? ` · ${Number(an.duration_seconds).toFixed(0)}s` : ''}</span>
             <span class="fb-card-link">Open playbook →</span>
           </div>
         </div>
@@ -1126,7 +1152,7 @@ function openFilterModal({ field, subfield, value, label }) {
       <button class="fb-modal-close" aria-label="Close" onclick="closeFilterModal()">&times;</button>
       <div class="fb-modal-eyebrow">${escapeHtml(fieldLabel)}</div>
       <h2 class="fb-modal-title">${escapeHtml(label)}</h2>
-      <p class="fb-modal-sub">${matches.length} ${matches.length === 1 ? 'video' : 'videos'} (${pct}% of dataset). Click any ad to open its full creative playbook.</p>
+      <p class="fb-modal-sub">${matches.length} ${matches.length === 1 ? 'video' : 'videos'} (${pct}% of dataset), sorted by days running. Click any ad to open its full creative playbook.</p>
       ${matches.length === 0 ? '<div class="fb-empty">No ads in this bucket.</div>' : `<div class="fb-grid">${grid}</div>`}
     </div>`;
   backdrop.classList.add('open');
