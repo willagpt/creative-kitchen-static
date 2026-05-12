@@ -142,6 +142,40 @@ h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.25}
 .fb-card-meta{font-size:.74rem;color:var(--ink-3);margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:.5rem}
 .fb-card-link{color:var(--accent);text-decoration:none;font-weight:600;font-size:.74rem}
 .fb-card-link:hover{color:var(--accent-dark);text-decoration:underline}
+
+/* Multi-select & compare */
+.fb-card{position:relative}
+.fb-card-checkbox{position:absolute;top:.5rem;left:.5rem;z-index:5;width:24px;height:24px;border-radius:6px;background:rgba(15,14,12,.55);border:2px solid rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);transition:background .12s,border-color .12s,transform .12s}
+.fb-card-checkbox:hover{transform:scale(1.08);border-color:#fff}
+.fb-card-checkbox svg{width:14px;height:14px;color:#fff;opacity:0;transition:opacity .12s}
+.fb-card.selected{outline:3px solid var(--accent);outline-offset:0;box-shadow:0 12px 30px -8px rgba(180,77,30,.35)}
+.fb-card.selected .fb-card-checkbox{background:var(--accent);border-color:#fff}
+.fb-card.selected .fb-card-checkbox svg{opacity:1}
+.fb-action-bar{position:sticky;bottom:0;left:0;right:0;margin:1.5rem -2rem -2rem;padding:.85rem 2rem;background:#0f0e0c;color:#fff;display:flex;align-items:center;gap:1rem;border-radius:0 0 14px 14px;box-shadow:0 -12px 24px -8px rgba(0,0,0,.25)}
+.fb-action-bar.hidden{display:none}
+.fb-action-count{font-size:.85rem;font-weight:600}
+.fb-action-count strong{color:var(--accent)}
+.fb-action-spacer{flex:1}
+.fb-action-btn{background:var(--accent);color:#fff;border:0;padding:.55rem 1.1rem;border-radius:6px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:var(--font-body)}
+.fb-action-btn:hover{background:var(--accent-dark)}
+.fb-action-btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.25)}
+.fb-action-btn.ghost:hover{background:rgba(255,255,255,.1)}
+.fb-action-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* Comparison view */
+.fb-compare-wrap{margin-top:1rem;overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:#fff}
+.fb-compare-grid{display:grid;min-width:100%;gap:0}
+.fb-compare-rowlabel{padding:.85rem 1rem;background:var(--paper);border-right:1px solid var(--border);border-bottom:1px solid var(--rule-soft);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:700;display:flex;align-items:flex-start}
+.fb-compare-cell{padding:.85rem 1rem;border-bottom:1px solid var(--rule-soft);border-right:1px solid var(--rule-soft);font-size:.85rem;color:var(--ink-1);line-height:1.45}
+.fb-compare-cell:last-of-type{border-right:0}
+.fb-compare-cell .compare-list{margin:0;padding-left:1.1rem}
+.fb-compare-cell .compare-list li{margin-bottom:.25rem;font-size:.82rem;color:var(--ink-2);line-height:1.4}
+.fb-compare-thumb{aspect-ratio:9/16;width:100%;max-width:160px;background:#000;border-radius:6px;overflow:hidden;display:block}
+.fb-compare-thumb img,.fb-compare-thumb video{width:100%;height:100%;object-fit:cover;display:block}
+.fb-compare-link{display:inline-block;margin-top:.5rem;color:var(--accent);font-size:.78rem;font-weight:600;text-decoration:none}
+.fb-compare-link:hover{text-decoration:underline}
+.fb-back-btn{background:transparent;color:var(--ink-2);border:1px solid var(--rule);padding:.45rem 1rem;border-radius:6px;font-size:.8rem;font-weight:500;cursor:pointer;margin-bottom:1rem}
+.fb-back-btn:hover{background:var(--paper-2)}
 .fb-empty{padding:3rem 1rem;text-align:center;color:var(--ink-3)}
 .bar-label{width:140px;font-size:.8rem;font-weight:500;text-align:right;flex-shrink:0;color:var(--ink-2)}
 .bar-track{flex:1;height:22px;background:var(--surface-alt);border-radius:3px;overflow:hidden;position:relative}
@@ -1124,39 +1158,197 @@ function openFilterModal({ field, subfield, value, label }) {
     const brandChip = brandColor
       ? `<span class="fb-brand-chip" style="background:${brandColor.bg};color:${brandColor.text}"><span class="fb-brand-dot" style="background:${brandColor.dot}"></span>${escapeHtml(parentBrand)}</span>`
       : `<span class="fb-brand-chip">${escapeHtml(parentBrand)}</span>`;
+    const isSelected = window.__ckSelectedIds && window.__ckSelectedIds.has(an.id);
     return `
-      <a class="fb-card" href="${playbookHref}" target="_blank" rel="noopener" title="Open playbook for this ad">
-        <div class="fb-card-thumb">
-          ${video ? `<video src="${escapeAttr(video)}" muted playsinline preload="metadata" ${thumb ? `poster="${escapeAttr(thumb)}"` : ''} onmouseenter="this.play().catch(()=>{})" onmouseleave="this.pause(); this.currentTime=0"></video>`
-                  : thumb ? `<img src="${escapeAttr(thumb)}" alt="" loading="lazy">`
-                  : `<div style="color:#777;display:flex;align-items:center;justify-content:center;height:100%;font-size:.75rem">No preview</div>`}
-          ${days ? `<span class="fb-card-days" title="Days running">${escapeHtml(days)}</span>` : ''}
-        </div>
-        <div class="fb-card-body">
-          <div class="fb-card-brand-row">
-            ${brandChip}
-            ${isCreator ? `<span class="fb-card-via">via ${escapeHtml(pageName)}</span>` : ''}
+      <div class="fb-card ${isSelected ? 'selected' : ''}" data-analysis-id="${escapeAttr(an.id)}">
+        <button class="fb-card-checkbox" aria-label="Select for compare" onclick="event.stopPropagation();event.preventDefault();toggleCardSelection(this);" data-id="${escapeAttr(an.id)}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+        <a class="fb-card-link-wrap" href="${playbookHref}" target="_blank" rel="noopener" title="Open playbook for this ad" style="display:contents;color:inherit;text-decoration:none">
+          <div class="fb-card-thumb">
+            ${video ? `<video src="${escapeAttr(video)}" muted playsinline preload="metadata" ${thumb ? `poster="${escapeAttr(thumb)}"` : ''} onmouseenter="this.play().catch(()=>{})" onmouseleave="this.pause(); this.currentTime=0"></video>`
+                    : thumb ? `<img src="${escapeAttr(thumb)}" alt="" loading="lazy">`
+                    : `<div style="color:#777;display:flex;align-items:center;justify-content:center;height:100%;font-size:.75rem">No preview</div>`}
+            ${days ? `<span class="fb-card-days" title="Days running">${escapeHtml(days)}</span>` : ''}
           </div>
-          <div class="fb-card-title">${escapeHtml(title)}</div>
-          <div class="fb-card-meta">
-            <span>${an.total_shots ? `${an.total_shots} shots` : ''}${an.duration_seconds ? ` · ${Number(an.duration_seconds).toFixed(0)}s` : ''}</span>
-            <span class="fb-card-link">Open playbook →</span>
+          <div class="fb-card-body">
+            <div class="fb-card-brand-row">
+              ${brandChip}
+              ${isCreator ? `<span class="fb-card-via">via ${escapeHtml(pageName)}</span>` : ''}
+            </div>
+            <div class="fb-card-title">${escapeHtml(title)}</div>
+            <div class="fb-card-meta">
+              <span>${an.total_shots ? `${an.total_shots} shots` : ''}${an.duration_seconds ? ` · ${Number(an.duration_seconds).toFixed(0)}s` : ''}</span>
+              <span class="fb-card-link">Open playbook →</span>
+            </div>
           </div>
-        </div>
-      </a>`;
+        </a>
+      </div>`;
   }).join('');
 
+  // Persist current modal context so compare/back can reflow the same view
+  window.__ckCurrentModal = { field, subfield, value, label, fieldLabel };
+  if (!window.__ckSelectedIds) window.__ckSelectedIds = new Set();
+
   const backdrop = document.getElementById('fb-modal-backdrop');
+  const selCount = window.__ckSelectedIds.size;
   backdrop.innerHTML = `
     <div class="fb-modal" onclick="event.stopPropagation()">
       <button class="fb-modal-close" aria-label="Close" onclick="closeFilterModal()">&times;</button>
       <div class="fb-modal-eyebrow">${escapeHtml(fieldLabel)}</div>
       <h2 class="fb-modal-title">${escapeHtml(label)}</h2>
-      <p class="fb-modal-sub">${matches.length} ${matches.length === 1 ? 'video' : 'videos'} (${pct}% of dataset), sorted by days running. Click any ad to open its full creative playbook.</p>
+      <p class="fb-modal-sub">${matches.length} ${matches.length === 1 ? 'video' : 'videos'} (${pct}% of dataset), sorted by days running. Tick the checkbox on cards to select; click the card to open its full playbook.</p>
       ${matches.length === 0 ? '<div class="fb-empty">No ads in this bucket.</div>' : `<div class="fb-grid">${grid}</div>`}
+      <div class="fb-action-bar ${selCount === 0 ? 'hidden' : ''}" id="fb-action-bar">
+        <div class="fb-action-count"><strong id="fb-action-num">${selCount}</strong> selected</div>
+        <div class="fb-action-spacer"></div>
+        <button class="fb-action-btn ghost" onclick="clearCompareSelection()">Clear</button>
+        <button class="fb-action-btn" onclick="renderCompareView()" ${selCount < 2 ? 'disabled' : ''}>Compare side-by-side →</button>
+      </div>
     </div>`;
   backdrop.classList.add('open');
   document.body.style.overflow = 'hidden';
+}
+
+// ── Multi-select & compare helpers ──
+function toggleCardSelection(btn) {
+  if (!window.__ckSelectedIds) window.__ckSelectedIds = new Set();
+  const id = btn.dataset.id;
+  const card = btn.closest('.fb-card');
+  if (window.__ckSelectedIds.has(id)) {
+    window.__ckSelectedIds.delete(id);
+    card?.classList.remove('selected');
+  } else {
+    window.__ckSelectedIds.add(id);
+    card?.classList.add('selected');
+  }
+  updateActionBar();
+}
+
+function updateActionBar() {
+  const bar = document.getElementById('fb-action-bar');
+  if (!bar) return;
+  const n = window.__ckSelectedIds ? window.__ckSelectedIds.size : 0;
+  const numEl = document.getElementById('fb-action-num');
+  if (numEl) numEl.textContent = n;
+  bar.classList.toggle('hidden', n === 0);
+  const compareBtn = bar.querySelector('.fb-action-btn:not(.ghost)');
+  if (compareBtn) compareBtn.disabled = n < 2;
+}
+
+function clearCompareSelection() {
+  window.__ckSelectedIds = new Set();
+  document.querySelectorAll('.fb-card.selected').forEach(c => c.classList.remove('selected'));
+  updateActionBar();
+}
+
+function renderCompareView() {
+  const data = window.__ckPlaybookData;
+  const ids = Array.from(window.__ckSelectedIds || []);
+  if (!data || ids.length < 2) return;
+  const ads = ids.map(id => data.complete.find(c => c.id === id)).filter(Boolean);
+  const brandMap = data.brandMap || {};
+
+  const cell = (an, key) => {
+    const ai = an.ai_analysis || {};
+    const ad = an.ad || {};
+    if (key === 'thumb') {
+      const thumb = ad.thumbnail_url; const video = an.video_url || ad.video_url;
+      const playbookHref = (ad.id || an.competitor_ad_id) ? `/single-ad-playbook.html?ad_id=${ad.id || an.competitor_ad_id}` : `/single-ad-playbook.html?analysis_id=${an.id}`;
+      return `<div class="fb-compare-thumb">${video ? `<video src="${escapeAttr(video)}" muted playsinline preload="metadata" ${thumb ? `poster="${escapeAttr(thumb)}"` : ''} onmouseenter="this.play().catch(()=>{})" onmouseleave="this.pause();this.currentTime=0"></video>` : thumb ? `<img src="${escapeAttr(thumb)}" alt="" loading="lazy">` : ''}</div>
+              <a class="fb-compare-link" href="${playbookHref}" target="_blank" rel="noopener">Open full playbook →</a>`;
+    }
+    if (key === 'brand') {
+      const pn = ad.page_name || 'Unknown';
+      const parent = resolveParentBrand(pn, brandMap);
+      const color = brandMap[parent]?.color;
+      const chip = color ? `<span class="fb-brand-chip" style="background:${color.bg};color:${color.text}"><span class="fb-brand-dot" style="background:${color.dot}"></span>${escapeHtml(parent)}</span>` : `<span class="fb-brand-chip">${escapeHtml(parent)}</span>`;
+      return chip + (parent !== pn ? `<div style="font-size:.7rem;color:var(--ink-3);margin-top:.3rem;text-transform:uppercase;letter-spacing:.04em">via ${escapeHtml(pn)}</div>` : '');
+    }
+    if (key === 'title') return escapeHtml(ad.creative_title || ai.one_line_summary || (ad.creative_body || '').slice(0, 140) || 'Untitled');
+    if (key === 'stats') {
+      const d = ad.days_active ? `${ad.days_active}d running` : '';
+      const s = an.total_shots ? `${an.total_shots} shots` : '';
+      const len = an.duration_seconds ? `${Number(an.duration_seconds).toFixed(0)}s` : '';
+      const asd = an.avg_shot_duration ? `${Number(an.avg_shot_duration).toFixed(1)}s/shot` : '';
+      return [d, s, len, asd].filter(Boolean).join(' · ');
+    }
+    if (key === 'hook') {
+      const t = ai.hook?.type ? `<span class="pill pill-accent" style="margin-bottom:.4rem;display:inline-block">${escapeHtml(formatLabel(ai.hook.type))}</span>` : '';
+      const q = ai.hook?.text ? `<div style="font-style:italic;color:var(--ink-2);font-size:.85rem">"${escapeHtml(ai.hook.text)}"</div>` : '';
+      return t + q;
+    }
+    if (key === 'narrative') {
+      const t = ai.narrative_arc?.structure ? `<span class="pill pill-purple" style="margin-bottom:.4rem;display:inline-block">${escapeHtml(formatLabel(ai.narrative_arc.structure))}</span>` : '';
+      const beats = (ai.narrative_arc?.beats || []).slice(0, 3);
+      return t + (beats.length ? `<ol class="compare-list">${beats.map(b => `<li>${escapeHtml(b)}</li>`).join('')}${ai.narrative_arc.beats.length > 3 ? `<li style="color:var(--ink-3)">+${ai.narrative_arc.beats.length - 3} more beats</li>` : ''}</ol>` : '');
+    }
+    if (key === 'pacing') {
+      const t = ai.pacing_analysis?.overall ? `<span class="pill pill-blue" style="margin-bottom:.4rem;display:inline-block">${escapeHtml(formatLabel(ai.pacing_analysis.overall))}</span>` : '';
+      const r = ai.pacing_analysis?.rhythm ? `<div style="font-size:.8rem;color:var(--ink-2)">${escapeHtml(ai.pacing_analysis.rhythm.slice(0, 220))}${ai.pacing_analysis.rhythm.length > 220 ? '…' : ''}</div>` : '';
+      return t + r;
+    }
+    if (key === 'production') {
+      const ps = ai.production_style || {};
+      const fields = [['Format', ps.format], ['Quality', ps.quality], ['Text overlays', ps.text_overlays], ['Music', ps.music_pacing]];
+      return fields.filter(([,v]) => v).map(([k,v]) => `<div style="font-size:.78rem;margin-bottom:.2rem"><span style="color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;font-weight:600;font-size:.7rem">${k}:</span> ${escapeHtml(formatLabel(v))}</div>`).join('');
+    }
+    if (key === 'drivers') {
+      const d = ai.emotional_drivers || [];
+      return d.length ? `<div style="display:flex;flex-wrap:wrap;gap:.3rem">${d.slice(0, 6).map(x => `<span class="pill pill-grey">${escapeHtml(formatLabel(x))}</span>`).join('')}</div>` : '';
+    }
+    if (key === 'selling') {
+      const sp = ai.selling_points || [];
+      return sp.length ? `<ol class="compare-list">${sp.slice(0, 5).map(x => `<li>${escapeHtml(x)}</li>`).join('')}${sp.length > 5 ? `<li style="color:var(--ink-3)">+${sp.length - 5} more</li>` : ''}</ol>` : '';
+    }
+    if (key === 'cta') {
+      const c = ai.cta || {};
+      return c.text ? `<strong>${escapeHtml(c.text)}</strong>${c.type ? `<span class="pill pill-grey" style="margin-left:.4rem">${escapeHtml(formatLabel(c.type))}</span>` : ''}` : '';
+    }
+    return '';
+  };
+
+  const rows = [
+    { key: 'thumb', label: 'Preview' },
+    { key: 'brand', label: 'Brand' },
+    { key: 'title', label: 'Title / Summary' },
+    { key: 'stats', label: 'Run + length' },
+    { key: 'hook', label: 'Hook' },
+    { key: 'narrative', label: 'Narrative arc' },
+    { key: 'pacing', label: 'Pacing' },
+    { key: 'production', label: 'Production style' },
+    { key: 'drivers', label: 'Emotional drivers' },
+    { key: 'selling', label: 'Selling points' },
+    { key: 'cta', label: 'CTA' },
+  ];
+
+  // Each ad is a column. Row label is sticky-left.
+  const colWidth = Math.max(220, Math.min(320, 1100 / (ads.length + 1)));
+  const gridTemplate = `minmax(140px, 0.6fr) repeat(${ads.length}, minmax(${colWidth}px, 1fr))`;
+  const ctx = window.__ckCurrentModal || {};
+  const backdrop = document.getElementById('fb-modal-backdrop');
+  backdrop.innerHTML = `
+    <div class="fb-modal" onclick="event.stopPropagation()">
+      <button class="fb-modal-close" aria-label="Close" onclick="closeFilterModal()">&times;</button>
+      <button class="fb-back-btn" onclick="reopenLastFilter()">← Back to results</button>
+      <div class="fb-modal-eyebrow">Compare</div>
+      <h2 class="fb-modal-title">${escapeHtml(ctx.label || 'Selected ads')} — ${ads.length} selected</h2>
+      <p class="fb-modal-sub">Side-by-side view of the ads you ticked. Scroll horizontally if the table overflows.</p>
+      <div class="fb-compare-wrap">
+        <div class="fb-compare-grid" style="grid-template-columns:${gridTemplate}">
+          ${rows.map(r => `
+            <div class="fb-compare-rowlabel">${escapeHtml(r.label)}</div>
+            ${ads.map(an => `<div class="fb-compare-cell">${cell(an, r.key)}</div>`).join('')}
+          `).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function reopenLastFilter() {
+  const ctx = window.__ckCurrentModal;
+  if (!ctx) { closeFilterModal(); return; }
+  openFilterModal(ctx);
 }
 
 function closeFilterModal() {
