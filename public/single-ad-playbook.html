@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Single Ad Playbook · Creative Kitchen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink-1:#0f0e0c; --ink-2:#3d3a35; --ink-3:#6e6a63;
+    --paper:#faf7f2; --paper-2:#f3eee6; --paper-3:#ebe4d8;
+    --rule:#e2dcce; --rule-soft:#eee7d8;
+    --accent:#b44d1e; --accent-dark:#8a3710; --accent-light:#f4e6dc;
+    --blue:#2563eb; --blue-light:#d0e2f4;
+    --green:#16a34a; --green-light:#d8f3dc;
+    --purple:#7c3aed; --purple-light:#ede9fe;
+    --amber:#d97706; --amber-light:#fef3c7;
+    --pink:#db2777; --pink-light:#fce7f3;
+    --font-display:'Fraunces',Georgia,serif;
+    --font-body:'Inter',-apple-system,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink-1);font-family:var(--font-body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .page{max-width:1180px;margin:0 auto;padding:2.5rem 2rem 6rem}
+  .loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;gap:1.5rem}
+  .loading-dot{display:inline-block;width:8px;height:8px;margin:0 4px;border-radius:50%;background:var(--accent);animation:bounce 1.4s infinite ease-in-out both}
+  .loading-dot:nth-child(2){animation-delay:.16s}
+  .loading-dot:nth-child(3){animation-delay:.32s}
+  @keyframes bounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
+
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding-bottom:1.25rem;margin-bottom:2rem;border-bottom:1px solid var(--rule)}
+  .topbar-brand{font-family:var(--font-display);font-weight:600;font-size:1.05rem;letter-spacing:-.01em}
+  .topbar-brand a{color:var(--ink-3);text-decoration:none;border-right:1px solid var(--rule);padding-right:.75rem;margin-right:.75rem;font-size:.85rem;font-weight:500}
+  .topbar-brand a:hover{color:var(--accent)}
+  .btn-export,.btn-back{background:var(--ink-1);color:var(--paper);border:0;padding:.55rem 1rem;border-radius:6px;font-size:.85rem;cursor:pointer;font-weight:500;font-family:var(--font-body)}
+  .btn-back{background:transparent;color:var(--ink-2);border:1px solid var(--rule);margin-right:.5rem}
+  .btn-back:hover{background:var(--paper-2)}
+  .btn-export:hover{background:var(--accent)}
+
+  /* Header / hero */
+  .hero{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:2.5rem;padding-bottom:2.25rem;margin-bottom:2.5rem;border-bottom:1px solid var(--rule)}
+  .hero-video{position:relative;background:#000;border-radius:14px;overflow:hidden;aspect-ratio:9/16;box-shadow:0 12px 32px -8px rgba(0,0,0,.18)}
+  .hero-video video{width:100%;height:100%;object-fit:cover;display:block}
+  .hero-meta .eyebrow{font-family:var(--font-body);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:.75rem}
+  .hero-meta h1{font-family:var(--font-display);font-weight:600;font-size:2.25rem;line-height:1.1;letter-spacing:-.02em;margin-bottom:.5rem}
+  .hero-meta .sub{color:var(--ink-2);font-size:1rem;margin-bottom:1.5rem;max-width:54ch}
+  .hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:1.25rem}
+  .hero-stat{padding:.85rem 1rem;background:var(--paper-2);border-radius:10px;border-left:3px solid var(--accent)}
+  .hero-stat .v{font-family:var(--font-display);font-weight:600;font-size:1.4rem;color:var(--ink-1);line-height:1}
+  .hero-stat .l{font-size:.7rem;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;margin-top:.3rem;font-weight:500}
+  .hero-stat .delta{font-size:.7rem;font-weight:600;margin-top:.25rem}
+  .delta-up{color:var(--green)}
+  .delta-down{color:var(--accent)}
+  .delta-flat{color:var(--ink-3)}
+
+  /* Section structure */
+  .section{margin-bottom:3.5rem}
+  .section-header{margin-bottom:1.75rem}
+  .section-num{font-family:var(--font-body);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:.5rem}
+  .section-title{font-family:var(--font-display);font-weight:600;font-size:1.75rem;letter-spacing:-.02em;line-height:1.15;margin-bottom:.4rem}
+  .section-sub{color:var(--ink-2);max-width:60ch}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+  .card{background:#fff;border:1px solid var(--rule);border-radius:14px;padding:1.5rem 1.65rem;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+  .card h3{font-family:var(--font-display);font-weight:600;font-size:1.05rem;margin-bottom:.85rem;display:flex;align-items:center;gap:.55rem}
+  .pill{display:inline-block;padding:.18rem .6rem;border-radius:99px;font-size:.7rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+  .pill-accent{background:var(--accent-light);color:var(--accent-dark)}
+  .pill-blue{background:var(--blue-light);color:var(--blue)}
+  .pill-green{background:var(--green-light);color:var(--green)}
+  .pill-purple{background:var(--purple-light);color:var(--purple)}
+  .pill-amber{background:var(--amber-light);color:var(--amber)}
+  .pill-pink{background:var(--pink-light);color:var(--pink)}
+  .pill-grey{background:var(--paper-2);color:var(--ink-3)}
+
+  blockquote{border-left:3px solid var(--accent);padding:.5rem 0 .5rem 1rem;color:var(--ink-2);font-style:italic;margin:.75rem 0;font-size:.95rem}
+  .effectiveness{padding:.75rem 1rem;background:var(--paper-2);border-radius:8px;font-size:.88rem;color:var(--ink-2);margin-top:.5rem}
+
+  /* Shot timeline */
+  .shot-timeline{display:flex;flex-direction:column;gap:.5rem}
+  .shot-row{display:grid;grid-template-columns:60px 90px 1fr;gap:1rem;padding:.85rem .5rem;border-bottom:1px solid var(--rule-soft);align-items:flex-start}
+  .shot-row:last-child{border-bottom:0}
+  .shot-num{font-family:var(--font-display);font-weight:600;font-size:1.1rem;color:var(--accent)}
+  .shot-time{font-family:'SF Mono',Menlo,monospace;font-size:.78rem;color:var(--ink-3)}
+  .shot-time .dur{display:block;margin-top:.15rem;color:var(--ink-2);font-weight:500}
+  .shot-body .shot-desc{font-size:.9rem;color:var(--ink-1);line-height:1.45;margin-bottom:.4rem}
+  .shot-body .shot-tags{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.3rem}
+  .shot-body .shot-ocr{font-size:.78rem;color:var(--ink-3);font-style:italic}
+
+  .shot-frame{display:flex;gap:.85rem;align-items:flex-start}
+  .shot-frame img{width:64px;height:auto;border-radius:6px;border:1px solid var(--rule);flex:0 0 auto}
+
+  /* Bullet lists */
+  .bullet{padding:.55rem 0;border-bottom:1px solid var(--rule-soft);font-size:.9rem;color:var(--ink-2);line-height:1.5}
+  .bullet:last-child{border-bottom:0}
+  .bullet strong{color:var(--ink-1);font-weight:600}
+
+  /* Compare bar */
+  .compare-row{display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:center;padding:.5rem 0;font-size:.86rem;border-bottom:1px solid var(--rule-soft)}
+  .compare-row:last-child{border-bottom:0}
+  .compare-label{color:var(--ink-2)}
+  .compare-val{font-family:var(--font-display);font-weight:600;color:var(--ink-1);font-size:1rem}
+
+  /* Recipe checklist */
+  .recipe-list{margin-top:.75rem}
+  .recipe-item{display:grid;grid-template-columns:160px 1fr;gap:1rem;padding:.65rem 0;border-bottom:1px solid var(--rule-soft);font-size:.9rem}
+  .recipe-item:last-child{border-bottom:0}
+  .recipe-key{font-weight:600;color:var(--ink-1);font-size:.78rem;letter-spacing:.05em;text-transform:uppercase}
+  .recipe-val{color:var(--ink-2)}
+
+  /* Driver chips */
+  .drivers-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.85rem}
+  .driver-chip{padding:.4rem .85rem;background:var(--paper-2);border-radius:99px;font-size:.82rem;font-weight:500;color:var(--ink-2);position:relative}
+  .driver-chip.dominant{background:var(--accent);color:#fff}
+  .driver-chip.notable{background:var(--accent-light);color:var(--accent-dark)}
+  .driver-chip small{margin-left:.4rem;opacity:.75;font-size:.72rem}
+
+  .what-block{margin-top:1rem;padding:.85rem 1rem;border-radius:8px}
+  .what-works{background:var(--green-light);border-left:3px solid var(--green)}
+  .what-weak{background:var(--accent-light);border-left:3px solid var(--accent)}
+  .what-steal{background:var(--blue-light);border-left:3px solid var(--blue)}
+  .what-block h4{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-bottom:.4rem}
+  .what-works h4{color:var(--green)}
+  .what-weak h4{color:var(--accent-dark)}
+  .what-steal h4{color:var(--blue)}
+  .what-block ul{margin:0;padding-left:1.1rem;font-size:.86rem;color:var(--ink-2)}
+  .what-block li{margin-bottom:.3rem;line-height:1.5}
+  .what-block li:last-child{margin-bottom:0}
+
+  .error-card{padding:2rem;background:var(--accent-light);border:1px solid var(--accent);border-radius:12px;color:var(--accent-dark);margin-top:2rem}
+  .error-card h2{font-family:var(--font-display);margin-bottom:.5rem}
+
+  @media (max-width:880px){
+    .hero{grid-template-columns:1fr;gap:1.5rem}
+    .grid-2{grid-template-columns:1fr}
+    .hero-stats{grid-template-columns:repeat(2,1fr)}
+  }
+  @media print{
+    body{background:#fff}
+    .topbar,.no-print{display:none!important}
+    .page{padding:0;max-width:none}
+    .section{break-inside:avoid;page-break-inside:avoid}
+    .card{box-shadow:none;border:1px solid #ccc}
+  }
+</style>
+</head>
+<body>
+
+<div class="page" id="app">
+  <div class="loading-screen" id="loading">
+    <h2 style="font-family:var(--font-display);font-weight:600;font-size:1.5rem;color:var(--ink-2)">Building this ad's playbook</h2>
+    <div><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://ifrxylvoufncdxyltgqt.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA';
+const HEADERS = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` };
+
+const params = new URLSearchParams(window.location.search);
+const adIdParam = params.get('ad_id');
+const analysisIdParam = params.get('analysis_id');
+
+function escapeHtml(str){
+  if (str == null) return '';
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function formatLabel(s){
+  if (!s) return '';
+  return String(s).replace(/[-_]/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+function pct(n, d){ return d > 0 ? Math.round((n/d)*100) : 0; }
+function fmtSec(s){ if (s == null) return '—'; return Number(s).toFixed(1) + 's'; }
+
+function showError(msg){
+  document.getElementById('app').innerHTML = `
+    <div class="topbar"><div class="topbar-brand"><a href="/">← Creative Kitchen</a> Single Ad Playbook</div></div>
+    <div class="error-card"><h2>Can't build the playbook</h2><p>${escapeHtml(msg)}</p></div>`;
+}
+
+async function fetchData(){
+  if (!adIdParam && !analysisIdParam){
+    showError('Pass ?ad_id=<competitor_ad_id> or ?analysis_id=<video_analysis_id> in the URL.');
+    return null;
+  }
+
+  let analysis, ad;
+  if (analysisIdParam){
+    const r = await fetch(`${SB_URL}/rest/v1/video_analyses?id=eq.${analysisIdParam}&select=*`, { headers: HEADERS });
+    analysis = (await r.json())[0];
+    if (!analysis){ showError('No analysis row found for that analysis_id.'); return null; }
+    if (analysis.competitor_ad_id){
+      const ar = await fetch(`${SB_URL}/rest/v1/competitor_ads?id=eq.${analysis.competitor_ad_id}&select=*`, { headers: HEADERS });
+      ad = (await ar.json())[0];
+    }
+  } else {
+    const [ar, anr] = await Promise.all([
+      fetch(`${SB_URL}/rest/v1/competitor_ads?id=eq.${adIdParam}&select=*`, { headers: HEADERS }),
+      fetch(`${SB_URL}/rest/v1/video_analyses?competitor_ad_id=eq.${adIdParam}&status=eq.complete&order=created_at.desc&limit=1`, { headers: HEADERS })
+    ]);
+    ad = (await ar.json())[0];
+    analysis = (await anr.json())[0];
+    if (!analysis){
+      showError(`No completed analysis found for ad ${adIdParam}. Run analysis from the ad card first.`);
+      return null;
+    }
+  }
+  if (!analysis.ai_analysis){
+    showError(`This analysis exists but has no AI breakdown yet (ai_analysis is empty). Re-run the AI step from the ad card.`);
+    return null;
+  }
+
+  const [shotsRes, allRes] = await Promise.all([
+    fetch(`${SB_URL}/rest/v1/video_shots?video_analysis_id=eq.${analysis.id}&order=shot_number.asc&select=*`, { headers: HEADERS }),
+    fetch(`${SB_URL}/rest/v1/video_analyses?status=eq.complete&ai_analysis=not.is.null&select=id,duration_seconds,total_shots,avg_shot_duration,pacing_profile,ai_analysis`, { headers: HEADERS })
+  ]);
+  const shots = await shotsRes.json();
+  const allAnalyses = await allRes.json();
+
+  return { ad: ad || {}, analysis, shots, allAnalyses };
+}
+
+function buildCategoryStats(all){
+  const stats = { count: all.length };
+  if (all.length === 0) return stats;
+  stats.avgDuration = all.reduce((s,a) => s + (a.duration_seconds||0), 0) / all.length;
+  stats.avgShots = all.reduce((s,a) => s + (a.total_shots||0), 0) / all.length;
+  stats.avgShotDuration = all.reduce((s,a) => s + (a.avg_shot_duration||0), 0) / all.length;
+  // counts of patterns
+  const hookCounts = {}, formatCounts = {}, paceCounts = {}, narrativeCounts = {}, emotionCounts = {};
+  all.forEach(a => {
+    const ai = a.ai_analysis || {};
+    const h = ai.hook?.type; if (h) hookCounts[h] = (hookCounts[h]||0)+1;
+    const f = ai.production_style?.format; if (f) formatCounts[f] = (formatCounts[f]||0)+1;
+    const p = ai.pacing_analysis?.overall || a.pacing_profile; if (p) paceCounts[p] = (paceCounts[p]||0)+1;
+    const n = ai.narrative_arc?.structure; if (n) narrativeCounts[n] = (narrativeCounts[n]||0)+1;
+    (ai.emotional_drivers || []).forEach(d => { if (d) emotionCounts[d] = (emotionCounts[d]||0)+1; });
+  });
+  stats.hookCounts = hookCounts;
+  stats.formatCounts = formatCounts;
+  stats.paceCounts = paceCounts;
+  stats.narrativeCounts = narrativeCounts;
+  stats.emotionCounts = emotionCounts;
+  return stats;
+}
+
+function rarityLabel(count, total){
+  const p = pct(count, total);
+  if (p === 0) return { label: 'Unique in dataset', cls: 'pill-purple', pct: p };
+  if (p < 10) return { label: `Rare · ${p}% of ads`, cls: 'pill-purple', pct: p };
+  if (p < 25) return { label: `Distinctive · ${p}% of ads`, cls: 'pill-blue', pct: p };
+  if (p < 50) return { label: `Common · ${p}% of ads`, cls: 'pill-amber', pct: p };
+  return { label: `Dominant · ${p}% of ads`, cls: 'pill-grey', pct: p };
+}
+
+function deltaBadge(value, avg, lowerIsBetter){
+  if (value == null || avg == null || !isFinite(avg) || avg === 0) return '';
+  const diff = value - avg;
+  const pctDiff = Math.round((diff / avg) * 100);
+  const arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '▬';
+  let cls = 'delta-flat';
+  if (Math.abs(pctDiff) >= 5){
+    cls = (diff > 0 ? (lowerIsBetter ? 'delta-down' : 'delta-up') : (lowerIsBetter ? 'delta-up' : 'delta-down'));
+  }
+  return `<div class="delta ${cls}">${arrow} ${pctDiff > 0 ? '+' : ''}${pctDiff}% vs avg (${avg.toFixed(1)})</div>`;
+}
+
+function render({ ad, analysis, shots, allAnalyses }){
+  const ai = analysis.ai_analysis;
+  const stats = buildCategoryStats(allAnalyses);
+
+  const hookType = ai.hook?.type;
+  const formatType = ai.production_style?.format;
+  const paceType = ai.pacing_analysis?.overall || analysis.pacing_profile;
+  const narrativeType = ai.narrative_arc?.structure;
+
+  const hookRarity = hookType ? rarityLabel(stats.hookCounts?.[hookType] || 0, stats.count) : null;
+  const formatRarity = formatType ? rarityLabel(stats.formatCounts?.[formatType] || 0, stats.count) : null;
+  const paceRarity = paceType ? rarityLabel(stats.paceCounts?.[paceType] || 0, stats.count) : null;
+  const narrativeRarity = narrativeType ? rarityLabel(stats.narrativeCounts?.[narrativeType] || 0, stats.count) : null;
+
+  const firstShot = shots[0];
+  const brandName = ad.page_name || 'Unknown brand';
+  const adTitle = ad.creative_title || analysis.video_url?.split('/').pop()?.split('.')[0] || 'Untitled ad';
+  const daysActive = ad.days_active || '—';
+
+  document.getElementById('app').innerHTML = `
+    <div class="topbar no-print">
+      <div class="topbar-brand">
+        <a href="/">← Creative Kitchen</a> Single Ad Playbook
+      </div>
+      <div>
+        <button class="btn-back" onclick="window.close(); window.history.length > 1 ? window.history.back() : window.location.href='/'">Back</button>
+        <button class="btn-export" onclick="window.print()">Export PDF</button>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-video">
+        ${analysis.video_url ? `
+          <video src="${escapeHtml(analysis.video_url)}" controls preload="metadata" ${ad.thumbnail_url ? `poster="${escapeHtml(ad.thumbnail_url)}"` : ''}></video>
+        ` : ad.thumbnail_url ? `
+          <img src="${escapeHtml(ad.thumbnail_url)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">
+        ` : `<div style="color:#999;text-align:center;padding:3rem">No video available</div>`}
+      </div>
+      <div class="hero-meta">
+        <div class="eyebrow">${escapeHtml(brandName)} · ${escapeHtml(formatLabel(formatType||'video'))} · ${daysActive}d running</div>
+        <h1>${escapeHtml(adTitle)}</h1>
+        <div class="sub">${escapeHtml(ai.one_line_summary || ad.creative_body?.slice(0, 280) || 'No summary available.')}</div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="v">${fmtSec(analysis.duration_seconds)}</div>
+            <div class="l">Duration</div>
+            ${stats.avgDuration ? deltaBadge(analysis.duration_seconds, stats.avgDuration, false) : ''}
+          </div>
+          <div class="hero-stat">
+            <div class="v">${analysis.total_shots || '—'}</div>
+            <div class="l">Shots</div>
+            ${stats.avgShots ? deltaBadge(analysis.total_shots, stats.avgShots, false) : ''}
+          </div>
+          <div class="hero-stat">
+            <div class="v">${fmtSec(analysis.avg_shot_duration)}</div>
+            <div class="l">Avg shot</div>
+            ${stats.avgShotDuration ? deltaBadge(analysis.avg_shot_duration, stats.avgShotDuration, false) : ''}
+          </div>
+          <div class="hero-stat">
+            <div class="v">${analysis.cuts_per_second ? Number(analysis.cuts_per_second).toFixed(2) : '—'}</div>
+            <div class="l">Cuts/sec</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 1: Hook breakdown -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-num">01 / Hook breakdown</div>
+        <h2 class="section-title">The first three seconds</h2>
+        <p class="section-sub">What stops the scroll and what's actually happening on screen before the brand reveal.</p>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Hook line ${hookType ? `<span class="pill pill-accent">${escapeHtml(formatLabel(hookType))}</span>` : ''}</h3>
+          ${ai.hook?.text ? `<blockquote>${escapeHtml(ai.hook.text)}</blockquote>` : '<p style="color:var(--ink-3)">No hook line captured.</p>'}
+          ${ai.hook?.effectiveness ? `<div class="effectiveness"><strong>Why it works:</strong> ${escapeHtml(ai.hook.effectiveness)}</div>` : ''}
+          ${hookRarity ? `<div style="margin-top:.85rem"><span class="pill ${hookRarity.cls}">${escapeHtml(hookRarity.label)}</span></div>` : ''}
+        </div>
+        <div class="card">
+          <h3>Opening shot</h3>
+          ${firstShot ? `
+            <div class="shot-frame">
+              ${firstShot.frame_url ? `<img src="${escapeHtml(firstShot.frame_url)}" alt="">` : ''}
+              <div style="flex:1">
+                <div style="font-size:.78rem;color:var(--ink-3);margin-bottom:.4rem">${fmtSec(firstShot.start_time)} → ${fmtSec(firstShot.end_time)} · ${fmtSec(firstShot.duration)} long · ${escapeHtml(formatLabel(firstShot.screen_layout||'full'))}</div>
+                <div style="font-size:.88rem;color:var(--ink-2);line-height:1.5">${escapeHtml(firstShot.description || 'No description')}</div>
+                ${firstShot.ocr_text ? `<div class="shot-ocr" style="margin-top:.4rem">On-screen text: "${escapeHtml(firstShot.ocr_text)}"</div>` : ''}
+              </div>
+            </div>
+          ` : '<p style="color:var(--ink-3)">No shot data captured.</p>'}
+          ${ai.pacing_analysis?.first_3s ? `<div class="effectiveness" style="margin-top:1rem"><strong>Tempo:</strong> ${escapeHtml(ai.pacing_analysis.first_3s)}</div>` : ''}
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Narrative & pacing -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-num">02 / Narrative arc &amp; pacing</div>
+        <h2 class="section-title">How the story unfolds</h2>
+        <p class="section-sub">Beat-by-beat structure plus shot-level detail so you can see exactly how the ad earns each cut.</p>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Narrative beats ${narrativeType ? `<span class="pill pill-purple">${escapeHtml(formatLabel(narrativeType))}</span>` : ''}</h3>
+          ${(ai.narrative_arc?.beats || []).length ? `
+            <ol style="padding-left:1.2rem;margin-top:.5rem">
+              ${ai.narrative_arc.beats.map((b,i) => `<li class="bullet" style="padding-left:.25rem"><strong>Beat ${i+1}.</strong> ${escapeHtml(b)}</li>`).join('')}
+            </ol>
+          ` : '<p style="color:var(--ink-3)">No beats captured.</p>'}
+          ${narrativeRarity ? `<div style="margin-top:.85rem"><span class="pill ${narrativeRarity.cls}">Narrative · ${escapeHtml(narrativeRarity.label)}</span></div>` : ''}
+        </div>
+        <div class="card">
+          <h3>Pacing ${paceType ? `<span class="pill pill-blue">${escapeHtml(formatLabel(paceType))}</span>` : ''}</h3>
+          ${ai.pacing_analysis?.rhythm ? `<p style="font-size:.92rem;color:var(--ink-2);line-height:1.55">${escapeHtml(ai.pacing_analysis.rhythm)}</p>` : ''}
+          <div class="recipe-list" style="margin-top:1rem">
+            <div class="recipe-item"><div class="recipe-key">This ad</div><div class="recipe-val">${analysis.total_shots} shots · ${fmtSec(analysis.duration_seconds)} · ${fmtSec(analysis.avg_shot_duration)}/shot</div></div>
+            <div class="recipe-item"><div class="recipe-key">Category avg</div><div class="recipe-val">${stats.avgShots ? stats.avgShots.toFixed(0) : '—'} shots · ${stats.avgDuration ? fmtSec(stats.avgDuration) : '—'} · ${stats.avgShotDuration ? fmtSec(stats.avgShotDuration) : '—'}/shot</div></div>
+          </div>
+          ${paceRarity ? `<div style="margin-top:.85rem"><span class="pill ${paceRarity.cls}">Pace · ${escapeHtml(paceRarity.label)}</span></div>` : ''}
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:1.5rem">
+        <h3>Shot-by-shot timeline</h3>
+        <div class="shot-timeline">
+          ${shots.length ? shots.map(s => `
+            <div class="shot-row">
+              <div>
+                <div class="shot-num">#${s.shot_number}</div>
+                ${s.frame_url ? `<img src="${escapeHtml(s.frame_url)}" alt="" style="width:54px;border-radius:6px;border:1px solid var(--rule);margin-top:.4rem">` : ''}
+              </div>
+              <div class="shot-time">${fmtSec(s.start_time)}<br>→ ${fmtSec(s.end_time)}<span class="dur">(${fmtSec(s.duration)})</span></div>
+              <div class="shot-body">
+                <div class="shot-tags">
+                  ${s.screen_layout ? `<span class="pill pill-grey">${escapeHtml(formatLabel(s.screen_layout))}</span>` : ''}
+                  ${s.vision_classification ? `<span class="pill pill-blue">${escapeHtml(formatLabel(s.vision_classification))}</span>` : ''}
+                </div>
+                <div class="shot-desc">${escapeHtml(s.description || '')}</div>
+                ${s.ocr_text ? `<div class="shot-ocr">On-screen: "${escapeHtml(s.ocr_text)}"</div>` : ''}
+              </div>
+            </div>
+          `).join('') : '<p style="color:var(--ink-3)">No shots captured.</p>'}
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Emotional drivers + value props -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-num">03 / Emotional drivers &amp; value props</div>
+        <h2 class="section-title">What it's really selling</h2>
+        <p class="section-sub">The emotions the ad pulls on and the specific selling points it makes — colour-coded by how often the rest of the market uses the same drivers.</p>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Emotional drivers</h3>
+          <div class="drivers-row">
+            ${(ai.emotional_drivers || []).length ? ai.emotional_drivers.map(d => {
+              const cnt = stats.emotionCounts?.[d] || 0;
+              const p = pct(cnt, stats.count);
+              const cls = p >= 40 ? 'dominant' : p >= 15 ? 'notable' : '';
+              return `<span class="driver-chip ${cls}">${escapeHtml(formatLabel(d))}<small>${p}%</small></span>`;
+            }).join('') : '<span class="driver-chip">None captured</span>'}
+          </div>
+          <p style="font-size:.78rem;color:var(--ink-3);margin-top:.5rem">Filled chips = drivers used by &gt;15% of the dataset. % = share of analysed ads using that driver.</p>
+          ${ai.target_audience?.primary ? `<div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--rule-soft)"><div class="recipe-key" style="margin-bottom:.4rem">Target audience</div><p style="font-size:.88rem;color:var(--ink-2)">${escapeHtml(ai.target_audience.primary)}</p></div>` : ''}
+        </div>
+        <div class="card">
+          <h3>Selling points</h3>
+          ${(ai.selling_points || []).length ? `
+            <div>${ai.selling_points.map(s => `<div class="bullet">${escapeHtml(s)}</div>`).join('')}</div>
+          ` : '<p style="color:var(--ink-3)">No selling points captured.</p>'}
+          ${ai.cta ? `<div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--rule-soft)"><div class="recipe-key" style="margin-bottom:.4rem">CTA</div><p style="font-size:.88rem;color:var(--ink-2)"><strong>${escapeHtml(ai.cta.text || '')}</strong> ${ai.cta.type ? `<span class="pill pill-grey" style="margin-left:.4rem">${escapeHtml(formatLabel(ai.cta.type))}</span>` : ''} ${ai.cta.placement ? `<span class="pill pill-grey" style="margin-left:.4rem">${escapeHtml(formatLabel(ai.cta.placement))}</span>` : ''}</p></div>` : ''}
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Production recipe -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-num">04 / Production recipe</div>
+        <h2 class="section-title">Clone the structure</h2>
+        <p class="section-sub">Everything you'd hand a creator or studio to replicate the spine of this ad.</p>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Format ${formatType ? `<span class="pill pill-pink">${escapeHtml(formatLabel(formatType))}</span>` : ''}</h3>
+          <div class="recipe-list">
+            <div class="recipe-item"><div class="recipe-key">Production style</div><div class="recipe-val">${escapeHtml(formatLabel(ai.production_style?.format || '—'))}</div></div>
+            <div class="recipe-item"><div class="recipe-key">Quality tier</div><div class="recipe-val">${escapeHtml(formatLabel(ai.production_style?.quality || '—'))}</div></div>
+            <div class="recipe-item"><div class="recipe-key">On-screen text</div><div class="recipe-val">${escapeHtml(formatLabel(ai.production_style?.text_overlays || '—'))}</div></div>
+            <div class="recipe-item"><div class="recipe-key">Music / sound</div><div class="recipe-val">${escapeHtml(formatLabel(ai.production_style?.music_pacing || '—'))}</div></div>
+            <div class="recipe-item"><div class="recipe-key">Pace</div><div class="recipe-val">${escapeHtml(formatLabel(paceType || '—'))}</div></div>
+            <div class="recipe-item"><div class="recipe-key">Hook type</div><div class="recipe-val">${escapeHtml(formatLabel(hookType || '—'))}</div></div>
+            <div class="recipe-item"><div class="recipe-key">Narrative arc</div><div class="recipe-val">${escapeHtml(formatLabel(narrativeType || '—'))}</div></div>
+            <div class="recipe-item"><div class="recipe-key">Shot count</div><div class="recipe-val">${analysis.total_shots} (vs avg ${stats.avgShots ? stats.avgShots.toFixed(0) : '—'})</div></div>
+          </div>
+          ${formatRarity ? `<div style="margin-top:.85rem"><span class="pill ${formatRarity.cls}">Format · ${escapeHtml(formatRarity.label)}</span></div>` : ''}
+        </div>
+        <div class="card">
+          <h3>What to steal</h3>
+          ${ai.competitor_insights?.what_to_steal?.length ? `
+            <div class="what-block what-steal">
+              <h4>Borrow these tactics</h4>
+              <ul>${ai.competitor_insights.what_to_steal.map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul>
+            </div>
+          ` : ''}
+          ${ai.competitor_insights?.what_works?.length ? `
+            <div class="what-block what-works">
+              <h4>What works in this ad</h4>
+              <ul>${ai.competitor_insights.what_works.map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul>
+            </div>
+          ` : ''}
+          ${ai.competitor_insights?.weaknesses?.length ? `
+            <div class="what-block what-weak">
+              <h4>Weaknesses to avoid</h4>
+              <ul>${ai.competitor_insights.weaknesses.map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul>
+            </div>
+          ` : ''}
+          ${!ai.competitor_insights ? '<p style="color:var(--ink-3)">No competitor-insight notes captured.</p>' : ''}
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;color:var(--ink-3);font-size:.78rem;padding-top:2rem;border-top:1px solid var(--rule)">
+      Built from <code>video_analyses.${analysis.id.slice(0,8)}…</code> · Benchmarked vs ${stats.count} ads in the dataset.
+    </div>
+  `;
+}
+
+(async function init(){
+  try {
+    const data = await fetchData();
+    if (data) render(data);
+  } catch (err){
+    console.error(err);
+    showError('Something went wrong loading the data: ' + (err.message || err));
+  }
+})();
+</script>
+</body>
+</html>
