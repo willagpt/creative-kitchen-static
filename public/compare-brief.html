@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Comparison Brief · Creative Kitchen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#faf9f7;--surface:#fff;--surface-alt:#f4f2ee;--surface-warm:#f9f5f0;
+    --paper:#faf7f2;--paper-2:#f3eee6;
+    --ink:#1a1714;--ink-1:#1a1714;--ink-2:#5c564d;--ink-3:#8a8279;--ink-4:#b0a99e;
+    --accent:#b44d1e;--accent-light:#f4e6dc;--accent-dark:#8a3710;
+    --green:#2d6a4f;--green-light:#d8f3dc;
+    --blue:#1d4e89;--blue-light:#d0e2f4;
+    --purple:#6b21a8;--purple-light:#ede9fe;
+    --amber:#92400e;--amber-light:#fef3c7;
+    --pink:#db2777;--pink-light:#fce7f3;
+    --border:#e8e4de;--rule:#e2dcce;--rule-soft:#eee7d8;
+    --radius:5px;--radius-lg:8px;
+    --font-display:'Fraunces',Georgia,serif;
+    --font-body:'DM Sans',-apple-system,system-ui,sans-serif;
+  }
+  html{font-size:14.5px}
+  body{font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4{font-family:var(--font-display);font-weight:600;line-height:1.2;letter-spacing:-.01em}
+
+  .page{max-width:1280px;margin:0 auto;padding:1.5rem clamp(1rem,3vw,2.5rem) 5rem}
+  .loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;gap:1.5rem;text-align:center}
+  .loading-dot{display:inline-block;width:8px;height:8px;margin:0 4px;border-radius:50%;background:var(--accent);animation:bounce 1.4s infinite ease-in-out both}
+  .loading-dot:nth-child(2){animation-delay:.16s}
+  .loading-dot:nth-child(3){animation-delay:.32s}
+  @keyframes bounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
+
+  /* Top bar */
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding:.85rem 0;border-bottom:1px solid var(--border);margin-bottom:2rem;flex-wrap:wrap;gap:.75rem}
+  .topbar-brand{font-family:var(--font-display);font-weight:600;font-size:1rem;color:var(--ink-2);letter-spacing:-.01em}
+  .topbar-brand a{color:var(--ink-3);text-decoration:none;border-right:1px solid var(--border);padding-right:.75rem;margin-right:.75rem;font-size:.85rem;font-weight:500}
+  .topbar-brand a:hover{color:var(--accent)}
+  .topbar-actions{display:flex;gap:.5rem;flex-wrap:wrap}
+  .btn{font-family:var(--font-body);font-size:.78rem;font-weight:600;padding:.5rem 1rem;border-radius:6px;cursor:pointer;border:1.5px solid transparent;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem}
+  .btn-primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+  .btn-ghost{background:transparent;color:var(--ink-2);border-color:var(--border)}
+  .btn-ghost:hover{background:var(--surface-alt);color:var(--ink)}
+  .copy-toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:.65rem 1.2rem;border-radius:8px;font-size:.85rem;box-shadow:0 8px 24px rgba(0,0,0,.18);opacity:0;pointer-events:none;transition:opacity .25s;z-index:50}
+  .copy-toast.show{opacity:1}
+
+  /* Cover */
+  .cover{padding:1rem 0 2.25rem;margin-bottom:2.75rem;border-bottom:1px solid var(--rule)}
+  .cover-eyebrow{font-family:var(--font-body);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:.85rem}
+  .cover-title{font-family:var(--font-display);font-size:2.5rem;font-weight:600;line-height:1.08;letter-spacing:-.02em;margin-bottom:.65rem;max-width:24ch}
+  .cover-sub{color:var(--ink-2);font-size:1.02rem;max-width:62ch;margin-bottom:1.75rem}
+  .cover-brands{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1.5rem}
+  .cover-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:.85rem;margin-top:1.25rem}
+  .cover-stat{padding:.95rem 1rem;background:var(--surface-warm);border-radius:8px;border-left:3px solid var(--accent)}
+  .cover-stat .v{font-family:var(--font-display);font-weight:600;font-size:1.5rem;color:var(--ink);line-height:1}
+  .cover-stat .l{font-size:.68rem;color:var(--ink-3);letter-spacing:.1em;text-transform:uppercase;margin-top:.4rem;font-weight:600}
+
+  /* Section structure */
+  .section{margin-bottom:3.25rem}
+  .section-header{margin-bottom:1.5rem}
+  .section-num{font-family:var(--font-body);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:.4rem}
+  .section-title{font-family:var(--font-display);font-weight:600;font-size:1.6rem;letter-spacing:-.015em;line-height:1.15;margin-bottom:.35rem}
+  .section-sub{color:var(--ink-2);max-width:64ch;font-size:.95rem}
+
+  /* Brand chip */
+  .brand-chip{display:inline-flex;align-items:center;gap:.4rem;padding:.22rem .65rem;border-radius:99px;font-size:.72rem;font-weight:600;letter-spacing:.02em;text-transform:uppercase;background:var(--surface-alt);color:var(--ink-2)}
+  .brand-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block;flex:0 0 auto}
+  .via-creator{font-size:.66rem;color:var(--ink-3);margin-top:.3rem;text-transform:uppercase;letter-spacing:.05em;font-weight:500}
+
+  /* Pills */
+  .pill{display:inline-block;padding:.2rem .65rem;border-radius:99px;font-size:.7rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+  .pill-accent{background:var(--accent-light);color:var(--accent-dark)}
+  .pill-blue{background:var(--blue-light);color:var(--blue)}
+  .pill-green{background:var(--green-light);color:var(--green)}
+  .pill-purple{background:var(--purple-light);color:var(--purple)}
+  .pill-amber{background:var(--amber-light);color:var(--amber)}
+  .pill-pink{background:var(--pink-light);color:var(--pink)}
+  .pill-grey{background:var(--surface-alt);color:var(--ink-3)}
+
+  /* At-a-glance ad tile grid */
+  .ataglance{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+  .ad-tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0;overflow:hidden;display:flex;flex-direction:column;break-inside:avoid;page-break-inside:avoid}
+  .ad-tile-thumb{aspect-ratio:9/16;background:#000;position:relative;overflow:hidden}
+  .ad-tile-thumb img,.ad-tile-thumb video{width:100%;height:100%;object-fit:cover;display:block}
+  .ad-tile-badge{position:absolute;top:.5rem;right:.5rem;background:rgba(15,14,12,.78);color:#fff;font-size:.65rem;font-weight:600;letter-spacing:.04em;padding:.18rem .5rem;border-radius:4px;text-transform:uppercase}
+  .ad-tile-body{padding:.9rem 1rem 1rem;flex:1;display:flex;flex-direction:column;gap:.45rem}
+  .ad-tile-brand{display:flex;align-items:flex-start;gap:.4rem;flex-direction:column}
+  .ad-tile-title{font-family:var(--font-body);font-size:.85rem;font-weight:500;color:var(--ink);line-height:1.4;margin-top:.25rem}
+  .ad-tile-stats{font-size:.72rem;color:var(--ink-3);letter-spacing:.02em;margin-top:auto;padding-top:.4rem;border-top:1px solid var(--border-light, var(--border))}
+  .ad-tile-link{font-size:.72rem;color:var(--accent);font-weight:600;text-decoration:none;margin-top:.5rem;display:inline-block}
+  .ad-tile-link:hover{text-decoration:underline}
+
+  /* Comparison grid (rows = attributes, columns = ads) */
+  .compare-wrap{margin-top:1rem;overflow-x:auto;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+  .compare-grid{display:grid;min-width:100%;gap:0}
+  .compare-rowlabel{padding:.85rem 1rem;background:var(--surface-warm);border-right:1px solid var(--border);border-bottom:1px solid var(--rule-soft);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:700;display:flex;align-items:flex-start;position:sticky;left:0;z-index:1}
+  .compare-colhead{padding:.85rem 1rem;background:var(--surface-warm);border-bottom:1px solid var(--rule);border-right:1px solid var(--rule-soft);font-size:.78rem;font-weight:600;color:var(--ink);display:flex;flex-direction:column;gap:.35rem}
+  .compare-colhead:last-of-type{border-right:0}
+  .compare-cell{padding:.85rem 1rem;border-bottom:1px solid var(--rule-soft);border-right:1px solid var(--rule-soft);font-size:.83rem;color:var(--ink);line-height:1.5;vertical-align:top}
+  .compare-cell:last-of-type{border-right:0}
+  .compare-cell ol,.compare-cell ul{margin:0;padding-left:1.1rem}
+  .compare-cell li{margin-bottom:.3rem;font-size:.8rem;color:var(--ink-2);line-height:1.45}
+  .compare-cell li:last-child{margin-bottom:0}
+  .compare-thumb{aspect-ratio:9/16;width:100%;max-width:140px;background:#000;border-radius:6px;overflow:hidden;display:block;margin-bottom:.5rem}
+  .compare-thumb img,.compare-thumb video{width:100%;height:100%;object-fit:cover;display:block}
+  .compare-meta-label{display:block;font-size:.66rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-bottom:.15rem}
+
+  .error-card{padding:2rem;background:var(--accent-light);border:1px solid var(--accent);border-radius:12px;color:var(--accent-dark);margin-top:2rem}
+  .error-card h2{font-family:var(--font-display);margin-bottom:.5rem;font-size:1.4rem}
+
+  /* Print: A4 landscape, side-by-side preserved */
+  @media print{
+    @page{size:A4 landscape;margin:12mm 12mm 14mm}
+    @page :first{margin-top:0}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
+    html,body{background:#fff!important;color:#0f0e0c;font-size:9pt;line-height:1.45}
+    .topbar,.no-print,.copy-toast,video{display:none!important}
+    .page{padding:0;max-width:none;margin:0}
+
+    /* COVER - first page only */
+    .cover{display:block;border-bottom:0;padding:0;margin:0;break-after:page;page-break-after:always;min-height:calc(100vh - 26mm);position:relative}
+    .cover::before{content:"";display:block;width:42px;height:2.5px;background:var(--accent);margin-bottom:9mm;margin-top:14mm}
+    .cover-eyebrow{font-size:9pt;letter-spacing:.16em;margin-bottom:5mm}
+    .cover-title{font-size:28pt;line-height:1.05;margin-bottom:5mm;max-width:24ch;font-weight:600;letter-spacing:-.015em}
+    .cover-sub{font-size:11pt;line-height:1.5;max-width:80ch;color:#3d3a35;margin-bottom:7mm}
+    .cover-brands{gap:1.5mm;margin-bottom:9mm}
+    .brand-chip{font-size:7.5pt;padding:1mm 2.5mm;letter-spacing:.04em;border-radius:99px}
+    .cover-stats{grid-template-columns:repeat(5,1fr);gap:4mm;margin-top:4mm;break-inside:avoid;page-break-inside:avoid;max-width:230mm}
+    .cover-stat{padding:4mm 5mm;background:#faf7f2;border-left:2px solid var(--accent);border-radius:0}
+    .cover-stat .v{font-size:16pt;font-weight:600;line-height:1}
+    .cover-stat .l{font-size:7pt;letter-spacing:.12em;margin-top:2mm;color:#6e6a63}
+    .cover::after{content:"Creative Kitchen \00B7  Competitive Video Intelligence";position:absolute;bottom:5mm;left:0;font-size:8pt;letter-spacing:.14em;text-transform:uppercase;color:#6e6a63;font-weight:600;padding-top:4mm;border-top:1px solid #e2dcce;width:100%}
+
+    /* Sections - each starts a new page */
+    .section{margin:0;padding:0;break-before:page;page-break-before:always;break-inside:auto}
+    .section-header{margin-bottom:5mm;break-inside:avoid;page-break-inside:avoid;break-after:avoid;page-break-after:avoid}
+    .section-num{font-size:8pt;letter-spacing:.14em;margin-bottom:2mm;color:#b44d1e}
+    .section-title{font-size:17pt;font-weight:600;letter-spacing:-.015em;margin-bottom:1.5mm;line-height:1.15}
+    .section-sub{font-size:9.5pt;line-height:1.45;color:#3d3a35;max-width:none}
+
+    /* At-a-glance */
+    .ataglance{grid-template-columns:repeat(4,1fr);gap:4mm;break-inside:auto}
+    .ad-tile{border:1px solid #d6cdb8;border-radius:3px;background:#fff;break-inside:avoid;page-break-inside:avoid}
+    .ad-tile-thumb{aspect-ratio:9/16;max-height:60mm}
+    .ad-tile-badge{font-size:6.5pt;padding:.5mm 1.5mm;background:rgba(15,14,12,.85);border-radius:2px;top:1.5mm;right:1.5mm}
+    .ad-tile-body{padding:3mm 3.5mm 3.5mm;gap:1.5mm}
+    .ad-tile-title{font-size:8.5pt;line-height:1.35}
+    .ad-tile-stats{font-size:7pt;padding-top:1.5mm}
+    .ad-tile-link{display:none}
+
+    /* Comparison grid - keep side-by-side, smaller text */
+    .compare-wrap{border:1px solid #d6cdb8;border-radius:3px;overflow:visible}
+    .compare-grid{break-inside:auto}
+    .compare-rowlabel{padding:2.5mm 3mm;font-size:6.5pt;letter-spacing:.06em;background:#faf7f2;border-right:1px solid #d6cdb8;border-bottom:1px solid #eee7d8;break-inside:avoid;position:static}
+    .compare-colhead{padding:2.5mm 3mm;font-size:7pt;background:#faf7f2;border-bottom:1px solid #d6cdb8;border-right:1px solid #eee7d8;break-inside:avoid;gap:1mm}
+    .compare-cell{padding:2.5mm 3mm;font-size:7.5pt;line-height:1.4;border-bottom:1px solid #eee7d8;border-right:1px solid #eee7d8;break-inside:avoid;page-break-inside:avoid}
+    .compare-cell li{font-size:7pt;line-height:1.35;margin-bottom:1mm}
+    .compare-thumb{max-width:28mm;aspect-ratio:9/16;margin-bottom:1.5mm;border-radius:2px}
+    .compare-meta-label{font-size:6.5pt;margin-bottom:.5mm}
+    .pill{font-size:6.5pt;padding:.5mm 2mm;font-weight:600;border-radius:99px}
+    .via-creator{font-size:6pt;margin-top:1mm}
+
+    /* When there are many ads, the grid gets tight - shrink further */
+    .compare-grid.many{font-size:6.5pt}
+    .compare-grid.many .compare-cell{padding:2mm 2.5mm;font-size:6.8pt}
+    .compare-grid.many .compare-cell li{font-size:6.5pt;line-height:1.3}
+    .compare-grid.many .pill{font-size:6pt}
+
+    h3,h4{break-after:avoid;page-break-after:avoid}
+    a{color:inherit;text-decoration:none}
+  }
+
+  /* Smaller screens - allow horizontal scroll on compare grid */
+  @media (max-width:880px){
+    .cover-stats{grid-template-columns:repeat(2,1fr)}
+    .cover-title{font-size:1.85rem}
+  }
+</style>
+</head>
+<body>
+
+<div class="page" id="app">
+  <div class="loading-screen">
+    <h2 style="font-family:var(--font-display);font-weight:600;font-size:1.4rem;color:var(--ink-2)">Building your comparison brief</h2>
+    <div><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div>
+  </div>
+</div>
+
+<div class="copy-toast" id="copy-toast">Link copied to clipboard</div>
+
+<script>
+const SB_URL = 'https://ifrxylvoufncdxyltgqt.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmcnh5bHZvdWZuY2R4eWx0Z3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzkwNDgsImV4cCI6MjA4OTQxNTA0OH0.ZsyGK_jdxjTrO3Ji8zgoyHz6VxW5hR36JWr1sgmmAFA';
+const HEADERS = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` };
+
+// Brand color palette (must match creative-playbook.html order so colors are consistent
+// when both pages are open against the same dataset).
+const BRAND_COLORS = [
+  { bg:'#f4e6dc', text:'#8a3710', dot:'#b44d1e' },
+  { bg:'#d8f3dc', text:'#1b4332', dot:'#2d6a4f' },
+  { bg:'#d0e2f4', text:'#0c3266', dot:'#1d4e89' },
+  { bg:'#ede9fe', text:'#4c1d95', dot:'#6b21a8' },
+  { bg:'#fef3c7', text:'#7c2d12', dot:'#92400e' },
+  { bg:'#fce7f3', text:'#9d174d', dot:'#db2777' },
+  { bg:'#cffafe', text:'#155e75', dot:'#0e7490' },
+  { bg:'#fee2e2', text:'#7f1d1d', dot:'#991b1b' },
+  { bg:'#e7f5ec', text:'#14532d', dot:'#15803d' },
+  { bg:'#e0e7ff', text:'#3730a3', dot:'#4338ca' },
+  { bg:'#ffe4e6', text:'#9f1239', dot:'#e11d48' },
+  { bg:'#f0fdf4', text:'#166534', dot:'#16a34a' },
+  { bg:'#fef9c3', text:'#854d0e', dot:'#ca8a04' },
+  { bg:'#e0f2fe', text:'#075985', dot:'#0284c7' },
+  { bg:'#fae8ff', text:'#86198f', dot:'#a21caf' },
+  { bg:'#ecfccb', text:'#3f6212', dot:'#65a30d' }
+];
+
+const params = new URLSearchParams(window.location.search);
+const idsParam = params.get('ids') || '';
+const contextParam = params.get('context') || '';
+const selectedIds = idsParam.split(',').map(s => s.trim()).filter(Boolean);
+
+function escapeHtml(s){ if (s == null) return ''; return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s){ return escapeHtml(s); }
+function formatLabel(s){ if (!s) return ''; return String(s).replace(/[-_]/g,' ').replace(/\b\w/g, c => c.toUpperCase()); }
+function fmtSec(s){ if (s == null) return '—'; return Number(s).toFixed(1) + 's'; }
+function fmtSecInt(s){ if (s == null) return '—'; return Math.round(Number(s)) + 's'; }
+
+function showError(msg){
+  document.getElementById('app').innerHTML = `
+    <div class="topbar"><div class="topbar-brand"><a href="/creative-playbook.html">← Creative Playbook</a> Comparison Brief</div></div>
+    <div class="error-card"><h2>Can't build the brief</h2><p>${escapeHtml(msg)}</p></div>`;
+}
+
+async function fetchData(){
+  if (selectedIds.length === 0){
+    showError('Pass ?ids=uuid1,uuid2,uuid3 in the URL. Each id should be a video_analyses.id.');
+    return null;
+  }
+  // Fetch ALL completed analyses so brand-color assignment is consistent with the playbook page.
+  const analysesRes = await fetch(`${SB_URL}/rest/v1/video_analyses?status=eq.complete&select=*&order=created_at.desc`, { headers: HEADERS });
+  const analyses = await analysesRes.json();
+  const adIds = [...new Set(analyses.map(a => a.competitor_ad_id).filter(Boolean))];
+  let ads = [];
+  if (adIds.length > 0){
+    const idsList = `(${adIds.map(id => `"${id}"`).join(',')})`;
+    const adsRes = await fetch(`${SB_URL}/rest/v1/competitor_ads?id=in.${idsList}&select=id,page_name,page_id,days_active,impressions_lower,impressions_upper,start_date,cta_type,creative_body,creative_title,thumbnail_url,video_url`, { headers: HEADERS });
+    ads = await adsRes.json();
+  }
+  return { analyses, ads };
+}
+
+function buildBrandMap(analyses, ads){
+  const adMap = {};
+  ads.forEach(a => { adMap[a.id] = a; });
+  const pageIdGroups = {};
+  analyses.forEach(an => {
+    if (!an.ai_analysis) return;
+    const ad = adMap[an.competitor_ad_id] || {};
+    const pid = ad.page_id || 'unknown';
+    if (!pageIdGroups[pid]) pageIdGroups[pid] = { pageNames: {}, analyses: [] };
+    const pn = ad.page_name || 'Unknown';
+    pageIdGroups[pid].pageNames[pn] = (pageIdGroups[pid].pageNames[pn] || 0) + 1;
+    pageIdGroups[pid].analyses.push({ ...an, ad });
+  });
+  const brandMap = {};
+  let colorIdx = 0;
+  Object.entries(pageIdGroups).forEach(([pid, group]) => {
+    const sorted = Object.entries(group.pageNames).sort((a,b) => b[1] - a[1]);
+    const brandName = sorted[0][0];
+    const creators = sorted.slice(1).map(([name,count]) => ({ name, count }));
+    brandMap[brandName] = {
+      name: brandName,
+      color: BRAND_COLORS[colorIdx % BRAND_COLORS.length],
+      analyses: group.analyses,
+      pageId: pid,
+      creators
+    };
+    colorIdx++;
+  });
+  return brandMap;
+}
+
+function resolveParentBrand(pageName, brandMap){
+  if (brandMap[pageName]) return pageName;
+  for (const [brandName, brand] of Object.entries(brandMap)){
+    if (brand.creators.some(c => c.name === pageName)) return brandName;
+  }
+  return pageName;
+}
+
+function brandChip(pageName, brandMap){
+  const parent = resolveParentBrand(pageName || 'Unknown', brandMap);
+  const color = brandMap[parent]?.color;
+  const chip = color
+    ? `<span class="brand-chip" style="background:${color.bg};color:${color.text}"><span class="brand-dot" style="background:${color.dot}"></span>${escapeHtml(parent)}</span>`
+    : `<span class="brand-chip">${escapeHtml(parent)}</span>`;
+  return chip + (parent !== pageName ? `<div class="via-creator">via ${escapeHtml(pageName)}</div>` : '');
+}
+
+function copyShareLink(){
+  const url = window.location.href;
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(() => {
+      const t = document.getElementById('copy-toast');
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 1800);
+    });
+  } else {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = url; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch(e){}
+    document.body.removeChild(ta);
+  }
+}
+window.copyShareLink = copyShareLink;
+
+function render({ analyses, ads }){
+  // Build adMap so we can attach .ad to each analysis (mirror playbook page)
+  const adMap = {};
+  ads.forEach(a => { adMap[a.id] = a; });
+  analyses.forEach(an => { an.ad = adMap[an.competitor_ad_id] || {}; });
+
+  // Filter to "complete" analyses, same rule as the playbook page
+  const complete = analyses.filter(a => {
+    if (!a.ai_analysis || !a.transcript_text) return false;
+    const ad = adMap[a.competitor_ad_id];
+    return ad && ad.page_id && ad.page_name;
+  });
+  const brandMap = buildBrandMap(complete, ads);
+
+  // Resolve selected ids → ordered list of analyses
+  const allById = {};
+  complete.forEach(a => { allById[a.id] = a; });
+  const selected = selectedIds.map(id => allById[id]).filter(Boolean);
+
+  if (selected.length === 0){
+    showError(`None of the ${selectedIds.length} ids matched a completed analysis. Make sure each id is a video_analyses.id and that those analyses are complete.`);
+    return;
+  }
+
+  // Build summary stats for the cover
+  const brandsInSelection = new Set();
+  let totalDuration = 0, totalShots = 0, longestRun = 0, runCount = 0;
+  selected.forEach(an => {
+    const parent = resolveParentBrand(an.ad.page_name || 'Unknown', brandMap);
+    brandsInSelection.add(parent);
+    if (an.duration_seconds) totalDuration += Number(an.duration_seconds);
+    if (an.total_shots) totalShots += Number(an.total_shots);
+    if (an.ad.days_active != null) { longestRun = Math.max(longestRun, Number(an.ad.days_active)); runCount++; }
+  });
+  const avgDuration = selected.length ? totalDuration / selected.length : 0;
+  const avgShots = selected.length ? totalShots / selected.length : 0;
+  const brandsList = Array.from(brandsInSelection).sort();
+
+  const today = new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Title: prefer context (e.g. "Production Style: UGC"); otherwise generic
+  const ctxLabel = contextParam ? contextParam : '';
+  const heroTitle = ctxLabel
+    ? `${selected.length} ads compared — ${ctxLabel}`
+    : `${selected.length} ads compared`;
+
+  // ── Cover ──
+  const coverHtml = `
+    <div class="cover">
+      <div class="cover-eyebrow">Comparison Brief${ctxLabel ? ' · ' + escapeHtml(ctxLabel) : ''}</div>
+      <h1 class="cover-title">${escapeHtml(heroTitle)}</h1>
+      <p class="cover-sub">Side-by-side breakdown of ${selected.length} analysed video ads from ${brandsList.length} ${brandsList.length === 1 ? 'brand' : 'brands'}, benchmarked across hook, narrative, pacing, production, drivers, selling points and CTA. Generated ${escapeHtml(today)}.</p>
+      <div class="cover-brands">
+        ${brandsList.map(b => {
+          const c = brandMap[b]?.color;
+          return c
+            ? `<span class="brand-chip" style="background:${c.bg};color:${c.text}"><span class="brand-dot" style="background:${c.dot}"></span>${escapeHtml(b)}</span>`
+            : `<span class="brand-chip">${escapeHtml(b)}</span>`;
+        }).join('')}
+      </div>
+      <div class="cover-stats">
+        <div class="cover-stat"><div class="v">${selected.length}</div><div class="l">Ads</div></div>
+        <div class="cover-stat"><div class="v">${brandsList.length}</div><div class="l">Brand${brandsList.length === 1 ? '' : 's'}</div></div>
+        <div class="cover-stat"><div class="v">${fmtSecInt(avgDuration)}</div><div class="l">Avg duration</div></div>
+        <div class="cover-stat"><div class="v">${avgShots ? avgShots.toFixed(0) : '—'}</div><div class="l">Avg shots</div></div>
+        <div class="cover-stat"><div class="v">${longestRun ? longestRun + 'd' : '—'}</div><div class="l">Longest run</div></div>
+      </div>
+    </div>`;
+
+  // ── At-a-glance grid (one tile per ad) ──
+  const atGlanceHtml = `
+    <div class="section">
+      <div class="section-header">
+        <div class="section-num">01 / At a glance</div>
+        <h2 class="section-title">The ${selected.length} ads in this brief</h2>
+        <p class="section-sub">A snapshot of each ad — brand, headline angle and run length — so you can keep track of which column is which in the comparison sections that follow.</p>
+      </div>
+      <div class="ataglance">
+        ${selected.map((an, i) => {
+          const ai = an.ai_analysis || {};
+          const ad = an.ad || {};
+          const title = ad.creative_title || ai.one_line_summary || (ad.creative_body || '').slice(0, 120) || 'Untitled';
+          const thumb = ad.thumbnail_url;
+          const playbookHref = (ad.id || an.competitor_ad_id) ? `/single-ad-playbook.html?ad_id=${ad.id || an.competitor_ad_id}` : `/single-ad-playbook.html?analysis_id=${an.id}`;
+          const stats = [
+            ad.days_active != null ? `${ad.days_active}d running` : null,
+            an.total_shots ? `${an.total_shots} shots` : null,
+            an.duration_seconds ? `${Number(an.duration_seconds).toFixed(0)}s` : null
+          ].filter(Boolean).join(' · ');
+          return `
+            <div class="ad-tile">
+              <div class="ad-tile-thumb">
+                ${thumb ? `<img src="${escapeAttr(thumb)}" alt="" loading="lazy">` : ''}
+                <span class="ad-tile-badge">#${i+1}</span>
+              </div>
+              <div class="ad-tile-body">
+                <div class="ad-tile-brand">${brandChip(ad.page_name, brandMap)}</div>
+                <div class="ad-tile-title">${escapeHtml(title)}</div>
+                <div class="ad-tile-stats">${escapeHtml(stats || '—')}</div>
+                <a class="ad-tile-link" href="${playbookHref}" target="_blank" rel="noopener">Open full playbook →</a>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  // ── Comparison sections ──
+  // Each section is its own block with a row label + N columns (one per ad).
+  // We render the column headers row inline at the start of each section grid so the
+  // ad identity is always visible next to the attribute.
+
+  const colMinPx = selected.length <= 3 ? 260 : selected.length <= 5 ? 220 : 180;
+  const labelColPx = 160;
+  const gridTemplate = `minmax(${labelColPx}px, 0.6fr) repeat(${selected.length}, minmax(${colMinPx}px, 1fr))`;
+  const manyClass = selected.length > 5 ? ' many' : '';
+
+  // The header row for each comparison section (column = ad)
+  const colHeaderCells = selected.map((an, i) => {
+    const ad = an.ad || {};
+    const thumb = ad.thumbnail_url;
+    const title = ad.creative_title || an.ai_analysis?.one_line_summary || 'Untitled';
+    const playbookHref = (ad.id || an.competitor_ad_id) ? `/single-ad-playbook.html?ad_id=${ad.id || an.competitor_ad_id}` : `/single-ad-playbook.html?analysis_id=${an.id}`;
+    return `
+      <div class="compare-colhead">
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <span style="font-family:var(--font-display);font-weight:600;font-size:.85rem;color:var(--ink-3)">#${i+1}</span>
+          ${brandChip(ad.page_name, brandMap)}
+        </div>
+        <a href="${playbookHref}" target="_blank" rel="noopener" style="font-size:.7rem;color:var(--ink-2);text-decoration:none;line-height:1.3">${escapeHtml(title.length > 60 ? title.slice(0, 60) + '…' : title)}</a>
+      </div>`;
+  }).join('');
+
+  // Helpers for cell rendering per attribute
+  function previewCell(an){
+    const ad = an.ad || {};
+    const thumb = ad.thumbnail_url;
+    const video = an.video_url || ad.video_url;
+    return `<div class="compare-thumb">${
+      video ? `<video src="${escapeAttr(video)}" muted playsinline preload="metadata" ${thumb ? `poster="${escapeAttr(thumb)}"` : ''} onmouseenter="this.play().catch(()=>{})" onmouseleave="this.pause();this.currentTime=0"></video>`
+            : thumb ? `<img src="${escapeAttr(thumb)}" alt="" loading="lazy">`
+            : '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:.7rem">No preview</div>'
+    }</div>`;
+  }
+  function statsCell(an){
+    const ad = an.ad || {};
+    const lines = [];
+    if (ad.days_active != null) lines.push(`<div><span class="compare-meta-label">Running</span>${ad.days_active} days</div>`);
+    if (an.total_shots) lines.push(`<div><span class="compare-meta-label">Shots</span>${an.total_shots}</div>`);
+    if (an.duration_seconds) lines.push(`<div><span class="compare-meta-label">Length</span>${Number(an.duration_seconds).toFixed(0)}s</div>`);
+    if (an.avg_shot_duration) lines.push(`<div><span class="compare-meta-label">Avg shot</span>${Number(an.avg_shot_duration).toFixed(1)}s</div>`);
+    return lines.join('');
+  }
+  function titleCell(an){
+    const ai = an.ai_analysis || {};
+    const ad = an.ad || {};
+    const summary = ai.one_line_summary;
+    const ct = ad.creative_title;
+    return [
+      ct ? `<div style="font-weight:600;color:var(--ink);margin-bottom:.35rem">${escapeHtml(ct)}</div>` : '',
+      summary ? `<div style="font-size:.78rem;color:var(--ink-2);line-height:1.45">${escapeHtml(summary)}</div>` : ''
+    ].join('') || '<span style="color:var(--ink-3)">—</span>';
+  }
+  function hookCell(an){
+    const ai = an.ai_analysis || {};
+    const h = ai.hook || {};
+    const t = h.type ? `<div style="margin-bottom:.45rem"><span class="pill pill-accent">${escapeHtml(formatLabel(h.type))}</span></div>` : '';
+    const q = h.text ? `<div style="font-style:italic;color:var(--ink);font-size:.83rem;line-height:1.45;margin-bottom:.4rem">&ldquo;${escapeHtml(h.text)}&rdquo;</div>` : '';
+    const why = h.effectiveness ? `<div style="font-size:.74rem;color:var(--ink-2);line-height:1.45;padding-top:.4rem;border-top:1px dashed var(--rule-soft)"><span class="compare-meta-label">Why it works</span>${escapeHtml(h.effectiveness)}</div>` : '';
+    return (t + q + why) || '<span style="color:var(--ink-3)">—</span>';
+  }
+  function narrativeCell(an){
+    const na = an.ai_analysis?.narrative_arc || {};
+    const t = na.structure ? `<div style="margin-bottom:.45rem"><span class="pill pill-purple">${escapeHtml(formatLabel(na.structure))}</span></div>` : '';
+    const beats = na.beats || [];
+    const list = beats.length
+      ? `<ol style="padding-left:1.1rem;margin:0">${beats.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ol>`
+      : '';
+    return (t + list) || '<span style="color:var(--ink-3)">—</span>';
+  }
+  function pacingCell(an){
+    const p = an.ai_analysis?.pacing_analysis || {};
+    const t = p.overall ? `<div style="margin-bottom:.45rem"><span class="pill pill-blue">${escapeHtml(formatLabel(p.overall))}</span></div>` : '';
+    const r = p.rhythm ? `<div style="font-size:.8rem;color:var(--ink-2);line-height:1.45;margin-bottom:.4rem">${escapeHtml(p.rhythm)}</div>` : '';
+    const f = p.first_3s ? `<div style="font-size:.74rem;color:var(--ink-2);line-height:1.45;padding-top:.4rem;border-top:1px dashed var(--rule-soft)"><span class="compare-meta-label">First 3s</span>${escapeHtml(p.first_3s)}</div>` : '';
+    const cps = an.cuts_per_second ? `<div style="font-size:.72rem;color:var(--ink-3);margin-top:.4rem">${Number(an.cuts_per_second).toFixed(2)} cuts/sec</div>` : '';
+    return (t + r + f + cps) || '<span style="color:var(--ink-3)">—</span>';
+  }
+  function productionCell(an){
+    const ps = an.ai_analysis?.production_style || {};
+    const items = [
+      ['Format', ps.format],
+      ['Quality', ps.quality],
+      ['Text overlays', ps.text_overlays],
+      ['Music', ps.music_pacing]
+    ].filter(([,v]) => v);
+    if (!items.length) return '<span style="color:var(--ink-3)">—</span>';
+    return items.map(([k,v]) => `<div style="font-size:.78rem;margin-bottom:.3rem"><span class="compare-meta-label">${k}</span>${escapeHtml(formatLabel(v))}</div>`).join('');
+  }
+  function driversCell(an){
+    const d = an.ai_analysis?.emotional_drivers || [];
+    if (!d.length) return '<span style="color:var(--ink-3)">—</span>';
+    return `<div style="display:flex;flex-wrap:wrap;gap:.3rem">${d.map(x => `<span class="pill pill-grey">${escapeHtml(formatLabel(x))}</span>`).join('')}</div>`;
+  }
+  function sellingCell(an){
+    const sp = an.ai_analysis?.selling_points || [];
+    if (!sp.length) return '<span style="color:var(--ink-3)">—</span>';
+    return `<ol style="padding-left:1.1rem;margin:0">${sp.map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ol>`;
+  }
+  function audienceCell(an){
+    const a = an.ai_analysis?.target_audience || {};
+    const p = a.primary ? `<div style="font-size:.82rem;color:var(--ink);line-height:1.45;margin-bottom:.4rem">${escapeHtml(a.primary)}</div>` : '';
+    const sigs = (a.signals || []);
+    const s = sigs.length ? `<div style="display:flex;flex-wrap:wrap;gap:.25rem">${sigs.map(x => `<span class="pill pill-grey">${escapeHtml(x)}</span>`).join('')}</div>` : '';
+    return (p + s) || '<span style="color:var(--ink-3)">—</span>';
+  }
+  function ctaCell(an){
+    const c = an.ai_analysis?.cta || {};
+    if (!c.text && !c.type) return '<span style="color:var(--ink-3)">—</span>';
+    return [
+      c.text ? `<div style="font-weight:600;color:var(--ink);margin-bottom:.35rem">${escapeHtml(c.text)}</div>` : '',
+      c.type ? `<div><span class="pill pill-grey">${escapeHtml(formatLabel(c.type))}</span> ${c.placement ? `<span class="pill pill-grey">${escapeHtml(formatLabel(c.placement))}</span>` : ''}</div>` : ''
+    ].join('');
+  }
+  function insightsCell(an){
+    const ci = an.ai_analysis?.competitor_insights || {};
+    const blocks = [];
+    if ((ci.what_works || []).length){
+      blocks.push(`<div style="margin-bottom:.55rem"><span class="compare-meta-label" style="color:var(--green)">What works</span><ul style="padding-left:1.1rem;margin:.1rem 0 0">${ci.what_works.map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul></div>`);
+    }
+    if ((ci.what_to_steal || []).length){
+      blocks.push(`<div style="margin-bottom:.55rem"><span class="compare-meta-label" style="color:var(--blue)">Steal</span><ul style="padding-left:1.1rem;margin:.1rem 0 0">${ci.what_to_steal.map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul></div>`);
+    }
+    if ((ci.weaknesses || []).length){
+      blocks.push(`<div><span class="compare-meta-label" style="color:var(--accent-dark)">Weaknesses</span><ul style="padding-left:1.1rem;margin:.1rem 0 0">${ci.weaknesses.map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul></div>`);
+    }
+    return blocks.join('') || '<span style="color:var(--ink-3)">—</span>';
+  }
+
+  // Each section: header + grid (col headers + one row per attribute)
+  function buildSection({ num, title, sub, rows }){
+    const headerRow = `
+      <div class="compare-rowlabel"></div>
+      ${colHeaderCells}
+    `;
+    const dataRows = rows.map(r => `
+      <div class="compare-rowlabel">${escapeHtml(r.label)}</div>
+      ${selected.map(an => `<div class="compare-cell">${r.cell(an)}</div>`).join('')}
+    `).join('');
+    return `
+      <div class="section">
+        <div class="section-header">
+          <div class="section-num">${escapeHtml(num)}</div>
+          <h2 class="section-title">${escapeHtml(title)}</h2>
+          <p class="section-sub">${escapeHtml(sub)}</p>
+        </div>
+        <div class="compare-wrap">
+          <div class="compare-grid${manyClass}" style="grid-template-columns:${gridTemplate}">
+            ${headerRow}
+            ${dataRows}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  const section1 = buildSection({
+    num: '02 / Headlines & hooks',
+    title: 'How each ad opens',
+    sub: 'The first three seconds — the hook type, the literal opening line, and why it earns the next beat. Read across to see whether the brands are leaning on the same scroll-stop or each finding their own.',
+    rows: [
+      { label: 'Preview', cell: previewCell },
+      { label: 'Title / Summary', cell: titleCell },
+      { label: 'Run + length', cell: statsCell },
+      { label: 'Hook', cell: hookCell }
+    ]
+  });
+
+  const section2 = buildSection({
+    num: '03 / Narrative arc',
+    title: 'The shape of the story',
+    sub: 'Every beat from start to end, side by side. Where two ads share a structure but order their beats differently, the difference is usually the lesson.',
+    rows: [
+      { label: 'Narrative arc', cell: narrativeCell }
+    ]
+  });
+
+  const section3 = buildSection({
+    num: '04 / Pacing & production',
+    title: 'How it’s made',
+    sub: 'Tempo, cut rhythm, format and the craft choices that hold the structure up.',
+    rows: [
+      { label: 'Pacing', cell: pacingCell },
+      { label: 'Production style', cell: productionCell }
+    ]
+  });
+
+  const section4 = buildSection({
+    num: '05 / Emotional drivers & target',
+    title: 'Who it’s for and how it pulls them',
+    sub: 'The emotions each ad pulls on, and the audience signals the AI inferred. Useful for spotting overlap — when several ads chase the same driver they’re likely fighting for the same impression.',
+    rows: [
+      { label: 'Emotional drivers', cell: driversCell },
+      { label: 'Target audience', cell: audienceCell }
+    ]
+  });
+
+  const section5 = buildSection({
+    num: '06 / Selling points & CTA',
+    title: 'The promises and the ask',
+    sub: 'Specific selling points the ad makes and where it sends the viewer. Read down a column to audit a single ad’s claim stack; read across to see which claims a category leans on.',
+    rows: [
+      { label: 'Selling points', cell: sellingCell },
+      { label: 'CTA', cell: ctaCell }
+    ]
+  });
+
+  const section6 = buildSection({
+    num: '07 / Competitor takeaways',
+    title: 'What to steal, what to avoid',
+    sub: 'The AI’s read on what each ad does well, what’s borrowable, and where the weak seams are.',
+    rows: [
+      { label: 'Insights', cell: insightsCell }
+    ]
+  });
+
+  // Topbar
+  const backHref = '/creative-playbook.html';
+  const topbarHtml = `
+    <div class="topbar no-print">
+      <div class="topbar-brand">
+        <a href="${backHref}">← Creative Playbook</a> Comparison Brief
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost" onclick="copyShareLink()">Copy share link</button>
+        <button class="btn btn-primary" onclick="window.print()">Export PDF</button>
+      </div>
+    </div>`;
+
+  document.getElementById('app').innerHTML = topbarHtml + coverHtml + atGlanceHtml + section1 + section2 + section3 + section4 + section5 + section6;
+}
+
+(async function init(){
+  try {
+    const data = await fetchData();
+    if (data) render(data);
+  } catch (err){
+    console.error(err);
+    showError('Something went wrong loading the data: ' + (err.message || err));
+  }
+})();
+</script>
+</body>
+</html>

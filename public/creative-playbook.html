@@ -1280,8 +1280,8 @@ function renderCompareView() {
     }
     if (key === 'narrative') {
       const t = ai.narrative_arc?.structure ? `<span class="pill pill-purple" style="margin-bottom:.4rem;display:inline-block">${escapeHtml(formatLabel(ai.narrative_arc.structure))}</span>` : '';
-      const beats = (ai.narrative_arc?.beats || []).slice(0, 3);
-      return t + (beats.length ? `<ol class="compare-list">${beats.map(b => `<li>${escapeHtml(b)}</li>`).join('')}${ai.narrative_arc.beats.length > 3 ? `<li style="color:var(--ink-3)">+${ai.narrative_arc.beats.length - 3} more beats</li>` : ''}</ol>` : '');
+      const beats = ai.narrative_arc?.beats || [];
+      return t + (beats.length ? `<ol class="compare-list">${beats.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ol>` : '');
     }
     if (key === 'pacing') {
       const t = ai.pacing_analysis?.overall ? `<span class="pill pill-blue" style="margin-bottom:.4rem;display:inline-block">${escapeHtml(formatLabel(ai.pacing_analysis.overall))}</span>` : '';
@@ -1330,7 +1330,10 @@ function renderCompareView() {
   backdrop.innerHTML = `
     <div class="fb-modal" onclick="event.stopPropagation()">
       <button class="fb-modal-close" aria-label="Close" onclick="closeFilterModal()">&times;</button>
-      <button class="fb-back-btn" onclick="reopenLastFilter()">← Back to results</button>
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem">
+        <button class="fb-back-btn" style="margin-bottom:0" onclick="reopenLastFilter()">← Back to results</button>
+        <a class="fb-back-btn" style="margin-bottom:0;text-decoration:none;background:#0f0e0c;color:#fff;border-color:#0f0e0c" href="/compare-brief.html?ids=${encodeURIComponent(ids.join(','))}${ctx.label ? '&context=' + encodeURIComponent((ctx.fieldLabel ? ctx.fieldLabel + ': ' : '') + ctx.label) : ''}" target="_blank" rel="noopener">Open as brief →</a>
+      </div>
       <div class="fb-modal-eyebrow">Compare</div>
       <h2 class="fb-modal-title">${escapeHtml(ctx.label || 'Selected ads')} — ${ads.length} selected</h2>
       <p class="fb-modal-sub">Side-by-side view of the ads you ticked. Scroll horizontally if the table overflows.</p>
