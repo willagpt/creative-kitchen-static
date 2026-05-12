@@ -147,12 +147,12 @@
 
     /* -- Cover page: hero is the title page -- */
     .hero{display:block;border-bottom:0;padding:0;margin:0 0 8mm;break-after:page;page-break-after:always;min-height:calc(100vh - 28mm);position:relative}
-    .hero::before{content:"";display:block;width:48px;height:3px;background:var(--accent);margin-bottom:14mm;margin-top:18mm}
+    .hero::before{content:"";display:block;width:42px;height:2.5px;background:var(--accent);margin-bottom:10mm;margin-top:14mm}
     .hero-meta{padding:0}
     .hero-meta .eyebrow{font-size:9pt;letter-spacing:.16em;margin-bottom:6mm}
-    .hero-meta h1{font-size:36pt;line-height:1.04;margin-bottom:6mm;max-width:20ch;font-weight:600}
-    .hero-meta .sub{font-size:12pt;line-height:1.55;max-width:60ch;color:#3d3a35;margin-bottom:14mm}
-    .hero-stats{grid-template-columns:repeat(4,1fr);gap:6mm;margin-top:0;page-break-inside:avoid;max-width:155mm}
+    .hero-meta h1{font-size:30pt;line-height:1.05;margin-bottom:5mm;max-width:22ch;font-weight:600;letter-spacing:-.015em}
+    .hero-meta .sub{font-size:11pt;line-height:1.55;max-width:62ch;color:#3d3a35;margin-bottom:10mm}
+    .hero-stats{grid-template-columns:repeat(4,1fr);gap:5mm;margin-top:4mm;break-inside:avoid;page-break-inside:avoid;max-width:155mm}
     .hero-stat{padding:5mm 5mm 5mm 6mm;background:#faf7f2;border-left:2px solid var(--accent);border-radius:0}
     .hero-stat .v{font-family:var(--font-display);font-size:17pt;font-weight:600;line-height:1}
     .hero-stat .l{font-size:7.5pt;letter-spacing:.12em;margin-top:2.5mm;color:#6e6a63}
@@ -160,19 +160,24 @@
     .hero-video{display:none}
 
     /* Tiny brand strip at bottom of cover */
-    .hero::after{content:"Creative Kitchen · Competitive Video Intelligence";position:absolute;bottom:0;left:0;font-size:8pt;letter-spacing:.14em;text-transform:uppercase;color:#6e6a63;font-weight:600}
+    .hero::after{content:"Creative Kitchen \00B7  Competitive Video Intelligence";position:absolute;bottom:6mm;left:0;font-size:8pt;letter-spacing:.14em;text-transform:uppercase;color:#6e6a63;font-weight:600;padding-top:5mm;border-top:1px solid #e2dcce;width:100%}
 
     /* -- Sections -- */
-    .section{margin:0 0 10mm;break-inside:auto;page-break-inside:auto}
-    .section + .section{padding-top:6mm;border-top:1px solid #e2dcce}
-    .section-header{margin-bottom:6mm;break-after:avoid;page-break-after:avoid}
+    .section{margin:0;padding:0;break-before:page;page-break-before:always;break-inside:auto;page-break-inside:auto}
+    .section + .section{padding-top:0;border-top:0}
+    /* The hero already forces a page break after itself; don't double-break for the first section. */
+    .hero + .section{break-before:auto;page-break-before:auto}
+    .section-header{margin-bottom:6mm;break-inside:avoid;page-break-inside:avoid;break-after:avoid;page-break-after:avoid}
     .section-num{font-size:8pt;letter-spacing:.14em;margin-bottom:2.5mm;color:#b44d1e}
     .section-title{font-size:18pt;font-weight:600;letter-spacing:-.015em;margin-bottom:1.5mm;line-height:1.15}
     .section-sub{font-size:9.5pt;line-height:1.5;color:#3d3a35;max-width:80ch}
 
     /* -- Cards -- */
-    .grid-2{grid-template-columns:1fr 1fr;gap:5mm;break-inside:avoid;page-break-inside:avoid}
+    .grid-2{grid-template-columns:1fr 1fr;gap:5mm;break-inside:auto;page-break-inside:auto}
     .card{padding:5mm 6mm;border:1px solid #d6cdb8;border-radius:5px;box-shadow:none;background:#fff;break-inside:avoid;page-break-inside:avoid;margin-bottom:5mm}
+    /* Long cards (like the shot timeline) must allow internal page breaks */
+    .card:has(.shot-timeline),.card:has(.bullet:nth-child(8)){break-inside:auto;page-break-inside:auto}
+    .card:has(.shot-timeline) > h3{break-after:avoid;page-break-after:avoid}
     .card h3{font-size:11pt;margin-bottom:3mm;font-weight:600;gap:3mm;line-height:1.3}
 
     /* Pills */
